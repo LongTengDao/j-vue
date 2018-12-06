@@ -1,0 +1,125 @@
+﻿
+`jVue`
+======
+
+用途
+---- 
+     
+     当使用 `@ltd/j-dev`#1# 构建包含 `.vue` 文件##2##的前端项目时，最终生成的前端运行时代码，需要用到此模块来完成最终步骤。
+     （之所以无法在服务器端进行完全构建，是因为全局唯一的发号器，必须在最终运行场景执行。只有这样，才能保证各组件的局部样式选择器名等绝对不会冲突。）
+     
+     #1# 发布在 `NPM` 上的包。是一个自动化构建项目的工具。
+     #2# `Vue` 的单文件组件。便于开发，但需要编译后才能运行。
+
+下载
+---- 
+     
+     >> https://GitHub.com/LongTengDao/j-vue/tree/master/dist/ <<
+
+加载
+----
+    
+    全局模式
+    -------- 
+             ``` .html
+                 <script src="j-vue.js"></script>
+                 <script>
+                     jVue;
+                 </script>
+    
+    AMD 模式（以 `RequireJS` 实现为例）
+    -------- 
+             
+             全局加载
+             -------- 
+                      ``` .html
+                          <script src="require.js"></script>
+                          <script>
+                              require(['j-vue'], function (jVue) {
+                                  jVue;
+                              });
+                          </script>
+             
+             模块内加载
+             ---------- 
+                        ``` .js
+                            define(['j-vue'], function (jVue) {
+                                jVue;
+                            });
+    
+    CMD 模式（以 `SeaJS` 实现为例）
+    -------- 
+             
+             全局加载
+             -------- 
+                      ``` .html
+                          <script src="sea.js"></script>
+                          <script>
+                              seajs.use(['j-vue'], function (jVue) {
+                                  jVue;
+                              });
+                          </script>
+             
+             模块内加载
+             ---------- 
+                        ``` .js
+                            define(function (require) {
+                                var jVue = require('j-vue');
+                                jVue;
+                            });
+             
+             模块内加载（动态）
+             ---------- 
+                        ``` .js
+                            define(function (require) {
+                                require.async(['j-vue'], function (jVue) {
+                                    jVue;
+                                });
+                            });
+
+API
+--- 
+    
+    <RegExp> `/--[a-z_][a-z_0-9]*--/i` 或 `/__[a-z$0-9]+(_[a-z$0-9]+)*__/i`
+    
+    `jVue.Scope([keys])`
+    -------------------- 
+                         
+                         当缺省参数 `keys` 时，返回一个 `function` 发号器。使用它时，唯一的参数 `key` 是一个 `string`，返回的值是全局唯一的号#1#（对同一个发号器，传入同一个 `key`，会得到同一个值）。
+                         
+                         如果参数 `keys` 存在，返回一个 `object`。`keys` 应当是一个字符串，内部的每个 `key` 用 `--` 分隔。将会为这些 `key` 逐一生成全局唯一的号#1#，并缓存在返回的 `object` 中（键名是对应的 `key`）。
+                         
+                         #1# “号”是一个 `string`；每次发的号，在 `jVue` 内部全局唯一。
+                             它由小写字母打头，后面的部分是小写字母或数字（即 `JavaScript (ECMAScript 5+)` 中，`.key` 式访问对象属性时的裸键名规则）。
+                             目的是能够用作合法的 `class` 选择器等任何用途、高缓存索引性能（避免退化成“字典模式”）的前提下，长度尽可能短。
+                             （由于想不出需要避讳语法保留字的应用场景，所以没有在发号时排除它们。如果你有，请提 issue，加上它是很容易的。）
+    
+    `jVue.Style(css[, scope])`
+    -------------------------- 
+                               
+                               创建一个 `<style>`，追加到 `<head>` 节点中，并返回这个 `<style>`。
+                               
+                               参数 `css` 是一个 `string`，作为创建的 `<style>` 的内容。
+                               
+                               如果存在第二个参数 `scope`，那么参数 `css` 中所有匹配 <RegExp> 的部分，都会被替换成 `scope` 中的该 `key`（匹配部分 `.slice(2, -2)` 后的值）映射的值。
+    
+    `jVue.remove(style)`
+    -------------------- 
+                         
+                         参数 `style` 是一个 `<style>`，它将被从 `<head>` 节点中移除。
+                         
+                         函数的返回值是该函数本身，以便于链式调用。
+    
+    `jVue.Render(code[, scope])`
+    ---------------------------- 
+                                 
+                                 参数 `code` 是一个 `string`，返回 `Function(code)`。
+                                 
+                                 如果存在第二个参数 `scope`，那么 `code` 中所有匹配 <RegExp> 的部分，都会被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。
+    
+    `jVue.StaticRenderFns(codes[, scope])`
+    -------------------------------------- 
+                                           
+                                           参数 `codes` 是一个 `string` `Array`，返回 `function` `Array`（逐一用 `Function` 生成）。
+                                           
+                                           如果存在第二个参数 `scope`，那么生成时用的每个 `string` 中所有匹配 <RegExp> 的部分，都会被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。

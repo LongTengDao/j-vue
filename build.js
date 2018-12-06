@@ -16,7 +16,7 @@ require('@ltd/j-dev').
 			meta_name: 'jVue',
 			main_global: 'jVue',
 		},
-		//DOC: true,
+		DOC: true,
 	}).
 	
 	catch(console.error);

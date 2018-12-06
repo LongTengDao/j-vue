@@ -1,0 +1,9 @@
+# http://editorconfig.org
+
+[*.markdoc]
+charset = utf-8-bom
+indent_style = tab
+indent_size = 8
+end_of_line = crlf
+trim_trailing_whitespace = false
+insert_final_newline = false
