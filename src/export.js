@@ -1,10 +1,10 @@
 import semver from './semver.json';
 export { semver };
 
-var create = window.Object.create;
-var Function = window.Function;
-var Error = window.Error;
-var document = window.document;
+var create = /*window.*/Object.create;
+//var Function = window.Function;
+//var Error = window.Error;
+//var document = window.document;
 
 var HEAD = document.documentElement.firstChild;
 
@@ -77,19 +77,21 @@ export function Scope (ID__ID) {
 	return ID__ID ? new IdentifiersObject(ID__ID.split('--')) : IdentifiersFunction();
 }
 
+function Replacer (scope) {
+	return typeof scope==='function' ?
+		function (__ID__) { return scope(__ID__.slice(2, -2)); } :
+		function (__ID__) {
+			var ID = __ID__.slice(2, -2);
+			if ( ID in scope ) { return scope[ID]; }
+			throw new Error(__ID__);
+		};
+}
+
 export function Render (code, scope) {
 	return Function(
-		scope ?
-			typeof scope==='function' ?
-				code.replace(IDENTIFIERS, function (__ID__) {
-					return scope(__ID__.slice(2, -2));
-				}) :
-				code.replace(IDENTIFIERS, function (__ID__) {
-					var ID = __ID__.slice(2, -2);
-					if ( ID in scope ) { return scope[ID]; }
-					throw new Error(__ID__);
-				}) :
-			code
+		scope
+			? code.replace(IDENTIFIERS, Replacer(scope))
+			: code
 	);
 }
 
@@ -98,23 +100,10 @@ export function StaticRenderFns (codes, scope) {
 	var length = codes.length;
 	var index = 0;
 	if ( scope ) {
-		if ( typeof scope==='function' ) {
-			while ( index<length ) {
-				fns.push(Function(codes[index].replace(IDENTIFIERS, function (__ID__) {
-					return scope(__ID__.slice(2, -2));
-				})));
-				++index;
-			}
-		}
-		else {
-			while ( index<length ) {
-				fns.push(Function(codes[index].replace(IDENTIFIERS, function (__ID__) {
-					var ID = __ID__.slice(2, -2);
-					if ( ID in scope ) { return scope[ID]; }
-					throw new Error(__ID__);
-				})));
-				++index;
-			}
+		var replacer = Replacer(scope);
+		while ( index<length ) {
+			fns.push(Function(codes[index].replace(IDENTIFIERS, replacer)));
+			++index;
 		}
 	}
 	else {
@@ -130,17 +119,9 @@ export function Style (css, scope) {
 	var style = document.createElement('style');
 	if ( css ) {
 		style.textContent =
-			scope ?
-				typeof scope==='function' ?
-					css.replace(IDENTIFIERS, function (__ID__) {
-						return scope(__ID__.slice(2, -2));
-					}) :
-					css.replace(IDENTIFIERS, function (__ID__) {
-						var ID = __ID__.slice(2, -2);
-						if ( ID in scope ) { return scope[ID]; }
-						throw new Error(__ID__);
-					}) :
-				css;
+			scope
+				? css.replace(IDENTIFIERS, Replacer(scope))
+				: css;
 	}
 	HEAD.appendChild(style);
 	return style;
