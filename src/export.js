@@ -148,6 +148,7 @@ export function Style (css, scope) {
 
 export function remove (style) {
 	HEAD.removeChild(style);
+	return remove;
 }
 
 var jDoc = {
