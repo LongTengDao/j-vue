@@ -81,10 +81,11 @@ export function Render (code, scope) {
 	return Function(
 		scope ?
 			typeof scope==='function' ?
-				code.replace(IDENTIFIERS, function (__ID__, ID) {
-					return scope(ID);
+				code.replace(IDENTIFIERS, function (__ID__) {
+					return scope(__ID__.slice(2, -2));
 				}) :
-				code.replace(IDENTIFIERS, function (__ID__, ID) {
+				code.replace(IDENTIFIERS, function (__ID__) {
+					var ID = __ID__.slice(2, -2);
 					if ( ID in scope ) { return scope[ID]; }
 					throw new Error(__ID__);
 				}) :
@@ -99,15 +100,16 @@ export function StaticRenderFns (codes, scope) {
 	if ( scope ) {
 		if ( typeof scope==='function' ) {
 			while ( index<length ) {
-				fns.push(Function(codes[index].replace(IDENTIFIERS, function (__ID__, ID) {
-					return scope(ID);
+				fns.push(Function(codes[index].replace(IDENTIFIERS, function (__ID__) {
+					return scope(__ID__.slice(2, -2));
 				})));
 				++index;
 			}
 		}
 		else {
 			while ( index<length ) {
-				fns.push(Function(codes[index].replace(IDENTIFIERS, function (__ID__, ID) {
+				fns.push(Function(codes[index].replace(IDENTIFIERS, function (__ID__) {
+					var ID = __ID__.slice(2, -2);
 					if ( ID in scope ) { return scope[ID]; }
 					throw new Error(__ID__);
 				})));
@@ -130,10 +132,11 @@ export function Style (css, scope) {
 		style.textContent =
 			scope ?
 				typeof scope==='function' ?
-					css.replace(IDENTIFIERS, function (__ID__, ID) {
-						return scope(ID);
+					css.replace(IDENTIFIERS, function (__ID__) {
+						return scope(__ID__.slice(2, -2));
 					}) :
-					css.replace(IDENTIFIERS, function (__ID__, ID) {
+					css.replace(IDENTIFIERS, function (__ID__) {
+						var ID = __ID__.slice(2, -2);
 						if ( ID in scope ) { return scope[ID]; }
 						throw new Error(__ID__);
 					}) :
