@@ -46,36 +46,6 @@ Load
 				define(['j-vue'], function (jVue) {
 					jVue;
 				});
-	
-	CMD Mode (Take `SeaJS` for example)
-	--------	
-		
-		Global Load
-		-----------	
-			```	.html
-				<script src="sea.js"></script>
-				<script>
-					seajs.use(['j-vue'], function (jVue) {
-						jVue;
-					});
-				</script>
-		
-		Load in Module
-		--------------	
-			```	.js
-				define(function (require) {
-					var jVue = require('j-vue');
-					jVue;
-				});
-		
-		Load in Module (dynamically)
-		--------------	
-			```	.js
-				define(function (require) {
-					require.async(['j-vue'], function (jVue) {
-						jVue;
-					});
-				});
 
 API
 ---	

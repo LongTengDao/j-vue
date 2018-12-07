@@ -46,36 +46,6 @@
 				define(['j-vue'], function (jVue) {
 					jVue;
 				});
-	
-	CMD 模式（以 `SeaJS` 实现为例）
-	--------	
-		
-		全局加载
-		--------	
-			```	.html
-				<script src="sea.js"></script>
-				<script>
-					seajs.use(['j-vue'], function (jVue) {
-						jVue;
-					});
-				</script>
-		
-		模块内加载
-		----------	
-			```	.js
-				define(function (require) {
-					var jVue = require('j-vue');
-					jVue;
-				});
-		
-		模块内加载（动态）
-		----------	
-			```	.js
-				define(function (require) {
-					require.async(['j-vue'], function (jVue) {
-						jVue;
-					});
-				});
 
 API
 ---	
