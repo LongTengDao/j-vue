@@ -9,7 +9,7 @@
 | `UMD/j-vue.min.js.map`    | 封装为 [`UMD`][UMD-zhs] 的最小化版本的源映射文件。                                                      |
 | `UMD/j-vue.min.js.map.gz` | 封装为 [`UMD`][UMD-zhs] 的最小化版本的源映射文件的压缩版本（如果更小的话）。                            |
 
-[NPM-zhs]: https://github.com/umdjs/umd "通用模块定义"
+[UMD-zhs]: https://github.com/umdjs/umd "通用模块定义"
 
 ## Editions Description
 
@@ -21,4 +21,4 @@
 | `UMD/j-vue.min.js.map`    | The source mapper of the edition built as minified [`UMD`][UMD-en].                                     |
 | `UMD/j-vue.min.js.map.gz` | The compressed file (if smaller) of the source mapper of the edition built as minified [`UMD`][UMD-en]. |
 
-[NPM-en]: https://github.com/umdjs/umd "Universal Module Definition"
+[UMD-en]: https://github.com/umdjs/umd "Universal Module Definition"
