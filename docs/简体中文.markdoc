@@ -101,7 +101,7 @@ API
 		`jVue` 提供了一个简单的组件：
 		
 		```	.js
-		118	{
+		118	({
 		119		render: function (createElement) {
 		120			return createElement('style', {
 		121				domProps: {
@@ -109,7 +109,7 @@ API
 		123				}
 		124			});
 		125		}
-		126	}
+		126	})
 		
 		你可以在你的组件的 `components` 中放入它，或全局注册它，然后这样使用：
 		

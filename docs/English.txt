@@ -101,7 +101,7 @@ API
                  `jVue` provides a simple component:
                  
                  ``` .js
-                 118 {
+                 118 ({
                  119     render: function (createElement) {
                  120         return createElement('style', {
                  121             domProps: {
@@ -109,7 +109,7 @@ API
                  123             }
                  124         });
                  125     }
-                 126 }
+                 126 })
                  
                  You can put it into the `components` of your component, or register it global, then do like this:
                  
