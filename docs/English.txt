@@ -93,3 +93,49 @@ API
                                            The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using `Function(code)` to generate each one).
                                            
                                            If the second parameter `scope` exists, then all parts matched <RegExp> in each `string`, will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
+    
+    `jVue.STYLE`
+    ------------ 
+                 
+                 Because `Vue` disables the inclusion of `<style>` elements in component templates, this is inconvenient in the case that we have already handled the component-scoped `CSS` on our own.
+                 `jVue` provides a simple component:
+                 
+                 ``` .js
+                 118 {
+                 119     render: function (createElement) {
+                 120         return createElement('style', {
+                 121             domProps: {
+                 122                 textContent: 'default' in this.$slots ? this.$slots.default[0].text : ''
+                 123             }
+                 124         });
+                 125     }
+                 126 }
+                 
+                 You can put it into the `components` of your component, or register it global, then do like this:
+                 
+                 ``` .html
+                     <STYLE v-text="css">
+                 
+                 Or do this:
+                 
+                 ``` .html
+                     <STYLE>
+                         .scoped-preview-area-selector { background-color:{{ theme_color }}; }
+                     </STYLE>
+                 
+                 Note: The reactivity of `Vue` is asynchronous naturally, so if you need high reactivity, then you must do like this:
+                 
+                 ``` .js
+                     ({
+                         template: `
+                             <div @scroll="onScroll">
+                                 <STYLE ref="sheet" />
+                             </div>`,
+                         methods: {
+                             onScroll () {
+                                 this.$refs.sheet.textContent = `
+                                     .scoped-selector { top:${ this.$el.scrollTop }; }
+                                 `;
+                             }
+                         }
+                     })

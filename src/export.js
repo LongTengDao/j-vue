@@ -115,6 +115,16 @@ export function StaticRenderFns (codes, scope) {
 	return fns;
 }
 
+export var STYLE = {
+	render: function (createElement) {
+		return createElement('style', {
+			domProps: {
+				textContent: 'default' in this.$slots ? this.$slots.default[0].text : ''
+			}
+		});
+	}
+};
+
 export function Style (css, scope) {
 	var style = document.createElement('style');
 	if ( css ) {
@@ -137,6 +147,7 @@ var jDoc = {
 	Scope: Scope,
 	Render: Render,
 	StaticRenderFns: StaticRenderFns,
+	STYLE: STYLE,
 	Style: Style,
 	remove: remove
 };

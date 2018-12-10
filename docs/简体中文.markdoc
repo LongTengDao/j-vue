@@ -93,3 +93,49 @@ API
 		参数 `codes` 是一个 `string` `Array`，返回 `function` `Array`（逐一用 `Function` 生成）。
 		
 		如果存在第二个参数 `scope`，那么生成时用的每个 `string` 中所有匹配 <RegExp> 的部分，都会被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。
+	
+	`jVue.STYLE`
+	------------	
+		
+		由于 `Vue` 禁止组件模板中包含 `<style>` 元素，这在我们已经自行搞定了组件作用域的 `CSS` 的情况下，反而带来了不便。
+		`jVue` 提供了一个简单的组件：
+		
+		```	.js
+		118	{
+		119		render: function (createElement) {
+		120			return createElement('style', {
+		121				domProps: {
+		122					textContent: 'default' in this.$slots ? this.$slots.default[0].text : ''
+		123				}
+		124			});
+		125		}
+		126	}
+		
+		你可以在你的组件的 `components` 中放入它，或全局注册它，然后这样使用：
+		
+		```	.html
+			<STYLE v-text="css">
+		
+		或这样使用：
+		
+		```	.html
+			<STYLE>
+				.scoped-preview-area-selector { background-color:{{ theme_color }}; }
+			</STYLE>
+		
+		注意：`Vue` 的响应式天然是异步的，如果你需要高响应性，那么你必须类似这样做：
+		
+		```	.js
+			({
+				template: `
+					<div @scroll="onScroll">
+						<STYLE ref="sheet" />
+					</div>`,
+				methods: {
+					onScroll () {
+						this.$refs.sheet.textContent = `
+							.scoped-selector { top:${ this.$el.scrollTop }; }
+						`;
+					}
+				}
+			})
