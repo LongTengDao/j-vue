@@ -121,11 +121,11 @@ export function StaticRenderFns (codes, scope) {
 
 export var STYLE = {
 	render: function (createElement) {
-		return createElement('style', {
+		return 'default' in this.$slots ? createElement('style', {
 			domProps: {
-				textContent: 'default' in this.$slots ? this.$slots.default[0].text : ''
+				textContent: this.$slots.default[0].text
 			}
-		});
+		}) : createElement('style');
 	}
 };
 
