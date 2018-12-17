@@ -83,16 +83,14 @@ API
     `jVue.Render(code[, scope])`
     ---------------------------- 
                                  
-                                 The parameter `code` is a `string`, and the value returned is `Function(code)`#RenderFn#.
+                                 The parameter `code` is a `string`, and the value returned is `Function('with(this){return '+code+'}')`.
                                  
                                  If the second parameter `scope` exists, all parts matched <RegExp> in `code` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
-    
-    #RenderFn# Actually it's `Function('_c', '"use strict";var _o=this._o,_n=this._n,_s=this._s,_l=this._l,_t=this._t,_q=this._q,_i=this._i,_m=this._m,_f=this._f,_k=this._k,_b=this._b,_v=this._v,_e=this._e,_u=this._u,_g=this._g;return '+code)`.
     
     `jVue.StaticRenderFns(codes[, scope])`
     -------------------------------------- 
                                            
-                                           The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using `Function`#RenderFn# to generate each one).
+                                           The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using `Function('with(this){return '+code+'}')` to generate each one).
                                            
                                            If the second parameter `scope` exists, then all parts matched <RegExp> in each `string`, will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
     

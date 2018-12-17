@@ -88,7 +88,7 @@ function Replacer (scope) {
 }
 
 function RenderFn (code) {
-	return Function('_c', '"use strict";var _o=this._o,_n=this._n,_s=this._s,_l=this._l,_t=this._t,_q=this._q,_i=this._i,_m=this._m,_f=this._f,_k=this._k,_b=this._b,_v=this._v,_e=this._e,_u=this._u,_g=this._g;return '+code);
+	return Function('with(this){return '+code+'}');
 }
 
 export function Render (code, scope) {
