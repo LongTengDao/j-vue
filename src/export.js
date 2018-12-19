@@ -1,5 +1,5 @@
-import semver from './semver.json';
-export { semver };
+import version from '../version?text';
+export { version };
 
 var create = /*window.*/Object.create;
 //var Function = window.Function;
@@ -147,13 +147,13 @@ export function remove (style) {
 }
 
 var jDoc = {
-	semver: semver,
 	Scope: Scope,
 	Render: Render,
 	StaticRenderFns: StaticRenderFns,
 	STYLE: STYLE,
 	Style: Style,
-	remove: remove
+	remove: remove,
+	version: version
 };
 
 jDoc.default = jDoc;

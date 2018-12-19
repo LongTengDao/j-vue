@@ -10,7 +10,7 @@ require('@ltd/j-dev').
 			对 .vue 文件进行构建后的前端统一依赖。从属于“简计划”。
 			The unified dependency for built .vue files. Belong to "Plan J".`,
 		semver:
-			require('fs').readFileSync(__dirname+'/../src/semver.json', 'utf8').match(/\d+/g).join('.'),
+			require('fs').readFileSync(__dirname+'/../version')+'',
 		UMD: {
 			ES: 5,
 			meta_name: 'jVue',
