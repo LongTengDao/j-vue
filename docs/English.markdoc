@@ -10,14 +10,14 @@ purpose
 	
 	#1#	A package published on `NPM`. It's a tool for automatic project building.
 	#2#	The single file component of `Vue`. It's convenient for developing, but need compiling.
-
+	
 Download
 --------	
 	
 	>> https://GitHub.com/LongTengDao/j-vue/tree/master/dist/ <<
-
+	
 Load
-----
+----	
 	
 	Global Mode
 	-----------	
@@ -26,7 +26,7 @@ Load
 			<script>
 				jVue;
 			</script>
-	
+		
 	AMD Mode (Take `RequireJS` for example)
 	--------	
 		
@@ -39,19 +39,19 @@ Load
 						jVue;
 					});
 				</script>
-		
+			
 		Load in Module
 		--------------	
 			```	.js
 				define(['j-vue'], function (jVue) {
 					jVue;
 				});
-
+	
 API
 ---	
 	
 	<RegExp>	`/--[a-z_][a-z_0-9]*--/i` 或 `/__[a-z$0-9]+(_[a-z$0-9]+)*__/i`
-	
+		
 	`jVue.Scope([keys])`
 	--------------------	
 		
@@ -63,7 +63,7 @@ API
 			It's leaded by a lowercase letter, and followed with lowercase letters or digits (same as the rule for `.key` mode bare key name accessing to object property in `JavaScript (ECMAScript 5+)`).
 			The aim is to be as short as possible, while being based on the premise that it can be used for legal `class` selector or any other purpose, with high cache index performance (avoid to become "dict mode").
 			(Because of I can't imagine the application scenario that need to avoid syntax reserved words, so I didn't exclude them. If you have reason, tell me via issues, adding it is very easy.)
-	
+		
 	`jVue.Style(css[, scope])`
 	--------------------------	
 		
@@ -72,28 +72,28 @@ API
 		The parameter `css` is a `string`, as the content of the `<style>` created.
 		
 		If the second parameter `scope` exists, all parts matching <RegExp> in parameter `css` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
-	
+		
 	`jVue.remove(style)`
 	--------------------	
 		
 		The parameter `style` is a `<style>`, it will be removed from the `<head>` node.
 		
 		The returned value of the function is itself, so as to chaining call.
-	
+		
 	`jVue.Render(code[, scope])`
 	----------------------------	
 		
 		The parameter `code` is a `string`, and the value returned is `Function('with(this){return '+code+'}')`.
 		
 		If the second parameter `scope` exists, all parts matched <RegExp> in `code` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
-	
+		
 	`jVue.StaticRenderFns(codes[, scope])`
 	--------------------------------------	
 		
 		The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using `Function('with(this){return '+code+'}')` to generate each one).
 		
 		If the second parameter `scope` exists, then all parts matched <RegExp> in each `string`, will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
-	
+		
 	`jVue.STYLE`
 	------------	
 		
