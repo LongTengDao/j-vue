@@ -10,6 +10,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, read }) => {
 			The unified dependency for built .vue files. Belong to "Plan J".`,
 		semver: await read('src/version'),
 		ES: 5,
+		ESM: true,
 		UMD: true,
 		DOC: true,
 	});
