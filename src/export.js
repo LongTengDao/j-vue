@@ -11,7 +11,7 @@ var HEAD = document.documentElement.firstChild;
 var IDENTIFIERS = /--[a-z_]\w*--|__[a-z0-9$]+(?:_[a-z0-9$]+)*__/ig;
 
 //var RESERVED_WORDS = function (Set) {
-//	Set.prototype = create(null);
+//	Set.prototype = /*window.*/Object.create(null);
 //	return new Set;
 //}(function () {
 //	this.break = this.case = this.catch = this.class = this.const = this.continue = this.debugger = this.default = this.delete = this.do = this.else = this.enum = this.export = this.extends = this.finally = this.for = this.funciton = this.if = this.import = this.in = this.instanceof = this.let = this.new = this.return = this.try = this.super = this.switch = this.this = this.throw = this.typeof = this.var = this.void = this.while = this.with = null;
@@ -63,7 +63,7 @@ function IdentifiersObject (IDs) {
 	}
 }
 
-IdentifiersObject.prototype = create(null);
+IdentifiersObject.prototype = /*window.*/Object.create(null);
 
 function IdentifiersFunction () {
 	var identifiers = create(null);
