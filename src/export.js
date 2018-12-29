@@ -44,7 +44,7 @@ function Identifier () {
 		case 'class':// ES 6
 		case 'const':// ES 6
 		case 'continue':
-		case 'debugger'://
+		case 'debugger':
 		case 'default':
 		case 'delete':
 		case 'do':
