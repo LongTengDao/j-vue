@@ -1,22 +1,11 @@
 import version from './version?text';
 export { version };
 
-var create = /*window.*/Object.create;
-//var Function = window.Function;
-//var Error = window.Error;
-//var document = window.document;
-
-var HEAD = document.documentElement.firstChild;
-
+var undefined;
+var create = Object.create;
+var head = document.documentElement.firstChild;
+var NULL = Object.freeze(Object.create(null));
 var IDENTIFIERS = /--[a-z_]\w*--|__[a-z0-9$]+(?:_[a-z0-9$]+)*__/ig;
-
-//var RESERVED_WORDS = function (Set) {
-//	Set.prototype = /*window.*/Object.create(null);
-//	return new Set;
-//}(function () {
-//	this.break = this.case = this.catch = this.class = this.const = this.continue = this.debugger = this.default = this.delete = this.do = this.else = this.enum = this.export = this.extends = this.finally = this.for = this.funciton = this.if = this.import = this.in = this.instanceof = this.let = this.new = this.return = this.try = this.super = this.switch = this.this = this.throw = this.typeof = this.var = this.void = this.while = this.with = null;
-//});
-
 var mapper = {
 	0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: 'a',
 	a: 'b', b: 'c', c: 'd', d: 'e', e: 'f', f: 'g', g: 'h',
@@ -47,35 +36,80 @@ function Identifier () {
 		}
 	}
 	else { identifierArray_lastItem = identifierArray[identifierArray_lastIndex] = mapper[identifierArray_lastItem]; }
+	/*
+	switch ( identifierString = identifierArray.join('') ) {
+		case 'break':
+		case 'case':
+		case 'catch':
+		case 'class':// ES 6
+		case 'const':// ES 6
+		case 'continue':
+		case 'debugger'://
+		case 'default':
+		case 'delete':
+		case 'do':
+		case 'else':
+		case 'enum'://
+		case 'export':// ES 6
+		case 'extends':// ES 6
+		case 'finally':
+		case 'for':
+		case 'function':
+		case 'if':
+		case 'import':// ES 6
+		case 'in':
+		case 'instanceof':
+		case 'new':
+		case 'return':
+		case 'switch':
+		case 'super':// ES 6
+		case 'this':
+		case 'throw':
+		case 'try':
+		case 'typeof':
+		case 'var':
+		case 'void':
+		case 'while':
+		case 'with':
+			identifierArray_lastItem = identifierArray[identifierArray_lastIndex] = mapper[identifierArray_lastItem];
+			var identifierString = identifierArray.join('');
+	}
+	return identifierString;
+	*/
 	return identifierArray.join('');
-	//var identifierString = identifierArray.join('');
-	//if ( identifierString in RESERVED_WORDS ) {
-	//	identifierArray_lastItem = identifierArray[identifierArray_lastIndex] = mapper[identifierArray_lastItem];
-	//	identifierString = identifierArray.join('');
-	//}
-	//return identifierString;
 }
 
 function IdentifiersObject (IDs) {
-	var index = IDs.length;
-	while ( index ) {
+	for ( var index = IDs.length; index; ) {
 		this[IDs[--index]] = Identifier();
 	}
 }
 
-IdentifiersObject.prototype = /*window.*/Object.create(null);
+IdentifiersObject.prototype = NULL;
 
-function IdentifiersFunction () {
-	var identifiers = create(null);
-	return function (ID) {
-		if ( ID in identifiers ) { return identifiers[ID]; }
-		return identifiers[ID] = Identifier();
+function IdentifiersObjectExtended (IDs) {
+	for ( var index = IDs.length; index; ) {
+		this[IDs[--index]] = Identifier();
+	}
+	IdentifiersObjectExtended.prototype = NULL;
+}
+
+function IdentifiersFunction (cache) {
+	return function scope (ID) {
+		if ( ID in cache ) { return cache[ID]; }
+		return cache[ID] = Identifier();
 	};
 }
 
 export function Scope (ID__ID) {
-	return ID__ID ? new IdentifiersObject(ID__ID.split('--')) : IdentifiersFunction();
+	if ( ID__ID===undefined ) { return IdentifiersFunction(create(this===undefined || this===window ? null : this)); }
+	if ( this===undefined || this===window ) { return new IdentifiersObject(ID__ID.split('--')); }
+	IdentifiersObjectExtended.prototype = this;
+	return new IdentifiersObjectExtended(ID__ID.split('--'));
 }
+
+Scope.prototype = NULL;
+Object.freeze(Scope);
 
 function Replacer (scope) {
 	return typeof scope==='function' ?
@@ -92,10 +126,9 @@ function RenderFn (code) {
 }
 
 export function Render (code, scope) {
-	return RenderFn(
-		scope
-			? code.replace(IDENTIFIERS, Replacer(scope))
-			: code
+	return RenderFn(scope
+		? code.replace(IDENTIFIERS, Replacer(scope))
+		: code
 	);
 }
 
@@ -119,30 +152,32 @@ export function StaticRenderFns (codes, scope) {
 	return fns;
 }
 
-export var STYLE = {
-	render: function (createElement) {
-		return 'default' in this.$slots ? createElement('style', {
-			domProps: {
-				textContent: this.$slots.default[0].text
-			}
-		}) : createElement('style');
+export var STYLE = Object.create(null, {
+	render: {
+		configurable: false,
+		enumerable: true,
+		writable: false,
+		value: function render (createElement) {
+			return 'default' in this.$slots
+				? createElement('style', { domProps: { textContent: this.$slots.default[0].text } })
+				: createElement('style');
+		}
 	}
-};
+});
 
 export function Style (css, scope) {
 	var style = document.createElement('style');
 	if ( css ) {
-		style.textContent =
-			scope
-				? css.replace(IDENTIFIERS, Replacer(scope))
-				: css;
+		style.textContent = scope
+			? css.replace(IDENTIFIERS, Replacer(scope))
+			: css;
 	}
-	HEAD.appendChild(style);
+	head.appendChild(style);
 	return style;
 }
 
 export function remove (style) {
-	HEAD.removeChild(style);
+	head.removeChild(style);
 	return remove;
 }
 
@@ -155,7 +190,6 @@ var jDoc = {
 	remove: remove,
 	version: version
 };
-
 jDoc.default = jDoc;
-
+Object.freeze(jDoc);
 export default jDoc;

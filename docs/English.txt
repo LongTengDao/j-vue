@@ -59,6 +59,8 @@ API
                                                 
                                                 If the parameter `keys` exists, it will return an `object`. The `keys` should be a `string`, using `--` split each `key` inner. Global unique id#1# will be generated for each `key`, and be cached in the `object` returned (the key name is the corresponding `key`).
                                                 
+                                                This function allows you to use another `object` `scope` as `this`. In this case, the new `scope` returned will "extend" `this`.
+                                                
                                                 #1# "id" is a `string`; id generated each time, is global unique in `jVue`.
                                                     It's leaded by a lowercase letter, and followed with lowercase letters or digits (same as the rule for `.key` mode bare key name accessing to object property in `JavaScript (ECMAScript 5+)`).
                                                     The aim is to be as short as possible, while being based on the premise that it can be used for legal `class` selector or any other purpose, with high cache index performance (avoid to become "dict mode").
