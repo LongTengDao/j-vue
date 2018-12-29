@@ -1,7 +1,6 @@
 import version from './version?text';
 export { version };
 
-var undefined;
 var create = Object.create;
 var head = document.documentElement.firstChild;
 var NULL = Object.freeze(Object.create(null));
@@ -102,10 +101,14 @@ function IdentifiersFunction (cache) {
 }
 
 export function Scope (ID__ID) {
-	if ( ID__ID===undefined ) { return IdentifiersFunction(create(this===undefined || this===window ? null : this)); }
-	if ( this===undefined || this===window ) { return new IdentifiersObject(ID__ID.split('--')); }
-	IdentifiersObjectExtended.prototype = this;
-	return new IdentifiersObjectExtended(ID__ID.split('--'));
+	if ( ID__ID ) {
+		if ( this instanceof IdentifiersObject ) {
+			IdentifiersObjectExtended.prototype = this;
+			return new IdentifiersObjectExtended(ID__ID.split('--'));
+		}
+		return new IdentifiersObject(ID__ID.split('--'));
+	}
+	return IdentifiersFunction(create(this instanceof IdentifiersObject ? this : null));
 }
 
 Scope.prototype = NULL;
