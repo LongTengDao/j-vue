@@ -61,6 +61,8 @@ API
 		
 		This function allows you to use another `object` `scope` as `this`. In this case, the new `scope` returned will "extend" `this`.
 		
+		`this` can also be an `Array` of `object` `scope`. In this case, the new `scope` returned will "extend" an `object` `scope` which mixed all these `object` `scope` in.
+		
 		#1#	"id" is a `string`; id generated each time, is global unique in `jVue`.
 			It's leaded by a lowercase letter, and followed with lowercase letters or digits (same as the rule for `.key` mode bare key name accessing to object property in `JavaScript (ECMAScript 5+)`).
 			The aim is to be as short as possible, while being based on the premise that it can be used for legal `class` selector or any other purpose, with high cache index performance (avoid to become "dict mode").

@@ -61,6 +61,8 @@ API
                                             
                                             该函数允许使用另一个 `object` `scope` 作为 `this`。这种情况下，所返回的新 `scope` 将“继承”自 `this`。
                                             
+                                            `this` 也可以是由 `object` `scope` 组成的 `Array`。这种情况下，所返回的新 `scope` 将“继承”自这些 `object` `scope` 混合之后的 `object` `scope`。
+                                            
                                             #1# “号”是一个 `string`；每次发的号，在 `jVue` 内部全局唯一。
                                                 它由小写字母打头，后面的部分是小写字母或数字（即 `JavaScript (ECMAScript 5+)` 中，`.key` 式访问对象属性时的裸键名规则）。
                                                 目的是能够用作合法的 `class` 选择器等任何用途、高缓存索引性能（避免退化成“字典模式”）的前提下，长度尽可能短。

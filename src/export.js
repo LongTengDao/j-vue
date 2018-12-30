@@ -1,6 +1,7 @@
 import version from './version?text';
 export { version };
 
+var isArray = Array.isArray;
 var create = Object.create;
 var head = document.documentElement.firstChild;
 var NULL = Object.freeze(Object.create(null));
@@ -100,15 +101,23 @@ function IdentifiersFunction (cache) {
 	};
 }
 
+function mix (protos) {
+	var scope = create(null);
+	for ( var length = protos.length, index = 0; index<length; ++index ) {
+		var proto = protos[index];
+		for ( var id in proto ) { scope[id] = proto[id]; }
+	}
+	return scope;
+}
+
 export function Scope (ID__ID) {
 	if ( ID__ID ) {
-		if ( this instanceof IdentifiersObject ) {
-			IdentifiersObjectExtended.prototype = this;
-			return new IdentifiersObjectExtended(ID__ID.split('--'));
-		}
-		return new IdentifiersObject(ID__ID.split('--'));
+		if ( isArray(this) ) { IdentifiersObjectExtended.prototype = mix(this); }
+		else if ( this instanceof IdentifiersObject ) { IdentifiersObjectExtended.prototype = this; }
+		else { return new IdentifiersObject(ID__ID.split('--')); }
+		return new IdentifiersObjectExtended(ID__ID.split('--'));
 	}
-	return IdentifiersFunction(create(this instanceof IdentifiersObject ? this : null));
+	return IdentifiersFunction(isArray(this) ? mix(this) : create(this instanceof IdentifiersObject ? this : null));
 }
 
 Scope.prototype = NULL;
