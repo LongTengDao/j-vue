@@ -4,7 +4,7 @@ export { version };
 var create = Object.create;
 var head = document.documentElement.firstChild;
 var NULL = Object.freeze(Object.create(null));
-var IDENTIFIERS = /--(?:[a-z][a-z0-9]*(?:_[a-z0-9]+)*|(?:_[a-z0-9]+)+)--|__[a-z0-9$]+(?:_[a-z0-9$]+)*__/ig;
+var IDENTIFIERS = /--[a-z][a-z0-9]*(?:_[a-z0-9]+)*--|__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
 var mapper = {
 	0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: 'a',
 	a: 'b', b: 'c', c: 'd', d: 'e', e: 'f', f: 'g', g: 'h',
