@@ -37,7 +37,7 @@ function Identifier () {
 	}
 	else { identifierArray_lastItem = identifierArray[identifierArray_lastIndex] = mapper[identifierArray_lastItem]; }
 	/*
-	switch ( identifierString = identifierArray.join('') ) {
+	switch ( identifierArray.join('') ) {
 		case 'break':
 		case 'case':
 		case 'catch':
@@ -72,9 +72,7 @@ function Identifier () {
 		case 'while':
 		case 'with':
 			identifierArray_lastItem = identifierArray[identifierArray_lastIndex] = mapper[identifierArray_lastItem];
-			var identifierString = identifierArray.join('');
 	}
-	return identifierString;
 	*/
 	return identifierArray.join('');
 }
@@ -165,15 +163,11 @@ export function StaticRenderFns (codes, scope) {
 }
 
 export var STYLE = Object.create(null, {
-	render: {
-		configurable: false,
-		enumerable: true,
-		writable: false,
-		value: function render (createElement) {
-			return 'default' in this.$slots
-				? createElement('style', { domProps: { textContent: this.$slots.default[0].text } })
-				: createElement('style');
-		}
+	functional: { configurable: false, enumerable: true, writable: false, value:
+		true
+	},
+	render: { configurable: false, enumerable: true, writable: false, value:
+		function render (createElement, context) { return createElement('style', context.data, context.children); }
 	}
 });
 

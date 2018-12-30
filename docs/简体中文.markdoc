@@ -105,29 +105,29 @@ API
 		`jVue` 提供了一个简单的组件：
 		
 		```	.js
-		118	({
-		119		render: function (createElement) {
-		120			return createElement('style', {
-		121				domProps: {
-		122					textContent: 'default' in this.$slots ? this.$slots.default[0].text : ''
-		123				}
-		124			});
-		125		}
-		126	})
+			({
+				functional: true,
+				render: function render (createElement, context) {
+					return createElement('style', context.data, context.children);
+				}
+			})
 		
 		你可以在你的组件的 `components` 中放入它，或全局注册它，然后这样使用：
 		
 		```	.html
-			<STYLE v-text="css">
+			<STYLE v-text="`
+				.scoped-preview-area-selector { background-color:${ theme_color }; }
+			`" />
+			<STYLE v-text="computedPropertyCSS" />
 		
-		或这样使用：
+		或这样使用（注意标签之间的内容会被 `Vue` 理解为 `HTML` 片段，比较适合没有 `<` 等的简单情况，或妥善处理 `HTML` 实体转义）：
 		
 		```	.html
 			<STYLE>
 				.scoped-preview-area-selector { background-color:{{ theme_color }}; }
 			</STYLE>
 		
-		注意：`Vue` 的响应式天然是异步的，如果你需要高响应性，那么你必须类似这样做：
+		注意：`Vue` 的响应式天然是异步的，如果你需要高响应性，那么你必须类似这样做（注意纯函数组件引用直接就是 `<style>` 元素，而不是 `Vue` 示例，不要通过 `.$el` 来获取）：
 		
 		```	.js
 			({
