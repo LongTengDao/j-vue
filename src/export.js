@@ -1,201 +1,30 @@
 import version from './version?text';
 export { version };
 
-var isArray = Array.isArray;
-var create = Object.create;
-var head = document.documentElement.firstChild;
-var NULL = Object.freeze(Object.create(null));
-var IDENTIFIERS = /--[a-z][a-z0-9]*(?:_[a-z0-9]+)*--|__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
-var mapper = {
-	0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: 'a',
-	a: 'b', b: 'c', c: 'd', d: 'e', e: 'f', f: 'g', g: 'h',
-	h: 'i', i: 'j', j: 'k', k: 'l', l: 'm', m: 'n', n: 'o',
-	o: 'p', p: 'q', q: 'r', r: 's', s: 't', t: 'u',
-	u: 'v', v: 'w', w: 'x', x: 'y', y: 'z'
-};
-var identifierArray = ['9'];
-var identifierArray_lastItem = '9';
-var identifierArray_lastIndex = 0;
+import { Identifier } from './Identifier.js';
+export { Identifier };
 
-function Identifier () {
-	if ( identifierArray_lastItem==='z' ) {
-		identifierArray_lastItem = identifierArray[identifierArray_lastIndex] = '0';
-		for ( var wIndex = identifierArray_lastIndex; ; ) {
-			if ( wIndex ) {
-				if ( identifierArray[--wIndex]==='z' ) { identifierArray[wIndex] = '0'; }
-				else {
-					identifierArray[wIndex] = mapper[identifierArray[wIndex]];
-					break;
-				}
-			}
-			else {
-				identifierArray.unshift('a');
-				++identifierArray_lastIndex;
-				break;
-			}
-		}
-	}
-	else { identifierArray_lastItem = identifierArray[identifierArray_lastIndex] = mapper[identifierArray_lastItem]; }
-	/*
-	switch ( identifierArray.join('') ) {
-		case 'break':
-		case 'case':
-		case 'catch':
-		case 'class':// ES 6
-		case 'const':// ES 6
-		case 'continue':
-		case 'debugger':
-		case 'default':
-		case 'delete':
-		case 'do':
-		case 'else':
-		case 'enum'://
-		case 'export':// ES 6
-		case 'extends':// ES 6
-		case 'finally':
-		case 'for':
-		case 'function':
-		case 'if':
-		case 'import':// ES 6
-		case 'in':
-		case 'instanceof':
-		case 'new':
-		case 'return':
-		case 'switch':
-		case 'super':// ES 6
-		case 'this':
-		case 'throw':
-		case 'try':
-		case 'typeof':
-		case 'var':
-		case 'void':
-		case 'while':
-		case 'with':
-			identifierArray_lastItem = identifierArray[identifierArray_lastIndex] = mapper[identifierArray_lastItem];
-	}
-	*/
-	return identifierArray.join('');
-}
+import Scope  from './Scope.js';
+export { Scope };
 
-function IdentifiersObject (IDs) {
-	for ( var index = IDs.length; index; ) {
-		this[IDs[--index]] = Identifier();
-	}
-}
+import { Render, StaticRenderFns } from './Render,StaticRenderFns.js';
+export { Render, StaticRenderFns };
 
-IdentifiersObject.prototype = NULL;
+import STYLE  from './STYLE.js';
+export { STYLE };
 
-function IdentifiersObjectExtended (IDs) {
-	for ( var index = IDs.length; index; ) {
-		this[IDs[--index]] = Identifier();
-	}
-	IdentifiersObjectExtended.prototype = NULL;
-}
+import { Style, remove } from './Style,remove.js';
+export { Style, remove };
 
-function IdentifiersFunction (cache) {
-	return function scope (ID) {
-		if ( ID in cache ) { return cache[ID]; }
-		return cache[ID] = Identifier();
-	};
-}
-
-function mix (protos) {
-	var scope = create(null);
-	for ( var length = protos.length, index = 0; index<length; ++index ) {
-		var proto = protos[index];
-		for ( var id in proto ) { scope[id] = proto[id]; }
-	}
-	return scope;
-}
-
-export function Scope (ID__ID) {
-	if ( ID__ID ) {
-		if ( isArray(this) ) { IdentifiersObjectExtended.prototype = mix(this); }
-		else if ( this instanceof IdentifiersObject ) { IdentifiersObjectExtended.prototype = this; }
-		else { return new IdentifiersObject(ID__ID.split('--')); }
-		return new IdentifiersObjectExtended(ID__ID.split('--'));
-	}
-	return IdentifiersFunction(isArray(this) ? mix(this) : create(this instanceof IdentifiersObject ? this : null));
-}
-
-Scope.prototype = NULL;
-Object.freeze(Scope);
-
-function Replacer (scope) {
-	return typeof scope==='function' ?
-		function (__ID__) { return scope(__ID__.slice(2, -2)); } :
-		function (__ID__) {
-			var ID = __ID__.slice(2, -2);
-			if ( ID in scope ) { return scope[ID]; }
-			throw new Error(__ID__);
-		};
-}
-
-function RenderFn (code) {
-	return Function('with(this){return '+code+'}');
-}
-
-export function Render (code, scope) {
-	return RenderFn(scope
-		? code.replace(IDENTIFIERS, Replacer(scope))
-		: code
-	);
-}
-
-export function StaticRenderFns (codes, scope) {
-	var fns = [];
-	var length = codes.length;
-	var index = 0;
-	if ( scope ) {
-		var replacer = Replacer(scope);
-		while ( index<length ) {
-			fns.push(RenderFn(codes[index].replace(IDENTIFIERS, replacer)));
-			++index;
-		}
-	}
-	else {
-		while ( index<length ) {
-			fns.push(RenderFn(codes[index]));
-			++index;
-		}
-	}
-	return fns;
-}
-
-export var STYLE = Object.create(null, {
-	functional: { configurable: false, enumerable: true, writable: false, value:
-		true
-	},
-	render: { configurable: false, enumerable: true, writable: false, value:
-		function render (createElement, context) { return createElement('style', context.data, context.children); }
-	}
+var jVue = Object.create(null, {
+	Identifier: { configurable: false, writable: false, value: Identifier },
+	Scope: { configurable: false, writable: false, value: Scope },
+	Render: { configurable: false, writable: false, value: Render },
+	StaticRenderFns: { configurable: false, writable: false, value: StaticRenderFns },
+	STYLE: { configurable: false, writable: false, value: STYLE },
+	Style: { configurable: false, writable: false, value: Style },
+	remove: { configurable: false, writable: false, value: remove },
+	version: { configurable: false, writable: false, value: version },
+	default: { configurable: false, get: function () { return this; } }
 });
-
-export function Style (css, scope) {
-	var style = document.createElement('style');
-	if ( css ) {
-		style.textContent = scope
-			? css.replace(IDENTIFIERS, Replacer(scope))
-			: css;
-	}
-	head.appendChild(style);
-	return style;
-}
-
-export function remove (style) {
-	head.removeChild(style);
-	return remove;
-}
-
-var jDoc = {
-	Scope: Scope,
-	Render: Render,
-	StaticRenderFns: StaticRenderFns,
-	STYLE: STYLE,
-	Style: Style,
-	remove: remove,
-	version: version
-};
-jDoc.default = jDoc;
-Object.freeze(jDoc);
-export default jDoc;
+export default jVue;

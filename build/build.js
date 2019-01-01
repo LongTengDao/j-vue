@@ -1,6 +1,6 @@
 'use strict';
 
-require('@ltd/j-dev')(__dirname+'/..')(async ({ build, read }) => {
+require('@ltd/j-dev')(__dirname+'/..')(async ({ build, read, path }) => {
 	
 	await build({
 		name: 'j-vue',
@@ -13,6 +13,9 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, read }) => {
 		ESM: true,
 		UMD: true,
 		DOC: true,
+		locate: {
+			'@ltd/j-groupify': path('../j-groupify/dist/ESM/j-groupify.js'),
+		},
 	});
 	
 });
