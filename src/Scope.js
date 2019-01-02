@@ -5,7 +5,6 @@ var undefined;
 var isArray = Array.isArray;
 var create = Object.create;
 var SEARCH = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
-var NOOP = /^(?!)/;
 var NULL = Object.freeze(Object.create(null));
 ObjectScope.prototype = NULL;
 
@@ -50,8 +49,7 @@ function InheritedObjectScope (keys, proto) {
 }
 
 function Search (keys) {
-	var group = groupify(keys);
-	return group ? new RegExp('__'+group+'__', 'g') : NOOP;
+	return new RegExp('__'+groupify(keys, false, true)+'__', 'g');
 }
 
 function Replacer (scope) {
