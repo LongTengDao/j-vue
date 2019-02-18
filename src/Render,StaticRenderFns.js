@@ -12,7 +12,7 @@ export function StaticRenderFns (codes, scope) {
 		while ( index<length ) { fns.push(RenderFn(codes[index++].replace(_search, _replacer))); }
 	}
 	else {
-		while ( index<length ) { fns.push(RenderFn(scope, codes[index++])); }
+		while ( index<length ) { fns.push(RenderFn(codes[index++])); }
 	}
 	return fns;
 }
