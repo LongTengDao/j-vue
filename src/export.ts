@@ -1,19 +1,20 @@
+// @ts-ignore
 import version from './version?text';
 export { version };
 
-import { Identifier } from './Identifier.js';
+import { Identifier } from './Identifier';
 export { Identifier };
 
-import Scope  from './Scope.js';
+import Scope  from './Scope';
 export { Scope };
 
-import { Render, StaticRenderFns } from './Render,StaticRenderFns.js';
+import { Render, StaticRenderFns } from './Render,StaticRenderFns';
 export { Render, StaticRenderFns };
 
-import STYLE  from './STYLE.js';
+import STYLE  from './STYLE';
 export { STYLE };
 
-import { Style, remove } from './Style,remove.js';
+import { Style, remove } from './Style,remove';
 export { Style, remove };
 
 var jVue = Object.create(null, {

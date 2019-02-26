@@ -1,4 +1,4 @@
-export function Render (code, scope) {
+export function Render (code :string, scope?) :Function {
 	return Function(
 		'with(this){return '+( scope
 			? code.replace(scope._search, scope._replacer)
@@ -7,7 +7,7 @@ export function Render (code, scope) {
 	);
 }
 
-export function StaticRenderFns (codes, scope) {
+export function StaticRenderFns (codes :string[], scope?) :Function[] {
 	return Function(
 		'return[function(){with(this){return '+( scope
 			? codes.join('}},function(){with(this){return ').replace(scope._search, scope._replacer)

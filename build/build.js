@@ -1,6 +1,6 @@
 'use strict';
 
-require('@ltd/j-dev')(__dirname+'/..')(async ({ build, get, ful }) => {
+require('@ltd/j-dev')(__dirname+'/..')(async ({ build, get, ful, map }) => {
 	
 	await build({
 		name: 'j-vue',
@@ -17,5 +17,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, get, ful }) => {
 			'@ltd/j-groupify': ful('../j-groupify/dist/ESM/j-groupify.js'),
 		},
 	});
+	
+	await map('src/j-vue.d.ts', 'dist/TSD/j-vue.d.ts');
 	
 });
