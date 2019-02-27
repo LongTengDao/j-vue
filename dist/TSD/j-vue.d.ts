@@ -7,6 +7,7 @@ declare module 'j-vue' {
 	export function Scope () :Function;
 	export function Scope (keys :string) :object;
 	
+	export function Template (html: string, scope :Function | object) :string;
 	export function Render (code :string, scope? :Function | object) :Function;
 	export function StaticRenderFns (codes :string[], scope? :Function | object) :Function[];
 	
@@ -14,7 +15,6 @@ declare module 'j-vue' {
 	
 	export function Style (css? :string, scope? :Function | object) :HTMLStyleElement;
 	
-	type remove = (style :HTMLStyleElement) => remove;
-	export const remove :remove;
+	export function remove (style :HTMLStyleElement) :typeof remove;
 	
 }

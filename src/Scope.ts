@@ -8,7 +8,7 @@ var SEARCH :RegExp = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
 var NULL :object = Object.freeze(Object.create(null));
 ObjectScope.prototype = NULL;
 
-export default function Scope (keys? :string) :Function | object {
+export default function Scope (this :object[] | object | any, keys? :string) :Function | object {
 	if ( keys===undefined ) { return FunctionScope(isArray(this) ? mix(this) : create(this instanceof ObjectScope ? this : null)); }
 	var proto :object;
 	if ( isArray(this) ) { proto = mix(this); }
@@ -18,7 +18,7 @@ export default function Scope (keys? :string) :Function | object {
 	return new InheritedObjectScope(keys.split('|'), proto);
 };
 
-function mix (protos :object[]) :object {
+function mix (this :void, protos :object[]) :object {
 	var scope :object = create(null);
 	for ( var length :number = protos.length, index = 0; index<length; ++index ) {
 		var proto :object = protos[index];
@@ -27,25 +27,26 @@ function mix (protos :object[]) :object {
 	return scope;
 }
 
-function FunctionScope (cache :object) :Function {
+function FunctionScope (this: void, cache :object) :Function {
 	function scope (key :string) :string { return cache[key] || ( cache[key] = Identifier() ); }
-	scope._search = SEARCH;
-	scope._replacer = function _replacer (__key__ :string) :string { return scope(__key__.slice(2, -2)); };
+	scope._ = function (string :string) { return string.replace(SEARCH, replacer); };
+	function replacer (__key__ :string) :string { return scope(__key__.slice(2, -2)); }
 	return scope;
 }
 
 function ObjectScope (keys :string[]) :void {
-	this._search = Search(keys);
-	this._replacer = Replacer(this);
+	this._ = function (string :string) { return string.replace(search, replacer); };
+	var search = Search(keys);
+	var replacer = Replacer(this);
 	for ( var index :number = keys.length; index; ) { this[keys[--index]] = Identifier(); }
 }
 
-function InheritedObjectScope (keys :string[], proto :object) {
-	this._search = null;
-	this._replacer = Replacer(this);
+function InheritedObjectScope (keys :string[], proto :object) :void {
+	this._ = function (string :string) { return string.replace(search, replacer); };
 	for ( var index :number = keys.length; index; ) { this[keys[--index]] = Identifier(); }
-	for ( var key in proto ) { key[0]==='_' || keys.push(key); }
-	this._search = Search(keys);
+	for ( var key in proto ) { key==='_' || keys.push(key); }
+	var search = Search(keys);
+	var replacer = Replacer(this);
 	InheritedObjectScope.prototype = NULL;
 }
 
@@ -53,8 +54,6 @@ function Search (keys :string[]) :RegExp {
 	return new RegExp('__'+groupify(keys, false, true)+'__', 'g');
 }
 
-function Replacer (scope :object) :Function {
-	return function _replacer (__key__ :string) :string {
-		return scope[__key__.slice(2, -2)];
-	};
+function Replacer (scope :object) {
+	return function replacer (__key__ :string) :string { return scope[__key__.slice(2, -2)]; };
 }

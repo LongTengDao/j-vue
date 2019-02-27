@@ -3,5 +3,9 @@
 		"target": "ES5",
 		"experimentalDecorators": true
 	},
+	"baseUrl": "..",
+	"paths": {
+		"@ltd/*": ["../../LongTengDao/*/src/export"]
+	},
 	"extends": "j-vue.d.ts"
 }

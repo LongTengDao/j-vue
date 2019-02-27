@@ -5,11 +5,11 @@ export { version };
 import { Identifier } from './Identifier';
 export { Identifier };
 
-import Scope  from './Scope';
+import Scope from './Scope';
 export { Scope };
 
-import { Render, StaticRenderFns } from './Render,StaticRenderFns';
-export { Render, StaticRenderFns };
+import { Template, Render, StaticRenderFns } from './Template,Render,StaticRenderFns';
+export { Template, Render, StaticRenderFns };
 
 import STYLE  from './STYLE';
 export { STYLE };
@@ -20,6 +20,7 @@ export { Style, remove };
 var jVue = Object.create(null, {
 	Identifier: { configurable: false, writable: false, value: Identifier },
 	Scope: { configurable: false, writable: false, value: Scope },
+	Template: { configurable: false, writable: false, value: Template },
 	Render: { configurable: false, writable: false, value: Render },
 	StaticRenderFns: { configurable: false, writable: false, value: StaticRenderFns },
 	STYLE: { configurable: false, writable: false, value: STYLE },
