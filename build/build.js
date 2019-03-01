@@ -18,6 +18,6 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, get, ful, map }) => {
 		},
 	});
 	
-	await map('src/j-vue.d.ts', 'dist/TSD/j-vue.d.ts');
+	await map('src/d.ts', 'dist/TSD/j-vue.d.ts');
 	
 });
