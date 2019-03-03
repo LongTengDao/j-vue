@@ -93,7 +93,7 @@ So, we can write our `.vue` single-file-component like this from now on: (only n
 </template>
 
 <script>
-import { template, Scope, STYLE } from '?template';
+import { template, Scope, STYLE } from 'j-vue?template';
 
 new Vue({
 	
