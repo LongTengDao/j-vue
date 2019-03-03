@@ -8,7 +8,7 @@ export { Identifier };
 import Scope from './Scope';
 export { Scope };
 
-import { Template, Render, StaticRenderFns } from './Template,Render,StaticRenderFns';
+import { Template, Render, StaticRenderFns } from './Template, Render, StaticRenderFns';
 export { Template, Render, StaticRenderFns };
 
 import STYLE  from './STYLE';

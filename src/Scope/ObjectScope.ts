@@ -1,11 +1,11 @@
 import { groupify } from '@ltd/j-groupify';
 import { Identifier } from '../Identifier';
 
-export type ObjectScope = object;
+export type ObjectScope = { _? :(string :string) => string };
 
-var NULL :object = Object.freeze(Object.create(null));
+var NULL :ObjectScope = Object.freeze(Object.create(null));
 
-export function ObjectScope (keys :string[]) :void {
+export function ObjectScope (this :ObjectScope, keys :string[]) :void {
 	this._ = function (string :string) { return string.replace(search, replacer); };
 	var search = Search(keys);
 	var replacer = Replacer(this);
@@ -14,7 +14,7 @@ export function ObjectScope (keys :string[]) :void {
 
 ObjectScope.prototype = NULL;
 
-export function InheritedObjectScope (keys :string[], proto :ObjectScope) :void {
+export function InheritedObjectScope (this :ObjectScope, keys :string[], proto :ObjectScope) :void {
 	this._ = function (string :string) { return string.replace(search, replacer); };
 	for ( var index :number = keys.length; index; ) { this[keys[--index]] = Identifier(); }
 	for ( var key in proto ) { key==='_' || keys.push(key); }
