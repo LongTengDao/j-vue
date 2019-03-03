@@ -54,7 +54,8 @@ new Vue({
 		red: false,
 		scope: new function () {
 			const cache = Object.create(null);
-			return (x) => cache[x] || (cache[x] = Identifier()); // Identifier 是 j-vue 内置的 36 进制发号器，从 a 开始。
+			return (x) => cache[x] || (cache[x] = Identifier());
+			// Identifier 是 j-vue 内置的 36 进制发号器，从 a 开始。
 		},
 	},
 	
