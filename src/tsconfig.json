@@ -3,8 +3,7 @@
 		"target": "ES5",
 		"experimentalDecorators": true,
 		"noImplicitReturns": true,
-		"noImplicitThis": true,
-		"noUnusedLocals": true
+		"noImplicitThis": true
 	},
 	"baseUrl": ".",
 	"paths": {
