@@ -3,9 +3,8 @@
 		"target": "ES5",
 		"experimentalDecorators": true
 	},
-	"baseUrl": "..",
+	"baseUrl": ".",
 	"paths": {
-		"@ltd/*": ["../../LongTengDao/*/src/export"]
-	},
-	"extends": "d.ts"
+		"@ltd/*": ["../../../LongTengDao/*/src/export"]
+	}
 }
