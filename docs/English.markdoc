@@ -64,7 +64,7 @@ API
 		
 		If the parameter `keys` not exists, it will return an identifier generator in `function` type. When use that, the only parameter `key` is a `string`, the value returned is a global unique identifier#3# (for same identifier generator, pass same `key` in, you will get same value).
 		
-		If the parameter `keys` exists, it will return an `object`. The `keys` should be a `string`, using `|` split each `key` inner. Global unique identifiers#3# will be generated for each `key`, and be cached in the `object` returned (the key name is the corresponding `key`).
+		If the parameter `keys` exists, it will return an `object`. The `keys` should be a `string`, using charactor(s) which `/[a-z][a-z0-9]*(?:_[a-z0-9]+)*/i` won't match to split each `key` inner. Global unique identifiers#3# will be generated for each `key`, and be cached in the `object` returned (the key name is the corresponding `key`).
 		In addition to higher runtime performance, this allows you to specify what needs to be captured by the regular.
 		
 		This function allows you to use another `object` `scope` as `this`. In this case, the new `scope` returned will "extend" `this`.
