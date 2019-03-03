@@ -1,20 +1,21 @@
-type scope = object | ( (value :string | object | any[]) => string );
-
 declare module 'j-vue' {
 	
 	export const version :string;
 	
 	export function Identifier () :string;
 	
-	export function Scope (keys :string) :object;
-	export function Scope () :(value :string | object | any[]) => string;
+	type ObjectScope = object;
+	type FunctionScope = ( (value :string | object | any[]) => string );
+	type Scope = ObjectScope | FunctionScope;
+	export function Scope (keys :string) :ObjectScope;
+	export function Scope () :FunctionScope;
 	
-	export function Template (html :string, scope :scope) :string;
+	export function Template (html :string, scope :Scope) :string;
 	
-	export function Render (code :string, scope? :scope) :Function;
-	export function StaticRenderFns (codes :string[], scope? :scope) :Function[];
+	export function Render (code :string, scope? :Scope) :Function;
+	export function StaticRenderFns (codes :string[], scope? :Scope) :Function[];
 	
-	export function Style (css? :string, scope? :scope) :HTMLStyleElement;
+	export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
 	export function remove (style :HTMLStyleElement) :typeof remove;
 	
 	export const STYLE :{ functional :true, render :Function };
@@ -22,9 +23,17 @@ declare module 'j-vue' {
 }
 
 declare module 'j-vue?*' {
+	
 	export * from 'j-vue';
-	export const scope :scope;
+	
+	type ObjectScope = object;
+	type FunctionScope = ( (value :string | object | any[]) => string );
+	type Scope = ObjectScope | FunctionScope;
+	export const scope :Scope;
+	
 	export const template :string;
+	
 	export const render :Function;
 	export const staticRenderFns :Function[];
+	
 }
