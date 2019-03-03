@@ -18,3 +18,40 @@ declare module 'j-vue' {
 	export function remove (style :HTMLStyleElement) :typeof remove;
 	
 }
+
+declare module '?template' {
+	export const template :string;
+	export * from 'j-vue';
+}
+
+declare module '?scope&template' {
+	export const scope :Function;
+	export const template :string;
+	export * from 'j-vue';
+}
+
+declare module '?template&scope' {
+	export const template :string;
+	export const scope :Function;
+	export * from 'j-vue';
+}
+
+declare module '?render&staticRenderFns' {
+	export const render :Function;
+	export const staticRenderFns :Function[];
+	export * from 'j-vue';
+}
+
+declare module '?scope&render&staticRenderFns' {
+	export const scope :Function;
+	export const render :Function;
+	export const staticRenderFns :Function[];
+	export * from 'j-vue';
+}
+
+declare module '?render&staticRenderFns&scope' {
+	export const render :Function;
+	export const staticRenderFns :Function[];
+	export const scope :Function;
+	export * from 'j-vue';
+}
