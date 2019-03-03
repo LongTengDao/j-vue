@@ -1,7 +1,4 @@
-var head :{
-	appendChild :(newChild) => typeof newChild,
-	removeChild :(oldChild) => typeof oldChild,
-} = document.documentElement.firstChild;
+var head :HTMLHeadElement = <HTMLHtmlElement>( <HTMLHtmlElement>document.documentElement ).firstChild;
 
 export function Style (css? :string, scope?) :HTMLStyleElement {
 	var style :HTMLStyleElement = document.createElement('style');
