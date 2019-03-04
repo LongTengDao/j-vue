@@ -3,7 +3,7 @@ import { Identifier } from '../Identifier';
 
 export type ObjectScope = { _? :(string :string) => string };
 
-var NULL :ObjectScope = Object.freeze(Object.create(null));
+export var SCOPE :ObjectScope = Object.freeze(Object.create(null));
 
 export function ObjectScope (this :ObjectScope, keys :string[]) :void {
 	this._ = function (string :string) { return string.replace(search, replacer); };
@@ -12,7 +12,7 @@ export function ObjectScope (this :ObjectScope, keys :string[]) :void {
 	for ( var index :number = keys.length; index; ) { this[keys[--index]] = Identifier(); }
 }
 
-ObjectScope.prototype = NULL;
+ObjectScope.prototype = SCOPE;
 
 export function InheritedObjectScope (this :ObjectScope, keys :string[], proto :ObjectScope) :void {
 	this._ = function (string :string) { return string.replace(search, replacer); };
@@ -20,7 +20,7 @@ export function InheritedObjectScope (this :ObjectScope, keys :string[], proto :
 	for ( var key in proto ) { key==='_' || keys.push(key); }
 	var search = Search(keys);
 	var replacer = Replacer(this);
-	InheritedObjectScope.prototype = NULL;
+	InheritedObjectScope.prototype = SCOPE;
 }
 
 function Search (keys :string[]) :RegExp {

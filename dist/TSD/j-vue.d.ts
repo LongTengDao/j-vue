@@ -5,10 +5,10 @@ declare module 'j-vue' {
 	export function Identifier () :string;
 	
 	type ObjectScope = object;
-	type FunctionScope = ( (value :string | object | any[]) => string );
+	type FunctionScope = (...args :any[]) => string;
 	type Scope = ObjectScope | FunctionScope;
-	export function Scope (keys :string) :ObjectScope;
-	export function Scope () :FunctionScope;
+	export function Scope (this :Scope[] | Scope | any, keys :string) :ObjectScope;
+	export function Scope (this :Scope[] | Scope | any) :FunctionScope;
 	
 	export function Template (html :string, scope :Scope) :string;
 	
@@ -27,7 +27,7 @@ declare module 'j-vue?*' {
 	export * from 'j-vue';
 	
 	type ObjectScope = object;
-	type FunctionScope = ( (value :string | object | any[]) => string );
+	type FunctionScope = (...args :any[]) => string;
 	type Scope = ObjectScope | FunctionScope;
 	export const scope :Scope;
 	
