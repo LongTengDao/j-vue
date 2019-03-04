@@ -1,7 +1,11 @@
 import { Identifier } from '../Identifier';
 import { ObjectScope } from './ObjectScope';
 
-export type FunctionScope = (...args :any[]) => string;
+export type FunctionScope = {
+	(...args :any[]) :string
+	prototype :ObjectScope
+	_ :(string :string) => string
+};
 
 var isArray :(arg :any) => boolean = Array.isArray;
 var slice :(this :{ length :number, [index :number] :any }, start? :number, end? :number) => any[] = Array.prototype.slice;

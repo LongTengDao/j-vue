@@ -4,7 +4,11 @@ import { FunctionScope } from './Scope/FunctionScope';
 type Scope = ObjectScope | FunctionScope;
 
 var isArray :(arg :any) => boolean = Array.isArray;
-var create :(o :object | null, properties?) => object = Object.create;
+var create :{
+	(o :typeof SCOPE, properties?) :typeof SCOPE
+	(o :Exclude<object, typeof SCOPE>, properties?) :typeof o
+	(o :null, properties?) :object
+} = Object.create;
 var KEYS :RegExp = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 var EMPTY :[] = [];
 
@@ -24,10 +28,10 @@ export default function Scope (this :Scope[] | Scope | any, keys? :string) :Scop
 };
 
 function mix (this :void, protos :Scope[]) :ObjectScope {
-	var scope :ObjectScope = create(null);
+	var scope :ObjectScope = create(SCOPE);
 	for ( var length :number = protos.length, index = 0; index<length; ++index ) {
 		var proto :Scope = protos[index];
-		if ( typeof proto==='function' ) { proto = <ObjectScope>( <FunctionScope>proto ).prototype; }
+		if ( typeof proto==='function' ) { proto = ( <FunctionScope>proto ).prototype; }
 		for ( var id in proto ) { scope[id] = proto[id]; }
 	}
 	return scope;

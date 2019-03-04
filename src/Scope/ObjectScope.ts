@@ -1,7 +1,9 @@
 import { groupify } from '@ltd/j-groupify';
 import { Identifier } from '../Identifier';
 
-export type ObjectScope = { _? :(string :string) => string };
+export type ObjectScope = {
+	_ :(string :string) => string
+};
 
 export var SCOPE :ObjectScope = Object.freeze(Object.create(null));
 

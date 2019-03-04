@@ -1,12 +1,21 @@
+type ObjectScope = {
+	_ :(string :string) => string
+};
+
+type FunctionScope = {
+	(...args :any[]) :string
+	prototype :ObjectScope
+	_ :(string :string) => string
+};
+
+type Scope = ObjectScope | FunctionScope;
+
 declare module 'j-vue' {
 	
 	export const version :string;
 	
 	export function Identifier () :string;
 	
-	type ObjectScope = object;
-	type FunctionScope = (...args :any[]) => string;
-	type Scope = ObjectScope | FunctionScope;
 	export function Scope (this :Scope[] | Scope | any, keys :string) :ObjectScope;
 	export function Scope (this :Scope[] | Scope | any) :FunctionScope;
 	
@@ -26,9 +35,6 @@ declare module 'j-vue?*' {
 	
 	export * from 'j-vue';
 	
-	type ObjectScope = object;
-	type FunctionScope = (...args :any[]) => string;
-	type Scope = ObjectScope | FunctionScope;
 	export const scope :Scope;
 	
 	export const template :string;
