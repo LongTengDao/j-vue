@@ -7,8 +7,8 @@ export type FunctionScope = {
 	_ :(string :string) => string
 };
 
-var isArray :(arg :any) => boolean = Array.isArray;
-var slice :(this :{ length :number, [index :number] :any }, start? :number, end? :number) => any[] = Array.prototype.slice;
+import isArray from '.Array.isArray';
+import slice from '.Array.prototype.slice';
 
 var SEARCH :RegExp = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
 

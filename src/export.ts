@@ -1,4 +1,3 @@
-// @ts-ignore
 import version from './version?text';
 export { version };
 
@@ -14,7 +13,7 @@ export { Template, Render, StaticRenderFns };
 import STYLE  from './STYLE';
 export { STYLE };
 
-import { Style, remove } from './Style,remove';
+import { Style, remove } from './Style, remove';
 export { Style, remove };
 
 var jVue = Object.create(null, {

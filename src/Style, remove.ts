@@ -1,4 +1,5 @@
-var head :HTMLHeadElement = <HTMLHtmlElement>( <HTMLHtmlElement>document.documentElement ).firstChild;
+import document from '.document';
+import head from '.document.documentElement.firstChild';
 
 export function Style (css? :string, scope?) :HTMLStyleElement {
 	var style :HTMLStyleElement = document.createElement('style');

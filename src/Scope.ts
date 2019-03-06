@@ -3,12 +3,8 @@ import { FunctionScope } from './Scope/FunctionScope';
 
 type Scope = ObjectScope | FunctionScope;
 
-var isArray :(arg :any) => boolean = Array.isArray;
-var create :{
-	(o :typeof SCOPE, properties?) :typeof SCOPE
-	(o :Exclude<object, typeof SCOPE>, properties?) :typeof o
-	(o :null, properties?) :object
-} = Object.create;
+import isArray from '.Array.isArray';
+import create from '.Object.create';
 var KEYS :RegExp = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 var EMPTY :[] = [];
 

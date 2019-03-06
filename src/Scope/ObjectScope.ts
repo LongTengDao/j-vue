@@ -5,7 +5,10 @@ export type ObjectScope = {
 	_ :(string :string) => string
 };
 
-export var SCOPE :ObjectScope = Object.freeze(Object.create(null));
+import Object from '.Object';
+
+export var SCOPE :ObjectScope = Object.create(null);
+/*#__PURE__*/Object.freeze(SCOPE);
 
 export function ObjectScope (this :ObjectScope, keys :string[]) :void {
 	this._ = function (string :string) { return string.replace(search, replacer); };

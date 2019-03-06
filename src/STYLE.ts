@@ -1,3 +1,5 @@
+import Object from '.Object';
+
 export default <{ functional :true, render :Function }>Object.create(null, {
 	functional: {
 		configurable: false,
