@@ -14,7 +14,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, get, ful, map }) => {
 		UMD: true,
 		DOC: true,
 		locate: {
-			'@ltd/j-groupify': ful('../../LongTengDao/j-groupify/dist/ESM/j-groupify.js'),
+			'@ltd/j-groupify': ful('../../LongTengDao/j-groupify/dist/ESM/j-groupify!.js'),
 		},
 	});
 	
