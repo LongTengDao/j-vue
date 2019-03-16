@@ -55,7 +55,10 @@ new Vue({
 		scope: new function () {
 			const cache = Object.create(null);
 			return (x) => cache[x] || (cache[x] = Identifier());
-			// Identifier 是 j-vue 内置的 36 进制发号器，从 a 开始。
+			// Identifier 是 j-vue 内置的 36 进制（0-9a-z）发号器，
+			// 从“a”开始，并且跳过所有数字开头的值。
+			// Identifier is a base-36 (0-9a-z) ID generator build-in j-vue,
+			// which start from "a", and skip all value starts with digit.
 		},
 	},
 	
