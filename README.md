@@ -1,7 +1,7 @@
 ﻿# jVue
 
 前端组件的 `CSS` 局部作用域需求，一直是一个大问题。  
-Front-end components' scoped `CSS` problem is always huge.
+For front-end components, the requirement of scoped `CSS` has been a big problem so far.
 
 现在我们可以像这样使用 `j-vue` 模块来解决这一问题：  
 Now we can use `j-vue` like this to resolve this problem:
@@ -17,15 +17,6 @@ Style(`
 
 new Vue({
 	
-	data: {
-		red: false,
-		scope: Scope(),
-	},
-	
-	methods: {
-		change () { this.red = !this.red; }
-	},
-	
 	template: Template(`
 		<div class="__static__">
 			<STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
@@ -33,6 +24,17 @@ new Vue({
 			<button @click="change">change</button>
 		</div>
 	`, scope),
+	
+	data () {
+		return {
+			red: false,
+			scope: Scope(),
+		};
+	},
+	
+	methods: {
+		change () { this.red = !this.red; }
+	},
 	
 	components: { STYLE },
 	
@@ -50,18 +52,6 @@ document.documentElement.firstChild.appendChild(document.createElement('style'))
 
 new Vue({
 
-	data: {
-		red: false,
-		scope: new function () {
-			const cache = Object.create(null);
-			return (x) => cache[x] || (cache[x] = Identifier());
-			// Identifier 是 j-vue 内置的 36 进制（0-9a-z）发号器，
-			// 并会跳过所有数字打头的值（这意味着第一个号会是“a”）。
-			// Identifier is a base-36 (0-9a-z) ID generator build-in j-vue,
-			// and skip all value starts with digit (that means "a" will be the 1st ID).
-		},
-	},
-	
 	template: `
 		<div class="a">
 			<STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
@@ -69,6 +59,24 @@ new Vue({
 			<button @click="change">change</button>
 		</div>
 	`,
+	
+	data () {
+		return {
+			red: false,
+			scope: new function () {
+				const cache = Object.create(null);
+				return (x) => cache[x] || (cache[x] = Identifier());
+				// Identifier 是 j-vue 内置的 36 进制（0-9a-z）发号器，
+				// 并会跳过所有数字打头的值（这意味着第一个号会是“a”）。
+				// Identifier is a base-36 (0-9a-z) ID generator build-in j-vue,
+				// and skip all value starts with digit (that means "a" will be the 1st ID).
+			},
+		};
+	},
+	
+	methods: {
+		change () { this.red = !this.red; }
+	},
 	
 	components: {
 		STYLE: {
@@ -104,12 +112,14 @@ import { template, Scope, STYLE } from 'j-vue?template';
 
 new Vue({
 	
-	data: {
-		red: false,
-		scope: Scope(),
-	},
-	
 	template,
+	
+	data () {
+		return {
+			red: false,
+			scope: Scope(),
+		};
+	},
 	
 	methods: {
 		change () { this.red = !this.red; }
