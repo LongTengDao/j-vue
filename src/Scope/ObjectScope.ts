@@ -1,3 +1,5 @@
+import RegExp from '.RegExp';
+
 import { groupify } from '@ltd/j-groupify';
 import { Identifier } from '../Identifier';
 

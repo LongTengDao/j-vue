@@ -13,3 +13,4 @@ declare module '.document.documentElement.firstChild' {
 	export default document.documentElement.firstChild;
 }
 declare module '.Function' { export default Function; }
+declare module '.RegExp' { export default RegExp; }

@@ -1,3 +1,5 @@
+import Object from '.Object';
+
 import version from './version?text';
 export { version };
 
