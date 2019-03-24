@@ -1,5 +1,5 @@
-import { ObjectScope, InheritedObjectScope, SCOPE } from './Scope/ObjectScope';
-import { FunctionScope } from './Scope/FunctionScope';
+import { ObjectScope, InheritedObjectScope, SCOPE } from './ObjectScope';
+import { FunctionScope } from './FunctionScope';
 
 type Scope = ObjectScope | FunctionScope;
 
