@@ -6,7 +6,7 @@ export { version };
 import { Identifier } from './Identifier';
 export { Identifier };
 
-import Scope from './Scope/';
+import { Scope } from './Scope/';
 export { Scope };
 
 import { Template, Render, StaticRenderFns } from './Template, Render, StaticRenderFns';

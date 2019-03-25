@@ -1,17 +1,16 @@
+import isArray from '.Array.isArray';
+import slice from '.Array.prototype.slice';
+
 import { Identifier } from '../Identifier';
 import { ObjectScope } from './ObjectScope';
+
+var SEARCH :RegExp = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
 
 export type FunctionScope = {
 	(...args :any[]) :string
 	prototype :ObjectScope
 	_ :(string :string) => string
 };
-
-import isArray from '.Array.isArray';
-import slice from '.Array.prototype.slice';
-
-var SEARCH :RegExp = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
-
 export function FunctionScope (this :void, cache :ObjectScope) :FunctionScope {
 	function scope (...args :any[]) :string;
 	function scope (value :string | object | any[]) :string { return scopify(arguments.length===1 ? value : slice.call(arguments, 0), _scope); }

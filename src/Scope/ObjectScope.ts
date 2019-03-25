@@ -1,17 +1,16 @@
-import RegExp from '.RegExp';
-
 import { groupify } from '@ltd/j-groupify';
-import { Identifier } from '../Identifier';
 
-export type ObjectScope = {
-	_ :(string :string) => string
-};
-
+import RegExp from '.RegExp';
 import Object from '.Object';
+
+import { Identifier } from '../Identifier';
 
 export var SCOPE :ObjectScope = Object.create(null);
 /*#__PURE__*/Object.freeze(SCOPE);
 
+export type ObjectScope = {
+	_ :(string :string) => string
+};
 export function ObjectScope (this :ObjectScope, keys :string[]) :void {
 	this._ = function (string :string) { return string.replace(search, replacer); };
 	var search = Search(keys);

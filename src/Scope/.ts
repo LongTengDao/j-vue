@@ -1,14 +1,14 @@
+import isArray from '.Array.isArray';
+import create from '.Object.create';
+
 import { ObjectScope, InheritedObjectScope, SCOPE } from './ObjectScope';
 import { FunctionScope } from './FunctionScope';
 
-type Scope = ObjectScope | FunctionScope;
-
-import isArray from '.Array.isArray';
-import create from '.Object.create';
 var KEYS :RegExp = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 var EMPTY :[] = [];
 
-export default function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
+export type Scope = ObjectScope | FunctionScope;
+export function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
 	if ( typeof keys==='string' ) {
 		if ( isArray(this) ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = mix(<Scope[]>this)); }
 		else if ( this instanceof ObjectScope ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = <ObjectScope>this); }
@@ -21,7 +21,7 @@ export default function Scope (this :Scope[] | Scope | any, keys? :string) :Scop
 		else if ( typeof this==='function' && ( <Function>this ).prototype instanceof ObjectScope ) { return FunctionScope(create(<ObjectScope>( <FunctionScope>this ).prototype)); }
 		else { return FunctionScope(create(SCOPE)); }
 	}
-};
+}
 
 function mix (this :void, protos :Scope[]) :ObjectScope {
 	var scope :ObjectScope = create(SCOPE);
