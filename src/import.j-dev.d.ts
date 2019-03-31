@@ -9,8 +9,8 @@ declare module '.Object' { export default Object; }
 declare module '.Object.create' { export default Object.create; }
 declare module '.document' { export default document; }
 declare module '.document.documentElement.firstChild' {
-	const document : { documentElement :{ firstChild :HTMLHtmlElement } };
-	export default document.documentElement.firstChild;
+	const head :HTMLHtmlElement;
+	export default head;
 }
 declare module '.Function' { export default Function; }
 declare module '.RegExp' { export default RegExp; }
