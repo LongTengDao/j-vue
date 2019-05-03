@@ -1,7 +1,7 @@
 export = exports;
 
 declare const exports :{
-	version :'8.9.0'
+	version :'8.10.0'
 	
 	Identifier () :string
 	
@@ -23,7 +23,7 @@ declare const exports :{
 
 type Scope = ObjectScope | FunctionScope;
 type ObjectScope = {
-	_ :(string :string) => string
+	[key :string] :string
 };
 type FunctionScope = {
 	(...args :any[]) :string

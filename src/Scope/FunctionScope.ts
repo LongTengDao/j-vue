@@ -1,25 +1,26 @@
 import isArray from '.Array.isArray';
 import slice from '.Array.prototype.slice';
 
-import { Identifier } from '../Identifier';
-import { ObjectScope } from './ObjectScope';
+import Identifier from '../Identifier';
+import { ObjectScope, Key } from './ObjectScope';
 
 var SEARCH :RegExp = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
 
-export type FunctionScope = {
-	(...args :any[]) :string
-	prototype :ObjectScope
-	_ :(string :string) => string
-};
-export function FunctionScope (this :void, cache :ObjectScope) :FunctionScope {
+export default FunctionScope;
+function FunctionScope (cache :ObjectScope) :FunctionScope {
 	function scope (...args :any[]) :string;
 	function scope (value :string | object | any[]) :string { return scopify(arguments.length===1 ? value : slice.call(arguments, 0), _scope); }
 	scope.prototype = cache;
 	scope._ = function (string :string) { return string.replace(SEARCH, _replacer); };
 	function _replacer (__key__ :string) :string { return _scope(__key__.slice(2, -2)); }
-	function _scope (key :string) :string { return cache[key] || ( cache[key] = Identifier() ); }
+	function _scope (key :string) :string { return cache[<Key>key] || ( cache[<Key>key] = Identifier() ); }
 	return scope;
 }
+type FunctionScope = {
+	(...args :any[]) :string
+	prototype :ObjectScope
+	_ :(string :string) => string
+};
 
 function scopify (value :string | object | any[], _scope :(key :string) => string) :string {
 	var keys :string,
@@ -44,7 +45,7 @@ function scopify (value :string | object | any[], _scope :(key :string) => strin
 			case 'object':
 				keys = '';
 				if ( isArray(value) ) {
-					for ( index = ( <any[]>value ).length; index--; ) {
+					for ( index = value.length; index--; ) {
 						key = scopify(value[index], _scope);
 						if ( key ) { keys = key+' '+keys; }
 					}
@@ -52,7 +53,7 @@ function scopify (value :string | object | any[], _scope :(key :string) => strin
 				}
 				else {
 					for ( key in value ) {
-						if ( value[key] ) { keys += ' '+_scope(key); }
+						if ( (<{ [key :string] :any }>value)[key] ) { keys += ' '+_scope(key); }
 					}
 					return keys && keys.slice(1);
 				}

@@ -1,13 +1,13 @@
 
 declare module 'j-vue' {
 	
-	export const version :'8.9.0';
+	export const version :'8.10.0';
 	
 	export function Identifier () :string;
 	
 	export type Scope = ObjectScope | FunctionScope;
 	type ObjectScope = {
-		_ :(string :string) => string
+		[key :string] :string
 	};
 	type FunctionScope = {
 		(...args :any[]) :string

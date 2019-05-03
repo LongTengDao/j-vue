@@ -1,6 +1,6 @@
 import Function from '.Function';
 
-import { Scope } from './Scope/';
+import Scope from './Scope/';
 
 export function Template (html :string, scope :Scope) :string {
 	return scope._(html);

@@ -1,6 +1,6 @@
 import Object from '.Object';
 
-export default <{ functional :true, render :Function }>Object.create(null, {
+export default Object.create(null, {
 	functional: {
 		configurable: false,
 		enumerable: true,
@@ -13,7 +13,7 @@ export default <{ functional :true, render :Function }>Object.create(null, {
 		enumerable: true,
 		writable: false,
 		value:
-			function render (createElement, context) {
+			function render (createElement :Function, context :NonNullable<any>) {
 				return createElement('style', context.data, context.children);
 			}
 	}

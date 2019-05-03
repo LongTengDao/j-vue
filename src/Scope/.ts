@@ -1,34 +1,35 @@
 import isArray from '.Array.isArray';
 import create from '.Object.create';
 
-import { ObjectScope, InheritedObjectScope, SCOPE } from './ObjectScope';
-import { FunctionScope } from './FunctionScope';
+import { ObjectScope, InheritedObjectScope, SCOPE, Key } from './ObjectScope';
+import FunctionScope from './FunctionScope';
 
 var KEYS :RegExp = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
-var EMPTY :[] = [];
+var EMPTY :Key[] = [];
 
-export type Scope = ObjectScope | FunctionScope;
-export function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
+export default Scope;
+type Scope = ObjectScope | FunctionScope;
+function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
 	if ( typeof keys==='string' ) {
-		if ( isArray(this) ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = mix(<Scope[]>this)); }
-		else if ( this instanceof ObjectScope ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = <ObjectScope>this); }
-		else if ( typeof this==='function' && ( <Function>this ).prototype instanceof ObjectScope ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = <ObjectScope>( <FunctionScope>this ).prototype); }
-		else { return new ObjectScope(keys.match(KEYS) || EMPTY); }
+		if ( isArray(this) ) { return new InheritedObjectScope(<Key[]>keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = mix(this)); }
+		else if ( this instanceof ObjectScope ) { return new InheritedObjectScope(<Key[]>keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = this); }
+		else if ( typeof this==='function' && this.prototype instanceof ObjectScope ) { return new InheritedObjectScope(<Key[]>keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = this.prototype); }
+		else { return new ObjectScope(<Key[]>keys.match(KEYS) || EMPTY); }
 	}
 	else {
-		if ( isArray(this) ) { return FunctionScope(mix(<Scope[]>this)); }
-		else if ( this instanceof ObjectScope ) { return FunctionScope(create(<ObjectScope>this)); }
-		else if ( typeof this==='function' && ( <Function>this ).prototype instanceof ObjectScope ) { return FunctionScope(create(<ObjectScope>( <FunctionScope>this ).prototype)); }
+		if ( isArray(this) ) { return FunctionScope(mix(this)); }
+		else if ( this instanceof ObjectScope ) { return FunctionScope(create(this)); }
+		else if ( typeof this==='function' && this.prototype instanceof ObjectScope ) { return FunctionScope(create(this.prototype)); }
 		else { return FunctionScope(create(SCOPE)); }
 	}
 }
 
-function mix (this :void, protos :Scope[]) :ObjectScope {
+function mix (protos :Scope[]) :ObjectScope {
 	var scope :ObjectScope = create(SCOPE);
 	for ( var length :number = protos.length, index = 0; index<length; ++index ) {
 		var proto :Scope = protos[index];
-		if ( typeof proto==='function' ) { proto = ( <FunctionScope>proto ).prototype; }
-		for ( var id in proto ) { scope[id] = proto[id]; }
+		if ( typeof proto==='function' ) { proto = proto.prototype; }
+		for ( var id in proto ) { scope[<Key>id] = proto[<Key>id]; }
 	}
 	return scope;
 }

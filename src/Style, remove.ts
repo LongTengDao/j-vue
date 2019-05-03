@@ -1,7 +1,9 @@
 import document from '.document';
 import head from '.document.documentElement.firstChild';
 
-export function Style (css? :string, scope?) :HTMLStyleElement {
+import Scope from './Scope/';
+
+export function Style (css? :string, scope? :Scope) :HTMLStyleElement {
 	var style :HTMLStyleElement = document.createElement('style');
 	if ( css ) { style.textContent = scope ? scope._(css) : css; }
 	return head.appendChild(style);

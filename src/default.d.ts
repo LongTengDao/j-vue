@@ -23,7 +23,7 @@ declare const exports :{
 
 type Scope = ObjectScope | FunctionScope;
 type ObjectScope = {
-	_ :(string :string) => string
+	[key :string] :string
 };
 type FunctionScope = {
 	(...args :any[]) :string

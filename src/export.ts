@@ -3,10 +3,10 @@ import Object from '.Object';
 import version from './version?text';
 export { version };
 
-import { Identifier } from './Identifier';
+import Identifier from './Identifier';
 export { Identifier };
 
-import { Scope } from './Scope/';
+import Scope from './Scope/';
 export { Scope };
 
 import { Template, Render, StaticRenderFns } from './Template, Render, StaticRenderFns';
