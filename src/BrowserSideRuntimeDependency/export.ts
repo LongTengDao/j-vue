@@ -1,6 +1,6 @@
 import Object from '.Object';
 
-import version from './version?text';
+import version from '../version?text';
 export { version };
 
 import Identifier from './Identifier';
