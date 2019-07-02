@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"baseUrl": "../..",
+		"paths": {
+			"@ltd/*": [ "../../LongTengDao/*/src/export.d", "../../LongTengDao/*/src/default.d" ],
+			"lib:*": [ "lib/*/dist" ]
+		},
+		"strict": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true
+	}
+}

@@ -2,24 +2,26 @@ import isArray from '.Array.isArray';
 import slice from '.Array.prototype.slice';
 
 import Identifier from '../Identifier';
-import { ObjectScope, Key } from './ObjectScope';
+import { ObjectScope } from './ObjectScope';
+import { _, $ } from './_';
 
-var SEARCH :RegExp = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
+var SEARCH = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
 
 export default FunctionScope;
 function FunctionScope (cache :ObjectScope) :FunctionScope {
-	function scope (...args :any[]) :string;
-	function scope (value :string | object | any[]) :string { return scopify(arguments.length===1 ? value : slice.call(arguments, 0), _scope); }
+	var scope = function scope (value :string | object | any[]) :string { return scopify(arguments.length===1 ? value : slice.call(arguments, 0), _scope); } as FunctionScope;
 	scope.prototype = cache;
-	scope._ = function (string :string) { return string.replace(SEARCH, _replacer); };
+	scope.$ = $;
+	scope[_] = function _ (string :string) { return string.replace(SEARCH, _replacer); };
 	function _replacer (__key__ :string) :string { return _scope(__key__.slice(2, -2)); }
-	function _scope (key :string) :string { return cache[<Key>key] || ( cache[<Key>key] = Identifier() ); }
+	function _scope (key :string) :string { return cache[key] || ( cache[key] = Identifier() ); }
 	return scope;
 }
 type FunctionScope = {
 	(...args :any[]) :string
 	prototype :ObjectScope
-	_ :(string :string) => string
+	$ :typeof $
+	[_] :(string :string) => string
 };
 
 function scopify (value :string | object | any[], _scope :(key :string) => string) :string {

@@ -1,12 +1,13 @@
+export as namespace jVue;
 export = exports;
 
 declare const exports :{
-	version :'8.10.0'
+	version :'9.0.0'
 	
 	Identifier () :string
 	
-	Scope (this :Scope[] | Scope | any, keys :string) :ObjectScope
-	Scope (this :Scope[] | Scope | any) :FunctionScope
+	Scope<Keys extends string = string> (this :Scope[] | Scope | any, keys :string) :ObjectScope<Keys>
+	Scope<Keys extends string = string> (this :Scope[] | Scope | any) :FunctionScope<Keys>
 	
 	Template (html :string, scope :Scope) :string
 	
@@ -21,14 +22,17 @@ declare const exports :{
 	default :typeof exports
 };
 
-type Scope = ObjectScope | FunctionScope;
-type ObjectScope = {
-	[key :string] :string
+type Scope<Keys extends string = string> = ObjectScope<Keys> | FunctionScope<Keys>;
+type ObjectScope<Keys extends string> = {
+	readonly [key in Keys] :string
+} & {
+	readonly [_] :(string :string) => string
 };
-type FunctionScope = {
+type FunctionScope<Keys extends string = string> = {
 	(...args :any[]) :string
-	prototype :ObjectScope
-	_ :(string :string) => string
+	readonly prototype :ObjectScope<Keys>
+	readonly [_] :(string :string) => string
 };
+declare const _ :unique symbol;
 
 declare function remove (style :HTMLStyleElement) :typeof remove;

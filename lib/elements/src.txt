@@ -1,0 +1,6 @@
+
+VOID_ELEMENTS = area, base, br, col, command, embed, hr, img, input, keygen, link, meta, param, source, track, wbr
+
+RAW_TEXT_ELEMENTS = script, style
+
+ESCAPABLE_RAW_TEXT_ELEMENTS = textarea, title

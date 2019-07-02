@@ -1,20 +1,20 @@
 import isArray from '.Array.isArray';
 import create from '.Object.create';
 
-import { ObjectScope, InheritedObjectScope, SCOPE, Key } from './ObjectScope';
+import { ObjectScope, InheritedObjectScope, SCOPE } from './ObjectScope';
 import FunctionScope from './FunctionScope';
 
-var KEYS :RegExp = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
-var EMPTY :Key[] = [];
+export var KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
+var EMPTY :string[] = [];
 
 export default Scope;
 type Scope = ObjectScope | FunctionScope;
 function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
 	if ( typeof keys==='string' ) {
-		if ( isArray(this) ) { return new InheritedObjectScope(<Key[]>keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = mix(this)); }
-		else if ( this instanceof ObjectScope ) { return new InheritedObjectScope(<Key[]>keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = this); }
-		else if ( typeof this==='function' && this.prototype instanceof ObjectScope ) { return new InheritedObjectScope(<Key[]>keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = this.prototype); }
-		else { return new ObjectScope(<Key[]>keys.match(KEYS) || EMPTY); }
+		if ( isArray(this) ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = mix(this)); }
+		else if ( this instanceof ObjectScope ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = this); }
+		else if ( typeof this==='function' && this.prototype instanceof ObjectScope ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = this.prototype); }
+		else { return new ObjectScope(keys.match(KEYS) || EMPTY); }
 	}
 	else {
 		if ( isArray(this) ) { return FunctionScope(mix(this)); }
@@ -29,7 +29,7 @@ function mix (protos :Scope[]) :ObjectScope {
 	for ( var length :number = protos.length, index = 0; index<length; ++index ) {
 		var proto :Scope = protos[index];
 		if ( typeof proto==='function' ) { proto = proto.prototype; }
-		for ( var id in proto ) { scope[<Key>id] = proto[<Key>id]; }
+		for ( var id in proto ) { scope[id] = proto[id]; }
 	}
 	return scope;
 }

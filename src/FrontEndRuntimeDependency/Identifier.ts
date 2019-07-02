@@ -16,8 +16,6 @@ var latestIdentifierCharacters :( keyof typeof dictionary )[] = ['9'];
 var latestIdentifierCharacters_lastCharacter :keyof typeof dictionary = '9';
 var latestIdentifierCharacters_lastCharacterIndex :number = 0;
 
-//var RESERVED_KEY :RegExp = /^(?:break|c(?:a(?:se|tch)|lass|on(?:st|tinue))|d(?:e(?:bugger|fault|lete)|o)|e(?:lse|num|x(?:port|tends))|f(?:inally|or|unction)|i(?:f|mport|n(?:stanceof)?)|new|return|s(?:witch|super)|t(?:ry|ypeof)|v(?:ar|oid)|w(?:hile|ith))$/;
-
 export default function Identifier () :string {
 	
 	if ( latestIdentifierCharacters_lastCharacter==='z' ) {
@@ -44,7 +42,7 @@ export default function Identifier () :string {
 	}
 	
 	//var identifier :string = latestIdentifierCharacters.join('');
-	//if ( RESERVED_KEY.test(identifier) ) {
+	//if ( isReservedWord(identifier) ) {
 	//	latestIdentifierCharacters_lastCharacter = latestIdentifierCharacters[latestIdentifierCharacters_lastCharacterIndex] = dictionary[latestIdentifierCharacters_lastCharacter];
 	//	return latestIdentifierCharacters.join('');
 	//}

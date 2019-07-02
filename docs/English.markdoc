@@ -2,154 +2,214 @@
 `jVue`
 ======
 
-purpose
--------	
+Back-End SFC Compiler
+---------------------	
 	
-	When use `@ltd/j-dev`#1# to build a front end project including `.vue` file#2#, the final front end runtime code generated, need to use this module to finish the final step.
-	(The reason why the building can't be completed on server side, is due to the global unique identifier generator must execute in the final running scenario. Only in this way, we can ensure the selector names for scoped style and so on will never conflict.)
-	
-	#1#	A package published on `NPM`. It's a tool for automatic project building.
-	#2#	The single file component of `Vue`. It's convenient for developing, but need compiling.
-	
-Download
---------	
-	
-	>> https://GitHub.com/LongTengDao/j-vue/tree/master/dist/ <<
-	
-Load
-----	
-	
-	Global Mode
-	-----------	
-		```	.html
-			<script src="j-vue.js"></script>
-			<script>
-				jVue;
-			</script>
+	Purpose
+	-------	
 		
-	AMD Mode (Take `RequireJS` for example)
+		To compile `.vue` file to ES 6 module.
+		
+	Download
 	--------	
 		
-		Global Load
+		```	.sh
+			npm install j-vue
+		
+	Load
+	----	
+		
+		```	.js
+			const jVue = require('j-vue');
+		
+	API
+	---	
+		
+		`new jVue.SFC(vue)`
+		-------------------	
+			
+			The parameter `vue` is the original `Buffer` (recommended) or a `string` of `.vue` file.
+			
+			In order to avoid unexpected parsing ambiguity, errors will be reported as strictly as possible.
+			
+		`sfc.export('default'[, from = 'j-vue?*'])`
+		-------------------------------------------	
+			
+			To generate the component's default export content string according to the content in `script` block or its `src' attribute. (For the generated `JavaScript` code is padded line wrapping and indentation as the original file, so source map is not provided.)
+			
+			Note: If there is a `lang` attribute which value is other than `js` (or semantic similar), then the user must transpile its `inner` property value and modify its `lang` property.
+			
+			When there is no `script` block, the second parameter `from' is used as the `import` path to introduce the `template' information of the file.
+			
+		`sfc.export('var'  [, from = 'j-vue'])`
+		`sfc.export('const'[, from = 'j-vue'])`
+		`sfc.export('let'  [, from = 'j-vue'])`
+		---------------------------------------	
+			
+			To generate the component's `scope`、`template`、`render`、`staticRenderFns` self using information export string, according to the contents in `template` and `style` blocks or their `src' attribute. Module content is similar to this:
+			
+			```	.js
+				import * as jVue from 'j-vue';
+				export var scope = jVue.Scope();
+				export var template = jVue.Template('<div />', scope);
+				export var render = jVue.Render('_c(\'div\')', scope);
+				export var staticRenderFns = jVue.StaticRenderFns([], scope);
+			
+			Note: If there is a `lang` attribute which value is other than `html` (or semantic similar) in the `template` block, or any `style` block has a `lang` attribute which value is other than `css` (or semantic similar), then the user must transpile its `inner` property value and modify its `lang` property.
+			
+			The second parameter `from` is the module id used to introduce the jVue front-end runtime dependency library.
+	
+Front-End Runtime Dependency
+----------------------------	
+	
+	Purpose
+	-------	
+		
+		When use `@ltd/j-dev`#1# to build a front end project including `.vue` file#2#, the final front end runtime code generated, need to use this module to finish the final step.
+		(The reason why the building can't be completed while front-end compiling, is due to the global unique identifier generator must execute in the final running scenario. Only in this way, we can ensure the selector names for scoped style and so on will never conflict.)
+		
+		#1#	A package published on `NPM`. It's a tool for automatic project building.
+		#2#	The single file component of `Vue`. It's convenient for developing, but need compiling.
+		
+	Download
+	--------	
+		
+		>> https://GitHub.com/LongTengDao/j-vue/tree/master/dist/ <<
+		
+	Load
+	----	
+		
+		Global Mode
 		-----------	
 			```	.html
-				<script src="require.js"></script>
+				<script src="j-vue.js"></script>
 				<script>
-					require(['j-vue'], function (jVue) {
-						jVue;
-					});
+					jVue;
 				</script>
 			
-		Load in Module
-		--------------	
+		AMD Mode (Take `RequireJS` for example)
+		--------	
+			
+			Global Load
+			-----------	
+				```	.html
+					<script src="require.js"></script>
+					<script>
+						require(['j-vue'], function (jVue) {
+							jVue;
+						});
+					</script>
+				
+			Load in Module
+			--------------	
+				```	.js
+					define(['j-vue'], function (jVue) {
+						jVue;
+					});
+		
+	API
+	---	
+		`jVue.Identifier()`
+		-------------------	
+			
+			Return a global unique identifier#3#.
+			
+		#3#	"identifier" is a `string`; identifier generated each time, is global unique in `jVue`.
+			It's leaded by a lowercase letter, and followed with lowercase letters or digits (same as the rule for `.key` mode bare key name accessing to object property in `JavaScript (ECMAScript 5+)`).
+			The aim is to be as short as possible, while being based on the premise that it can be used for legal `class` selector or any other purpose, with high cache index performance (avoid to become "dict mode").
+			(Because of I can't imagine the application scenario that need to avoid syntax reserved words, so I didn't exclude them. If you have reason, tell me via issues, adding it is very easy.)
+		
+		`jVue.Scope([keys])`
+		--------------------	
+			
+			If the parameter `keys` not exists, it will return an identifier generator `scope` in `function` type. When use that, the only parameter `key` is a `string`, the value returned is a global unique identifier#3# (for same identifier generator, pass same `key` in, you will get same value).
+			Alternatively, you can pass arguments allowed by `:class` directly into this function (`string`, `object`, or `Array`), which will convert the aliases one by one.
+			
+			If the parameter `keys` exists, it will return an `object` `scope`. The `keys` should be a `string`, using charactor(s) which `/[a-z][a-z0-9]*(?:_[a-z0-9]+)*/i` won't match to split each `key` inner. Global unique identifiers#3# will be generated for each `key`, and be cached in the `object` returned (the key name is the corresponding `key`).
+			In addition to higher runtime performance, this allows you to specify what needs to be captured by the regular.
+			
+			This function allows you to use another `scope` as `this`. In this case, the new `scope` returned will "extend" `this`.
+			`this` can also be an `Array` of `scope`. In this case, the new `scope` returned will "extend" an `scope` which mixed all these `scope` in.
+			
+		<RE>	`/__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig`
+			
+		`jVue.Style(css[, scope])`
+		--------------------------	
+			
+			Create a `<style>`, append to the `<head>` node, and return that `<style>`.
+			
+			The parameter `css` is a `string`, as the content of the `<style>` created.
+			
+			If the second parameter `scope` exists, all parts matching <RE> in parameter `css` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
+			
+		`jVue.remove(style)`
+		--------------------	
+			
+			The parameter `style` is a `<style>`, it will be removed from the `<head>` node.
+			
+			The returned value of the function is itself, so as to chaining call.
+			
+		`jVue.Template(html, scope)`
+		----------------------------	
+			
+			The parameter `html` is a `string`, all parts matched <RE> in `html` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`, then return.
+			
+		`jVue.Render(code[, scope])`
+		----------------------------	
+			
+			The parameter `code` is a `string`, and the value returned is `Function('with(this){return '+code+'}')`.
+			
+			If the second parameter `scope` exists, all parts matched <RE> in `code` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
+			
+		`jVue.StaticRenderFns(codes[, scope])`
+		--------------------------------------	
+			
+			The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using `Function('with(this){return '+code+'}')` to generate each one).
+			
+			If the second parameter `scope` exists, then all parts matched <RE> in each `string`, will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
+			
+		`jVue.STYLE`
+		------------	
+			
+			Because `Vue` disables the inclusion of `<style>` elements in component templates, this is inconvenient in the case that we have already handled the component-scoped `CSS` on our own.
+			`jVue` provides a simple component:
+			
 			```	.js
-				define(['j-vue'], function (jVue) {
-					jVue;
-				});
-	
-API
----	
-	`jVue.Identifier()`
-	-------------------	
-		
-		Return a global unique identifier#3#.
-		
-	#3#	"identifier" is a `string`; identifier generated each time, is global unique in `jVue`.
-		It's leaded by a lowercase letter, and followed with lowercase letters or digits (same as the rule for `.key` mode bare key name accessing to object property in `JavaScript (ECMAScript 5+)`).
-		The aim is to be as short as possible, while being based on the premise that it can be used for legal `class` selector or any other purpose, with high cache index performance (avoid to become "dict mode").
-		(Because of I can't imagine the application scenario that need to avoid syntax reserved words, so I didn't exclude them. If you have reason, tell me via issues, adding it is very easy.)
-	
-	`jVue.Scope([keys])`
-	--------------------	
-		
-		If the parameter `keys` not exists, it will return an identifier generator `scope` in `function` type. When use that, the only parameter `key` is a `string`, the value returned is a global unique identifier#3# (for same identifier generator, pass same `key` in, you will get same value).
-		Alternatively, you can pass arguments allowed by `:class` directly into this function (`string`, `object`, or `Array`), which will convert the aliases one by one.
-		
-		If the parameter `keys` exists, it will return an `object` `scope`. The `keys` should be a `string`, using charactor(s) which `/[a-z][a-z0-9]*(?:_[a-z0-9]+)*/i` won't match to split each `key` inner. Global unique identifiers#3# will be generated for each `key`, and be cached in the `object` returned (the key name is the corresponding `key`).
-		In addition to higher runtime performance, this allows you to specify what needs to be captured by the regular.
-		
-		This function allows you to use another `scope` as `this`. In this case, the new `scope` returned will "extend" `this`.
-		`this` can also be an `Array` of `scope`. In this case, the new `scope` returned will "extend" an `scope` which mixed all these `scope` in.
-		
-	<RE>	`/__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig`
-		
-	`jVue.Style(css[, scope])`
-	--------------------------	
-		
-		Create a `<style>`, append to the `<head>` node, and return that `<style>`.
-		
-		The parameter `css` is a `string`, as the content of the `<style>` created.
-		
-		If the second parameter `scope` exists, all parts matching <RE> in parameter `css` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
-		
-	`jVue.remove(style)`
-	--------------------	
-		
-		The parameter `style` is a `<style>`, it will be removed from the `<head>` node.
-		
-		The returned value of the function is itself, so as to chaining call.
-		
-	`jVue.Template(html, scope)`
-	----------------------------	
-		
-		The parameter `html` is a `string`, all parts matched <RE> in `html` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`, then return.
-		
-	`jVue.Render(code[, scope])`
-	----------------------------	
-		
-		The parameter `code` is a `string`, and the value returned is `Function('with(this){return '+code+'}')`.
-		
-		If the second parameter `scope` exists, all parts matched <RE> in `code` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
-		
-	`jVue.StaticRenderFns(codes[, scope])`
-	--------------------------------------	
-		
-		The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using `Function('with(this){return '+code+'}')` to generate each one).
-		
-		If the second parameter `scope` exists, then all parts matched <RE> in each `string`, will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
-		
-	`jVue.STYLE`
-	------------	
-		
-		Because `Vue` disables the inclusion of `<style>` elements in component templates, this is inconvenient in the case that we have already handled the component-scoped `CSS` on our own.
-		`jVue` provides a simple component:
-		
-		```	.js
-			({
-				functional: true,
-				render: function render (createElement, context) {
-					return createElement('style', context.data, context.children);
-				}
-			})
-		
-		You can put it into the `components` of your component, or register it global, then do like this:
-		
-		```	.html
-			<STYLE v-text="`
-				.scoped-preview-area-selector { background-color:${ theme_color }; }
-			`" />
-			<STYLE v-text="computedPropertyCSS" />
-		
-		Or do this (note that the content between tags will be treated as `HTML` fragment by `Vue`, so this is more suitable for simple cases without `<` and such things, or properly handle `HTML` entries escaping):
-		
-		```	.html
-			<STYLE>
-				.scoped-preview-area-selector { background-color:{{ theme_color }}; }
-			</STYLE>
-		
-		Note: The reactivity of `Vue` is asynchronous naturally, so if you need high reactivity, then you must do like this (note that the reference of functional component is `<style>` element directly, not a `Vue` instance, so don't fetch that through `.$el`):
-		
-		```	.js
-			({
-				template: `
-					<div @scroll="onScroll">
-						<STYLE ref="sheet" />
-					</div>`,
-				methods: {
-					onScroll () {
-						this.$refs.sheet.textContent = `
-							.scoped-selector { top:${ this.$el.scrollTop }; }
-						`;
+				({
+					functional: true,
+					render: function render (createElement, context) {
+						return createElement('style', context.data, context.children);
 					}
-				}
-			})
+				})
+			
+			You can put it into the `components` of your component, or register it global, then do like this:
+			
+			```	.html
+				<STYLE v-text="`
+					.scoped-preview-area-selector { background-color:${ theme_color }; }
+				`" />
+				<STYLE v-text="computedPropertyCSS" />
+			
+			Or do this (note that the content between tags will be treated as `HTML` fragment by `Vue`, so this is more suitable for simple cases without `<` and such things, or properly handle `HTML` entries escaping):
+			
+			```	.html
+				<STYLE>
+					.scoped-preview-area-selector { background-color:{{ theme_color }}; }
+				</STYLE>
+			
+			Note: The reactivity of `Vue` is asynchronous naturally, so if you need high reactivity, then you must do like this (note that the reference of functional component is `<style>` element directly, not a `Vue` instance, so don't fetch that through `.$el`):
+			
+			```	.js
+				({
+					template: `
+						<div @scroll="onScroll">
+							<STYLE ref="sheet" />
+						</div>`,
+					methods: {
+						onScroll () {
+							this.$refs.sheet.textContent = `
+								.scoped-selector { top:${ this.$el.scrollTop }; }
+							`;
+						}
+					}
+				})

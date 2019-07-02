@@ -2,17 +2,22 @@ export const version :string;
 
 export function Identifier () :string;
 
-export type Scope = ObjectScope | FunctionScope;
-type ObjectScope = {
-	[key :string] :string
+export type Scope<Keys extends string = string> = ObjectScope<Keys> | FunctionScope<Keys>;
+type ObjectScope<Keys extends string> = {
+	readonly [key in Keys] :string
+} & {
+	readonly $ :<T extends ObjectScope<Keys>> (this :T, css? :string, media? :string) => T
+	readonly [_] :(string :string) => string
 };
-type FunctionScope = {
+type FunctionScope<Keys extends string = string> = {
 	(...args :any[]) :string
-	prototype :ObjectScope
-	_ :(string :string) => string
+	readonly prototype :ObjectScope<Keys>
+	readonly $ :<T extends FunctionScope<Keys>> (this :T, css? :string, media? :string) => T
+	readonly [_] :(string :string) => string
 };
-export function Scope (this :Scope[] | Scope | any, keys :string) :ObjectScope;
-export function Scope (this :Scope[] | Scope | any) :FunctionScope;
+declare const _ :unique symbol;
+export function Scope<Keys extends string = string> (this :Scope[] | Scope | any, keys :string) :ObjectScope<Keys>;
+export function Scope<Keys extends string = string> (this :Scope[] | Scope | any) :FunctionScope<Keys>;
 
 export function Template (html :string, scope :Scope) :string;
 
