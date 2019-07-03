@@ -12,13 +12,15 @@ function Body (body :string) :string {
 	return 'var '+body.slice(0, index)+'=this'+body.slice(index, body.indexOf('(', index))+'=this._self._c||this.$createElement;return '+body.slice(index+1);
 }
 
-export function Render (code :string, scope? :Scope) :Function {
-	return Function('"use strict";'+Body(scope ? scope[_](code) : code));
+export function Render (code :string, scope? :Scope) :Render {
+	return Function('"use strict";'+Body(scope ? scope[_](code) : code)) as Render;
 }
 
-export function StaticRenderFns (codes :string[], scope? :Scope) :Function[] {
+export function StaticRenderFns (codes :string[], scope? :Scope) :Render[] {
 	var index = codes.length;
 	if ( scope ) { for ( var scope_ = scope[_]; index--; ) { codes[index] = Body(scope_(codes[index])); } }
 	else { while ( index-- ) { codes[index] = Body(codes[index]); } }
 	return Function('"use strict";return[function(){'+codes.join('},function(){')+'}]')();
 }
+
+type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;

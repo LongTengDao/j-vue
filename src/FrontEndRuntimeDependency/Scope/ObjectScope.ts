@@ -2,19 +2,14 @@ import { groupify } from '@ltd/j-groupify';
 
 import RegExp from '.RegExp';
 import create from '.Object.create';
-import defineProperty from '.Object.defineProperty';
+import PropertyDescriptor from '.null.PropertyDescriptor';
 import preventExtensions from '.Object.preventExtensions';
 
 import Identifier from '../Identifier';
 import { _, $, prepare_ } from './_';
 
 export var SCOPE :ObjectScope =
-	/*#__PURE__*/
-	function () {
-		var descriptor = create(null);
-		descriptor.value = $;
-		return preventExtensions(defineProperty(create(null), '$', descriptor));
-	}();
+	/*#__PURE__*/preventExtensions(create(null, { $: PropertyDescriptor($, false, false, false) }));
 
 export var ObjectScope = function ObjectScope (this :ObjectScope, keys :string[]) :void {
 	prepare_(this);

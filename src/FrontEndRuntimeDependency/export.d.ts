@@ -21,13 +21,13 @@ export function Scope<Keys extends string = string> (this :Scope[] | Scope | any
 
 export function Template (html :string, scope :Scope) :string;
 
-export function Render (code :string, scope? :Scope) :Function;
-export function StaticRenderFns (codes :string[], scope? :Scope) :Function[];
+export function Render (code :string, scope? :Scope) :Render;
+export function StaticRenderFns (codes :string[], scope? :Scope) :Render[];
 
 export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
 export function remove (style :HTMLStyleElement) :typeof remove;
 
-export const STYLE :{ functional :true, render :Function };
+export const STYLE :{ functional :true, render :Render };
 
 export default exports;
 declare const exports :{
@@ -42,3 +42,5 @@ declare const exports :{
 	STYLE :typeof STYLE
 	default :typeof exports
 };
+
+type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;

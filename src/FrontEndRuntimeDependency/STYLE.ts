@@ -1,20 +1,10 @@
-import Object from '.Object';
+import create from '.Object.create';
+import PropertyDescriptor from '.null.PropertyDescriptor';
 
-export default Object.create(null, {
-	functional: {
-		configurable: false,
-		enumerable: true,
-		writable: false,
-		value:
-			true
-	},
-	render: {
-		configurable: false,
-		enumerable: true,
-		writable: false,
-		value:
-			function render (createElement :Function, context :NonNullable<any>) {
-				return createElement('style', context.data, context.children);
-			}
-	}
-});
+export default create(null, {
+	functional: PropertyDescriptor(true, false, true, false),
+	render: PropertyDescriptor(function render (createElement :(...args :any[]) => any, context :{ data :any, children :any }) { return createElement('style', context.data, context.children); }, false, true, false)
+}) as {
+	functional :true,
+	render :<CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>,
+};

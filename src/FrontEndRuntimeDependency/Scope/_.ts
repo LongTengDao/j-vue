@@ -1,4 +1,4 @@
-import create from '.Object.create';
+import PropertyDescriptor from '.null.PropertyDescriptor';
 import defineProperty from '.Object.defineProperty';
 import document from '.document';
 import head from '.document.head';
@@ -23,9 +23,7 @@ export var prepare_ :(scope :Scope) => void = typeof _==='symbol'
 	? function $ () {}
 	
 	: /*#__PURE__*/ function () {
-		var _descriptor = create(null);
-		_descriptor.value = function _ () {};
-		_descriptor.writable = true;
+		var _descriptor = PropertyDescriptor(function _ () {}, true, false, false);
 		return function $ (scope :Scope) {
 			defineProperty(scope, _, _descriptor);
 		};

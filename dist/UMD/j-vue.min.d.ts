@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 
 declare const exports :{
-	version :'9.0.3'
+	version :'9.0.4'
 	
 	Identifier () :string
 	
@@ -11,13 +11,13 @@ declare const exports :{
 	
 	Template (html :string, scope :Scope) :string
 	
-	Render (code :string, scope? :Scope) :Function
-	StaticRenderFns (codes :string[], scope? :Scope) :Function[]
+	Render (code :string, scope? :Scope) :Render
+	StaticRenderFns (codes :string[], scope? :Scope) :Render[]
 	
 	Style (css? :string, scope? :Scope) :HTMLStyleElement
 	remove :typeof remove
 	
-	STYLE :{ functional :true, render :Function }
+	STYLE :{ functional :true, render :Render }
 	
 	default :typeof exports
 };
@@ -36,3 +36,5 @@ type FunctionScope<Keys extends string = string> = {
 declare const _ :unique symbol;
 
 declare function remove (style :HTMLStyleElement) :typeof remove;
+
+type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
