@@ -52,9 +52,11 @@
 				import * as jVue from 'j-vue';
 				export var scope = jVue.Scope();
 				export var template = jVue.Template('<div />', scope);
-				export var render = jVue.Render('_c(\'div\')', scope);
+				export var render = jVue.Render('_vm,_c("div")', scope);
 				export var staticRenderFns = jVue.StaticRenderFns([], scope);
 				export * from 'j-vue';
+			
+			当选择 `const` 或 `let` 时，`Render` 和 `StaticRenderFns` 的参数（编译后的模板）也会作为 ES 6 代码进行压缩。
 			
 			注意：如果 `template` 块存在非 `html`（或语义近似值）的 `lang` 属性，或任何 `style` 块存在非 `css`（或语义近似值）的 `lang` 属性，那么用户必须自行转码其 `inner` 属性中的内容，并修改其 `lang` 属性。
 			

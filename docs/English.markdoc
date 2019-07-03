@@ -52,9 +52,11 @@ Back-End SFC Compiler
 				import * as jVue from 'j-vue';
 				export var scope = jVue.Scope();
 				export var template = jVue.Template('<div />', scope);
-				export var render = jVue.Render('_c(\'div\')', scope);
+				export var render = jVue.Render('_c("div")', scope);
 				export var staticRenderFns = jVue.StaticRenderFns([], scope);
 				export * from 'j-vue';
+			
+			When choose `const` or `let`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.
 			
 			Note: If there is a `lang` attribute which value is other than `html` (or semantic similar) in the `template` block, or any `style` block has a `lang` attribute which value is other than `css` (or semantic similar), then the user must transpile its `inner` property value and modify its `lang` property.
 			
