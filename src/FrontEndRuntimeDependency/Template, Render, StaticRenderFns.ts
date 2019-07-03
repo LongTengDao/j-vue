@@ -7,24 +7,18 @@ export function Template (html :string, scope :Scope) :string {
 	return scope[_](html);
 }
 
-var VM_C_EXP = /^([\w$]+),(([\w$]+)\([^]*\))$/;
-
-function Body (_vm :string, _c$_$ :string, _c :string) :string {
-	return 'var '+_vm+'=this,'+_c+'=this._self._c||this.$createElement;return '+_c$_$;
+function Body (body :string) :string {
+	var index = body.indexOf(',');
+	return 'var '+body.slice(0, index)+'=this'+body.slice(index, body.indexOf('(', index))+'=this._self._c||this.$createElement;return '+body.slice(index+1);
 }
 
 export function Render (code :string, scope? :Scope) :Function {
-	return Function('"use strict";'+( scope ? scope[_](code) : code ).replace(VM_C_EXP, Body));
+	return Function('"use strict";'+Body(scope ? scope[_](code) : code));
 }
 
 export function StaticRenderFns (codes :string[], scope? :Scope) :Function[] {
 	var index = codes.length;
-	if ( scope ) {
-		var scope_ = scope[_];
-		while ( index-- ) { codes[index] = scope_(codes[index]).replace(VM_C_EXP, Body); }
-	}
-	else {
-		while ( index-- ) { codes[index] = codes[index].replace(VM_C_EXP, Body); }
-	}
+	if ( scope ) { for ( var scope_ = scope[_]; index--; ) { codes[index] = Body(scope_(codes[index])); } }
+	else { while ( index-- ) { codes[index] = Body(codes[index]); } }
 	return Function('"use strict";return[function(){'+codes.join('},function(){')+'}]')();
 }

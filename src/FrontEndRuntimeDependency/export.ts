@@ -15,7 +15,7 @@ export {
 };
 
 import Default from '.default';
-export default Default(null, {
+export default Default({
 	version: version,
 	Identifier: Identifier,
 	Scope: Scope,
