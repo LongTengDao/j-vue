@@ -157,14 +157,16 @@ Front-End Runtime Dependency
                                       `jVue.Render(code[, scope])`
                                       ----------------------------           
                                                                              
-                                                                             The parameter `code` is a `string`, and the value returned is `Function('with(this){return '+code+'}')`.
+                                                                             The parameter `code` is a `string`, and the value returned is <Fn>.
                                                                              
                                                                              If the second parameter `scope` exists, all parts matched <RE> in `code` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
+                                                                             
+                                      <Fn>                                   `Function( code.replace( /^([\w$]+),([\w$]+)\(([^]*)\)$/, ' "use strict"; var $1 = this, $2 = this._self._c || this.$createElement; return $2($3); ' ) )`
                                                                              
                                       `jVue.StaticRenderFns(codes[, scope])`
                                       -------------------------------------- 
                                                                              
-                                                                             The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using `Function('with(this){return '+code+'}')` to generate each one).
+                                                                             The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using <Fn> to generate each one).
                                                                              
                                                                              If the second parameter `scope` exists, then all parts matched <RE> in each `string`, will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
                                                                              

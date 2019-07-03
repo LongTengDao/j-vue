@@ -7,22 +7,24 @@ export function Template (html :string, scope :Scope) :string {
 	return scope[_](html);
 }
 
+var VM_C_EXP = /^([\w$]+),(([\w$]+)\([^]*\))$/;
+
+function Body (_vm :string, _c$_$ :string, _c :string) :string {
+	return 'var '+_vm+'=this,'+_c+'=this._self._c||this.$createElement;return '+_c$_$;
+}
+
 export function Render (code :string, scope? :Scope) :Function {
-	return Function(
-		'"use strict";var _vm=this,_h=_vm.$createElement,_c=_vm._self._c||_h;return '+
-		( scope ? scope[_](code) : code )
-	);
+	return Function('"use strict";'+( scope ? scope[_](code) : code ).replace(VM_C_EXP, Body));
 }
 
 export function StaticRenderFns (codes :string[], scope? :Scope) :Function[] {
+	var index = codes.length;
 	if ( scope ) {
-		for ( var index = codes.length, scope_ = scope[_]; index--; ) {
-			codes[index] = scope_(codes[index]);
-		}
+		var scope_ = scope[_];
+		while ( index-- ) { codes[index] = scope_(codes[index]).replace(VM_C_EXP, Body); }
 	}
-	return Function(
-		'"use strict";return[function(){var _vm=this,_h=_vm.$createElement,_c=_vm._self._c||_h;return '+
-		codes.join('},function(){var _vm=this,_h=_vm.$createElement,_c=_vm._self._c||_h;return ')+
-		'}]'
-	)();
+	else {
+		while ( index-- ) { codes[index] = codes[index].replace(VM_C_EXP, Body); }
+	}
+	return Function('"use strict";return[function(){'+codes.join('},function(){')+'}]')();
 }
