@@ -37,7 +37,7 @@ export default class Style extends Block<'style'> {
 		const _this :Style = _(this);
 		
 		if ( 'abbr.' in attributes ) {
-			const literal = attributes['.'];
+			const literal = attributes['abbr.'];
 			if ( literal===undefined ) { throw SyntaxError(`style 功能块元素的“abbr.”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“abbr.”属性语法错误：\n${literal}`); }
@@ -63,10 +63,10 @@ export default class Style extends Block<'style'> {
 	}
 	
 	get innerCSS () :string {
-		let inner = this.inner;
+		let { inner } = this;
 		if ( typeof inner!=='string' ) { throw Error(`自闭合的 style 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
 		if ( this.lang && !CSS.test(this.lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 css`); }
-		const abbr = _(this).abbr;
+		const { abbr } = _(this);
 		if ( abbr ) { inner = inner.replace(NAME_IN_CSS, (componentName :string) :string => componentName in abbr ? abbr[componentName] : componentName); }
 		return inner;
 	}

@@ -9,12 +9,16 @@ import { NON_SCALAR as SURROGATE } from '@ltd/j-utf';
 
 import { NONCHARACTER, CONTROL_CHARACTER } from './RE';
 
-const SEARCH_ESCAPABLE = /[\t\n\x20"&'<>`\xA0\u2000-\u200A\u202F\u3000]/g;// 除了必须转义的，还有防止被 Vue 编译器剔除的空白，以及提示 IE 中可能造成安全隐患的反引号
+const ESCAPABLE_INNER_TEXT = /[\t\n\r\x20&<\xA0\u2000-\u200A\u2028\u2029\u202F\u3000]/g;// 除了必须转义的，还有防止被 Vue 编译器剔除的空白
+const escapableInnerTextReplacer = ($0 :string) => `&#${$0.charCodeAt(0)};`;
+export function escapeInnerText (text :string) :string { return text.replace(ESCAPABLE_INNER_TEXT, escapableInnerTextReplacer); }
 
-const escapableReplacer = ($0 :string) => `&#${$0.charCodeAt(0)};`;
+const ESCAPABLE_ATTRIBUTE_VALUE = /["&]/g;
+const escapableAttributeValueReplacer = ($0 :string) => $0==='"' ? '&quot;' : '&amp;';
+export function escapeAttributeValue (text :string) :string { return text.replace(ESCAPABLE_ATTRIBUTE_VALUE, escapableAttributeValueReplacer); }
 
-export function escape (text :string) :string {
-	return text.replace(SEARCH_ESCAPABLE, escapableReplacer);
+export function test (text :string) {
+	if ( / /.test(text) ) {}
 }
 
 import { SEMICOLON_ENTITIES, CONTINUE_ENTITIES } from 'lib:entities';

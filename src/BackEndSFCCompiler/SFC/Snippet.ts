@@ -44,7 +44,7 @@ export default function Snippet (whole :string, errorPosition :number) :string {
 	const errorSnippet :string[] = [];
 	for ( let { number, value } of linesAroundError ) {
 		number = number ? number.padStart(maxLengthOfLineNumber, '0') : ' '.repeat(maxLengthOfLineNumber);
-		errorSnippet.push(`${number}|${value}`);
+		errorSnippet.push(`${number}\t|${value}`);
 	}
 	return errorSnippet.join('\n');
 	

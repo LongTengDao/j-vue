@@ -63,34 +63,42 @@ function NecessaryStringLiteral (body :string) :string {
 	return StringLiteral(code.slice(PRE_LENGTH, SUR_LENGTH));
 }
 
+const LF_LS_PS = /[\n\u2028\u2029]/g;
+const escape_LF_LS_PS = ($0 :string) :string => $0==='\n' ? '<LF=U+000A>' : $0==='\u2028' ? '<LS=U+2028>' : '<PS=U+2029>';
+
 export default function * From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string, eol :string) :IterableIterator<string> {
 	
 	yield `export * from ${StringLiteral(from)};${eol}${eol}`;
-	yield `import { Scope, Template, Render, StaticRenderFns } from ${StringLiteral(from)};${eol}${eol}`;
+	yield `import * as jVue from ${StringLiteral(from)};${eol}${eol}`;
 	
 	yield !template || _(template).keys===undefined
-		? `export ${mode} scope = /*#__PURE__*/Scope()`
-		: `export ${mode} scope = /*#__PURE__*/Scope('${( _(template).keys!.match(KEYS) || [] ).join(',')}')`;
+		? `export ${mode} scope = /*#__PURE__*/jVue.Scope()`
+		: `export ${mode} scope = /*#__PURE__*/jVue.Scope('${( _(template).keys!.match(KEYS) || [] ).join(',')}')`;
 	for ( const style of styles ) {
-		yield _(style).media===undefined
-			? `${eol}.$(${StringLiteral(style.innerCSS)})`
-			: `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(_(style).media!)})`;
+		const { innerCSS } = style;
+		yield `${eol}//${innerCSS.replace(LF_LS_PS, escape_LF_LS_PS)}`;
+		const { media } = _(style);
+		yield media===undefined
+			? `${eol}.$(${StringLiteral(innerCSS)})`
+			: `${eol}.$(${StringLiteral(innerCSS)}, ${StringLiteral(media)})`;
 	}
-	yield `;${eol}${eol}`;
+	yield `;${eol}`;
 	
-	if ( !template ) { return; }
+	if ( template ) { yield eol; }
+	else { return; }
 	
 	const { innerHTML } = template;
 	const { errors, render, staticRenderFns } = compile(innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
 	
-	yield `export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, scope);${eol}`;
-	yield `export ${mode} render = /*#__PURE__*/Render(${NecessaryStringLiteral(render)}, scope);${eol}`;
+	yield `export ${mode} template = /*#__PURE__*/jVue.Template(${StringLiteral(innerHTML)}, scope);${eol}`;
+	yield `export ${mode} render = /*#__PURE__*/jVue.Render(${NecessaryStringLiteral(render)}, scope);${eol}`;
 	yield staticRenderFns.length
-		? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.map(NecessaryStringLiteral).join(`,${eol}${tab}`)}${eol}], scope);${eol}`
+		? `export ${mode} staticRenderFns = /*#__PURE__*/jVue.StaticRenderFns([${eol}${tab}${staticRenderFns.map(NecessaryStringLiteral).join(`,${eol}${tab}`)}${eol}], scope);${eol}`
 		: `export ${mode} staticRenderFns = [];${eol}`;
-	
-	for ( const line of template.content.toSource(tab) ) { yield `//${tab}${line}${eol}`; }
+	for ( const line of template.content.toSource(tab) ) {
+		yield `//${tab}${line.replace(LF_LS_PS, escape_LF_LS_PS)}${eol}`;
+	}
 	
 };
 

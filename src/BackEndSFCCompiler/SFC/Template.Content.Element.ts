@@ -7,19 +7,22 @@ const _ID = /(?<=^|[\s(,:[{/]|\.\.\.)_[a-zA-Z]+(?=[\s),\]}/=])/;// 缩小检测�
 
 export default class Element extends Node {
 	
-	constructor (localName :string, attributes :Attributes, partial? :{ tagName :string, class :string }) {
+	constructor (localName :string, attributes :Attributes, partial? :Partial) {
 		super();
 		if ( 'v-for' in attributes ) {
 			const _id = _ID.exec(attributes['v-for']!);
 			if ( _id ) { throw ReferenceError(`“v-for”中似乎存在以下划线开头后跟字母的危险变量“${_id[0]}”，这可能使得 Vue 模板编译结果以错误的方式运行`); }
 		}
-		if ( partial ) {
-			localName = partial.tagName;
-			attributes.class = 'class' in attributes
-				? attributes.class
-					? partial.class+' '+attributes.class
-					: partial.class
-				: partial.class;
+		if ( partial && localName in partial ) {
+			const { tagName, class: classNames } = partial[localName];
+			if ( classNames ) {
+				attributes.class = 'class' in attributes
+					? attributes.class
+						? classNames+' '+attributes.class
+						: classNames
+					: classNames;
+			}
+			localName = tagName;
 		}
 		this.localName = localName;
 		this.attributes = attributes;
@@ -56,3 +59,4 @@ export default class Element extends Node {
 freeze(Element.prototype);
 
 import Attributes from './Attributes';
+import { Partial } from './Template';

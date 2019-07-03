@@ -15,7 +15,7 @@ export default class Attributes extends NULL<string> {
 		let literal :string = '';
 		for ( const name in this ) {
 			const value = this[name];
-			literal += value===undefined ? ` ${name}` : ` ${name}="${Entities.escape(value)}"`;
+			literal += value===undefined ? ` ${name}` : ` ${name}="${Entities.escapeAttributeValue(value)}"`;
 		}
 		return literal;
 	}

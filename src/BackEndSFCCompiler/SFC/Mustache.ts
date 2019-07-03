@@ -9,7 +9,7 @@ const NT = /\n\t+/g;
 const N = /^\n|\n$/g;
 
 function trimTab (raw :string) :string {
-	//Entities.unescape(raw);// 以后如果要完全剔除“\n”，则需要要先检查解码的正确性，防止“&l”“t;”连起来
+	//Entities.test(raw);// 以后如果要完全剔除“\n”，则需要要先检查解码的正确性，防止“&l”“t;”连起来
 	//return raw.replace(/\n\t*/g, '');
 	return raw.replace(NT, '\n').replace(N, '');
 }

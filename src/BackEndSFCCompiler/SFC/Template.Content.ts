@@ -23,43 +23,45 @@ let html :string = '';
 let index :number = 0;
 let partial :Partial | undefined;
 
-function parseAppend (xName :string, node :Node) :void {
+function parseAppend (parentNode_xName :string, parentNode :Node) :void {
 	for ( ; ; ) {
 		const tag = Tag(html, index);
-		if ( tag.type===EOF ) {
-			if ( xName ) { throw SyntaxError(`template 块中存在未关闭的 ${xName} 标签`); }
+		const { type } = tag;
+		if ( type===EOF ) {
+			if ( parentNode_xName ) { throw SyntaxError(`template 块中存在未关闭的 ${parentNode_xName} 标签`); }
 			index = tag.end;
 			return;
 		}
-		if ( tag.type===TEXT ) {
-			const data :string = new Mustache(tag.raw).toData();
-			data && node.appendChild(new Text(data));
+		if ( type===TEXT ) {
+			const data :string = new Mustache(tag.raw!).toData();
+			data && parentNode.appendChild(new Text(data));
 			index = tag.end;
 			continue;
 		}
-		if ( tag.type===COMMENT ) {
+		if ( type===COMMENT ) {
 			index = tag.end;
 			continue;
 		}
-		if ( tag.type===ELEMENT_END ) {
-			tag.xName===xName || throwSyntaxError(xName
-				? `在 ${xName} 配对的结束标签出现前，出现了预期外的结束标签“</${tag.xName}>”`
-				: `template 块中凭空出现了“</${tag.xName}>”结束标签`
+		const xName = tag.xName!;
+		if ( type===ELEMENT_END ) {
+			xName===parentNode_xName || throwSyntaxError(parentNode_xName
+				? `在 ${parentNode_xName} 配对的结束标签出现前，出现了预期外的结束标签“</${xName}>”`
+				: `template 块中凭空出现了“</${xName}>”结束标签`
 			);
 			index = tag.end;
 			return;
 		}
-		tag.xName==='script' && throwSyntaxError(`Vue 不允许 template 中存在 script 标签`);
-		tag.xName==='style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
-		const element :Element = node.appendChild(new Element(xName, tag.attributes, partial && partial[xName]));
+		xName==='script' && throwSyntaxError(`Vue 不允许 template 中存在 script 标签`);
+		xName==='style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
+		const element :Element = parentNode.appendChild(new Element(xName, tag.attributes!, partial));
 		index = tag.end;
-		if ( tag.type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(tag.xName) ) { continue; }
+		if ( type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName) ) { continue; }
 		// iframe：Vue 运行所必须的 IE9+ 刚好允许其中嵌套标签
 		if ( xName==='textarea' || xName==='title' || xName==='STYLE' ) {
 			if ( 'v-text' in element.attributes || 'v-html' in element.attributes ) {
 				throw SyntaxError((
 					xName==='textarea' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（形如标签的文本会被剔除）` :
-						xName==='STYLE' ? `非自闭合 STYLE 组件中的内容为了避免被 Vue 额外修正（形如标签的文本会被剔除）` :
+						xName==='STYLE' ? `非自闭合 ${xName} 组件中的内容为了避免被 Vue 额外修正（形如标签的文本会被剔除）` :
 							xName==='title' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（会试着真的作为标签解析）` :
 								``
 				)+`，jVue 会将其编译为 v-text 属性，因此标签不能已经具备 v-text 或 v-html 属性`);
@@ -103,11 +105,11 @@ export default class Content extends Node {
 		super();
 		if ( inner ) {
 			partial = abbr;
-			html = inner;
+			html = '\n'+inner;
 			index = 0;
 			try { parseAppend('', this); }
 			catch (error) {
-				error.message = `${error.message}：\n${Snippet(inner, index)}`;
+				error.message = `${error.message}：\n${Snippet(html, index)}`;
 				throw error;
 			}
 			finally {

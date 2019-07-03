@@ -55,7 +55,7 @@ export default class Template extends Block {
 						const xName :string = tokens[0];
 						const localName_class :string[] = tokens[1].split('.');
 						abbr[xName] = {
-							tagName: localName_class.pop()!,
+							tagName: localName_class.shift()!,
 							class: localName_class.length
 								? localName_class.join(' ') || `__${xName}__`
 								: '',
@@ -80,16 +80,17 @@ export default class Template extends Block {
 	}
 	
 	get content () :Content {
-		const _this :{ content :Content } = _(this);
+		const _this :{ content :Content, abbr? :Partial } = _(this);
 		if ( _this.content ) { return _this.content; }
 		if ( typeof this.inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
 		if ( this.lang && !HTML.test(this.lang) ) { throw Error(`template 功能块元素如果设置了非 html 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 html`); }
-		return _this.content = new Content(this.inner, _(this).abbr);
+		return _this.content = new Content(this.inner, _this.abbr);
 	}
 	
 	get innerHTML () :string {
-		if ( this.content.childNodes.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
-		const rootNode = this.content.firstChild;
+		const { childNodes } = this.content;
+		if ( childNodes.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
+		const rootNode = childNodes[0];
 		if ( !( rootNode instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
 		return rootNode.outerHTML;
 	}

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.0.0';
+const version = '9.0.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -678,7 +678,7 @@ function Snippet(whole, errorPosition) {
     const errorSnippet = [];
     for (let { number, value } of linesAroundError) {
         number = number ? number.padStart(maxLengthOfLineNumber, '0') : ' '.repeat(maxLengthOfLineNumber);
-        errorSnippet.push(`${number}|${value}`);
+        errorSnippet.push(`${number}\t|${value}`);
     }
     return errorSnippet.join('\n');
 }
@@ -2823,11 +2823,12 @@ const SEMICOLON_ENTITIES = /*#__PURE__*/ NULL({
 
 const CONTINUE_ENTITIES = /*#__PURE__*/ NULL({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
 
-const SEARCH_ESCAPABLE = /[\t\n\x20"&'<>`\xA0\u2000-\u200A\u202F\u3000]/g; // 除了必须转义的，还有防止被 Vue 编译器剔除的空白，以及提示 IE 中可能造成安全隐患的反引号
-const escapableReplacer = ($0) => `&#${$0.charCodeAt(0)};`;
-function escape(text) {
-    return text.replace(SEARCH_ESCAPABLE, escapableReplacer);
-}
+const ESCAPABLE_INNER_TEXT = /[\t\n\r\x20&<\xA0\u2000-\u200A\u2028\u2029\u202F\u3000]/g; // 除了必须转义的，还有防止被 Vue 编译器剔除的空白
+const escapableInnerTextReplacer = ($0) => `&#${$0.charCodeAt(0)};`;
+function escapeInnerText(text) { return text.replace(ESCAPABLE_INNER_TEXT, escapableInnerTextReplacer); }
+const ESCAPABLE_ATTRIBUTE_VALUE = /["&]/g;
+const escapableAttributeValueReplacer = ($0) => $0 === '"' ? '&quot;' : '&amp;';
+function escapeAttributeValue(text) { return text.replace(ESCAPABLE_ATTRIBUTE_VALUE, escapableAttributeValueReplacer); }
 const CONTROL_TO_CHAR = NULL({
     0x80: 0x20AC,
     0x82: 0x201A,
@@ -3140,7 +3141,7 @@ class Attributes extends NULL$1 {
         let literal = '';
         for (const name in this) {
             const value = this[name];
-            literal += value === undefined$1 ? ` ${name}` : ` ${name}="${escape(value)}"`;
+            literal += value === undefined$1 ? ` ${name}` : ` ${name}="${escapeAttributeValue(value)}"`;
         }
         return literal;
     }
@@ -3159,18 +3160,14 @@ function Tag(html, position) {
     if (html.startsWith('<', position)) {
         if (html.startsWith('!', position + 1)) {
             if (!html.startsWith('--', position + 2)) {
-                throw SyntaxError(html.startsWith('[CDATA[', position + 2)
-                    ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内`
-                    : `标准的注释语法应由“<!--”而非“ <!”开启`);
+                throw SyntaxError(html.startsWith('[CDATA[', position + 2) ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内` : `标准的注释语法应由“<!--”而非“ <!”开启`);
             }
             if (html.startsWith('>', position + 4) || html.startsWith('->', position + 4)) {
                 throw SyntaxError(`紧随“<!--”注释开始语法之后出现的“>”或“->”会造成注释意外中断`);
             }
             const end = html.indexOf('-->', position + 4);
             if (end < 0) {
-                throw SyntaxError(html.includes('--!>', position + 4)
-                    ? '应使用“-->”而非“--!>”关闭注释节点'
-                    : '存在未关闭的注释节点');
+                throw SyntaxError(html.includes('--!>', position + 4) ? '应使用“-->”而非“--!>”关闭注释节点' : '存在未关闭的注释节点');
             }
             const data = html.slice(position + 4, end);
             if (data.includes('--!>')) {
@@ -3183,9 +3180,9 @@ function Tag(html, position) {
         }
         rest = html.slice(position);
         if (IS_TAG.test(rest)) {
-            const { 0: { length }, 1: endSolidus, 2: xName, 3: data, 4: selfClosingSolidus } = TAG.exec(rest) || throwSyntaxError('标签格式有误');
+            const { 0: { length }, 1: endSolidus, 2: xName, 3: attributesLiteral, 4: selfClosingSolidus } = TAG.exec(rest) || throwSyntaxError('标签格式有误');
             if (endSolidus) {
-                if (data) {
+                if (attributesLiteral) {
                     throw SyntaxError(`结束标签中存在属性`);
                 }
                 if (selfClosingSolidus) {
@@ -3194,8 +3191,8 @@ function Tag(html, position) {
                 return { type: ELEMENT_END, xName, end: position + length };
             }
             const attributes = new Attributes;
-            if (data) {
-                for (let name of data.match(ATTRIBUTE)) {
+            if (attributesLiteral) {
+                for (let name of attributesLiteral.match(ATTRIBUTE)) {
                     let value;
                     if (name.includes('=')) {
                         ({ 1: name, 2: value } = ATTRIBUTE_NAME_VALUE.exec(name));
@@ -3208,7 +3205,7 @@ function Tag(html, position) {
                         attributes[name] = value;
                     }
                 }
-                if (data.endsWith('/')) {
+                if (attributesLiteral.endsWith('/')) {
                     throw SyntaxError(`标签结尾处的“/”有歧义，无法达到标注标签为自闭合的目的，而是会作为最后一个无引号属性值的结束字符`);
                 }
             }
@@ -3221,9 +3218,7 @@ function Tag(html, position) {
     if (rest) {
         let end = rest.search(TAG_START);
         end = end < 0 ? html.length : position + end;
-        const raw = rest.slice(position, end);
-        unescape(raw);
-        return { type: TEXT, raw, end };
+        return { type: TEXT, raw: html.slice(position, end), end };
     }
     return { type: EOF, end: html.length };
 }
@@ -3295,12 +3290,16 @@ const Private = (
 		var GET = /*#__PURE__*/ create(null);
 		GET.value = Weak.prototype.get;
 		var SET = /*#__PURE__*/ create(null);
-		GET.value = Weak.prototype.set;
+		SET.value = Weak.prototype.set;
+		function add (weak, THIS) {
+			var _THIS = create(null);
+			weak.set(THIS, _THIS);
+			return _THIS;
+		}
 		return function Private () {
 			var weak = /*#__PURE__*/ defineProperty(/*#__PURE__*/ defineProperty(/*#__PURE__*/ new Weak, 'get', GET), 'set', SET);
 			return function _ (THIS) {
-				var _THIS;
-				return /*#__PURE__*/ weak.get(THIS) || ( /*#__PURE__*/ weak.set(THIS, _THIS = /*#__PURE__*/ create(null)), _THIS );
+				return /*#__PURE__*/ weak.get(THIS) || /*#__PURE__*/ add(weak, THIS);
 			};
 		};
 	}()
@@ -3326,7 +3325,7 @@ class Style extends Block {
         super('style', attributes, true, inner, STYLE_END_TAG);
         const _this = _(this);
         if ('abbr.' in attributes) {
-            const literal = attributes['.'];
+            const literal = attributes['abbr.'];
             if (literal === undefined$1) {
                 throw SyntaxError(`style 功能块元素的“abbr.”属性的缺省值写法还没有实现`);
             }
@@ -3355,14 +3354,14 @@ class Style extends Block {
         }
     }
     get innerCSS() {
-        let inner = this.inner;
+        let { inner } = this;
         if (typeof inner !== 'string') {
             throw Error(`自闭合的 style 功能块元素必须自行（根据 src 属性）加载 inner 值`);
         }
         if (this.lang && !CSS.test(this.lang)) {
             throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 css`);
         }
-        const abbr = _(this).abbr;
+        const { abbr } = _(this);
         if (abbr) {
             inner = inner.replace(NAME_IN_CSS, (componentName) => componentName in abbr ? abbr[componentName] : componentName);
         }
@@ -3370,11 +3369,12 @@ class Style extends Block {
     }
 }
 
+const _parentNode = Symbol('#parentNode');
 class Node {
     constructor() {
-        this.parentNode = null;
         this.childNodes = new Array;
     }
+    get parentNode() { return this[_parentNode] || null; }
     get firstChild() {
         return this.childNodes.length ? this.childNodes[0] : null;
     }
@@ -3382,8 +3382,10 @@ class Node {
         return this.childNodes.length ? this.childNodes[this.childNodes.length - 1] : null;
     }
     appendChild(node) {
-        node.parentNode && node.parentNode.childNodes.splice(node.parentNode.childNodes.indexOf(node), 1);
-        node.parentNode = this;
+        if (node[_parentNode]) {
+            node[_parentNode].childNodes.splice(node[_parentNode].childNodes.indexOf(node), 1);
+        }
+        node[_parentNode] = this;
         this.childNodes.push(node);
         return node;
     }
@@ -3400,13 +3402,16 @@ class Element extends Node {
                 throw ReferenceError(`“v-for”中似乎存在以下划线开头后跟字母的危险变量“${_id[0]}”，这可能使得 Vue 模板编译结果以错误的方式运行`);
             }
         }
-        if (partial) {
-            localName = partial.tagName;
-            attributes.class = 'class' in attributes
-                ? attributes.class
-                    ? partial.class + ' ' + attributes.class
-                    : partial.class
-                : partial.class;
+        if (partial && localName in partial) {
+            const { tagName, class: classNames } = partial[localName];
+            if (classNames) {
+                attributes.class = 'class' in attributes
+                    ? attributes.class
+                        ? classNames + ' ' + attributes.class
+                        : classNames
+                    : classNames;
+            }
+            localName = tagName;
         }
         this.localName = localName;
         this.attributes = attributes;
@@ -3437,9 +3442,11 @@ class Element extends Node {
 }
 freeze(Element.prototype);
 
+const childNodesPropertyDescriptor = PropertyDescriptor(/*#__PURE__*/ freeze([]), true, false, true);
 class CharacterData extends Node {
     constructor(data) {
         super();
+        defineProperty(this, 'childNodes', childNodesPropertyDescriptor);
         this.data = data;
     }
 }
@@ -3449,7 +3456,7 @@ class Text extends CharacterData {
         super(data);
     }
     get outerHTML() {
-        return escape(this.data);
+        return escapeInnerText(this.data);
     }
     *toSource() {
         yield* this.outerHTML.split('&#10;');
@@ -3460,7 +3467,7 @@ freeze(Text.prototype);
 const NT$1 = /\n\t+/g;
 const N = /^\n|\n$/g;
 function trimTab(raw) {
-    //Entities.unescape(raw);// 以后如果要完全剔除“\n”，则需要要先检查解码的正确性，防止“&l”“t;”连起来
+    //Entities.test(raw);// 以后如果要完全剔除“\n”，则需要要先检查解码的正确性，防止“&l”“t;”连起来
     //return raw.replace(/\n\t*/g, '');
     return raw.replace(NT$1, '\n').replace(N, '');
 }
@@ -3519,45 +3526,47 @@ const TEXTAREA = /^textarea$/i;
 let html = '';
 let index = 0;
 let partial;
-function parseAppend(xName, node) {
+function parseAppend(parentNode_xName, parentNode) {
     for (;;) {
         const tag = Tag(html, index);
-        if (tag.type === EOF) {
-            if (xName) {
-                throw SyntaxError(`template 块中存在未关闭的 ${xName} 标签`);
+        const { type } = tag;
+        if (type === EOF) {
+            if (parentNode_xName) {
+                throw SyntaxError(`template 块中存在未关闭的 ${parentNode_xName} 标签`);
             }
             index = tag.end;
             return;
         }
-        if (tag.type === TEXT) {
+        if (type === TEXT) {
             const data = new Mustache(tag.raw).toData();
-            data && node.appendChild(new Text(data));
+            data && parentNode.appendChild(new Text(data));
             index = tag.end;
             continue;
         }
-        if (tag.type === COMMENT) {
+        if (type === COMMENT) {
             index = tag.end;
             continue;
         }
-        if (tag.type === ELEMENT_END) {
-            tag.xName === xName || throwSyntaxError(xName
-                ? `在 ${xName} 配对的结束标签出现前，出现了预期外的结束标签“</${tag.xName}>”`
-                : `template 块中凭空出现了“</${tag.xName}>”结束标签`);
+        const xName = tag.xName;
+        if (type === ELEMENT_END) {
+            xName === parentNode_xName || throwSyntaxError(parentNode_xName
+                ? `在 ${parentNode_xName} 配对的结束标签出现前，出现了预期外的结束标签“</${xName}>”`
+                : `template 块中凭空出现了“</${xName}>”结束标签`);
             index = tag.end;
             return;
         }
-        tag.xName === 'script' && throwSyntaxError(`Vue 不允许 template 中存在 script 标签`);
-        tag.xName === 'style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
-        const element = node.appendChild(new Element(xName, tag.attributes, partial && partial[xName]));
+        xName === 'script' && throwSyntaxError(`Vue 不允许 template 中存在 script 标签`);
+        xName === 'style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
+        const element = parentNode.appendChild(new Element(xName, tag.attributes, partial));
         index = tag.end;
-        if (tag.type === ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(tag.xName)) {
+        if (type === ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName)) {
             continue;
         }
         // iframe：Vue 运行所必须的 IE9+ 刚好允许其中嵌套标签
         if (xName === 'textarea' || xName === 'title' || xName === 'STYLE') {
             if ('v-text' in element.attributes || 'v-html' in element.attributes) {
                 throw SyntaxError((xName === 'textarea' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（形如标签的文本会被剔除）` :
-                    xName === 'STYLE' ? `非自闭合 STYLE 组件中的内容为了避免被 Vue 额外修正（形如标签的文本会被剔除）` :
+                    xName === 'STYLE' ? `非自闭合 ${xName} 组件中的内容为了避免被 Vue 额外修正（形如标签的文本会被剔除）` :
                         xName === 'title' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（会试着真的作为标签解析）` :
                             ``) + `，jVue 会将其编译为 v-text 属性，因此标签不能已经具备 v-text 或 v-html 属性`);
             }
@@ -3594,13 +3603,13 @@ class Content extends Node {
         super();
         if (inner) {
             partial = abbr;
-            html = inner;
+            html = '\n' + inner;
             index = 0;
             try {
                 parseAppend('', this);
             }
             catch (error) {
-                error.message = `${error.message}：\n${Snippet(inner, index)}`;
+                error.message = `${error.message}：\n${Snippet(html, index)}`;
                 throw error;
             }
             finally {
@@ -3655,7 +3664,7 @@ class Template extends Block {
                         const xName = tokens[0];
                         const localName_class = tokens[1].split('.');
                         abbr[xName] = {
-                            tagName: localName_class.pop(),
+                            tagName: localName_class.shift(),
                             class: localName_class.length
                                 ? localName_class.join(' ') || `__${xName}__`
                                 : '',
@@ -3688,13 +3697,14 @@ class Template extends Block {
         if (this.lang && !HTML.test(this.lang)) {
             throw Error(`template 功能块元素如果设置了非 html 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 html`);
         }
-        return _this.content = new Content(this.inner, _(this).abbr);
+        return _this.content = new Content(this.inner, _this.abbr);
     }
     get innerHTML() {
-        if (this.content.childNodes.length !== 1) {
+        const { childNodes } = this.content;
+        if (childNodes.length !== 1) {
             throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`);
         }
-        const rootNode = this.content.firstChild;
+        const rootNode = childNodes[0];
         if (!(rootNode instanceof Element)) {
             throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`);
         }
@@ -3868,19 +3878,27 @@ function NecessaryStringLiteral(body) {
     }
     return StringLiteral(code.slice(PRE_LENGTH, SUR_LENGTH));
 }
+const LF_LS_PS = /[\n\u2028\u2029]/g;
+const escape_LF_LS_PS = ($0) => $0 === '\n' ? '<LF=U+000A>' : $0 === '\u2028' ? '<LS=U+2028>' : '<PS=U+2029>';
 function* From(tab, mode, styles, template, from, eol) {
     yield `export * from ${StringLiteral(from)};${eol}${eol}`;
-    yield `import { Scope, Template, Render, StaticRenderFns } from ${StringLiteral(from)};${eol}${eol}`;
+    yield `import * as jVue from ${StringLiteral(from)};${eol}${eol}`;
     yield !template || _(template).keys === undefined$1
-        ? `export ${mode} scope = /*#__PURE__*/Scope()`
-        : `export ${mode} scope = /*#__PURE__*/Scope('${(_(template).keys.match(KEYS) || []).join(',')}')`;
+        ? `export ${mode} scope = /*#__PURE__*/jVue.Scope()`
+        : `export ${mode} scope = /*#__PURE__*/jVue.Scope('${(_(template).keys.match(KEYS) || []).join(',')}')`;
     for (const style of styles) {
-        yield _(style).media === undefined$1
-            ? `${eol}.$(${StringLiteral(style.innerCSS)})`
-            : `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(_(style).media)})`;
+        const { innerCSS } = style;
+        yield `${eol}//${innerCSS.replace(LF_LS_PS, escape_LF_LS_PS)}`;
+        const { media } = _(style);
+        yield media === undefined$1
+            ? `${eol}.$(${StringLiteral(innerCSS)})`
+            : `${eol}.$(${StringLiteral(innerCSS)}, ${StringLiteral(media)})`;
     }
-    yield `;${eol}${eol}`;
-    if (!template) {
+    yield `;${eol}`;
+    if (template) {
+        yield eol;
+    }
+    else {
         return;
     }
     const { innerHTML } = template;
@@ -3888,13 +3906,13 @@ function* From(tab, mode, styles, template, from, eol) {
     if (errors.length) {
         throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`);
     }
-    yield `export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, scope);${eol}`;
-    yield `export ${mode} render = /*#__PURE__*/Render(${NecessaryStringLiteral(render)}, scope);${eol}`;
+    yield `export ${mode} template = /*#__PURE__*/jVue.Template(${StringLiteral(innerHTML)}, scope);${eol}`;
+    yield `export ${mode} render = /*#__PURE__*/jVue.Render(${NecessaryStringLiteral(render)}, scope);${eol}`;
     yield staticRenderFns.length
-        ? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.map(NecessaryStringLiteral).join(`,${eol}${tab}`)}${eol}], scope);${eol}`
+        ? `export ${mode} staticRenderFns = /*#__PURE__*/jVue.StaticRenderFns([${eol}${tab}${staticRenderFns.map(NecessaryStringLiteral).join(`,${eol}${tab}`)}${eol}], scope);${eol}`
         : `export ${mode} staticRenderFns = [];${eol}`;
     for (const line of template.content.toSource(tab)) {
-        yield `//${tab}${line}${eol}`;
+        yield `//${tab}${line.replace(LF_LS_PS, escape_LF_LS_PS)}${eol}`;
     }
 }
 
