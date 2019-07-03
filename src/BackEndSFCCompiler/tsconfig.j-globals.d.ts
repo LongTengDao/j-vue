@@ -157,7 +157,7 @@ declare module '.document.head' { export default document.head; }
 declare module '.null' { export default NULL;
 	const NULL :{
 		new<ValueType extends any> () :NULL<ValueType>,
-		new () :{},
+		new () :object,
 		<_ extends never, Object extends object> (object :Object, define? :boolean) :Object,
 		<ValueType> (object :object, define? :boolean) :NULL<ValueType>,
 	};
@@ -193,16 +193,16 @@ declare module '.null.assign' { export default assign;
 	function assign<O extends {}> (target :null | O, firstSource :O, ...restSources :O[]) :O;
 }
 declare module '.null.create' { export default create;
-	function create<O extends {}, OO extends PropertyDescriptorMap> (proto? :null | O, descriptorMap? :OO) :( OO extends TypedPropertyDescriptorMap<infer O> ? O : {} ) & O;
+	function create<O extends object, OO extends PropertyDescriptorMap> (proto? :null | O, descriptorMap? :OO) :( OO extends TypedPropertyDescriptorMap<infer O> ? O : object ) & O;
 	type TypedPropertyDescriptorMap<O> = { [k in keyof O] :TypedPropertyDescriptor<O[k]> };
 }
 declare module '.null.defineProperties' { export default defineProperties;
-	function defineProperties<O extends {}, OO extends PropertyDescriptorMap> (object :O, descriptorMap :OO) :( OO extends TypedPropertyDescriptorMap<infer O> ? O : never ) & O;
+	function defineProperties<O extends object, OO extends PropertyDescriptorMap> (object :O, descriptorMap :OO) :( OO extends TypedPropertyDescriptorMap<infer O> ? O : never ) & O;
 	type TypedPropertyDescriptorMap<O> = { [k in keyof O] :TypedPropertyDescriptor<O[k]> };
 }
 declare module '.null.defineProperty' { export default defineProperty;
-	function defineProperty<O extends {}, K extends string | symbol, D extends PropertyDescriptor> (object :O, key :K, descriptor :D, useReflect? :false) :( D extends TypedPropertyDescriptor<infer V> ? { [key in K] :V } : never ) & O;
-	function defineProperty<O extends {}, K extends string | symbol, D extends PropertyDescriptor> (object :O, key :K, descriptor :D, useReflect :true) :boolean;
+	function defineProperty<O extends object, K extends string | symbol, D extends PropertyDescriptor> (object :O, key :K, descriptor :D, useReflect? :false) :( D extends TypedPropertyDescriptor<infer V> ? { [key in K] :V } : never ) & O;
+	function defineProperty<O extends object, K extends string | symbol, D extends PropertyDescriptor> (object :O, key :K, descriptor :D, useReflect :true) :boolean;
 }
 declare module '.null.fromEntries' { export default fromEntries;
 	function fromEntries<K extends string | symbol, V extends any> (entries :Iterable<{ readonly 0: K, readonly 1: V }>) :{ [k in K] :V };
