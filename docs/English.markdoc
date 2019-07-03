@@ -54,10 +54,13 @@ Back-End SFC Compiler
 				export var template = jVue.Template('<div />', scope);
 				export var render = jVue.Render('_c(\'div\')', scope);
 				export var staticRenderFns = jVue.StaticRenderFns([], scope);
+				export * from 'j-vue';
 			
 			Note: If there is a `lang` attribute which value is other than `html` (or semantic similar) in the `template` block, or any `style` block has a `lang` attribute which value is other than `css` (or semantic similar), then the user must transpile its `inner` property value and modify its `lang` property.
 			
 			The second parameter `from` is the module id used to introduce the jVue front-end runtime dependency library.
+			
+			The exports of `j-vue` will be exported too, to make them simply to use.
 	
 Front-End Runtime Dependency
 ----------------------------	

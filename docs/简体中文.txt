@@ -54,10 +54,13 @@
                                                                           export var template = jVue.Template('<div />', scope);
                                                                           export var render = jVue.Render('_c(\'div\')', scope);
                                                                           export var staticRenderFns = jVue.StaticRenderFns([], scope);
+                                                                          export * from 'j-vue';
                                                                       
                                                                       注意：如果 `template` 块存在非 `html`（或语义近似值）的 `lang` 属性，或任何 `style` 块存在非 `css`（或语义近似值）的 `lang` 属性，那么用户必须自行转码其 `inner` 属性中的内容，并修改其 `lang` 属性。
                                                                       
                                                                       第二个参数 `from`，是用于引入 jVue 前端运行时依赖库的模块名。
+                                                                      
+                                                                      `j-vue` 中的内容也会一并导出，以便于使用。
                      
 前端运行时依赖
 --------------       
