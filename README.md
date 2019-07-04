@@ -100,7 +100,7 @@ So, we can write our `.vue` single-file-component like this from now on: (only n
     <div class="__static__">
         <STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
         <p :class="{ [scope('dynamic')]: red }">text</p>
-        <p :class="scope({   dynamic:    red })">text (object)</p>
+        <p :class="scope({ dynamic: red   })">text (object)</p>
         <p :class="scope([red && 'dynamic'])">text (array)</p>
         <p :class="scope( red && 'dynamic' )">text (arguments)</p>
         <button @click="change">change</button>

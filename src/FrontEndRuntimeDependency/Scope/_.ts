@@ -4,11 +4,11 @@ import document from '.document';
 import head from '.document.head';
 import undefined from '.undefined';
 
-export var _ :'_' = typeof Symbol==='function'
+var _ :'_' = typeof Symbol==='function'
 	? Symbol('_') as any
 	: '_';
 
-export function $<T extends Scope> (this :T, css? :string, media? :string) :T {
+function $<T extends Scope> (this :T, css? :string, media? :string) :T {
 	var style :HTMLStyleElement = document.createElement('style');
 	if ( css ) { style.textContent = this[_](css); }
 	if ( media!==undefined ) {
@@ -18,7 +18,7 @@ export function $<T extends Scope> (this :T, css? :string, media? :string) :T {
 	return this;
 }
 
-export var prepare_ :(scope :Scope) => void = typeof _==='symbol'
+var prepare_ :(scope :Scope) => void = typeof _==='symbol'
 	
 	? function $ () {}
 	
@@ -28,5 +28,7 @@ export var prepare_ :(scope :Scope) => void = typeof _==='symbol'
 			defineProperty(scope, _, _descriptor);
 		};
 	}();
+
+export { _, $, prepare_ };
 
 import Scope from './';

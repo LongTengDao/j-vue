@@ -1,7 +1,8 @@
 import version from '../version?text';
 import Identifier from './Identifier';
 import Scope from './Scope/';
-import { Template, Render, StaticRenderFns } from './Template, Render, StaticRenderFns';
+import Template from './Template';
+import { Render, StaticRenderFns } from './Render, StaticRenderFns';
 import STYLE  from './STYLE';
 import { Style, remove } from './Style, remove';
 
@@ -9,7 +10,8 @@ export {
 	version,
 	Identifier,
 	Scope,
-	Template, Render, StaticRenderFns,
+	Template,
+	Render, StaticRenderFns,
 	STYLE,
 	Style, remove,
 };
