@@ -19,6 +19,9 @@ const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG = newRegExp`</STYLE${TAG_EMIT_CHAR}`;
 const TITLE_END_TAG = newRegExp`</title${TAG_EMIT_CHAR}`;
 const TEXTAREA = /^textarea$/i;
+const TNS = /^[\t\n ]+$/;
+const SOF_TNS_LT = /^[\t\n ]+</;
+const GT_TNS_EOF = />[\t\n ]+$/;
 
 let html :string = '';
 let index :number = 0;
@@ -112,17 +115,19 @@ export default class Content extends Node {
 		super();
 		if ( inner ) {
 			partial = abbr;
-			html = '\n'+inner;
+			html = inner;
 			index = 0;
 			try { parseAppend('', this); }
 			catch (error) {
-				error.message = `${error.message}：\n${Snippet(inner, index-1)}`;
+				error.message = `${error.message}：\n${Snippet(inner, index)}`;
 				throw error;
 			}
 			finally {
 				partial = undefined;
 				html = '';
 			}
+			if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.childNodes.shift(); }
+			if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.childNodes.pop(); }
 		}
 	}
 	
