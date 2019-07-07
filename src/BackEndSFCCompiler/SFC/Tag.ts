@@ -4,7 +4,7 @@ import throwSyntaxError from '.throw.SyntaxError';
 import * as Entities from './Entities';
 import Attributes from './Attributes';
 
-import { ATTRIBUTE, ATTRIBUTE_NAME_VALUE, TAG, IS_TAG, TAG_START } from './RE';
+import { ATTRIBUTE, ATTRIBUTE_NAME_VALUE, TAG, IS_TAG, TAG_LIKE } from './RE';
 
 export const ELEMENT_START :1.1 = 1.1;
 export const ELEMENT_END :1.2 = 1.2;
@@ -61,7 +61,7 @@ export function Tag (html :string, position :number) {
 	else { rest = html.slice(position); }
 	
 	if ( rest ) {
-		let end :number = rest.search(TAG_START);
+		let end :number = rest.search(TAG_LIKE);
 		end = end<0 ? html.length : position+end;
 		return { type: TEXT, raw: html.slice(position, end), end };
 	}

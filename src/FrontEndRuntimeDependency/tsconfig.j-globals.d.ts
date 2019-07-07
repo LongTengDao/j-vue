@@ -1,5 +1,7 @@
 
-declare module '.Array.isArray' { export default Array.isArray; }
+declare module '.Array.isArray' { export default isArray;
+	function isArray (value :any) :value is any[] | readonly any[];
+}
 declare module '.Array.prototype.slice' { export default Array.prototype.slice; }
 
 declare module '.Function' { export default Function; }
@@ -21,7 +23,7 @@ declare module '.default' { export default Default;
 	function Default<Statics extends { readonly [key :string] :any, default? :ModuleFunction<Statics, Main> }, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
 	type Module<Exports> = { readonly [key in keyof Exports] :Exports[key] } & { readonly default :Module<Exports> };
 	type ModuleFunction<Statics, Main> = { readonly [key in keyof Statics] :Statics[key] } & { readonly default :ModuleFunction<Statics, Main> } & Main;
-	type Callable = { (...args :any[]) :any };
+	type Callable = (...args :any[]) => any;
 	type Newable = { new (...args :any[]) :any };
 }
 

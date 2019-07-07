@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.0.5';
+const version = '9.0.6';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -98,18 +98,19 @@ const NULL = (
  * 模块名称：ES
  * 模块功能：ECMAScript 语法相关共享实用程序。从属于“简计划”。
    　　　　　ECMAScript syntax util. Belong to "Plan J".
- * 模块版本：0.6.1
+ * 模块版本：0.7.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-es/issues
  * 项目主页：https://GitHub.com/LongTengDao/j-es/
  */
+
 var Cf = /[\xAD\u0600-\u0605\u061C\u06DD\u070F\u08E2\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF\uFFF9-\uFFFB]|\uD804\uDCBD|\uD82F[\uDCA0-\uDCA3]|\uD834[\uDD73-\uDD7A]|\uDB40[\uDC01\uDC20-\uDC7F]/g;
-var CANT_IN_SINGLE_QUOTE = /[\\'\n\r\u2028\u2029]/g;
+var CANT_IN_SINGLE_QUOTE = /[\n\r'\\\u2028\u2029]/g;
 function staticallyEscape(cant_in_single_quote) {
     return CHAR_TO_ESCAPED[cant_in_single_quote];
 }
-var CHAR_TO_ESCAPED = { '\\': '\\\\', '\'': '\\\'', '\n': '\\n', '\r': '\\r', '\u2028': '\\u2028', '\u2029': '\\u2029' };
+var CHAR_TO_ESCAPED = { '\n': '\\n', '\r': '\\r', '\'': '\\\'', '\\': '\\\\', '\u2028': '\\u2028', '\u2029': '\\u2029' };
 function dynamicallyEscape(char_in_cf) {
     if (char_in_cf.length > 1) {
         return dynamicallyEscape(char_in_cf.charAt(0)) + dynamicallyEscape(char_in_cf.charAt(1));
@@ -340,7 +341,7 @@ const create$1 = Object.create || (
 		}
 		return function create (o, properties) {
 			return /*#__PURE__*/ __PURE__(o, properties);
-		}
+		};
 	}()
 	/*¡ j-globals: Object.create (polyfill) */
 );
@@ -454,12 +455,6 @@ const TAG_LIKE = newRegExp `
 `;
 const IS_TAG = newRegExp `
 	^
-	<
-	/?
-	${TAG_NAME}
-	${TAG_EMIT_CHAR}
-`;
-const TAG_START = newRegExp `
 	<
 	/?
 	${TAG_NAME}
@@ -2940,7 +2935,7 @@ const isArray$1 = Array.isArray;
  * 模块名称：j-orderify
  * 模块功能：返回一个能保证给定对象的属性按此后添加顺序排列的 proxy，即使键名是 symbol，或整数 string。从属于“简计划”。
    　　　　　Return a proxy for given object, which can guarantee own keys are in setting order, even if the key name is symbol or int string. Belong to "Plan J".
- * 模块版本：5.1.0
+ * 模块版本：5.2.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-orderify/issues
@@ -2951,17 +2946,13 @@ const Keeper = Set;
 const target2keeper = new WeakMap;
 const proxy2target = new WeakMap;
 const target2proxy = new WeakMap;
-const setDescriptor = /*#__PURE__*/ function () {
-    var setDescriptor = create(null);
-    setDescriptor.value = undefined$1;
-    setDescriptor.writable = true;
-    setDescriptor.enumerable = true;
-    setDescriptor.configurable = true;
-    return setDescriptor;
-}();
-const handlers = 
-/*#__PURE__*/
-assign(create(null), {
+const setDescriptor = /*#__PURE__*/ assign(create(null), {
+    value: undefined$1,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+});
+const handlers = /*#__PURE__*/ assign(create(null), {
     apply(Function, thisArg, args) {
         return orderify(apply(Function, thisArg, args));
     },
@@ -3216,7 +3207,7 @@ function Tag(html, position) {
         rest = html.slice(position);
     }
     if (rest) {
-        let end = rest.search(TAG_START);
+        let end = rest.search(TAG_LIKE);
         end = end < 0 ? html.length : position + end;
         return { type: TEXT, raw: html.slice(position, end), end };
     }
@@ -3888,7 +3879,7 @@ const SUR = '})';
 const PRE_LENGTH = PRE.length;
 const SUR_LENGTH = -SUR.length;
 const VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return (\2\(.*\))}\);$/s;
-function fetchName(global) { return global ? global.name : ''; }
+function fetchName(global) { return global ? global.name || '' : ''; }
 function NecessaryStringLiteral(body) {
     if (!body.startsWith('with(this){return ') || !body.endsWith('}')) {
         throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`);
@@ -3918,13 +3909,18 @@ function NecessaryStringLiteral(body) {
     }
     return StringLiteral(`${vm_c_exp[1]},${vm_c_exp[3]}`);
 }
+const NULo = /^\0[0-7]/;
 const LS_PS = /[\u2028\u2029]/g;
 const LF_LS_PS = /[\n\u2028\u2029]/g;
 const escape_LS_PS = ($0) => $0 === '\u2028' ? '\\002028' : '\\002029';
 const escape_LF_LS_PS = ($0) => $0 === '\n' ? '&#x0A;' : $0 === '\u2028' ? '&#x2028;' : '&#x2029;';
+function VisibleStringLiteral(id) {
+    const literal = StringLiteral(id);
+    return id.startsWith('\0') ? (NULo.test(id) ? `'\\x00` : `'\\0`) + literal.slice(2) : literal;
+}
 function* From(tab, mode, styles, template, from, eol) {
-    yield `export * from ${StringLiteral(from)};${eol}`;
-    yield `import { Scope, Template, Render, StaticRenderFns } from ${StringLiteral(from)};${eol}${eol}`;
+    yield `export * from ${VisibleStringLiteral(from)};${eol}`;
+    yield `import { Scope, Template, Render, StaticRenderFns } from ${VisibleStringLiteral(from)};${eol}${eol}`;
     yield !template || _(template).keys === undefined$1
         ? `export ${mode} scope = /*#__PURE__*/Scope()`
         : `export ${mode} scope = /*#__PURE__*/Scope('${(_(template).keys.match(KEYS) || []).join(',')}')`;

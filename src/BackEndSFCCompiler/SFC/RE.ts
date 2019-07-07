@@ -77,10 +77,3 @@ export const IS_TAG = newRegExp`
 	${TAG_NAME}
 	${TAG_EMIT_CHAR}
 `;
-
-export const TAG_START = newRegExp`
-	<
-	/?
-	${TAG_NAME}
-	${TAG_EMIT_CHAR}
-`;

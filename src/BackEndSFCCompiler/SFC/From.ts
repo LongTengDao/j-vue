@@ -74,7 +74,7 @@ const SUR_LENGTH = -SUR.length;
 
 const VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return (\2\(.*\))}\);$/s;
 
-function fetchName (global :{ name :string }) :string { return global ? global.name : ''; }
+function fetchName (global :{ name :string }) :string { return global ? global.name || '' : ''; }
 
 function NecessaryStringLiteral (body :string) :string {
 	if ( !body.startsWith('with(this){return ') || !body.endsWith('}') ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
@@ -96,15 +96,21 @@ function NecessaryStringLiteral (body :string) :string {
 	return StringLiteral(`${vm_c_exp[1]},${vm_c_exp[3]}`);
 }
 
+const NULo = /^\0[0-7]/;
 const LS_PS = /[\u2028\u2029]/g;
 const LF_LS_PS = /[\n\u2028\u2029]/g;
 const escape_LS_PS = ($0 :string) :string => $0==='\u2028' ? '\\002028' : '\\002029';
 const escape_LF_LS_PS = ($0 :string) :string => $0==='\n' ? '&#x0A;' : $0==='\u2028' ? '&#x2028;' : '&#x2029;';
 
+function VisibleStringLiteral (id :string) :string {
+	const literal :string = StringLiteral(id);
+	return id.startsWith('\0') ? ( NULo.test(id) ? `'\\x00` : `'\\0` )+literal.slice(2) : literal;
+}
+
 export default function * From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string, eol :string) :IterableIterator<string> {
 	
-	yield `export * from ${StringLiteral(from)};${eol}`;
-	yield `import { Scope, Template, Render, StaticRenderFns } from ${StringLiteral(from)};${eol}${eol}`;
+	yield `export * from ${VisibleStringLiteral(from)};${eol}`;
+	yield `import { Scope, Template, Render, StaticRenderFns } from ${VisibleStringLiteral(from)};${eol}${eol}`;
 	
 	yield !template || _(template).keys===undefined
 		? `export ${mode} scope = /*#__PURE__*/Scope()`
