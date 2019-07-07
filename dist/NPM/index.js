@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.0.6';
+const version = '9.0.7';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -626,11 +626,13 @@ const checkNewline = (
 	/*¡ j-globals: return (internal) */
 );
 
-const VOID_ELEMENTS = /^(?:area|b(?:r|ase)|co(?:l|mmand)|embed|hr|i(?:mg|nput)|keygen|link|meta|param|source|track|wbr)$/;
+const VOID_ELEMENTS = /^(?:area|b(?:r|ase)|co(?:l|mmand)|embed|hr|i(?:mg|nput)|keygen|link|meta|param|source|track|wbr)$/i;
 
-const RAW_TEXT_ELEMENTS = /^s(?:cript|tyle)$/;
+const RAW_TEXT_ELEMENTS = /^s(?:cript|tyle)$/i;
 
-const ESCAPABLE_RAW_TEXT_ELEMENTS = /^t(?:extarea|itle)$/;
+const ESCAPABLE_RAW_TEXT_ELEMENTS = /^t(?:extarea|itle)$/i;
+
+const FOREIGN_ELEMENTS = /^(?:s(?:vg|witch|ymbol)|animate|c(?:ircle|lippath|ursor)|de(?:fs|sc)|ellipse|f(?:ilter|o(?:nt\-face|reignObject))|g(?:lyph)?|image|line|m(?:a(?:rker|sk)|issing\-glyph)|p(?:at(?:h|tern)|oly(?:gon|line))|rect|t(?:ext(?:path)?|span)|use|view)$/i;
 
 const NON_ASCII = /[^\x00-\x7F]/u;
 const NON_TAB = /[^\t\x20]/g;
@@ -3510,6 +3512,7 @@ class Mustache extends Array {
     }
 }
 
+const COMPONENT_NAME = /[A-Z]/;
 const TEXTAREA_END_TAG = newRegExp `</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG$1 = newRegExp `</STYLE${TAG_EMIT_CHAR}`;
 const TITLE_END_TAG = newRegExp `</title${TAG_EMIT_CHAR}`;
@@ -3548,6 +3551,12 @@ function parseAppend(parentNode_xName, parentNode) {
         }
         xName === 'script' && throwSyntaxError(`Vue 不允许 template 中存在 script 标签`);
         xName === 'style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
+        if ('is' in tag.attributes && FOREIGN_ELEMENTS.test(tag.attributes.is) && COMPONENT_NAME.test(tag.attributes.is)) {
+            throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${tag.attributes.is}”，不被 Vue 作为组件对待`);
+        }
+        if (FOREIGN_ELEMENTS.test(xName) && COMPONENT_NAME.test(xName)) {
+            throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，不被 Vue 作为组件对待`);
+        }
         const element = parentNode.appendChild(new Element(xName, tag.attributes, partial));
         index = tag.end;
         if (type === ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName)) {

@@ -11,7 +11,7 @@ function Body (body :string) :string {
 type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
 
 function Render (code :string, scope? :Scope) :Render {
-	return Function('"use strict";'+Body(scope ? scope[_](code) : code)) as Render;
+	return /*#__PURE__*/ Function('"use strict";'+Body(scope ? scope[_](code) : code)) as Render;
 }
 
 function StaticRenderFns (codes :string[], scope? :Scope) :Render[] {

@@ -12,8 +12,9 @@ import Snippet from './Snippet';
 import { TAG_EMIT_CHAR } from './RE';
 import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from './Tag';
 
-import { VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
+import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
+const COMPONENT_NAME = /[A-Z]/;
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG = newRegExp`</STYLE${TAG_EMIT_CHAR}`;
 const TITLE_END_TAG = newRegExp`</title${TAG_EMIT_CHAR}`;
@@ -53,6 +54,12 @@ function parseAppend (parentNode_xName :string, parentNode :Node) :void {
 		}
 		xName==='script' && throwSyntaxError(`Vue 不允许 template 中存在 script 标签`);
 		xName==='style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
+		if ( 'is' in tag.attributes! && FOREIGN_ELEMENTS.test(tag.attributes!.is!) && COMPONENT_NAME.test(tag.attributes!.is!) ) {
+			throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${tag.attributes!.is!}”，不被 Vue 作为组件对待`);
+		}
+		if ( FOREIGN_ELEMENTS.test(xName) && COMPONENT_NAME.test(xName) ) {
+			throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，不被 Vue 作为组件对待`);
+		}
 		const element :Element = parentNode.appendChild(new Element(xName, tag.attributes!, partial));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName) ) { continue; }

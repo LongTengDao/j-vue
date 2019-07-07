@@ -22,13 +22,13 @@ type Scope = ObjectScope | FunctionScope;
 
 function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
 	if ( keys===undefined ) {
-		if ( isArray(this) ) { return FunctionScope(mix(this)); }
+		if ( isArray(this) ) { return FunctionScope(mix(this as Scope[])); }
 		else if ( this instanceof ObjectScope ) { return FunctionScope(create(this)); }
 		else if ( typeof this==='function' && this.prototype instanceof ObjectScope ) { return FunctionScope(create(this.prototype)); }
 		else { return FunctionScope(create(SCOPE)); }
 	}
 	else {
-		if ( isArray(this) ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = mix(this)); }
+		if ( isArray(this) ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = mix(this as Scope[])); }
 		else if ( this instanceof ObjectScope ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = this); }
 		else if ( typeof this==='function' && this.prototype instanceof ObjectScope ) { return new InheritedObjectScope(keys.match(KEYS) || EMPTY, InheritedObjectScope.prototype = this.prototype); }
 		else { return new ObjectScope(keys.match(KEYS) || EMPTY); }
