@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.0.7';
+const version = '9.0.8';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3609,7 +3609,7 @@ class Content extends Node {
                 parseAppend('', this);
             }
             catch (error) {
-                error.message = `${error.message}：\n${Snippet(html, index)}`;
+                error.message = `${error.message}：\n${Snippet(inner, index - 1)}`;
                 throw error;
             }
             finally {
@@ -3779,7 +3779,7 @@ function parseComponent(sfc, vue) {
                 const endTagStart = vue.indexOf(`\n</${blockName}>`, index) + 1 || throwSyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`);
                 index = endTagStart + 3 + blockName.length;
                 inner = endTagStart === innerStart || endTagStart === innerStart + 1 ? '' : vue.slice(innerStart, endTagStart - 1);
-                if (blockName === 'script') {
+                if (blockName !== 'style') {
                     inner =
                         checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '') +
                             inner;
@@ -3793,7 +3793,7 @@ function parseComponent(sfc, vue) {
                 }
                 vue.endsWith(`</${blockName}>`, index) || throwSyntaxError(`开始标签后不紧跟换行则启用单行块模式，该行应以对应的结束标签结尾`);
                 inner = vue.slice(innerStart, index - 3 - blockName.length);
-                if (blockName === 'script') {
+                if (blockName !== 'style') {
                     const lastLineStart = vue.lastIndexOf('\n', innerStart) + 1;
                     inner =
                         checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '') +

@@ -64,23 +64,23 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 			VOID_ELEMENTS.test(blockName) && throwSyntaxError(`.vue 文件中的自定义块如果是 HTML void 元素（无论大小写），必须自闭合使用、并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`);
 			index===length && throwSyntaxError(`开始标签后缺少结束标签“</${blockName}>”`);
 			if ( vue.startsWith('\n', index) ) {
-				const innerStart = index+1;
-				const endTagStart = vue.indexOf(`\n</${blockName}>`, index)+1 || throwSyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`);
+				const innerStart :number = index+1;
+				const endTagStart :number = vue.indexOf(`\n</${blockName}>`, index)+1 || throwSyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`);
 				index = endTagStart+3+blockName.length;
 				inner = endTagStart===innerStart || endTagStart===innerStart+1 ? '' : vue.slice(innerStart, endTagStart-1);
-				if ( blockName==='script' ) {
+				if ( blockName!=='style' ) {
 					inner =
 						checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '')+
 						inner;
 				}
 			}
 			else {
-				const innerStart = index;
+				const innerStart :number = index;
 				index = vue.indexOf('\n', index);
 				if ( index<0 ) { index = length; }
 				vue.endsWith(`</${blockName}>`, index) || throwSyntaxError(`开始标签后不紧跟换行则启用单行块模式，该行应以对应的结束标签结尾`);
 				inner = vue.slice(innerStart, index-3-blockName.length);
-				if ( blockName==='script' ) {
+				if ( blockName!=='style' ) {
 					const lastLineStart :number = vue.lastIndexOf('\n', innerStart)+1;
 					inner =
 						checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '')+

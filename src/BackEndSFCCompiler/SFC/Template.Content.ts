@@ -116,7 +116,7 @@ export default class Content extends Node {
 			index = 0;
 			try { parseAppend('', this); }
 			catch (error) {
-				error.message = `${error.message}：\n${Snippet(html, index)}`;
+				error.message = `${error.message}：\n${Snippet(inner, index-1)}`;
 				throw error;
 			}
 			finally {
