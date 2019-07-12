@@ -18,10 +18,14 @@ const delimiters = [ '{{', '}}' ];
 
 export default class Mustache extends Array<string> {
 	
-	constructor (raw :string) {
+	constructor (raw :string, v_pre :boolean) {
 		// Vue 会优先解析 <tag>，而且还看 tagName，然后才是 {{}}，这和流式解析矛盾，因此要求避免任何潜在的视觉歧义
 		// 如果未来发现不会导致解析报错终止的歧义，则要更严格地，在解码前检查确保连“<”都不存在
 		super();
+		if ( v_pre ) {
+			this.push(Entities.unescape(trimTab(raw)));
+			return;
+		}
 		for ( let index :number = 0, data :string; ; ) {
 			
 			const insStart :number = raw.indexOf(delimiters[0], index);

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.0.9';
+const version = '9.0.10';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3385,16 +3385,9 @@ class Node {
 }
 freeze(Node.prototype);
 
-const _ID = /(?<=^|[\s(,:[{/]|\.\.\.)_[a-zA-Z]+(?=[\s),\]}/=])/; // 缩小检测范围的话，标识符部分可以只检测“_(?:[a-z]|vm)”
 class Element extends Node {
     constructor(localName, attributes, partial) {
         super();
-        if ('v-for' in attributes) {
-            const _id = _ID.exec(attributes['v-for']);
-            if (_id) {
-                throw ReferenceError(`“v-for”中似乎存在以下划线开头后跟字母的危险变量“${_id[0]}”，这可能使得 Vue 模板编译结果以错误的方式运行`);
-            }
-        }
         if (partial && localName in partial) {
             const { tagName, class: classNames } = partial[localName];
             if (classNames) {
@@ -3466,10 +3459,14 @@ function trimTab(raw) {
 }
 const delimiters = ['{{', '}}'];
 class Mustache extends Array {
-    constructor(raw) {
+    constructor(raw, v_pre) {
         // Vue 会优先解析 <tag>，而且还看 tagName，然后才是 {{}}，这和流式解析矛盾，因此要求避免任何潜在的视觉歧义
         // 如果未来发现不会导致解析报错终止的歧义，则要更严格地，在解码前检查确保连“<”都不存在
         super();
+        if (v_pre) {
+            this.push(unescape(trimTab(raw)));
+            return;
+        }
         for (let index = 0, data;;) {
             const insStart = raw.indexOf(delimiters[0], index);
             if (insStart < 0) {
@@ -3520,10 +3517,11 @@ const TEXTAREA = /^textarea$/i;
 const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
+const _ID = /(?<=^|[\s(,:[{/]|\.\.\.)_[a-zA-Z]+(?=[\s),\]}/=])/; // 缩小检测范围的话，标识符部分可以只检测“_(?:[a-z]|vm)”
 let html = '';
 let index = 0;
 let partial;
-function parseAppend(parentNode_xName, parentNode) {
+function parseAppend(parentNode_xName, parentNode, V_PRE) {
     for (;;) {
         const tag = Tag(html, index);
         const { type } = tag;
@@ -3535,7 +3533,7 @@ function parseAppend(parentNode_xName, parentNode) {
             return;
         }
         if (type === TEXT) {
-            const data = new Mustache(tag.raw).toData();
+            const data = new Mustache(tag.raw, V_PRE).toData();
             data && parentNode.appendChild(new Text(data));
             index = tag.end;
             continue;
@@ -3554,33 +3552,49 @@ function parseAppend(parentNode_xName, parentNode) {
         }
         xName === 'script' && throwSyntaxError(`Vue 不允许 template 中存在 script 标签`);
         xName === 'style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
-        if ('is' in tag.attributes && FOREIGN_ELEMENTS.test(tag.attributes.is) && COMPONENT_NAME.test(tag.attributes.is)) {
-            throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${tag.attributes.is}”，不被 Vue 作为组件对待`);
+        const attributes = tag.attributes;
+        const v_pre = V_PRE || 'v-pre' in attributes;
+        if (!v_pre && (':is' in attributes || 'v-bind:is' in attributes)) { }
+        else if (!v_pre && 'is' in attributes) {
+            if (FOREIGN_ELEMENTS.test(attributes.is) && COMPONENT_NAME.test(attributes.is)) {
+                throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${attributes.is}”，不被 Vue 作为组件对待`);
+            }
         }
-        if (FOREIGN_ELEMENTS.test(xName) && COMPONENT_NAME.test(xName)) {
-            throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，不被 Vue 作为组件对待`);
+        else {
+            if (FOREIGN_ELEMENTS.test(xName) && COMPONENT_NAME.test(xName)) {
+                throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，不被 Vue 作为组件对待`);
+            }
         }
-        const element = parentNode.appendChild(new Element(xName, tag.attributes, partial));
+        if (!v_pre && 'v-for' in attributes) {
+            const _id = _ID.exec(attributes['v-for']);
+            if (_id) {
+                throw ReferenceError(`“v-for”中似乎存在以下划线开头后跟字母的危险变量“${_id[0]}”，这可能使得 Vue 模板编译结果以错误的方式运行`);
+            }
+        }
+        const element = parentNode.appendChild(new Element(xName, attributes, partial));
         index = tag.end;
         if (type === ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName)) {
             continue;
         }
+        if (!v_pre && ('v-text' in attributes || 'v-html' in attributes)) {
+            throw SyntaxError(`开放标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
+        }
         // iframe：Vue 运行所必须的 IE9+ 刚好允许其中嵌套标签
         if (xName === 'textarea' || xName === 'title' || xName === 'STYLE') {
-            if ('v-text' in element.attributes || 'v-html' in element.attributes) {
+            if ('v-text' in attributes || 'v-html' in attributes || v_pre) {
                 throw SyntaxError((xName === 'textarea' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（形如标签的文本会被剔除）` :
                     xName === 'STYLE' ? `非自闭合 ${xName} 组件中的内容为了避免被 Vue 额外修正（形如标签的文本会被剔除）` :
                         xName === 'title' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（会试着真的作为标签解析）` :
-                            ``) + `，jVue 会将其编译为 v-text 属性，因此标签不能已经具备 v-text 或 v-html 属性`);
+                            ``) + `，jVue 会将其编译为 v-text 属性，因此标签不能已经具备 v-text 或 v-html，且自身或外层节点不能有 v-pre 属性`);
             }
             const endTagStart = html.slice(index).search(xName === 'textarea' ? TEXTAREA_END_TAG :
                 xName === 'STYLE' ? STYLE_END_TAG$1 :
                     xName === 'title' ? TITLE_END_TAG :
                         null);
             endTagStart < 0 && throwSyntaxError(`template 块中存在未关闭的 ${xName} 标签`);
-            const expression = new Mustache(html.slice(index, endTagStart)).toExpression();
+            const expression = new Mustache(html.slice(index, endTagStart), v_pre).toExpression();
             if (expression) {
-                element.attributes['v-text'] = expression;
+                attributes['v-text'] = expression;
             }
             index = Tag(html, index = endTagStart).end;
         }
@@ -3597,7 +3611,7 @@ function parseAppend(parentNode_xName, parentNode) {
                 `并不知道该往什么方向进行（除 jVue 推荐的 STYLE 组件用来模拟 style 外）`);
         }
         else {
-            parseAppend(xName, element); // 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
+            parseAppend(xName, element, v_pre); // 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
         }
     }
 }
@@ -3609,7 +3623,7 @@ class Content extends Node {
             html = inner;
             index = 0;
             try {
-                parseAppend('', this);
+                parseAppend('', this, false);
             }
             catch (error) {
                 error.message = `${error.message}：\n${Snippet(inner, index)}`;
