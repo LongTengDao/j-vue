@@ -31,7 +31,7 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 			continue;
 		}
 		
-		const tag = Tag(vue, index);
+		const tag = Tag(vue, index, false);
 		switch ( tag.type ) {
 			case ELEMENT_START:
 			case ELEMENT_SELF_CLOSING:

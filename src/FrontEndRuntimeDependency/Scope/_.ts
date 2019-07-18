@@ -22,7 +22,7 @@ var prepare_ :(scope :Scope) => void = typeof _==='symbol'
 	
 	? function $ () {}
 	
-	: /*#__PURE__*/ function () {
+	: function () {
 		var _descriptor = PropertyDescriptor(function _ () {}, true, false, false);
 		return function $ (scope :Scope) {
 			defineProperty(scope, _, _descriptor);

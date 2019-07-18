@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.0.10';
+const version = '9.0.11';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -24,7 +24,7 @@ const getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 
 const PropertyDescriptor = (
 	/*! j-globals: null.PropertyDescriptor (internal) */
-	/*#__PURE__*/ function () {
+	function () {
 		function __PURE__ (value_get, set_writable, enumerable, configurable) {
 			var propertyDescriptor = create(null);
 			if ( set_writable===true ) {
@@ -312,7 +312,7 @@ const create$1 = Object.create || (
 		}
 		else {
 			dom = document.createElement('iframe');
-			dom.style.display = 'none';
+			dom.setAttribute('style', 'display:none !important;_display:none;');//dom.style.display = 'none';
 			var parent = document.body || document.documentElement;
 			parent.appendChild(dom);
 			dom.src = 'javascript:';
@@ -3148,12 +3148,12 @@ const ELEMENT_SELF_CLOSING = 1.3;
 const TEXT = 3;
 const COMMENT = 8;
 const EOF = 0;
-function Tag(html, position) {
+function Tag(html, position, foreign) {
     let rest;
     if (html.startsWith('<', position)) {
         if (html.startsWith('!', position + 1)) {
             if (!html.startsWith('--', position + 2)) {
-                throw SyntaxError(html.startsWith('[CDATA[', position + 2) ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内` : `标准的注释语法应由“<!--”而非“ <!”开启`);
+                throw SyntaxError(html.startsWith('[CDATA[', position + 2) && !foreign ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内` : `标准的注释语法应由“<!--”而非“ <!”开启`);
             }
             if (html.startsWith('>', position + 4) || html.startsWith('->', position + 4)) {
                 throw SyntaxError(`紧随“<!--”注释开始语法之后出现的“>”或“->”会造成注释意外中断`);
@@ -3169,7 +3169,7 @@ function Tag(html, position) {
             return { type: COMMENT, data, end: end + 3 };
         }
         if (html.startsWith('?', position + 1)) {
-            throw SyntaxError(`在 HTML 上下文中，“<?”XML 指令/声明只会被作为注释对待，而且其引号属性并不安全`);
+            throw SyntaxError(foreign ? `不知该如何对待“<?”开启的 XML 指令/声明` : `在 HTML 上下文中，“<?”XML 指令/声明只会被作为注释对待，而且其引号属性并不安全`);
         }
         rest = html.slice(position);
         if (IS_TAG.test(rest)) {
@@ -3278,24 +3278,26 @@ class Script extends Block {
 
 const Private = (
 	/*! j-globals: private (internal) */
-	/*#__PURE__*/ function () {
-		var Weak = WeakMap;
-		var GET = /*#__PURE__*/ create(null);
-		GET.value = Weak.prototype.get;
-		var SET = /*#__PURE__*/ create(null);
-		SET.value = Weak.prototype.set;
-		function add (weak, THIS) {
-			var _THIS = create(null);
-			weak.set(THIS, _THIS);
-			return _THIS;
-		}
-		return function Private () {
-			var weak = /*#__PURE__*/ defineProperty(/*#__PURE__*/ defineProperty(/*#__PURE__*/ new Weak, 'get', GET), 'set', SET);
-			return function _ (THIS) {
-				return /*#__PURE__*/ weak.get(THIS) || /*#__PURE__*/ add(weak, THIS);
+	typeof WeakMap==='function'
+		? /*#__PURE__*/ function () {
+			var Weak = WeakMap;
+			var GET = create(null);
+			GET.value = Weak.prototype.get;
+			var SET = create(null);
+			SET.value = Weak.prototype.set;
+			function add (weak, THIS) {
+				var _THIS = create(null);
+				weak.set(THIS, _THIS);
+				return _THIS;
+			}
+			return function Private () {
+				var weak = /*#__PURE__*/ defineProperty(/*#__PURE__*/ defineProperty(/*#__PURE__*/ new Weak, 'get', GET), 'set', SET);
+				return function _ (THIS) {
+					return /*#__PURE__*/ weak.get(THIS) || /*#__PURE__*/ add(weak, THIS);
+				};
 			};
-		};
-	}()
+		}()
+		: function Private () { return checkNewline; }
 	/*¡ j-globals: private (internal) */
 );
 
@@ -3509,7 +3511,7 @@ class Mustache extends Array {
     }
 }
 
-const COMPONENT_NAME = /[A-Z]/;
+const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
 const TEXTAREA_END_TAG = newRegExp `</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG$1 = newRegExp `</STYLE${TAG_EMIT_CHAR}`;
 const TITLE_END_TAG = newRegExp `</title${TAG_EMIT_CHAR}`;
@@ -3517,13 +3519,13 @@ const TEXTAREA = /^textarea$/i;
 const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
-const _ID = /(?<=^|[\s(,:[{/]|\.\.\.)_[a-zA-Z]+(?=[\s),\]}/=])/; // 缩小检测范围的话，标识符部分可以只检测“_(?:[a-z]|vm)”
+const _ID = /(?<=^|[\s(,:[{/]|\.\.\.)_\w+(?=[\s),\]}/=])/; // 缩小检测范围的话，标识符部分可以只检测“_(?:[a-z]|vm)”
 let html = '';
 let index = 0;
 let partial;
-function parseAppend(parentNode_xName, parentNode, V_PRE) {
+function parseAppend(parentNode_xName, parentNode, V_PRE, FOREIGN) {
     for (;;) {
-        const tag = Tag(html, index);
+        const tag = Tag(html, index, FOREIGN);
         const { type } = tag;
         if (type === EOF) {
             if (parentNode_xName) {
@@ -3556,13 +3558,13 @@ function parseAppend(parentNode_xName, parentNode, V_PRE) {
         const v_pre = V_PRE || 'v-pre' in attributes;
         if (!v_pre && (':is' in attributes || 'v-bind:is' in attributes)) { }
         else if (!v_pre && 'is' in attributes) {
-            if (FOREIGN_ELEMENTS.test(attributes.is) && COMPONENT_NAME.test(attributes.is)) {
+            if (!foreign_elements.test(attributes.is) && FOREIGN_ELEMENTS.test(attributes.is)) {
                 throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${attributes.is}”，不被 Vue 作为组件对待`);
             }
         }
         else {
-            if (FOREIGN_ELEMENTS.test(xName) && COMPONENT_NAME.test(xName)) {
-                throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，不被 Vue 作为组件对待`);
+            if (!foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName)) {
+                throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
             }
         }
         if (!v_pre && 'v-for' in attributes) {
@@ -3579,7 +3581,9 @@ function parseAppend(parentNode_xName, parentNode, V_PRE) {
         if (!v_pre && ('v-text' in attributes || 'v-html' in attributes)) {
             throw SyntaxError(`开放标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
         }
+        const foreign = FOREIGN || xName === 'svg' || xName === 'math';
         // iframe：Vue 运行所必须的 IE9+ 刚好允许其中嵌套标签
+        // pre
         if (xName === 'textarea' || xName === 'title' || xName === 'STYLE') {
             if ('v-text' in attributes || 'v-html' in attributes || v_pre) {
                 throw SyntaxError((xName === 'textarea' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（形如标签的文本会被剔除）` :
@@ -3587,16 +3591,17 @@ function parseAppend(parentNode_xName, parentNode, V_PRE) {
                         xName === 'title' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（会试着真的作为标签解析）` :
                             ``) + `，jVue 会将其编译为 v-text 属性，因此标签不能已经具备 v-text 或 v-html，且自身或外层节点不能有 v-pre 属性`);
             }
-            const endTagStart = html.slice(index).search(xName === 'textarea' ? TEXTAREA_END_TAG :
+            let endTagStart = html.slice(index).search(xName === 'textarea' ? TEXTAREA_END_TAG :
                 xName === 'STYLE' ? STYLE_END_TAG$1 :
                     xName === 'title' ? TITLE_END_TAG :
                         null);
             endTagStart < 0 && throwSyntaxError(`template 块中存在未关闭的 ${xName} 标签`);
+            endTagStart += index;
             const expression = new Mustache(html.slice(index, endTagStart), v_pre).toExpression();
             if (expression) {
                 attributes['v-text'] = expression;
             }
-            index = Tag(html, index = endTagStart).end;
+            index = Tag(html, index = endTagStart, foreign).end;
         }
         else if (TEXTAREA.test(xName)) {
             throw SyntaxError(`Vue 不会将 textarea 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，` +
@@ -3611,7 +3616,7 @@ function parseAppend(parentNode_xName, parentNode, V_PRE) {
                 `并不知道该往什么方向进行（除 jVue 推荐的 STYLE 组件用来模拟 style 外）`);
         }
         else {
-            parseAppend(xName, element, v_pre); // 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
+            parseAppend(xName, element, v_pre, foreign); // 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
         }
     }
 }
@@ -3623,7 +3628,7 @@ class Content extends Node {
             html = inner;
             index = 0;
             try {
-                parseAppend('', this, false);
+                parseAppend('', this, false, false);
             }
             catch (error) {
                 error.message = `${error.message}：\n${Snippet(inner, index)}`;
@@ -3767,7 +3772,7 @@ function parseComponent(sfc, vue) {
             ++index;
             continue;
         }
-        const tag = Tag(vue, index);
+        const tag = Tag(vue, index, false);
         switch (tag.type) {
             case ELEMENT_START:
             case ELEMENT_SELF_CLOSING:

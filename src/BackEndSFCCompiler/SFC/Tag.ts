@@ -13,14 +13,14 @@ export const TEXT :3 = 3;
 export const COMMENT :8 = 8;
 export const EOF :0 = 0;
 
-export function Tag (html :string, position :number) {
+export function Tag (html :string, position :number, foreign :boolean) {
 	
 	let rest :string;
 	
 	if ( html.startsWith('<', position) ) {
 		
 		if ( html.startsWith('!', position+1) ) {
-			if ( !html.startsWith('--', position+2) ) { throw SyntaxError(html.startsWith('[CDATA[', position+2) ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内` : `标准的注释语法应由“<!--”而非“ <!”开启`); }
+			if ( !html.startsWith('--', position+2) ) { throw SyntaxError(html.startsWith('[CDATA[', position+2) && !foreign ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内` : `标准的注释语法应由“<!--”而非“ <!”开启`); }
 			if ( html.startsWith('>', position+4) || html.startsWith('->', position+4) ) { throw SyntaxError(`紧随“<!--”注释开始语法之后出现的“>”或“->”会造成注释意外中断`); }
 			const end :number = html.indexOf('-->', position+4);
 			if ( end<0 ) { throw SyntaxError(html.includes('--!>', position+4) ? '应使用“-->”而非“--!>”关闭注释节点' : '存在未关闭的注释节点'); }
@@ -29,7 +29,7 @@ export function Tag (html :string, position :number) {
 			return { type: COMMENT, data, end: end+3 };
 		}
 		
-		if ( html.startsWith('?', position+1) ) { throw SyntaxError(`在 HTML 上下文中，“<?”XML 指令/声明只会被作为注释对待，而且其引号属性并不安全`); }
+		if ( html.startsWith('?', position+1) ) { throw SyntaxError(foreign ? `不知该如何对待“<?”开启的 XML 指令/声明` : `在 HTML 上下文中，“<?”XML 指令/声明只会被作为注释对待，而且其引号属性并不安全`); }
 		
 		rest = html.slice(position);
 		
