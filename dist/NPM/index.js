@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.0.11';
+const version = '9.1.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -297,55 +297,6 @@ function buffer2object(buffer, options) {
 
 const slice = Array.prototype.slice;
 
-const create$1 = Object.create || (
-	/*! j-globals: Object.create (polyfill) */
-	/*#__PURE__*/ function () {
-		var NULL;
-		if ( document.domain ) {
-			try { dom = new ActiveXObject('htmlfile'); }
-			catch (error) { }
-		}
-		if ( dom ) {
-			dom.write('<script><\/script>');
-			dom.close();
-			NULL = dom.parentWindow.Object.prototype;
-		}
-		else {
-			dom = document.createElement('iframe');
-			dom.setAttribute('style', 'display:none !important;_display:none;');//dom.style.display = 'none';
-			var parent = document.body || document.documentElement;
-			parent.appendChild(dom);
-			dom.src = 'javascript:';
-			NULL = dom.contentWindow.Object.prototype;
-			parent.removeChild(dom);
-		}
-		var dom = null;
-		delete NULL.constructor;
-		delete NULL.hasOwnProperty;
-		delete NULL.isPrototypeOf;
-		delete NULL.propertyIsEnumerable;
-		delete NULL.toLocaleString;
-		delete NULL.toString;
-		delete NULL.valueOf;
-		var Null = function () {};
-		Null.prototype = NULL;
-		var constructor = function () {};
-		function __PURE__ (o, properties) {
-			if ( properties!==undefined$1 ) { throw TypeError('CAN NOT defineProperties in ES 3 Object.create polyfill'); }
-			if ( o===null ) { return new Null; }
-			if ( typeof o!=='object' && typeof o!=='function' ) { throw TypeError('Object prototype may only be an Object or null: '+o); }
-			constructor.prototype = o;
-			var created = new constructor;
-			constructor.prototype = NULL;
-			return created;
-		}
-		return function create (o, properties) {
-			return /*#__PURE__*/ __PURE__(o, properties);
-		};
-	}()
-	/*¡ j-globals: Object.create (polyfill) */
-);
-
 /*!
  * 模块名称：j-regexp
  * 模块功能：可读性更好的正则表达式创建方式。从属于“简计划”。
@@ -461,15 +412,7 @@ const IS_TAG = newRegExp `
 	${TAG_EMIT_CHAR}
 `;
 
-const toString = Object.prototype.toString;
-
-const isArray = (
-	/*! j-globals: Array.isArray (polyfill) */
-	Array.isArray || function isArray (value) {
-		return typeof value==='object' && /*#__PURE__*/ toString.call(value)==='[object Array]';
-	}
-	/*¡ j-globals: Array.isArray (polyfill) */
-);
+const isArray = Array.isArray;
 
 /*!
  * 模块名称：j-eol
@@ -495,9 +438,9 @@ const isArray = (
 
 var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]$/;
 var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
-var GROUP = create$1(null);
+var GROUP = create(null);
 function groupify(branches, uFlag, noEscape) {
-    var group = create$1(null);
+    var group = create(null);
     var appendBranch = uFlag ? appendPointBranch : appendCodeBranch;
     for (var length = branches.length, index = 0; index < length; ++index) {
         appendBranch(group, branches[index]);
@@ -507,7 +450,7 @@ function groupify(branches, uFlag, noEscape) {
 function appendPointBranch(group, branch) {
     if (branch) {
         var char = SURROGATE_PAIR.test(branch) ? branch.slice(0, 2) : branch.charAt(0);
-        appendPointBranch(group[char] || (group[char] = create$1(null)), branch.slice(char.length));
+        appendPointBranch(group[char] || (group[char] = create(null)), branch.slice(char.length));
     }
     else {
         group[''] = GROUP;
@@ -516,7 +459,7 @@ function appendPointBranch(group, branch) {
 function appendCodeBranch(group, branch) {
     if (branch) {
         var char = branch.charAt(0);
-        appendCodeBranch(group[char] || (group[char] = create$1(null)), branch.slice(1));
+        appendCodeBranch(group[char] || (group[char] = create(null)), branch.slice(1));
     }
     else {
         group[''] = GROUP;
@@ -2931,8 +2874,6 @@ const ownKeys$1 = Reflect.ownKeys;
 
 const set = Reflect.set;
 
-const isArray$1 = Array.isArray;
-
 /*!
  * 模块名称：j-orderify
  * 模块功能：返回一个能保证给定对象的属性按此后添加顺序排列的 proxy，即使键名是 symbol，或整数 string。从属于“简计划”。
@@ -3079,7 +3020,7 @@ function NULL_from(source, define) {
     const target = create(null);
     const keeper = new Keeper;
     if (define) {
-        if (isArray$1(source)) {
+        if (isArray(source)) {
             for (let length = source.length, index = 0; index < length; ++index) {
                 const descriptorMap = getOwnPropertyDescriptors$1(source[index]);
                 defineProperties$1(target, descriptorMap);
@@ -3093,7 +3034,7 @@ function NULL_from(source, define) {
         }
     }
     else {
-        if (isArray$1(source)) {
+        if (isArray(source)) {
             assign(target, ...source);
             for (let length = source.length, index = 0; index < length; ++index) {
                 keeperAddKeys(keeper, source[index]);
