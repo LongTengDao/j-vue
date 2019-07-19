@@ -7,7 +7,7 @@ import { newRegExp } from '@ltd/j-regexp';
 
 import { TOKENS, AliasName, localName, className, TAG_EMIT_CHAR } from './RE';
 import Block from './Block';
-import _ from './Private';
+import _ from './private';
 
 const SELECTOR = newRegExp`^
 	\s*(?:

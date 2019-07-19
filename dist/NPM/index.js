@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.1.0';
+const version = '9.2.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3400,7 +3400,8 @@ function trimTab(raw) {
     //return raw.replace(/\n\t*/g, '');
     return raw.replace(NT$1, '\n').replace(N, '');
 }
-const delimiters = ['{{', '}}'];
+const delimiters_0 = '{{';
+const delimiters_1 = '}}';
 class Mustache extends Array {
     constructor(raw, v_pre) {
         // Vue 会优先解析 <tag>，而且还看 tagName，然后才是 {{}}，这和流式解析矛盾，因此要求避免任何潜在的视觉歧义
@@ -3411,21 +3412,21 @@ class Mustache extends Array {
             return;
         }
         for (let index = 0, data;;) {
-            const insStart = raw.indexOf(delimiters[0], index);
+            const insStart = raw.indexOf(delimiters_0, index);
             if (insStart < 0) {
                 data = unescape(trimTab(raw.slice(index)));
-                data.includes(delimiters[0]) && throwSyntaxError(`对“${delimiters[0]}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码`);
+                data.includes(delimiters_0) && throwSyntaxError(`对“${delimiters_0}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码`);
                 this.push(data);
                 break;
             }
             data = unescape(trimTab(raw.slice(index, insStart)));
-            data.includes(delimiters[0]) && throwSyntaxError(`对“${delimiters[0]}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码`);
+            data.includes(delimiters_0) && throwSyntaxError(`对“${delimiters_0}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码`);
             this.push(data);
-            const insEnd = raw.indexOf(delimiters[1], insStart + 2);
-            insEnd < 0 && throwSyntaxError(`template 块中存在未关闭的插值模板标记“${delimiters[0]}”，虽然 Vue 会将其作为普通文字处理，但这种情况本身极有可能是误以为插值语法可以包含标签造成的`);
+            const insEnd = raw.indexOf(delimiters_1, insStart + 2);
+            insEnd < 0 && throwSyntaxError(`template 块中存在未关闭的插值模板标记“${delimiters_0}”，虽然 Vue 会将其作为普通文字处理，但这种情况本身极有可能是误以为插值语法可以包含标签造成的`);
             index = insStart + 2;
             data = unescape(raw.slice(index, insEnd));
-            data.includes(delimiters[1]) && throwSyntaxError(`对“${delimiters[1]}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码`);
+            data.includes(delimiters_1) && throwSyntaxError(`对“${delimiters_1}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码`);
             this.push(data);
             index = insEnd + 2;
         }
@@ -3444,7 +3445,7 @@ class Mustache extends Array {
         let isTemplate = true;
         for (const each of this) {
             if (each) {
-                data += isTemplate ? each : `${delimiters[0]}${each}${delimiters[1]}`;
+                data += isTemplate ? each : `${delimiters_0}${each}${delimiters_1}`;
             } // 以后如果要完全剔除“\n”，则需要更复杂的保全逻辑（{{'{{{'}}、{{{k:{b:'}\}\}'} } }}），避免本来没有连在一起的连到一起
             isTemplate = !isTemplate;
         }
@@ -3813,10 +3814,7 @@ const { compile } = require('vue-template-compiler');
 const { target, transform } = require('vue-template-es2015-compiler/buble');
 const detectGlobals = require('acorn-globals');
 const { minify } = require('terser');
-const transformOptions = NULL({
-    transforms: NULL(target({})),
-    objectAssign: 'Object.assign',
-});
+const transformOptions = NULL({ transforms: NULL(target({})), objectAssign: 'Object.assign' });
 for (const key in transformOptions.transforms) {
     transformOptions.transforms[key] =
         key === 'stripWith' || // key==='stripWithFunctional' ||
@@ -3825,10 +3823,7 @@ for (const key in transformOptions.transforms) {
             //key==='spreadRest' ||
             key === 'numericLiteral';
 }
-const detectOptions = NULL({
-    ecmaVersion: 2014,
-    sourceType: 'module',
-});
+const detectOptions = NULL({ ecmaVersion: 2014, sourceType: 'module' });
 const minifyOptions = NULL({
     warnings: 'verbose',
     parse: NULL({
@@ -3887,6 +3882,18 @@ function NecessaryStringLiteral(body) {
     }
     return StringLiteral(`${vm_c_exp[1]},${vm_c_exp[3]}`);
 }
+function Render(innerHTML, ES) {
+    const { errors, render, staticRenderFns } = compile(innerHTML);
+    if (errors.length) {
+        throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`);
+    }
+    minifyOptions.ecma = ES;
+    return {
+        render: NecessaryStringLiteral(render),
+        staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),
+    };
+}
+
 const NULo = /^\0[0-7]/;
 const LS_PS = /[\u2028\u2029]/g;
 const LF_LS_PS = /[\n\u2028\u2029]/g;
@@ -3917,16 +3924,12 @@ function* From(tab, mode, styles, template, from, eol) {
         return;
     }
     const { innerHTML } = template;
-    const { errors, render, staticRenderFns } = compile(innerHTML);
-    if (errors.length) {
-        throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`);
-    }
-    minifyOptions.ecma = mode === 'var' ? 5 : 8;
+    const { render, staticRenderFns } = Render(innerHTML, mode === 'var' ? 5 : 8);
     yield eol;
     yield `export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, scope);${eol}`;
-    yield `export ${mode} render = /*#__PURE__*/Render(${NecessaryStringLiteral(render)}, scope);${eol}`;
+    yield `export ${mode} render = /*#__PURE__*/Render(${render}, scope);${eol}`;
     yield staticRenderFns.length
-        ? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.map(NecessaryStringLiteral).join(`,${eol}${tab}`)}${eol}], scope);${eol}`
+        ? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)}${eol}], scope);${eol}`
         : `export ${mode} staticRenderFns = [];${eol}`;
     for (const line of template.content.toSource(tab)) {
         yield `//${tab}${line.replace(LF_LS_PS, escape_LF_LS_PS)}${eol}`;

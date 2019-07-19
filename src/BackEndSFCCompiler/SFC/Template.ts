@@ -5,7 +5,7 @@ import create from '.Object.create';
 
 import { newRegExp } from '@ltd/j-regexp';
 
-import _ from './Private';
+import _ from './private';
 import Block from './Block';
 import Content from './Template.Content';
 import Element from './Template.Content.Element';
