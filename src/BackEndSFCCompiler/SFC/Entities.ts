@@ -3,7 +3,7 @@ import ReferenceError from '.ReferenceError';
 import RangeError from '.RangeError';
 import parseInt from '.parseInt';
 import fromCodePoint from '.String.fromCodePoint';
-import NULL from '.null';
+import __null__ from '.null';
 
 import { NON_SCALAR as SURROGATE } from '@ltd/j-utf';
 
@@ -23,7 +23,7 @@ export function test (text :string) {
 
 import { SEMICOLON_ENTITIES, CONTINUE_ENTITIES } from 'lib:entities';
 
-const CONTROL_TO_CHAR = NULL({
+const CONTROL_TO_CHAR = __null__({
 	0x80: 0x20AC,
 	0x82: 0x201A,
 	0x83: 0x0192,

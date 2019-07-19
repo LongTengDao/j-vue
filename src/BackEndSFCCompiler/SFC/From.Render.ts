@@ -1,6 +1,6 @@
 import Error from '.Error';
 import ReferenceError from '.ReferenceError';
-import NULL from '.null';
+import __null__ from '.null';
 
 const { compile } :{ compile (template :string) :{ errors :string[], render :string, staticRenderFns :string[] } } = require('vue-template-compiler');
 const { target, transform } :{ target (target :{}) :object, transform (source :string, options :object) :{ code :string } } = require('vue-template-es2015-compiler/buble');
@@ -9,24 +9,29 @@ const { minify } = require('terser');
 
 import { StringLiteral } from '@ltd/j-es';
 
-const transformOptions = NULL({ transforms: NULL<boolean>(target({})), objectAssign: 'Object.assign' });
-for ( const key in transformOptions.transforms ) {
-	transformOptions.transforms[key] =
-		key==='stripWith' ||// key==='stripWithFunctional' ||
-		key==='trailingFunctionCommas' ||
-		//key==='destructuring' || key==='parameterDestructuring' ||
-		//key==='spreadRest' ||
-		key==='numericLiteral';
-}
-const detectOptions = NULL({ ecmaVersion: 2014 as 2019, sourceType: 'module' });
-const minifyOptions = NULL({
+const transformOptions = __null__({
+	transforms: function (transforms) {
+		for ( const key in transforms ) {
+			transforms[key] =
+				key==='stripWith' ||// key==='stripWithFunctional' ||
+				key==='trailingFunctionCommas' ||
+				//key==='destructuring' || key==='parameterDestructuring' ||
+				//key==='spreadRest' ||
+				key==='numericLiteral';
+		}
+		return transforms;
+	}(__null__<boolean>(target({}))),
+	objectAssign: 'Object.assign',
+});
+const detectOptions = __null__({ ecmaVersion: 2014 as 2019, sourceType: 'module' });
+const minifyOptions = __null__({
 	warnings: 'verbose',
-	parse: NULL({
+	parse: __null__({
 		bare_returns: false,
 		html5_comments: false,
 		shebang: false,
 	}),
-	compress: NULL({
+	compress: __null__({
 		warnings: true,
 		collapse_vars: false,
 		pure_getters: false,

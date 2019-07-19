@@ -2,9 +2,9 @@ import Error from '.Error';
 import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import isBuffer from '.Buffer.isBuffer';
-import NULL from '.null';
 import freeze from '.Object.freeze';
 import undefined from '.undefined'
+import NULL from '.null';
 
 import { StringLiteral } from '@ltd/j-es';
 

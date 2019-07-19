@@ -1,16 +1,16 @@
 ﻿'use strict';
 
-const version = '9.2.0';
+const version = '9.3.0';
 
 const isBuffer = Buffer.isBuffer;
-
-const assign = Object.assign;
-
-const create = Object.create;
 
 const freeze = Object.freeze;
 
 const undefined$1 = void 0;
+
+const assign = Object.assign;
+
+const create = Object.create;
 
 const keys = Object.keys;
 
@@ -3814,15 +3814,20 @@ const { compile } = require('vue-template-compiler');
 const { target, transform } = require('vue-template-es2015-compiler/buble');
 const detectGlobals = require('acorn-globals');
 const { minify } = require('terser');
-const transformOptions = NULL({ transforms: NULL(target({})), objectAssign: 'Object.assign' });
-for (const key in transformOptions.transforms) {
-    transformOptions.transforms[key] =
-        key === 'stripWith' || // key==='stripWithFunctional' ||
-            key === 'trailingFunctionCommas' ||
-            //key==='destructuring' || key==='parameterDestructuring' ||
-            //key==='spreadRest' ||
-            key === 'numericLiteral';
-}
+const transformOptions = NULL({
+    transforms: function (transforms) {
+        for (const key in transforms) {
+            transforms[key] =
+                key === 'stripWith' || // key==='stripWithFunctional' ||
+                    key === 'trailingFunctionCommas' ||
+                    //key==='destructuring' || key==='parameterDestructuring' ||
+                    //key==='spreadRest' ||
+                    key === 'numericLiteral';
+        }
+        return transforms;
+    }(NULL(target({}))),
+    objectAssign: 'Object.assign',
+});
 const detectOptions = NULL({ ecmaVersion: 2014, sourceType: 'module' });
 const minifyOptions = NULL({
     warnings: 'verbose',
