@@ -8,8 +8,8 @@ import * as Entities from './Entities';
 
 export default class Attributes extends NULL<string> {
 	
-	[Symbol.toPrimitive] (this :Attributes, hint :'number') :number
-	[Symbol.toPrimitive] (this :Attributes, hint :'string' | 'default') :string
+	[Symbol.toPrimitive] (this :Attributes, hint :'number') :number;
+	[Symbol.toPrimitive] (this :Attributes, hint :'string' | 'default') :string;
 	[Symbol.toPrimitive] (this :Attributes, hint :'number' | 'string' | 'default') :number | string {
 		if ( hint==='number' ) { return keys(this).length; }
 		let literal :string = '';

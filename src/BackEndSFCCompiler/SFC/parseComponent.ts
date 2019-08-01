@@ -104,4 +104,4 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 	
 };
 
-import SFC from './';
+type SFC = import('./').default;

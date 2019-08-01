@@ -29,5 +29,5 @@ export default class Node {
 
 freeze(Node.prototype);
 
-import Element from './Template.Content.Element';
-import Text from './Template.Content.Text';
+type Element = import('./Template.Content.Element').default;
+type Text = import('./Template.Content.Text').default;

@@ -1,8 +1,7 @@
 import version from '../version?text';
 import SFC from './SFC/';
-
-export default {
+import Default from '.default';
+export default Default({
 	version,
 	SFC,
-	get default () { return this; },
-};
+});

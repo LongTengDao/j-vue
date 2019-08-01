@@ -11,7 +11,7 @@ declare namespace exports {
 		eol :string;
 		tab :string;
 		
-		script :null | {
+		readonly script :null | {
 			blockName :'script',
 			attributes :{ [name :string] :undefined | string },
 			inner? :string,
@@ -20,7 +20,7 @@ declare namespace exports {
 			readonly innerJS :string,
 		};
 		
-		styles :Array<{
+		readonly styles :Array<{
 			blockName :'style',
 			attributes :{ [name :string] :undefined | string },
 			inner? :string,
@@ -29,7 +29,7 @@ declare namespace exports {
 			readonly innerCSS :string,
 		}>;
 		
-		template :null | {
+		readonly template :null | {
 			blockName :'template',
 			attributes :{ [name :string] :undefined | string },
 			inner? :string,
@@ -38,7 +38,7 @@ declare namespace exports {
 			readonly innerHTML :string,
 		} | null;
 		
-		customBlocks :Array<{
+		readonly customBlocks :Array<{
 			blockName :string,
 			attributes :{ [name :string] :undefined | string },
 			inner? :string,

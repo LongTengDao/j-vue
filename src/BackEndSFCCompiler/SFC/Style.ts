@@ -27,8 +27,8 @@ const NAME_IN_CSS = /(?<=[\s,>}{\](+~]|\*\/|^)(?:[A-Z][\w-]*)+(?=[\s,>{}[)+~#:.]
 
 export default class Style extends Block<'style'> {
 	
-	abbr? :Selector
-	media? :string
+	abbr? :Selector;
+	media? :string;
 	
 	constructor (attributes :Attributes, inner :string | undefined) {
 		

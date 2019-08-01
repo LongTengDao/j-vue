@@ -61,9 +61,9 @@ export default class SFC extends NULL {
 	}
 	
 	script :Script | null = null;
-	styles :Style[] = [];
+	readonly styles :Style[] = [];
 	template :Template | null = null;
-	customBlocks :CustomBlock[] = [];
+	readonly customBlocks :CustomBlock[] = [];
 	
 	export (mode :'default' | 'const' | 'var' | 'let', from :string = mode==='default' ? 'j-vue?*' : 'j-vue') :string {
 		const { bom, tab, eol, script, styles, template } = this;

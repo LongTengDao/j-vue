@@ -15,7 +15,7 @@ class CharacterData extends Node {
 		this.data = data;
 	}
 	
-	data :string
+	data :string;
 	
 }
 

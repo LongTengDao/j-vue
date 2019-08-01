@@ -31,4 +31,4 @@ var prepare_ :(scope :Scope) => void = typeof _==='symbol'
 
 export { _, $, prepare_ };
 
-import Scope from './';
+type Scope = import('./').default;

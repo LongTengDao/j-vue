@@ -1,10 +1,12 @@
 'use strict';
 
+const ___________________________ = _ => console.info(`\n[${_}]:`) || {};
+
 require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map, put }) => {
 	
 	const version = await get('src/version');
 	
-	/* Back-End SFC Compiler: NPM */
+	___________________________`Back-End SFC Compiler: NPM`.___________________________;
 	
 	await build({
 		src: 'src/BackEndSFCCompiler',
@@ -16,7 +18,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map,
 				'acorn-globals': '4.3.2',
 				'terser': '3.16.1',
 			},
-			keywords: ['Vue', 'SFC'],
+			keywords: [ 'Vue', 'SFC' ],
 		},
 		ES: 6,
 		semver: version,
@@ -38,7 +40,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map,
 	
 	const EDITIONS_README_OF_NPM = await get('dist/README.md');
 	
-	/* Front-End Runtime Dependency: UMD, ESM */
+	___________________________`Front-End Runtime Dependency: UMD, ESM`.___________________________;
 	
 	await build({
 		src: 'src/FrontEndRuntimeDependency',
@@ -61,7 +63,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map,
 	
 	const EDITIONS_README_OF_UMD_AND_ESM = await get('dist/README.md');
 	
-	/* Common: TSD, dist Editions README, LICENSE_, DOC */
+	___________________________`Common: TSD, dist Editions README, LICENSE_, DOC'`.___________________________;
 	
 	await map('src/FrontEndRuntimeDependency/module.d.ts', replaceWithVersion(version), 'dist/TSD/j-vue.d.ts');///////////////////
 	

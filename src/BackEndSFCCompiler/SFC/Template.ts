@@ -27,9 +27,9 @@ const HTML = /^(?:HTML|\s*text\/html\s*)$/i;
 
 export default class Template extends Block {
 	
-	abbr? :Partial
-	keys? :string
-	functional? :boolean
+	abbr? :Partial;
+	keys? :string;
+	functional? :boolean;
 	
 	constructor (attributes :Attributes, inner :string | undefined) {
 		
