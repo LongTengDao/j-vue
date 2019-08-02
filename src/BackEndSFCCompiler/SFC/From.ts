@@ -2,7 +2,7 @@ import undefined from '.undefined';
 
 import { StringLiteral } from '@ltd/j-es';
 
-import { KEYS } from '../../FrontEndRuntimeDependency/Scope/';
+import KEYS from '../../FrontEndRuntimeDependency/Scope/KEYS';
 import _ from './private';
 import Render from './From.Render';
 

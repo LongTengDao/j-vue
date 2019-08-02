@@ -4,8 +4,8 @@ import undefined from '.undefined';
 
 import { ObjectScope, InheritedObjectScope, SCOPE } from './ObjectScope';
 import FunctionScope from './FunctionScope';
+import KEYS from './KEYS';
 
-var KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 var EMPTY :string[] = [];
 
 function mix (protos :Scope[]) :ObjectScope {

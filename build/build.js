@@ -27,7 +27,6 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map,
 		Auth: 龙腾道,
 		Copy: 'LGPL-3.0',
 		locate: {
-			'@ltd/j-groupify': ful('../../LongTengDao/j-groupify/dist/ESM/.j-groupify'),
 			'@ltd/j-orderify': ful('../../LongTengDao/j-orderify/dist/ESM/.j-orderify'),
 			'@ltd/j-regexp': ful('../../LongTengDao/j-regexp/dist/ESM/.j-regexp'),
 			'@ltd/j-utf': ful('../../LongTengDao/j-utf/dist/ESM/.j-utf'),

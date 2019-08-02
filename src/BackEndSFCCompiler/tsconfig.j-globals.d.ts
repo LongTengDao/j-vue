@@ -29,7 +29,6 @@ declare module '.Object.is' { export default Object.is; }
 declare module '.Object.keys' { export default keys;
 	function keys<T extends object> (object :T) :Extract<string, keyof T>[];
 }
-declare module '.Object.preventExtensions' { export default Object.preventExtensions; }
 declare module '.Object.prototype.hasOwnProperty' { export default Object.prototype.hasOwnProperty; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
 declare module '.Object.seal' { export default Object.seal; }
@@ -80,9 +79,6 @@ declare module '.default?=' { export default Default;
 	type Callable = (...args :any[]) => any;
 	type Newable = { new (...args :any[]) :any };
 }
-
-declare module '.document' { export default document; }
-declare module '.document.head' { export default document.head; }
 
 declare module '.null' { export default NULL;
 	const NULL :{

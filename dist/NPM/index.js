@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.4.0';
+const version = '9.5.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -88,11 +88,37 @@ const NULL = (
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
+const toStringTag = typeof Symbol!=='undefined' ? Symbol.toStringTag : undefined;
+
+const defineProperty = Object.defineProperty;
+
+const seal = Object.seal;
+
+const Default = (
+	/*! j-globals: default (internal) */
+	function Default (exports, addOnOrigin) {
+		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
+			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create(null); }
+			if ( Object_assign ) { Object_assign(exports, addOnOrigin); }
+			else { for ( var key in addOnOrigin ) { if ( hasOwnProperty.call(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
+			exports['default'] = exports;
+			typeof exports==='function' && exports.prototype && seal(exports.prototype);
+			if ( toStringTag ) {
+				var descriptor = create(null);
+				descriptor.value = 'Module';
+				defineProperty(exports, toStringTag, descriptor);
+			}
+			return freeze(exports);
+		}(exports, addOnOrigin);
+	}
+	/*¡ j-globals: default (internal) */
+);
+
 /*!
  * 模块名称：ES
  * 模块功能：ECMAScript 语法相关共享实用程序。从属于“简计划”。
    　　　　　ECMAScript syntax util. Belong to "Plan J".
- * 模块版本：0.7.0
+ * 模块版本：0.8.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-es/issues
@@ -147,7 +173,7 @@ const RegExp_prototype = RegExp.prototype;
  * 模块名称：j-utf
  * 模块功能：UTF 相关共享实用程序。从属于“简计划”。
    　　　　　UTF util. Belong to "Plan J".
- * 模块版本：3.1.0
+ * 模块版本：3.2.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-utf/issues
@@ -269,32 +295,6 @@ function buffer2object (buffer        , options          )                      
 /*¡ j-utf */
 
 const slice = Array.prototype.slice;
-
-const toStringTag = typeof Symbol!=='undefined' ? Symbol.toStringTag : undefined;
-
-const defineProperty = Object.defineProperty;
-
-const seal = Object.seal;
-
-const Default = (
-	/*! j-globals: default (internal) */
-	function Default (exports, addOnOrigin) {
-		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
-			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create(null); }
-			if ( Object_assign ) { Object_assign(exports, addOnOrigin); }
-			else { for ( var key in addOnOrigin ) { if ( hasOwnProperty.call(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
-			exports['default'] = exports;
-			typeof exports==='function' && exports.prototype && seal(exports.prototype);
-			if ( toStringTag ) {
-				var descriptor = create(null);
-				descriptor.value = 'Module';
-				defineProperty(exports, toStringTag, descriptor);
-			}
-			return freeze(exports);
-		}(exports, addOnOrigin);
-	}
-	/*¡ j-globals: default (internal) */
-);
 
 /*!
  * 模块名称：j-regexp
@@ -432,12 +432,24 @@ const isArray = Array.isArray;
  * 模块名称：j-eol
  * 模块功能：换行符相关共享实用程序。从属于“简计划”。
    　　　　　EOL util. Belong to "Plan J".
- * 模块版本：1.1.0
+ * 模块版本：1.2.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-eol/issues
  * 项目主页：https://GitHub.com/LongTengDao/j-eol/
  */
+
+var clearRegExp = '$_' in RegExp
+	? function () {
+		var REGEXP = /^/;
+		return function clearRegExp                (value    )                {
+			REGEXP.test('');
+			return value;
+		};
+	}()
+	: function clearRegExp                (value    )                {
+		return value;
+	};
 
 var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
 var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
@@ -486,18 +498,6 @@ function sourcify (group       , needEscape         )         {
 		)
 		+( noEmptyBranch ? '' : '?' );
 }
-
-var clearRegExp = '$_' in RegExp
-	? function () {
-		var REGEXP = /^/;
-		return function clearRegExp                (value    )                {
-			REGEXP.test('');
-			return value;
-		};
-	}()
-	: function clearRegExp                (value    )                {
-		return value;
-	};
 
 /*¡ j-regexp */
 
@@ -2851,7 +2851,7 @@ const Reflect_ownKeys = Reflect.ownKeys;
  * 模块名称：j-orderify
  * 模块功能：返回一个能保证给定对象的属性按此后添加顺序排列的 proxy，即使键名是 symbol，或整数 string。从属于“简计划”。
    　　　　　Return a proxy for given object, which can guarantee own keys are in setting order, even if the key name is symbol or int string. Belong to "Plan J".
- * 模块版本：5.2.1
+ * 模块版本：5.3.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-orderify/issues
@@ -3773,20 +3773,7 @@ function parseComponent (sfc     , vue        )       {
 	
 }
 
-/*!
- * 模块名称：j-groupify
- * 模块功能：将一个字符串数组，转化为分支式优化后的正则表达式匹配组。从属于“简计划”。
-   　　　　　Transform a string array into a branch-style optimized regExp group. Belong to "Plan J".
- * 模块版本：3.5.0
- * 许可条款：LGPL-3.0
- * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
- * 问题反馈：https://GitHub.com/LongTengDao/j-groupify/issues
- * 项目主页：https://GitHub.com/LongTengDao/j-groupify/
- */
-
-/*¡ j-groupify */
-
-var KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
+const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
 const { compile }                                                                                                  = require('vue-template-compiler');
 const { target, transform }                                                                                                 = require('vue-template-es2015-compiler/buble');
