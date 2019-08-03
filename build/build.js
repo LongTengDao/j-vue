@@ -14,7 +14,6 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map,
 			description: '.vue single file component back-end compiler. Belong to "Plan J".／.vue 单文件组件后端编译工具。从属于“简计划”。',
 			dependencies: {
 				'vue-template-compiler': '2.6.8',
-				'vue-template-es2015-compiler': '1.9.1',
 				'acorn': '6.2.0',
 				'acorn-bigint': '0.4.0',
 				'@ltd/acorn-globals': '1.0.1',
