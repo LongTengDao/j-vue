@@ -38,7 +38,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	
 	if ( !template ) { return; }
 	const { innerHTML } = template;
-	const { render, staticRenderFns } = Render(innerHTML, mode==='var' ? 5 : 8);
+	const { render, staticRenderFns } = Render(innerHTML, mode==='var');
 	
 	yield eol;
 	yield `export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, scope);${eol}`;

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.5.0';
+const version = '9.6.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3775,26 +3775,25 @@ function parseComponent (sfc     , vue        )       {
 
 const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
-const { compile }                                                                                                  = require('vue-template-compiler');
-const { target, transform }                                                                                                 = require('vue-template-es2015-compiler/buble');
-const detectGlobals                                                          = require('acorn-globals');
+const { compile } = require('vue-template-compiler');
+const Parser = require('acorn').Parser.extend(require('acorn-bigint'));
+const findGlobals = require('@ltd/acorn-globals')                                       ;
+const { simple } = require('acorn-walk');
 const { minify } = require('terser');
 
-const transformOptions = NULL({
-	transforms: function (transforms) {
-		for ( const key in transforms ) {
-			transforms[key] =
-				key==='stripWith' ||// key==='stripWithFunctional' ||
-				key==='trailingFunctionCommas' ||
-				//key==='destructuring' || key==='parameterDestructuring' ||
-				//key==='spreadRest' ||
-				key==='numericLiteral';
+const byStart = (a      , b      )         => a.start-b.start;
+
+const shorthand                = new WeakSet;
+const visitors = NULL({
+	ObjectExpression ({ properties }      )       {
+		for ( let index         = properties .length; index--; ) {
+			const property = properties [index];
+			if ( property.shorthand ) { shorthand.add(property.value); }
 		}
-		return transforms;
-	}(NULL         (target({}))),
-	objectAssign: 'Object.assign',
+	},
 });
-const detectOptions = NULL({ ecmaVersion: 2014        , sourceType: 'module' });
+
+const parserOptions = NULL({ ecmaVersion: 5 });
 const minifyOptions = NULL({
 	warnings: 'verbose',
 	parse: NULL({
@@ -3819,45 +3818,54 @@ const minifyOptions = NULL({
 	ecma: 5,
 });
 
-const PRE = '(function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return ';
-const SUR = '})';
-const PRE_LENGTH = PRE.length;
-const SUR_LENGTH = -SUR.length;
+const with_this__return_ = 'with(this){return ';
+const with_this__return_$ = with_this__return_.length;
+const _$1 = '}';
+const _$ = -_$1.length;
+const _function__c___use_strict__return_ = '(function(_c){"use strict";return ';
+const _function__c___use_strict__return_$ = _function__c___use_strict__return_.length;
 
-const VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return (\2\(.*\))}\);$/s;
-
-function fetchName (global                  )         { return global ? global.name || '' : ''; }
+const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return \1=this,(\2\(.*\))}\);$/s;
 
 function NecessaryStringLiteral (body        )         {
 	
-	if ( !body.startsWith('with(this){return ') || !body.endsWith('}') ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
+	if ( !body.startsWith(with_this__return_) || !body.endsWith(_$1) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
 	
-	const without = transform(`(function(){${body}})`, transformOptions).code;
-	if ( !without.startsWith(PRE) || !without.endsWith(SUR) ) { throw Error(`jVue 内部错误：vue-template-es2015-compiler/buble .transform 返回了与预期不符的内容格式`); }
-	const wrapped = `(function(_vm,_c){"use strict";return ${without.slice(PRE_LENGTH, SUR_LENGTH)}});`;
+	let code         = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
 	
-	const globals = detectGlobals(wrapped, detectOptions);
-	if ( globals && globals.length ) {
-		const names         = globals.map(fetchName).join('”“');
-		throw names==='_h'
-			? Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`)
-			: ReferenceError(`template 块中，存在编译后跳过实例属性检查直接作为全局变量的标识符“${names}”`);
+	const ast       = Parser.parse(code, parserOptions);
+	const globals = findGlobals(ast);
+	if ( globals.size ) {
+		if ( globals.has('_h') ) { throw Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`); }
+		simple(ast, visitors);
+		let _code         = '';
+		let index         = 0;
+		for ( const node of globals.nodes().sort(byStart) ) {
+			const { start }       = node;
+			if ( start!==index ) { _code += code.slice(index, start); }
+			const name         = code.slice(start, index = node.end);
+			if ( shorthand.has(node) ) { _code += node.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
+			_code += `_vm.${name}`;
+		}
+		if ( index!==code.length ) { _code += code.slice(index); }
+		code = _code;
 	}
 	
-	const minified = minify(wrapped, minifyOptions);
+	const minified = minify(`(function(_vm,_c){"use strict";return _vm=this,${code.slice(_function__c___use_strict__return_$)}`, minifyOptions);
 	if ( minified.error ) { throw minified.error; }
 	if ( minified.warnings ) { throw Error(`Terser 压缩警告：\n${minified.warnings.join('\n')}`); }
 	
-	const vm_c_exp = VM_C_EXP.exec(minified.code);
-	if ( !vm_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
-	return StringLiteral(`${vm_c_exp[1]},${vm_c_exp[3]}`);
+	const _vm_c_exp = _VM_C_EXP.exec(minified.code);
+	if ( !_vm_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
+	return StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
 	
 }
 
-function Render (innerHTML        , ES       )                                                {
+function Render (innerHTML        , ES5         )                                                {
 	const { errors, render, staticRenderFns } = compile(innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
-	minifyOptions.ecma = ES;
+	parserOptions.ecmaVersion = ES5 ? 5 : 2014;
+	minifyOptions.ecma = ES5 ? 5 : 8;
 	return {
 		render: NecessaryStringLiteral(render),
 		staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),
@@ -3896,7 +3904,7 @@ function * From (tab        , mode                         , styles         , te
 	
 	if ( !template ) { return; }
 	const { innerHTML } = template;
-	const { render, staticRenderFns } = Render(innerHTML, mode==='var' ? 5 : 8);
+	const { render, staticRenderFns } = Render(innerHTML, mode==='var');
 	
 	yield eol;
 	yield `export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, scope);${eol}`;

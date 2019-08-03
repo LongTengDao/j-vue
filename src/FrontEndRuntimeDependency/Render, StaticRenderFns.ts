@@ -3,9 +3,15 @@ import Function from '.Function';
 import { _ } from './Scope/_';
 import Scope from './Scope/';
 
+var VAR_ :'const ' | 'var ' = /*#__PURE__*/ function () {
+	try { Function('const v=0'); }
+	catch (error) { return 'var '; }
+	return 'const ';
+}();
+
 function Body (body :string) :string {
 	var index = body.indexOf(',');
-	return 'var '+body.slice(0, index)+'=this'+body.slice(index, body.indexOf('(', index))+'=this._self._c||this.$createElement;return '+body.slice(index+1);
+	return VAR_+body.slice(0, index)+'=this'+body.slice(index, body.indexOf('(', index))+'=this._self._c||this.$createElement;return '+body.slice(index+1);
 }
 
 type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;

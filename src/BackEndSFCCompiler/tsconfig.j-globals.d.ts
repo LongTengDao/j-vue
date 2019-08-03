@@ -63,6 +63,8 @@ declare module '.TypeError' { export default TypeError; }
 
 declare module '.WeakMap' { export default WeakMap; }
 
+declare module '.WeakSet' { export default WeakSet; }
+
 declare module '.default' { export default Default;
 	function Default<Exports extends Readonly<{ [key :string] :any, default? :Module<Exports> }>> (exports :Exports) :Module<Exports>;
 	function Default<Statics extends Readonly<{ [key :string] :any, default? :ModuleFunction<Statics, Main> }>, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
