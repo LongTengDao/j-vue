@@ -1,4 +1,6 @@
-﻿# jVue
+﻿
+jVue
+====
 
 前端组件的 `CSS` 局部作用域需求，一直是一个大问题。  
 For front-end components, the requirement of scoped `CSS` has been a big problem so far.
@@ -133,3 +135,23 @@ new Vue({
 
 这种运行时方案比静态编译选择器名的做法，一来更可靠（只有前端发号器才能真正保证不重复），二来可以达到以实例为单位的动态使用的目的。  
 This kind of runtime solution is more reliable (only front-end id generator can promise unique) and support dynamically use.
+
+刚刚提到的后端预处理器（用于单文件组件编译）也有提供：  
+Back-end pre-processor we just mentioned (for single-file-component compiling) is also supplied:
+
+```js
+const { SFC } = require('j-vue');
+
+const sfc = new SFC(source);
+
+sfc.export('default');
+// import { ... } from 'j-vue?*';
+// export default { ... };
+
+sfc.export('var');
+// import { Scope, Template, Render, StaticRenderFns } from 'j-vue';
+// export var scope = Scope( ... );
+// export var template = Template( ... );
+// export var render = Render( ... );
+// export var staticRenderFns = StaticRenderFns( ... );
+```
