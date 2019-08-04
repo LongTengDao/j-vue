@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.7.0';
+const version = '9.8.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -8,85 +8,60 @@ const freeze = Object.freeze;
 
 const undefined$1 = void 0;
 
-const Object_assign = Object.assign;
+const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 const create = Object.create;
 
 const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 
-const PropertyDescriptor = (
-	/*! j-globals: null.PropertyDescriptor (internal) */
-	function () {
-		function __PURE__ (value_get, set_writable, enumerable, configurable) {
-			var propertyDescriptor = create(null);
-			if ( set_writable===true ) {
-				propertyDescriptor.value = value_get;
-				propertyDescriptor.writable = true;
-			}
-			else if ( set_writable===false ) {
-				propertyDescriptor.value = value_get;
-				propertyDescriptor.writable = false;
-			}
-			else {
-				propertyDescriptor.get = value_get;
-				propertyDescriptor.set = set_writable;
-			}
-			propertyDescriptor.enumerable = enumerable;
-			propertyDescriptor.configurable = configurable;
-			return propertyDescriptor;
-		}
-		return function PropertyDescriptor (value_get, set_writable, enumerable, configurable) {
-			return /*#__PURE__*/ __PURE__(value_get, set_writable, enumerable, configurable);
-		};
-	}()
-	/*¡ j-globals: null.PropertyDescriptor (internal) */
-);
-
-const getOwnPropertyDescriptor = (
-	/*! j-globals: null.getOwnPropertyDescriptor (internal) */
-	function getOwnPropertyDescriptor (object, key) {
-		var descriptor = /*#__PURE__*/ Object_getOwnPropertyDescriptor(object, key);
-		return /*#__PURE__*/ descriptor.hasOwnProperty('value')
-			? /*#__PURE__*/ PropertyDescriptor(descriptor.value, descriptor.writable, descriptor.enumerable, descriptor.configurable)
-			: /*#__PURE__*/ PropertyDescriptor(descriptor.get, descriptor.set, descriptor.enumerable, descriptor.configurable);
-	}
-	/*¡ j-globals: null.getOwnPropertyDescriptor (internal) */
-);
-
 var ownKeys = typeof Reflect==='object' ? Reflect.ownKeys : Object.getOwnPropertyNames;
-const getOwnPropertyDescriptors = (
-	/*! j-globals: null.getOwnPropertyDescriptors (internal) */
-	function getOwnPropertyDescriptors (object) {
-		var descriptorMap = /*#__PURE__*/ create(null);
-		for ( var keys = /*#__PURE__*/ ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
-			var key = keys[index];
-			descriptorMap[key] = /*#__PURE__*/ getOwnPropertyDescriptor(object, key);
-		}
-		return descriptorMap;
-	}
-	/*¡ j-globals: null.getOwnPropertyDescriptors (internal) */
-);
-
 const NULL = (
 	/*! j-globals: null (internal) */
 	/*#__PURE__*/ function () {
+		var assign = Object.assign || function assign (target, source) {
+			for ( var key in source ) {
+				if ( hasOwnProperty.call(source, key) ) { target[key] = source[key]; }
+			}
+			return target;
+		};
+		var DESCRIPTOR = create(null);
+		DESCRIPTOR.enumerable = true;
+		DESCRIPTOR.configurable = true;
+		function getOwnPropertyDescriptors (object) {
+			var descriptorMap = create(null);
+			for ( var keys = ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
+				var key = keys[index];
+				var nullDescriptor = create(DESCRIPTOR);
+				var protoDescriptor = Object_getOwnPropertyDescriptor(object, key);
+				if ( protoDescriptor.hasOwnProperty('value') ) {
+					nullDescriptor.value = protoDescriptor.value;
+					nullDescriptor.writable = true;
+				}
+				else {
+					nullDescriptor.get = protoDescriptor.get;
+					nullDescriptor.set = protoDescriptor.set;
+				}
+				descriptorMap[key] = nullDescriptor;
+			}
+			return descriptorMap;
+		}
 		var NULL = function (object, define) {
 			if ( object ) {
 				return define
-					? /*#__PURE__*/ create(null, /*#__PURE__*/getOwnPropertyDescriptors(object))
-					: /*#__PURE__*/ Object_assign(/*#__PURE__*/ create(null), object);
+					? /*#__PURE__*/ create(null, /*#__PURE__*/ getOwnPropertyDescriptors(object))
+					: /*#__PURE__*/ assign(/*#__PURE__*/ create(null), object);
 			}
 		};
 		delete NULL.name;
 		//try { delete NULL.length; } catch (error) {}
 		NULL.prototype = null;
-		freeze && freeze(NULL);
+		freeze(NULL);
 		return NULL;
 	}()
 	/*¡ j-globals: null (internal) */
 );
 
-const hasOwnProperty = Object.prototype.hasOwnProperty;
+const Object_assign = Object.assign;
 
 const toStringTag = typeof Symbol!=='undefined' ? Symbol.toStringTag : undefined;
 
@@ -2957,7 +2932,7 @@ function InternalDescriptor                               (source   )    {
 	return target;
 }
 
-const { getOwnPropertyDescriptors: getOwnPropertyDescriptors$1 } = {
+const { getOwnPropertyDescriptors } = {
 	getOwnPropertyDescriptors                   (object   )                                                    {
 		const descriptors = create(null);
 		const keeper         = new Keeper;
@@ -2983,13 +2958,13 @@ function NULL_from (source           , define         )      {
 	if ( define ) {
 		if ( isArray(source) ) {
 			for ( let length         = source.length, index         = 0; index<length; ++index ) {
-				const descriptorMap = getOwnPropertyDescriptors$1(source[index]);
+				const descriptorMap = getOwnPropertyDescriptors(source[index]);
 				Object_defineProperties(target, descriptorMap);
 				keeperAddKeys(keeper, descriptorMap);
 			}
 		}
 		else {
-			const descriptorMap = getOwnPropertyDescriptors$1(source);
+			const descriptorMap = getOwnPropertyDescriptors(source);
 			Object_defineProperties(target, descriptorMap);
 			keeperAddKeys(keeper, descriptorMap);
 		}
@@ -3335,6 +3310,34 @@ class Element extends Node {
 	
 }
 freeze(Element.prototype);
+
+const PropertyDescriptor = (
+	/*! j-globals: null.PropertyDescriptor (internal) */
+	function () {
+		function __PURE__ (value_get, set_writable, enumerable, configurable) {
+			var propertyDescriptor = create(null);
+			if ( set_writable===true ) {
+				propertyDescriptor.value = value_get;
+				propertyDescriptor.writable = true;
+			}
+			else if ( set_writable===false ) {
+				propertyDescriptor.value = value_get;
+				propertyDescriptor.writable = false;
+			}
+			else {
+				propertyDescriptor.get = value_get;
+				propertyDescriptor.set = set_writable;
+			}
+			propertyDescriptor.enumerable = enumerable;
+			propertyDescriptor.configurable = configurable;
+			return propertyDescriptor;
+		}
+		return function PropertyDescriptor (value_get, set_writable, enumerable, configurable) {
+			return /*#__PURE__*/ __PURE__(value_get, set_writable, enumerable, configurable);
+		};
+	}()
+	/*¡ j-globals: null.PropertyDescriptor (internal) */
+);
 
 const childNodesPropertyDescriptor = PropertyDescriptor(/*#__PURE__*/freeze([]), true, false, true);
 

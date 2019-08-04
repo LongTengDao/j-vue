@@ -69,7 +69,7 @@ declare module '.default' { export default Default;
 	function Default<Exports extends Readonly<{ [key :string] :any, default? :Module<Exports> }>> (exports :Exports) :Module<Exports>;
 	function Default<Statics extends Readonly<{ [key :string] :any, default? :ModuleFunction<Statics, Main> }>, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
 	type Module<Exports> = Readonly<Exports & { default :Module<Exports> }>;
-	type ModuleFunction<Statics, Main> = Readonly<Statics & { default :ModuleFunction<Statics, Main> } & Main>;
+	type ModuleFunction<Statics, Main> = Readonly<Statics & { default :ModuleFunction<Statics, Main> }> & Main;
 	type Callable = (...args :any[]) => any;
 	type Newable = { new (...args :any[]) :any };
 }
@@ -77,7 +77,7 @@ declare module '.default?=' { export default Default;
 	function Default<Exports extends Readonly<{ [key :string] :any, default? :Module<Exports> }>> (exports :Exports) :Module<Exports>;
 	function Default<Statics extends Readonly<{ [key :string] :any, default? :ModuleFunction<Statics, Main> }>, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
 	type Module<Exports> = Readonly<Exports & { default :Module<Exports> }>;
-	type ModuleFunction<Statics, Main> = Readonly<Statics & { default :ModuleFunction<Statics, Main> } & Main>;
+	type ModuleFunction<Statics, Main> = Readonly<Statics & { default :ModuleFunction<Statics, Main> }> & Main;
 	type Callable = (...args :any[]) => any;
 	type Newable = { new (...args :any[]) :any };
 }
@@ -108,12 +108,6 @@ declare module '.null' { export default NULL;
 declare module '.null.PropertyDescriptor' { export default PropertyDescriptor;
 	function PropertyDescriptor<V extends any, W extends boolean, E extends boolean, C extends boolean> (value :V, writable :W, enumerable :E, configurable :C) :{ value :V, writable :W, enumerable :E, configurable :C };
 	function PropertyDescriptor<G extends ( () => any ) | undefined, S extends ( (value :any) => void ) | undefined, E extends boolean, C extends boolean> (get :G, set :S, enumerable :E, configurable :C) :{ get :G, set :S, enumerable :E, configurable :C };
-}
-declare module '.null.getOwnPropertyDescriptor' { export default getOwnPropertyDescriptor;
-	function getOwnPropertyDescriptor<O extends {}, K extends Extract<keyof O, string | symbol>> (object :O, key :K) :TypedPropertyDescriptor<O[K]>;
-}
-declare module '.null.getOwnPropertyDescriptors' { export default getOwnPropertyDescriptors;
-	function getOwnPropertyDescriptors<O extends {}> (object :O) :{ [k in keyof O] :TypedPropertyDescriptor<O[k]> };
 }
 
 declare module '.parseInt' { export default parseInt; }
