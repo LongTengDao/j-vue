@@ -37,7 +37,7 @@ Back-End SFC Compiler
 			
 			To generate the component's default export content string according to the content in `script` block or its `src' attribute. (For the generated `JavaScript` code is padded line wrapping and indentation as the original file, so source map is not provided.)
 			
-			Note: If there is a `lang` attribute which value is other than `js` (or semantic similar), then the user must transpile its `inner` property value and modify its `lang` property.
+			Note: If there is a `lang` attribute which value is other than `js` (or semantic similar), then the user must transpile (its `inner` property value) and set to its `innerJS` property.
 			
 			When there is no `script` block, the second parameter `from' is used as the `import` path to introduce the `template' information of the file.
 			
@@ -58,7 +58,7 @@ Back-End SFC Compiler
 			
 			When choose `const` or `let`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.
 			
-			Note: If there is a `lang` attribute which value is other than `html` (or semantic similar) in the `template` block, or any `style` block has a `lang` attribute which value is other than `css` (or semantic similar), then the user must transpile its `inner` property value and modify its `lang` property.
+			Note: If there is a `lang` attribute which value is other than `html` (or semantic similar) in the `template` block, or any `style` block has a `lang` attribute which value is other than `css` (or semantic similar), then the user must transpile (its `inner` property value) and set to its `innerHTML` / `innerCSS` property.
 			
 			The second parameter `from` is the module id used to introduce the jVue front-end runtime dependency library.
 			

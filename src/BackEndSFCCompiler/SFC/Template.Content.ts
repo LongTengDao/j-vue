@@ -160,4 +160,4 @@ export default class Content extends Node {
 };
 
 type Partial = import('./Template').Partial;
-import Attributes from './Attributes';
+type Attributes = import('./Attributes').default;

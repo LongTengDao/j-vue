@@ -3,7 +3,7 @@ import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import isBuffer from '.Buffer.isBuffer';
 import freeze from '.Object.freeze';
-import undefined from '.undefined'
+import undefined from '.undefined';
 import NULL from '.null';
 
 import { StringLiteral } from '@ltd/j-es';
@@ -18,8 +18,8 @@ const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 const CR_LF = /\r\n?/g;
 
 import parseComponent from './parseComponent';
-
 import From from './From';
+import one from './one';
 
 export default class SFC extends NULL {
 	
@@ -65,7 +65,15 @@ export default class SFC extends NULL {
 	template :Template | null = null;
 	readonly customBlocks :CustomBlock[] = [];
 	
-	export (mode :'default' | 'const' | 'var' | 'let', from :string = mode==='default' ? 'j-vue?*' : 'j-vue') :string {
+	export (mode :'default' | 'const' | 'var' | 'let' | {
+		'var' :'const' | 'var' | 'let',
+		'j-vue?*'? :string,
+		'j-vue'? :string,
+		'map'? :boolean | 'inline',
+		'src'? (src :string) :Promise<string>,
+		'lang'? (lang :string, inner :string) :string | Promise<string>,
+	}, from? :string) :string | Promise<string | { code :string, map :any }> {
+		if ( typeof mode==='object' ) { return one(this, mode); }
 		const { bom, tab, eol, script, styles, template } = this;
 		if ( mode==='default' ) {
 			if ( script ) {
@@ -82,7 +90,7 @@ export default class SFC extends NULL {
 			else {
 				if ( template ) {
 					return bom
-						+`import { template } from ${StringLiteral(from)};${eol}`
+						+`import { template } from ${from===undefined ? `'j-vue?*'` : StringLiteral(from)};${eol}`
 						+`export default { template: template };`;
 				}
 				else {
@@ -92,7 +100,7 @@ export default class SFC extends NULL {
 		}
 		else {
 			let code :string = bom;
-			for ( const chunk of From(tab, mode, styles, template, from, eol) ) { code += chunk; }
+			for ( const chunk of From(tab, mode, styles, template, from===undefined ? 'j-vue' : from, eol) ) { code += chunk; }
 			return code;
 		}
 	}

@@ -10,6 +10,7 @@ import Block from './Block';
 import Content from './Template.Content';
 import Element from './Template.Content.Element';
 import { TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE } from './RE';
+import TypeError from ".TypeError";
 
 const TEMPLATE_END_TAG = newRegExp.i`</template${TAG_EMIT_CHAR}`;
 
@@ -80,11 +81,17 @@ export default class Template extends Block {
 	}
 	
 	get content () :Content {
-		const _this :{ content :Content, abbr? :Partial } = _(this);
-		if ( _this.content ) { return _this.content; }
-		if ( typeof this.inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
-		if ( this.lang && !HTML.test(this.lang) ) { throw Error(`template 功能块元素如果设置了非 html 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 html`); }
-		return _this.content = new Content(this.inner, _this.abbr);
+		const _this :{ content :Content, abbr? :Partial, innerHTML :string, cache? :string } = _(this);
+		let inner :string | undefined = _this.innerHTML;
+		if ( inner===undefined ) {
+			inner = this.inner;
+			if ( typeof inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
+			if ( this.lang && !HTML.test(this.lang) ) { throw Error(`template 功能块元素如果设置了非 html 的 lang 属性值，那么必须自行提供转译后的 innerHTML`); }
+			_this.cache = inner;
+		}
+		if ( _this.content && _this.cache===inner ) { return _this.content; }
+		_this.cache = inner;
+		return _this.content = new Content(inner, _this.abbr);
 	}
 	
 	get innerHTML () :string {
@@ -94,8 +101,12 @@ export default class Template extends Block {
 		if ( !( rootNode instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
 		return rootNode.outerHTML;
 	}
+	set innerHTML (value :string) {
+		if ( typeof <unknown> value!=='string' ) { throw TypeError(`innerHTML 只能被赋值字符串`); }
+		_(this).innerHTML = value;
+	}
 	
 };
 
 export type Partial = { [xName :string] :{ tagName :string, class :string } };
-import Attributes from './Attributes';
+type Attributes = import('./Attributes').default;

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '9.8.0';
+const version = '10.0.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3120,31 +3120,6 @@ class Block                                    extends NULL {
 	
 }
 
-const SCRIPT_END_TAG = newRegExp.i`</script${TAG_EMIT_CHAR}`;
-
-const JS = newRegExp.i`^\s*(?:
-	JS|JavaScript(?:\s*1\.\d)?
-	|
-	(?:ES|ECMAScript|ECMAS?)(?:\s*\d+)?
-	|
-	ESM
-	|
-	(?:text|application)\/(?:ECMAScript|JavaScript(?:;\s*version\s*=\s*1\.\d)?)
-)\s*$`;
-
-class Script extends Block {
-	
-	constructor (attributes            , inner                    ) { super('script', attributes, true, inner, SCRIPT_END_TAG); }
-	
-	get innerJS ()         {
-		let inner = this.inner;
-		if ( typeof inner!=='string' ) { throw Error(`自闭合的 script 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
-		if ( this.lang && !JS.test(this.lang) ) { throw Error(`script 功能块元素如果设置了非 js 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 js`); }
-		return inner;
-	}
-	
-}
-
 const Private = (
 	/*! j-globals: private (internal) */
 	typeof WeakMap==='function'
@@ -3171,6 +3146,38 @@ const Private = (
 );
 
 const _ = Private();
+
+const SCRIPT_END_TAG = newRegExp.i`</script${TAG_EMIT_CHAR}`;
+
+const JS = newRegExp.i`^\s*(?:
+	JS|JavaScript(?:\s*1\.\d)?
+	|
+	(?:ES|ECMAScript|ECMAS?)(?:\s*\d+)?
+	|
+	ESM
+	|
+	(?:text|application)\/(?:ECMAScript|JavaScript(?:;\s*version\s*=\s*1\.\d)?)
+)\s*$`;
+
+class Script extends Block {
+	
+	constructor (attributes            , inner                    ) { super('script', attributes, true, inner, SCRIPT_END_TAG); }
+	
+	get innerJS ()         {
+		let inner                     = _(this).innerJS;
+		if ( inner===undefined$1 ) {
+			inner = this.inner;
+			if ( typeof inner!=='string' ) { throw Error(`自闭合的 script 功能块元素必须自行根据 src 属性加载 inner 值`); }
+			if ( this.lang && !JS.test(this.lang) ) { throw Error(`script 功能块元素如果设置了非 js 的 lang 属性值，那么必须自行提供转译后的 innerJS`); }
+		}
+		return inner;
+	}
+	set innerJS (value        ) {
+		if ( typeof           value!=='string' ) { throw TypeError(`innerJS 只能被赋值字符串`); }
+		_(this).innerJS = value;
+	}
+	
+}
 
 const SELECTOR = newRegExp`^
 	\s*(?:
@@ -3226,12 +3233,19 @@ class Style extends Block          {
 	}
 	
 	get innerCSS ()         {
-		let { inner } = this;
-		if ( typeof inner!=='string' ) { throw Error(`自闭合的 style 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
-		if ( this.lang && !CSS.test(this.lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 css`); }
+		let inner                     = _(this).innerCSS;
+		if ( inner===undefined$1 ) {
+			inner = this.inner;
+			if ( typeof inner!=='string' ) { throw Error(`自闭合的 style 功能块元素必须自行根据 src 属性加载 inner 值`); }
+			if ( this.lang && !CSS.test(this.lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
+		}
 		const { abbr } = _(this);
 		if ( abbr ) { inner = inner.replace(NAME_IN_CSS, (componentName        )         => componentName in abbr ? abbr[componentName] : componentName); }
 		return inner;
+	}
+	set innerCSS (value        ) {
+		if ( typeof           value!=='string' ) { throw TypeError(`innerCSS 只能被赋值字符串`); }
+		_(this).innerCSS = value;
 	}
 	
 }
@@ -3652,11 +3666,17 @@ class Template extends Block {
 	}
 	
 	get content ()          {
-		const _this                                       = _(this);
-		if ( _this.content ) { return _this.content; }
-		if ( typeof this.inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
-		if ( this.lang && !HTML.test(this.lang) ) { throw Error(`template 功能块元素如果设置了非 html 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 html`); }
-		return _this.content = new Content(this.inner, _this.abbr);
+		const _this                                                                          = _(this);
+		let inner                     = _this.innerHTML;
+		if ( inner===undefined$1 ) {
+			inner = this.inner;
+			if ( typeof inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
+			if ( this.lang && !HTML.test(this.lang) ) { throw Error(`template 功能块元素如果设置了非 html 的 lang 属性值，那么必须自行提供转译后的 innerHTML`); }
+			_this.cache = inner;
+		}
+		if ( _this.content && _this.cache===inner ) { return _this.content; }
+		_this.cache = inner;
+		return _this.content = new Content(inner, _this.abbr);
 	}
 	
 	get innerHTML ()         {
@@ -3665,6 +3685,10 @@ class Template extends Block {
 		const rootNode = childNodes[0];
 		if ( !( rootNode instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
 		return rootNode.outerHTML;
+	}
+	set innerHTML (value        ) {
+		if ( typeof           value!=='string' ) { throw TypeError(`innerHTML 只能被赋值字符串`); }
+		_(this).innerHTML = value;
 	}
 	
 }
@@ -3828,7 +3852,7 @@ const _$ = -_$1.length;
 const _function__c___use_strict__return_ = '(function(_c){"use strict";return ';
 const _function__c___use_strict__return_$ = _function__c___use_strict__return_.length;
 
-const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return \1=this,(\2\(.*\))}\);$/s;
+const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return (?:\1=)?this,(\2\(.*\))}\);$/s;
 
 function NecessaryStringLiteral (body        )         {
 	
@@ -3921,6 +3945,102 @@ function * From (tab        , mode                         , styles         , te
 	
 }
 
+const { rollup } = require('rollup');
+const AcornBigint = require('acorn-bigint');
+const AcornClassFields = require('acorn-class-fields');
+const AcornStaticClassFeatures = require('acorn-static-class-features');
+const AcornPrivateMethods = require('acorn-private-methods');
+
+const acornInjectPlugins = [
+	function AcornStage3 (Parser     ) {
+		return Parser.extend(
+			AcornBigint,
+			AcornClassFields,
+			AcornStaticClassFeatures,
+			AcornPrivateMethods,
+		);
+	}
+];
+function onwarn (warning     )       {
+	switch ( warning.code ) {
+		case 'UNUSED_EXTERNAL_IMPORT':
+		case 'CIRCULAR_DEPENDENCY':
+			return;
+	}
+	throw warning;
+}
+
+const TRUE = NULL({
+	format: 'esm',
+	sourcemap: true,
+});
+const FALSE = NULL({
+	format: 'esm',
+	sourcemap: false,
+});
+const INLINE = NULL({
+	format: 'esm',
+	sourcemap: 'inline',
+});
+
+async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, map = false, src, lang }   
+	                               
+	                   
+	                 
+	                         
+	                                    
+	                                                              
+ )                                               {
+	if ( lang ) {
+		const { script } = sfc;
+		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner ); }
+	}
+	const main         = sfc.export('default', x_from)          ;
+	let round         = 1;
+	const bundle = await rollup({
+		input: '_'.repeat(main.length+1),
+		acornInjectPlugins,
+		onwarn,
+		treeshake: false,
+		experimentalTopLevelAwait: true,
+		external: (path        )          => path!==x_from,
+		plugins: [
+			{
+				resolveId (path        )         {
+					if ( round===1 || path===x_from ) { return path; }
+					throw Error(path);
+				},
+				async load ()                  {
+					if ( round===1 ) {
+						round = 2;
+						return main;
+					}
+					if ( round===3 ) { throw Error('3'); }
+					round = 3;
+					const { template, styles } = sfc;
+					if ( src ) {
+						if ( template && template.src ) { template.inner = await src(template.src); }
+						for ( const style of styles ) {
+							if ( style.src ) { style.inner = await src(style.src); }
+						}
+					}
+					if ( lang ) {
+						if ( template && template.lang ) { template.innerHTML = await lang(template.lang, template.inner ); }
+						for ( const style of styles ) {
+							if ( style.lang ) { style.innerCSS = await lang(style.lang, style.inner ); }
+						}
+					}
+					return sfc.export(x_var, from)          ;
+				},
+			}
+		],
+	});
+	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
+	if ( output.length!==1 ) { throw Error(''+output.length); }
+	const first = output[0];
+	return map===true ? first : first.code;
+}
+
 const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true };
 const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 const CR_LF = /\r\n?/g;
@@ -3969,7 +4089,15 @@ class SFC extends NULL {
 	template                  = null;
 	         customBlocks                = [];
 	
-	export (mode                                     , from         = mode==='default' ? 'j-vue?*' : 'j-vue')         {
+	export (mode                                         
+		                               
+		                   
+		                 
+		                           
+		                                      
+		                                                                
+	 , from         )                                                        {
+		if ( typeof mode==='object' ) { return one(this, mode); }
 		const { bom, tab, eol, script, styles, template } = this;
 		if ( mode==='default' ) {
 			if ( script ) {
@@ -3986,7 +4114,7 @@ class SFC extends NULL {
 			else {
 				if ( template ) {
 					return bom
-						+`import { template } from ${StringLiteral(from)};${eol}`
+						+`import { template } from ${from===undefined$1 ? `'j-vue?*'` : StringLiteral(from)};${eol}`
 						+`export default { template: template };`;
 				}
 				else {
@@ -3996,7 +4124,7 @@ class SFC extends NULL {
 		}
 		else {
 			let code         = bom;
-			for ( const chunk of From(tab, mode, styles, template, from, eol) ) { code += chunk; }
+			for ( const chunk of From(tab, mode, styles, template, from===undefined$1 ? 'j-vue' : from, eol) ) { code += chunk; }
 			return code;
 		}
 	}

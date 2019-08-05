@@ -1,5 +1,6 @@
 import undefined from '.undefined';
 import Error from '.Error';
+import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import create from '.Object.create';
 
@@ -63,15 +64,22 @@ export default class Style extends Block<'style'> {
 	}
 	
 	get innerCSS () :string {
-		let { inner } = this;
-		if ( typeof inner!=='string' ) { throw Error(`自闭合的 style 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
-		if ( this.lang && !CSS.test(this.lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 inner，并将 lang 设置为 css`); }
+		let inner :string | undefined = _(this).innerCSS;
+		if ( inner===undefined ) {
+			inner = this.inner;
+			if ( typeof inner!=='string' ) { throw Error(`自闭合的 style 功能块元素必须自行根据 src 属性加载 inner 值`); }
+			if ( this.lang && !CSS.test(this.lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
+		}
 		const { abbr } = _(this);
 		if ( abbr ) { inner = inner.replace(NAME_IN_CSS, (componentName :string) :string => componentName in abbr ? abbr[componentName] : componentName); }
 		return inner;
+	}
+	set innerCSS (value :string) {
+		if ( typeof <unknown> value!=='string' ) { throw TypeError(`innerCSS 只能被赋值字符串`); }
+		_(this).innerCSS = value;
 	}
 	
 };
 
 type Selector = { [componentName :string] :string };
-import Attributes from './Attributes';
+type Attributes = import('./Attributes').default;

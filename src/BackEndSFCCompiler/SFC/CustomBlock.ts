@@ -19,4 +19,4 @@ export default class CustomBlock extends Block {
 	}
 };
 
-import Attributes from './Attributes';
+type Attributes = import('./Attributes').default;

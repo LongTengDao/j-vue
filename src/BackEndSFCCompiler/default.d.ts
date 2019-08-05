@@ -12,41 +12,58 @@ declare namespace exports {
 		tab :string;
 		
 		readonly script :null | {
-			blockName :'script',
-			attributes :{ [name :string] :undefined | string },
-			inner? :string,
-			src? :string,
-			lang? :string,
-			readonly innerJS :string,
+			readonly blockName :'script'
+			readonly attributes :Readonly<{ [name :string] :undefined | string }>
+			inner? :string
+			readonly src? :string
+			readonly lang? :string
+			innerJS :string
 		};
 		
 		readonly styles :Array<{
-			blockName :'style',
-			attributes :{ [name :string] :undefined | string },
-			inner? :string,
-			src? :string,
-			lang? :string,
-			readonly innerCSS :string,
+			readonly blockName :'style'
+			readonly attributes :Readonly<{ [name :string] :undefined | string }>
+			inner? :string
+			readonly src? :string
+			readonly lang? :string
+			innerCSS :string
 		}>;
 		
 		readonly template :null | {
-			blockName :'template',
-			attributes :{ [name :string] :undefined | string },
-			inner? :string,
-			src? :string,
-			lang? :string,
-			readonly innerHTML :string,
+			readonly blockName :'template'
+			readonly attributes :Readonly<{ [name :string] :undefined | string }>
+			inner? :string
+			readonly src? :string
+			readonly lang? :string
+			innerHTML :string
 		} | null;
 		
 		readonly customBlocks :Array<{
-			blockName :string,
-			attributes :{ [name :string] :undefined | string },
-			inner? :string,
-			src? :string,
-			lang? :string,
+			readonly blockName :string
+			readonly attributes :Readonly<{ [name :string] :undefined | string }>
+			inner? :string
+			readonly src? :string
+			readonly lang? :string
 		}>;
 		
-		export (mode :'default' | 'const' | 'var' | 'let', from? :string) :string;
+		export (mode :'default', from? :string) :string;
+		export (mode :'const' | 'var' | 'let', from? :string) :string;
+		export (mode :{
+			'var' :'const' | 'var' | 'let',
+			'j-vue?*'? :string,
+			'j-vue'? :string,
+			'map'? :false | 'inline',
+			'src'? (src :string) :Promise<string>,
+			'lang'? (lang :string, inner :string) :string | Promise<string>,
+		}) :Promise<string>;
+		export (mode :{
+			'var' :'const' | 'var' | 'let',
+			'j-vue?*'? :string,
+			'j-vue'? :string,
+			'map' :true,
+			'src'? (src :string) :Promise<string>,
+			'lang'? (lang :string, inner :string) :string | Promise<string>,
+		}) :Promise<object & { code :string, map :any }>;
 		
 	}
 	

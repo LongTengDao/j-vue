@@ -51,5 +51,5 @@ export default class Element extends Node {
 
 freeze(Element.prototype);
 
-import Attributes from './Attributes';
 type Partial = import('./Template').Partial;
+type Attributes = import('./Attributes').default;

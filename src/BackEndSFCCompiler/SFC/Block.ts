@@ -36,4 +36,4 @@ export default class Block<BlockName extends string = string> extends NULL {
 	
 };
 
-import Attributes from './Attributes';
+type Attributes = import('./Attributes').default;

@@ -54,7 +54,7 @@ const _$ = -_.length;
 const _function__c___use_strict__return_ = '(function(_c){"use strict";return ';
 const _function__c___use_strict__return_$ = _function__c___use_strict__return_.length;
 
-const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return \1=this,(\2\(.*\))}\);$/s;
+const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return (?:\1=)?this,(\2\(.*\))}\);$/s;
 
 export function NecessaryStringLiteral (body :string) :string {
 	
