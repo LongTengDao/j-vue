@@ -2,13 +2,9 @@ import Error from '.Error';
 import WeakSet from '.WeakSet';
 import __null__ from '.null';
 
-const { compile } = require('vue-template-compiler');
-const Parser = require('acorn').Parser.extend(require('acorn-bigint'));
-const findGlobals = require('@ltd/acorn-globals') as typeof import('@ltd/acorn-globals');
-const { simple } = require('acorn-walk');
-const { minify } = require('terser');
-
 import { StringLiteral } from '@ltd/j-es';
+
+import { compile, Parser, findGlobals, simple, minify } from '../dependencies';
 
 const byStart = (a :Node, b :Node) :number => a.start-b.start;
 

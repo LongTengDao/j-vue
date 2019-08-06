@@ -1,22 +1,9 @@
 import Error from '.Error';
 import __null__ from '.null';
 
-const { rollup } = require('rollup');
-const AcornBigint = require('acorn-bigint');
-const AcornClassFields = require('acorn-class-fields');
-const AcornStaticClassFeatures = require('acorn-static-class-features');
-const AcornPrivateMethods = require('acorn-private-methods');
+import { rollup, AcornStage3 } from '../dependencies';
 
-const acornInjectPlugins = [
-	function AcornStage3 (Parser :any) {
-		return Parser.extend(
-			AcornBigint,
-			AcornClassFields,
-			AcornStaticClassFeatures,
-			AcornPrivateMethods,
-		);
-	}
-];
+const acornInjectPlugins = [ AcornStage3 ];
 function onwarn (warning :any) :void {
 	switch ( warning.code ) {
 		case 'UNUSED_EXTERNAL_IMPORT':

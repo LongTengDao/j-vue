@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '10.0.0';
+const version = '10.0.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3802,10 +3802,24 @@ function parseComponent (sfc     , vue        )       {
 
 const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
-const { compile } = require('vue-template-compiler');
-const Parser = require('acorn').Parser.extend(require('acorn-bigint'));
-const findGlobals = require('@ltd/acorn-globals')                                       ;
+const { rollup } = require('rollup');
+const AcornBigint = require('acorn-bigint');
+const AcornClassFields = require('acorn-class-fields');
+const AcornStaticClassFeatures = require('acorn-static-class-features');
+const AcornPrivateMethods = require('acorn-private-methods');
+function AcornStage3 (Parser     ) {
+	return Parser.extend(
+		AcornBigint,
+		AcornClassFields,
+		AcornStaticClassFeatures,
+		AcornPrivateMethods,
+	);
+}
+
+const Parser = require('acorn').Parser.extend(AcornStage3);
 const { simple } = require('acorn-walk');
+const findGlobals = require('@ltd/acorn-globals')                                       ;
+const { compile } = require('vue-template-compiler');
 const { minify } = require('terser');
 
 const byStart = (a      , b      )         => a.start-b.start;
@@ -3945,22 +3959,7 @@ function * From (tab        , mode                         , styles         , te
 	
 }
 
-const { rollup } = require('rollup');
-const AcornBigint = require('acorn-bigint');
-const AcornClassFields = require('acorn-class-fields');
-const AcornStaticClassFeatures = require('acorn-static-class-features');
-const AcornPrivateMethods = require('acorn-private-methods');
-
-const acornInjectPlugins = [
-	function AcornStage3 (Parser     ) {
-		return Parser.extend(
-			AcornBigint,
-			AcornClassFields,
-			AcornStaticClassFeatures,
-			AcornPrivateMethods,
-		);
-	}
-];
+const acornInjectPlugins = [ AcornStage3 ];
 function onwarn (warning     )       {
 	switch ( warning.code ) {
 		case 'UNUSED_EXTERNAL_IMPORT':
