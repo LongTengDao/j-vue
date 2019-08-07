@@ -166,7 +166,7 @@ Front-End Runtime Dependency
 			
 			If the second parameter `scope` exists, all parts matched <RE> in `code` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
 			
-		<Fn>	`Function( code.replace( /^([\w$]+),([\w$]+)\(([^]*)\)$/, ' "use strict"; var $1 = this, $2 = this._self._c || this.$createElement; return $2($3); ' ) )`
+		<Fn>	`Function( code.replace( /^([^,]*),([^(]*)\(([^]*)\)$/, (_vm, _c, args) => ` "use strict"; var ${_vm && _vm+' = this, '}${_c} = this._self._c || this.$createElement; return ${_c}(${args}); ` ) )`
 			
 		`jVue.StaticRenderFns(codes[, scope])`
 		--------------------------------------	

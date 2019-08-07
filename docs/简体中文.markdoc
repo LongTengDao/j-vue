@@ -162,16 +162,16 @@
 		`jVue.Render(code[, scope])`
 		----------------------------	
 			
-			参数 `code` 是一个 `string`，返回 <Fn>。
+			参数 `code` 是一个 `string`，返回 <函数>。
 			
 			如果存在第二个参数 `scope`，那么 `code` 中所有匹配 <正则> 的部分，都会被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。
 			
-		<Fn>	`Function( code.replace( /^([\w$]+),([\w$]+)\(([^]*)\)$/, ' "use strict"; var $1 = this, $2 = this._self._c || this.$createElement; return $2($3); ' ) )`
+		<函数>	`Function( code.replace( /^([^,]*),([^(]*)\(([^]*)\)$/, (_vm, _c, args) => ` "use strict"; var ${_vm && _vm+' = this, '}${_c} = this._self._c || this.$createElement; return ${_c}(${args}); ` ) )`
 			
 		`jVue.StaticRenderFns(codes[, scope])`
 		--------------------------------------	
 			
-			参数 `codes` 是一个 `string` `Array`，返回 `function` `Array`（逐一用 <Fn> 生成）。
+			参数 `codes` 是一个 `string` `Array`，返回 `function` `Array`（逐一用 <函数> 生成）。
 			
 			如果存在第二个参数 `scope`，那么生成时用的每个 `string` 中所有匹配 <正则> 的部分，都会被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。
 			

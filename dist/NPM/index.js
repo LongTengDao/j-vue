@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '10.0.2';
+const version = '11.0.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3483,7 +3483,7 @@ const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
 
-const _NAME = /^_[a-z]*$/;
+const _NAME = /^_[a-z]$/;
 const _NAMES           = [];
 function Pattern (node     )       {
 	switch ( node.type ) {
@@ -3864,12 +3864,28 @@ const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 const byStart = (a      , b      )         => a.start-b.start;
 
 const shorthand                = new WeakSet;
+const dangerous                = new WeakSet;
+const __Proto__         = Object('__proto__');
 const visitors = NULL({
 	ObjectExpression ({ properties }      )       {
 		for ( let index         = properties .length; index--; ) {
 			const property = properties [index];
 			if ( property.shorthand ) { shorthand.add(property.value); }
 		}
+	},
+	ObjectPattern ({ properties }      )       {
+		for ( let index         = properties .length; index--; ) {
+			const property = properties [index];
+			if ( property.shorthand ) {
+				let { value } = property;
+				if ( value.type==='AssignmentPattern' ) { value = value.left ; }
+				if ( value.name==='__proto__' ) { value.name = __Proto__; }
+				shorthand.add(value);
+			}
+		}
+	},
+	VariablePattern (node      )       {
+		if ( node.name .startsWith('_') ) { dangerous.add(node); }
 	},
 });
 
@@ -3905,40 +3921,49 @@ const _$ = -_$1.length;
 const _function__c___use_strict__return_ = '(function(_c){"use strict";return ';
 const _function__c___use_strict__return_$ = _function__c___use_strict__return_.length;
 
-const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return (?:\1=)?this,(\2\(.*\))}\);$/s;
+const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return \1=this,(\2\(.*\))}\);$/s;
+const _C_EXP = /^\(function\(([\w$]+)\){"use strict";return (\1\(.*\))}\);$/s;
 
 function NecessaryStringLiteral (body        )         {
-	
 	if ( !body.startsWith(with_this__return_) || !body.endsWith(_$1) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
-	
-	let code         = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
-	
+	const code         = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
 	const AST       = Parser.parse(code, parserOptions$1);
 	const globals = findGlobals(AST);
 	if ( globals.size ) {
 		if ( globals.has('_h') ) { throw Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`); }
+		
+		const _vm         = '$'.repeat(body.length);
+		
 		simple(AST, visitors);
 		let _code         = '';
 		let index         = 0;
 		for ( const node of globals.nodes().sort(byStart) ) {
+			if ( dangerous.has(node) ) { throw Error(`不要对实例下的下划线开头的私有属性“${node.name}”进行写操作！`); }
 			const { start }       = node;
 			if ( start!==index ) { _code += code.slice(index, start); }
 			const name         = code.slice(start, index = node.end);
 			if ( shorthand.has(node) ) { _code += node.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
-			_code += `_vm.${name}`;
+			_code += `${_vm}.${name}`;
 		}
 		if ( index!==code.length ) { _code += code.slice(index); }
-		code = _code;
+		
+		const minified = minify(`(function(${_vm},_c){"use strict";return ${_vm}=this,${_code.slice(_function__c___use_strict__return_$)}`, minifyOptions);
+		if ( minified.error ) { throw minified.error; }
+		if ( minified.warnings ) { throw Error(`Terser 压缩警告：\n${minified.warnings.join('\n')}`); }
+		
+		const _vm_c_exp = _VM_C_EXP.exec(minified.code);
+		if ( !_vm_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
+		return StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
 	}
-	
-	const minified = minify(`(function(_vm,_c){"use strict";return _vm=this,${code.slice(_function__c___use_strict__return_$)}`, minifyOptions);
-	if ( minified.error ) { throw minified.error; }
-	if ( minified.warnings ) { throw Error(`Terser 压缩警告：\n${minified.warnings.join('\n')}`); }
-	
-	const _vm_c_exp = _VM_C_EXP.exec(minified.code);
-	if ( !_vm_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
-	return StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
-	
+	else {
+		const minified = minify(`(function(_c){"use strict";return ${code.slice(_function__c___use_strict__return_$)}`, minifyOptions);
+		if ( minified.error ) { throw minified.error; }
+		if ( minified.warnings ) { throw Error(`Terser 压缩警告：\n${minified.warnings.join('\n')}`); }
+		
+		const _c_exp = _C_EXP.exec(minified.code);
+		if ( !_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
+		return StringLiteral(`,${_c_exp[2]}`);
+	}
 }
 
 function Render (innerHTML        , ES5         )                                                {

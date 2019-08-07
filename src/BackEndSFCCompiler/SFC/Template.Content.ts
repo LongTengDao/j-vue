@@ -28,7 +28,7 @@ const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
 
-const _NAME = /^_[a-z]*$/;
+const _NAME = /^_[a-z]$/;
 const _NAMES :string[] = [];
 function Pattern (node :any) :void {
 	switch ( node.type ) {

@@ -10,8 +10,8 @@ var VAR_ :'const ' | 'var ' = /*#__PURE__*/ function () {
 }();
 
 function Body (body :string) :string {
-	var index = body.indexOf(',');
-	return VAR_+body.slice(0, index)+'=this'+body.slice(index, body.indexOf('(', index))+'=this._self._c||this.$createElement;return '+body.slice(index+1);
+	var index :number = body.indexOf(',');
+	return ( index ? VAR_+body.slice(0, index)+'=this,' : VAR_ )+body.slice(++index, body.indexOf('(', index))+'=this._self._c||this.$createElement;return '+body.slice(index);
 }
 
 type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;

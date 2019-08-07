@@ -15,6 +15,23 @@ declare module '.Error' { export default Error; }
 
 declare module '.Map' { export default Map; }
 
+declare module '.Object' { export default Object;
+	const Object :{		<T extends object> (value :T) :T;
+		(value? :undefined | null) :object;
+		(value :boolean) :Boolean & object;
+		(value :number) :Number & object;
+		(value :string) :String & object;
+		(value :symbol) :Symbol & object;
+		(value :bigint) :BigInt & object;
+		new<T extends object> (value :T) :T;
+		new (value? :undefined | null) :object;
+		new (value :boolean) :Boolean & object;
+		new (value :number) :Number & object;
+		new (value :string) :String & object;
+		new (value :symbol) :Symbol & object;
+		new (value :bigint) :BigInt & object;
+	};
+}
 declare module '.Object.assign' { export default Object.assign; }
 declare module '.Object.create' { export default Object.create; }
 declare module '.Object.create?=' { export default Object.create; }
