@@ -1,7 +1,7 @@
 
 declare module 'j-vue' {
 	
-	export const version :'11.0.0';
+	export const version :'11.1.0';
 	
 	export function Identifier () :string;
 	

@@ -1,5 +1,6 @@
 import undefined from '.undefined';
 import Error from '.Error';
+import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import create from '.Object.create';
 
@@ -10,7 +11,6 @@ import Block from './Block';
 import Content from './Template.Content';
 import Element from './Template.Content.Element';
 import { TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE } from './RE';
-import TypeError from ".TypeError";
 
 const TEMPLATE_END_TAG = newRegExp.i`</template${TAG_EMIT_CHAR}`;
 
@@ -28,10 +28,6 @@ const HTML = /^(?:HTML|\s*text\/html\s*)$/i;
 
 export default class Template extends Block {
 	
-	abbr? :Partial;
-	keys? :string;
-	functional? :boolean;
-	
 	constructor (attributes :Attributes, inner :string | undefined) {
 		
 		if ( inner!==undefined && attributes.lang && !HTML.test(attributes.lang) ) {
@@ -42,7 +38,7 @@ export default class Template extends Block {
 			super('template', attributes, true, inner, null);
 		}
 		
-		const _this :Template = _(this);
+		const _this :Private = _(this);
 		
 		if ( 'abbr.' in attributes ) {
 			const literal = attributes['abbr.'];
@@ -81,7 +77,7 @@ export default class Template extends Block {
 	}
 	
 	get content () :Content {
-		const _this :{ content :Content, abbr? :Partial, innerHTML :string, cache? :string } = _(this);
+		const _this :Private = _(this);
 		let inner :string | undefined = _this.innerHTML;
 		if ( inner===undefined ) {
 			inner = this.inner;
@@ -108,5 +104,13 @@ export default class Template extends Block {
 	
 };
 
+export type Private = object & {
+	abbr? :Partial
+	keys? :string
+	functional? :boolean
+	cache? :string
+	content? :Content
+	innerHTML? :string
+};
 export type Partial = { [xName :string] :{ tagName :string, class :string } };
 type Attributes = import('./Attributes').default;

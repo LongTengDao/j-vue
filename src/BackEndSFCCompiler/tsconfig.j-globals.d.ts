@@ -130,7 +130,15 @@ declare module '.null.PropertyDescriptor' { export default PropertyDescriptor;
 declare module '.parseInt' { export default parseInt; }
 
 declare module '.private' { export default Private;
-	function Private () :<T extends {}> (THIS :T) => T;
+
+	function Private () :{
+		(instance :object) :void
+		<Private extends object, Public extends object> (instance :Public) :Private
+	};
+	function Private<_ extends (instance :any) => object> () :_;
+	function Private<Private extends object, Public extends object> () :{
+		(instance :Public) :Private
+	};
 }
 
 declare module '.return' { export default RETURN;

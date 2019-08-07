@@ -52,5 +52,5 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	
 };
 
-import Style from './Style';
-import Template from './Template';
+type Style = import('./Style').default;
+type Template = import('./Template').default;

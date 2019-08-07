@@ -39,4 +39,7 @@ export default class Script extends Block {
 	
 };
 
+export type Private = object & {
+	innerJS? :string
+};
 type Attributes = import('./Attributes').default;

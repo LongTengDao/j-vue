@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '11.0.0';
+const version = '11.1.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3145,7 +3145,11 @@ const Private = (
 	/*¡ j-globals: private (internal) */
 );
 
-const _ = Private();
+const _ = Private  
+	                                                                
+	                                                                  
+	                                                                      
+  ();
 
 const SCRIPT_END_TAG = newRegExp.i`</script${TAG_EMIT_CHAR}`;
 
@@ -3197,14 +3201,11 @@ const NAME_IN_CSS = /(?<=[\s,>}{\](+~]|\*\/|^)(?:[A-Z][\w-]*)+(?=[\s,>{}[)+~#:.]
 
 class Style extends Block          {
 	
-	                
-	               
-	
 	constructor (attributes            , inner                    ) {
 		
 		super('style', attributes, true, inner, STYLE_END_TAG);
 		
-		const _this        = _(this);
+		const _this          = _(this);
 		
 		if ( 'abbr.' in attributes ) {
 			const literal = attributes['abbr.'];
@@ -3672,10 +3673,6 @@ const HTML = /^(?:HTML|\s*text\/html\s*)$/i;
 
 class Template extends Block {
 	
-	               
-	              
-	                     
-	
 	constructor (attributes            , inner                    ) {
 		
 		if ( inner!==undefined$1 && attributes.lang && !HTML.test(attributes.lang) ) {
@@ -3686,7 +3683,7 @@ class Template extends Block {
 			super('template', attributes, true, inner, null);
 		}
 		
-		const _this           = _(this);
+		const _this          = _(this);
 		
 		if ( 'abbr.' in attributes ) {
 			const literal = attributes['abbr.'];
@@ -3725,7 +3722,7 @@ class Template extends Block {
 	}
 	
 	get content ()          {
-		const _this                                                                          = _(this);
+		const _this          = _(this);
 		let inner                     = _this.innerHTML;
 		if ( inner===undefined$1 ) {
 			inner = this.inner;

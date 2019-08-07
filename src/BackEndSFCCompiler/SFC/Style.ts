@@ -28,14 +28,11 @@ const NAME_IN_CSS = /(?<=[\s,>}{\](+~]|\*\/|^)(?:[A-Z][\w-]*)+(?=[\s,>{}[)+~#:.]
 
 export default class Style extends Block<'style'> {
 	
-	abbr? :Selector;
-	media? :string;
-	
 	constructor (attributes :Attributes, inner :string | undefined) {
 		
 		super('style', attributes, true, inner, STYLE_END_TAG);
 		
-		const _this :Style = _(this);
+		const _this :Private = _(this);
 		
 		if ( 'abbr.' in attributes ) {
 			const literal = attributes['abbr.'];
@@ -81,5 +78,10 @@ export default class Style extends Block<'style'> {
 	
 };
 
+export type Private = object & {
+	abbr? :Selector
+	media? :string
+	innerCSS? :string
+};
 type Selector = { [componentName :string] :string };
 type Attributes = import('./Attributes').default;
