@@ -1,17 +1,17 @@
 import Error from '.Error';
+import assign from '.Object.assign';
+import create from '.Object.create';
 import __null__ from '.null';
 
 import { rollup, AcornStage3 } from '../dependencies';
 
-const acornInjectPlugins = [ AcornStage3 ];
-function onwarn (warning :any) :void {
-	switch ( warning.code ) {
-		case 'UNUSED_EXTERNAL_IMPORT':
-		case 'CIRCULAR_DEPENDENCY':
-			return;
-	}
-	throw warning;
-}
+const rollupOptions = {
+	onwarn (warning :any) :void { if ( warning.code!=='UNUSED_EXTERNAL_IMPORT' ) { throw warning; } },
+	acornInjectPlugins: [ AcornStage3 ],
+	experimentalTopLevelAwait: true,
+	strictDeprecations: true,
+	treeshake: false,
+};
 
 const TRUE = __null__({
 	format: 'esm',
@@ -40,12 +40,8 @@ export default async function one (sfc :SFC, { 'var': x_var, 'j-vue?*': x_from, 
 	}
 	const main :string = sfc.export('default', x_from) as string;
 	let round :number = 1;
-	const bundle = await rollup({
+	const bundle = await rollup(assign(create(null), rollupOptions, {
 		input: '_'.repeat(main.length+1),
-		acornInjectPlugins,
-		onwarn,
-		treeshake: false,
-		experimentalTopLevelAwait: true,
 		external: (path :string) :boolean => path!==x_from,
 		plugins: [
 			{
@@ -77,7 +73,7 @@ export default async function one (sfc :SFC, { 'var': x_var, 'j-vue?*': x_from, 
 				},
 			}
 		],
-	});
+	}));
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
 	if ( output.length!==1 ) { throw Error(''+output.length); }
 	const first = output[0];

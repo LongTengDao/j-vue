@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 
 declare const exports :{
-	version :'10.0.1'
+	version :'10.0.2'
 	
 	Identifier () :string
 	

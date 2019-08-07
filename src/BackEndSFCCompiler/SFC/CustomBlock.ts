@@ -3,6 +3,7 @@ import SyntaxError from '.SyntaxError';
 import RegExp from '.RegExp';
 
 import { ESCAPABLE_RAW_TEXT_ELEMENTS } from 'lib:elements';
+
 import { TAG_EMIT_CHAR, TAG_LIKE } from './RE';
 import Block from './Block';
 

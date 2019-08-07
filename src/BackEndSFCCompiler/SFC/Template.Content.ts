@@ -1,10 +1,13 @@
 import undefined from '.undefined';
-import ReferenceError from '.ReferenceError';
+import Error from '.Error';
 import SyntaxError from '.SyntaxError';
+import ReferenceError from '.ReferenceError';
 import throwSyntaxError from '.throw.SyntaxError';
 import RegExp from '.RegExp';
+import __null__ from '.null';
 
 import { newRegExp } from '@ltd/j-regexp';
+import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
 import Node from './Template.Content.Node';
 import Element from './Template.Content.Element';
@@ -13,8 +16,8 @@ import Mustache from './Mustache';
 import Snippet from './Snippet';
 import { TAG_EMIT_CHAR } from './RE';
 import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from './Tag';
-
-import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
+import { Parser } from '../dependencies';
+import { escapeAttributeValue } from './Entities';
 
 const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
@@ -24,7 +27,45 @@ const TEXTAREA = /^textarea$/i;
 const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
-const _ID = /(?<=^|[\s(,:[{/]|\.\.\.)_\w+(?=[\s),\]}/=])/;// 缩小检测范围的话，标识符部分可以只检测“_(?:[a-z]|vm)”
+
+const _NAME = /^_[a-z]*$/;
+const _NAMES :string[] = [];
+function Pattern (node :any) :void {
+	switch ( node.type ) {
+		case 'Identifier':
+			if ( _NAME.test(node.name) ) { _NAMES.push(node.name); }
+			break;
+		case 'ObjectPattern':
+			const { properties } = node;
+			const { length } = properties;
+			for ( let index :number = 0; index<length; ++index ) {
+				const property = properties[index];
+				Pattern(property.value || property.argument);
+			}
+			break;
+		case 'ArrayPattern':
+			node.elements.forEach(Pattern);
+			break;
+		case 'RestElement':
+			Pattern(node.argument);
+			break;
+		case 'AssignmentPattern':
+			Pattern(node.left);
+			break;
+		default:
+			throw Error(`Unrecognized pattern type: ${node.type}`);
+	}
+}
+const forAliasRE = /(?<=^\s*\(?).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
+const parserOptions = __null__({ ecmaVersion: 2014 });
+function _NAME_test (v_for :string) :boolean {
+	const alias :string = forAliasRE.exec(v_for)![0];
+	const AST = Parser.parse(`(${alias})=>{}`, parserOptions);
+	const { params } = AST.body[0].expression;
+	_NAMES.length = 0;
+	params.forEach(Pattern);
+	return _NAMES.length!==0;
+}
 
 let html :string = '';
 let index :number = 0;
@@ -73,9 +114,10 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 				throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
 			}
 		}
-		if ( !v_pre && 'v-for' in attributes ) {
-			const _id = _ID.exec(attributes['v-for']!);
-			if ( _id ) { throw ReferenceError(`“v-for”中似乎存在以下划线开头后跟字母的危险变量“${_id[0]}”，这可能使得 Vue 模板编译结果以错误的方式运行`); }
+		if ( !v_pre && 'v-for' in attributes && _NAME_test(attributes['v-for']!) ) {
+			const names :string = _NAMES.join('”“');
+			_NAMES.length = 0;
+			throw ReferenceError(`“v-for="${escapeAttributeValue(attributes['v-for']!)}"”中存在以下划线开头后跟字母的危险变量“${names}”，这可能使得 Vue 模板编译结果以错误的方式运行`);
 		}
 		const element :Element = parentNode.appendChild(new Element(xName, attributes, partial));
 		index = tag.end;

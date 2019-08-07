@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '10.0.1';
+const version = '10.0.2';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -61,7 +61,7 @@ const NULL = (
 	/*¡ j-globals: null (internal) */
 );
 
-const Object_assign = Object.assign;
+const assign = Object.assign;
 
 const toStringTag = typeof Symbol!=='undefined' ? Symbol.toStringTag : undefined;
 
@@ -74,7 +74,7 @@ const Default = (
 	function Default (exports, addOnOrigin) {
 		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
 			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create(null); }
-			if ( Object_assign ) { Object_assign(exports, addOnOrigin); }
+			if ( assign ) { assign(exports, addOnOrigin); }
 			else { for ( var key in addOnOrigin ) { if ( hasOwnProperty.call(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
 			exports['default'] = exports;
 			typeof exports==='function' && exports.prototype && seal(exports.prototype);
@@ -2838,13 +2838,13 @@ const target2keeper                          = new WeakMap;
 const proxy2target                         = new WeakMap;
 const target2proxy                         = new WeakMap;
 
-const setDescriptor = /*#__PURE__*/Object_assign(create(null), {
+const setDescriptor = /*#__PURE__*/assign(create(null), {
 	value: undefined$1,
 	writable: true,
 	enumerable: true,
 	configurable: true,
 });
-const handlers = /*#__PURE__*/Object_assign(create(null), {
+const handlers = /*#__PURE__*/assign(create(null), {
 	apply (Function                           , thisArg     , args       ) {
 		return orderify(Reflect_apply(Function, thisArg, args));
 	},
@@ -2971,13 +2971,13 @@ function NULL_from (source           , define         )      {
 	}
 	else {
 		if ( isArray(source) ) {
-			Object_assign(target, ...source);
+			assign(target, ...source);
 			for ( let length         = source.length, index         = 0; index<length; ++index ) {
 				keeperAddKeys(keeper, source[index]);
 			}
 		}
 		else {
-			Object_assign(target, source);
+			assign(target, source);
 			keeperAddKeys(keeper, source);
 		}
 	}
@@ -3454,6 +3454,26 @@ class Mustache extends Array         {
 	
 }
 
+const { rollup } = require('rollup');
+const AcornBigint = require('acorn-bigint');
+const AcornClassFields = require('acorn-class-fields');
+const AcornStaticClassFeatures = require('acorn-static-class-features');
+const AcornPrivateMethods = require('acorn-private-methods');
+function AcornStage3 (Parser     ) {
+	return Parser.extend(
+		AcornBigint,
+		AcornClassFields,
+		AcornStaticClassFeatures,
+		AcornPrivateMethods,
+	);
+}
+
+const Parser = require('acorn').Parser.extend(AcornStage3);
+const { simple } = require('acorn-walk');
+const findGlobals = require('@ltd/acorn-globals')                                       ;
+const { compile } = require('vue-template-compiler');
+const { minify } = require('terser');
+
 const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG$1 = newRegExp`</STYLE${TAG_EMIT_CHAR}`;
@@ -3462,7 +3482,45 @@ const TEXTAREA = /^textarea$/i;
 const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
-const _ID = /(?<=^|[\s(,:[{/]|\.\.\.)_\w+(?=[\s),\]}/=])/;// 缩小检测范围的话，标识符部分可以只检测“_(?:[a-z]|vm)”
+
+const _NAME = /^_[a-z]*$/;
+const _NAMES           = [];
+function Pattern (node     )       {
+	switch ( node.type ) {
+		case 'Identifier':
+			if ( _NAME.test(node.name) ) { _NAMES.push(node.name); }
+			break;
+		case 'ObjectPattern':
+			const { properties } = node;
+			const { length } = properties;
+			for ( let index         = 0; index<length; ++index ) {
+				const property = properties[index];
+				Pattern(property.value || property.argument);
+			}
+			break;
+		case 'ArrayPattern':
+			node.elements.forEach(Pattern);
+			break;
+		case 'RestElement':
+			Pattern(node.argument);
+			break;
+		case 'AssignmentPattern':
+			Pattern(node.left);
+			break;
+		default:
+			throw Error(`Unrecognized pattern type: ${node.type}`);
+	}
+}
+const forAliasRE = /(?<=^\s*\(?).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
+const parserOptions = NULL({ ecmaVersion: 2014 });
+function _NAME_test (v_for        )          {
+	const alias         = forAliasRE.exec(v_for) [0];
+	const AST = Parser.parse(`(${alias})=>{}`, parserOptions);
+	const { params } = AST.body[0].expression;
+	_NAMES.length = 0;
+	params.forEach(Pattern);
+	return _NAMES.length!==0;
+}
 
 let html         = '';
 let index         = 0;
@@ -3500,7 +3558,7 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 		xName==='style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
 		const attributes             = tag.attributes ;
 		const v_pre          = V_PRE || 'v-pre' in attributes;
-		if ( !v_pre && ( ':is' in attributes || 'v-bind:is' in attributes ) ) {}
+		if ( !v_pre && ( ':is' in attributes || 'v-bind:is' in attributes ) ) ;
 		else if ( !v_pre && 'is' in attributes ) {
 			if ( !foreign_elements.test(attributes.is ) && FOREIGN_ELEMENTS.test(attributes.is ) ) {
 				throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${attributes.is }”，不被 Vue 作为组件对待`);
@@ -3511,9 +3569,10 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 				throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
 			}
 		}
-		if ( !v_pre && 'v-for' in attributes ) {
-			const _id = _ID.exec(attributes['v-for'] );
-			if ( _id ) { throw ReferenceError(`“v-for”中似乎存在以下划线开头后跟字母的危险变量“${_id[0]}”，这可能使得 Vue 模板编译结果以错误的方式运行`); }
+		if ( !v_pre && 'v-for' in attributes && _NAME_test(attributes['v-for'] ) ) {
+			const names         = _NAMES.join('”“');
+			_NAMES.length = 0;
+			throw ReferenceError(`“v-for="${escapeAttributeValue(attributes['v-for'] )}"”中存在以下划线开头后跟字母的危险变量“${names}”，这可能使得 Vue 模板编译结果以错误的方式运行`);
 		}
 		const element          = parentNode.appendChild(new Element(xName, attributes, partial));
 		index = tag.end;
@@ -3802,26 +3861,6 @@ function parseComponent (sfc     , vue        )       {
 
 const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
-const { rollup } = require('rollup');
-const AcornBigint = require('acorn-bigint');
-const AcornClassFields = require('acorn-class-fields');
-const AcornStaticClassFeatures = require('acorn-static-class-features');
-const AcornPrivateMethods = require('acorn-private-methods');
-function AcornStage3 (Parser     ) {
-	return Parser.extend(
-		AcornBigint,
-		AcornClassFields,
-		AcornStaticClassFeatures,
-		AcornPrivateMethods,
-	);
-}
-
-const Parser = require('acorn').Parser.extend(AcornStage3);
-const { simple } = require('acorn-walk');
-const findGlobals = require('@ltd/acorn-globals')                                       ;
-const { compile } = require('vue-template-compiler');
-const { minify } = require('terser');
-
 const byStart = (a      , b      )         => a.start-b.start;
 
 const shorthand                = new WeakSet;
@@ -3834,7 +3873,7 @@ const visitors = NULL({
 	},
 });
 
-const parserOptions = NULL({ ecmaVersion: 5 });
+const parserOptions$1 = NULL({ ecmaVersion: 5 });
 const minifyOptions = NULL({
 	warnings: 'verbose',
 	parse: NULL({
@@ -3874,11 +3913,11 @@ function NecessaryStringLiteral (body        )         {
 	
 	let code         = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
 	
-	const ast       = Parser.parse(code, parserOptions);
-	const globals = findGlobals(ast);
+	const AST       = Parser.parse(code, parserOptions$1);
+	const globals = findGlobals(AST);
 	if ( globals.size ) {
 		if ( globals.has('_h') ) { throw Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`); }
-		simple(ast, visitors);
+		simple(AST, visitors);
 		let _code         = '';
 		let index         = 0;
 		for ( const node of globals.nodes().sort(byStart) ) {
@@ -3905,7 +3944,7 @@ function NecessaryStringLiteral (body        )         {
 function Render (innerHTML        , ES5         )                                                {
 	const { errors, render, staticRenderFns } = compile(innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
-	parserOptions.ecmaVersion = ES5 ? 5 : 2014;
+	parserOptions$1.ecmaVersion = ES5 ? 5 : 2014;
 	minifyOptions.ecma = ES5 ? 5 : 8;
 	return {
 		render: NecessaryStringLiteral(render),
@@ -3959,15 +3998,13 @@ function * From (tab        , mode                         , styles         , te
 	
 }
 
-const acornInjectPlugins = [ AcornStage3 ];
-function onwarn (warning     )       {
-	switch ( warning.code ) {
-		case 'UNUSED_EXTERNAL_IMPORT':
-		case 'CIRCULAR_DEPENDENCY':
-			return;
-	}
-	throw warning;
-}
+const rollupOptions = {
+	onwarn (warning     )       { if ( warning.code!=='UNUSED_EXTERNAL_IMPORT' ) { throw warning; } },
+	acornInjectPlugins: [ AcornStage3 ],
+	experimentalTopLevelAwait: true,
+	strictDeprecations: true,
+	treeshake: false,
+};
 
 const TRUE = NULL({
 	format: 'esm',
@@ -3996,12 +4033,8 @@ async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, 
 	}
 	const main         = sfc.export('default', x_from)          ;
 	let round         = 1;
-	const bundle = await rollup({
+	const bundle = await rollup(assign(create(null), rollupOptions, {
 		input: '_'.repeat(main.length+1),
-		acornInjectPlugins,
-		onwarn,
-		treeshake: false,
-		experimentalTopLevelAwait: true,
 		external: (path        )          => path!==x_from,
 		plugins: [
 			{
@@ -4033,7 +4066,7 @@ async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, 
 				},
 			}
 		],
-	});
+	}));
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
 	if ( output.length!==1 ) { throw Error(''+output.length); }
 	const first = output[0];

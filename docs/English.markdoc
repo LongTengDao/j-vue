@@ -74,7 +74,7 @@ Front-End Runtime Dependency
 		(The reason why the building can't be completed while front-end compiling, is due to the global unique identifier generator must execute in the final running scenario. Only in this way, we can ensure the selector names for scoped style and so on will never conflict.)
 		
 		#1#	A package published on `NPM`. It's a tool for automatic project building.
-		#2#	The single file component of `Vue`. It's convenient for developing, but need compiling.
+		#2#	The single-file component of `Vue`. It's convenient for developing, but need compiling.
 		
 	Download
 	--------	

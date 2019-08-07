@@ -58,11 +58,11 @@ export function NecessaryStringLiteral (body :string) :string {
 	
 	let code :string = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
 	
-	const ast :Node = Parser.parse(code, parserOptions);
-	const globals = findGlobals(ast);
+	const AST :Node = Parser.parse(code, parserOptions);
+	const globals = findGlobals(AST);
 	if ( globals.size ) {
 		if ( globals.has('_h') ) { throw Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`); }
-		simple(ast, visitors);
+		simple(AST, visitors);
 		let _code :string = '';
 		let index :number = 0;
 		for ( const node of globals.nodes().sort(byStart) ) {

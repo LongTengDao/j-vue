@@ -91,7 +91,7 @@ new Vue({
 ```
 
 从此，我们可以这样写 `.vue` 单文件组件：（只需要预处理器的支持）  
-So, we can write our `.vue` single-file-component like this from now on: (only need pre-processor support)
+So, we can write our `.vue` single-file component like this from now on: (only need pre-processor support)
 
 ```vue
 <style>
@@ -137,7 +137,7 @@ new Vue({
 This kind of runtime solution is more reliable (only front-end id generator can promise unique) and support dynamically use.
 
 刚刚提到的后端预处理器（用于单文件组件编译）也有提供：  
-Back-end pre-processor we just mentioned (for single-file-component compiling) is also supplied:
+Back-end pre-processor we just mentioned (for single-file component compiling) is also supplied:
 
 ```js
 const { SFC } = require('j-vue');

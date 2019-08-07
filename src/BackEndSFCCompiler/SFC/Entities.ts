@@ -6,6 +6,7 @@ import fromCodePoint from '.String.fromCodePoint';
 import __null__ from '.null';
 
 import { NON_SCALAR as SURROGATE } from '@ltd/j-utf';
+import { SEMICOLON_ENTITIES, CONTINUE_ENTITIES } from 'lib:entities';
 
 import { NONCHARACTER, CONTROL_CHARACTER } from './RE';
 
@@ -20,8 +21,6 @@ export function escapeAttributeValue (text :string) :string { return text.replac
 export function test (text :string) {
 	if ( / /.test(text) ) {}
 }
-
-import { SEMICOLON_ENTITIES, CONTINUE_ENTITIES } from 'lib:entities';
 
 const CONTROL_TO_CHAR = __null__({
 	0x80: 0x20AC,
