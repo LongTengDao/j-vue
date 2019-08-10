@@ -1,7 +1,5 @@
 # http://editorconfig.org
 
-root = true
-
 [*.{ts,js,md}]
 indent_size = 4
 
