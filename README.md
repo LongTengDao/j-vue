@@ -1,8 +1,4 @@
 ﻿
-<style>
-pre{tab-size:4}
-</style>
-
 jVue
 ====
 
