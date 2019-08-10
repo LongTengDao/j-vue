@@ -14,5 +14,8 @@ end_of_line = crlf
 trim_trailing_whitespace = false
 insert_final_newline = false
 
+[/docs/*.md]
+indent_style = space
+
 [/README.md]
 indent_style = space
