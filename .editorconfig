@@ -1,12 +1,16 @@
 # http://editorconfig.org
 
-[*.{ts,js,md}]
+[*.{ts,js}]
 indent_size = 4
 
 [.*.js]
 indent_size = 4
 
-[docs/*.markdoc]
+[/README.md]
+indent_style = space
+indent_size = 4
+
+[/docs/*.markdoc]
 charset = utf-8-bom
 indent_style = tab
 indent_size = 8
