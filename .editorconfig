@@ -16,4 +16,3 @@ insert_final_newline = false
 
 [/README.md]
 indent_style = space
-indent_size = 4
