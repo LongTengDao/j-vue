@@ -1,6 +1,9 @@
 # http://editorconfig.org
 
-[{*, .*.js, **/.ts}]
+[*]
+indent_size = 4
+
+[.*]
 indent_size = 4
 
 [/docs/*.markdoc]
