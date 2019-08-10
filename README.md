@@ -14,32 +14,32 @@ import { Scope, Style, Template, STYLE } from 'j-vue';
 const scope = Scope();
 
 Style(`
-	.__static__ { border: 1px solid black; }
+    .__static__ { border: 1px solid black; }
 `, scope);
 
 new Vue({
-	
-	template: Template(`
-		<div class="__static__">
-			<STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
-			<p :class="{ [scope('dynamic')]: red }">text</p>
-			<button @click="change">change</button>
-		</div>
-	`, scope),
-	
-	data () {
-		return {
-			red: false,
-			scope: Scope(),
-		};
-	},
-	
-	methods: {
-		change () { this.red = !this.red; }
-	},
-	
-	components: { STYLE },
-	
+    
+    template: Template(`
+        <div class="__static__">
+            <STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
+            <p :class="{ [scope('dynamic')]: red }">text</p>
+            <button @click="change">change</button>
+        </div>
+    `, scope),
+    
+    data () {
+        return {
+            red: false,
+            scope: Scope(),
+        };
+    },
+    
+    methods: {
+        change () { this.red = !this.red; }
+    },
+    
+    components: { STYLE },
+    
 });
 ```
 
@@ -49,44 +49,44 @@ That means behaviour below:
 ```js
 
 document.documentElement.firstChild.appendChild(document.createElement('style')).textContent = `
-	.a { border: 1px solid black; }
+    .a { border: 1px solid black; }
 `;
 
 new Vue({
 
-	template: `
-		<div class="a">
-			<STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
-			<p :class="{ [scope('dynamic')]: red }">text</p>
-			<button @click="change">change</button>
-		</div>
-	`,
-	
-	data () {
-		return {
-			red: false,
-			scope: new function () {
-				const cache = Object.create(null);
-				return (x) => cache[x] || (cache[x] = Identifier());
-				// Identifier 是 j-vue 内置的 36 进制（0-9a-z）发号器，
-				// 并会跳过所有数字打头的值（这意味着第一个号会是“a”）。
-				// Identifier is a base-36 (0-9a-z) ID generator build-in j-vue,
-				// and skip all value starts with digit (that means "a" will be the 1st ID).
-			},
-		};
-	},
-	
-	methods: {
-		change () { this.red = !this.red; }
-	},
-	
-	components: {
-		STYLE: {
-			functional: true,
-			render: (createElement, context) => createElement('style', context.data, context.children),
-		}
-	},
-	
+    template: `
+        <div class="a">
+            <STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
+            <p :class="{ [scope('dynamic')]: red }">text</p>
+            <button @click="change">change</button>
+        </div>
+    `,
+    
+    data () {
+        return {
+            red: false,
+            scope: new function () {
+                const cache = Object.create(null);
+                return (x) => cache[x] || (cache[x] = Identifier());
+                // Identifier 是 j-vue 内置的 36 进制（0-9a-z）发号器，
+                // 并会跳过所有数字打头的值（这意味着第一个号会是“a”）。
+                // Identifier is a base-36 (0-9a-z) ID generator build-in j-vue,
+                // and skip all value starts with digit (that means "a" will be the 1st ID).
+            },
+        };
+    },
+    
+    methods: {
+        change () { this.red = !this.red; }
+    },
+    
+    components: {
+        STYLE: {
+            functional: true,
+            render: (createElement, context) => createElement('style', context.data, context.children),
+        }
+    },
+    
 });
 ```
 
@@ -95,40 +95,40 @@ So, we can write our `.vue` single-file component like this from now on: (only n
 
 ```vue
 <style>
-	.__static__ { border: 1px solid black; }
+    .__static__ { border: 1px solid black; }
 </style>
 
 <template>
-	<div class="__static__">
-		<STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
-		<p :class="{ [scope('dynamic')]: red }">text</p>
-		<p :class="scope({ dynamic: red   })">text (object)</p>
-		<p :class="scope([red && 'dynamic'])">text (array)</p>
-		<p :class="scope( red && 'dynamic' )">text (arguments)</p>
-		<button @click="change">change</button>
-	</div>
+    <div class="__static__">
+        <STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
+        <p :class="{ [scope('dynamic')]: red }">text</p>
+        <p :class="scope({ dynamic: red   })">text (object)</p>
+        <p :class="scope([red && 'dynamic'])">text (array)</p>
+        <p :class="scope( red && 'dynamic' )">text (arguments)</p>
+        <button @click="change">change</button>
+    </div>
 </template>
 
 <script>
 import { template, Scope, STYLE } from 'j-vue?*';
 
 new Vue({
-	
-	template,
-	
-	data () {
-		return {
-			red: false,
-			scope: Scope(),
-		};
-	},
-	
-	methods: {
-		change () { this.red = !this.red; }
-	},
-	
-	components: { STYLE },
-	
+    
+    template,
+    
+    data () {
+        return {
+            red: false,
+            scope: Scope(),
+        };
+    },
+    
+    methods: {
+        change () { this.red = !this.red; }
+    },
+    
+    components: { STYLE },
+    
 });
 </script>
 ```
