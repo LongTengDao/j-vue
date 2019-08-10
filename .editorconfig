@@ -3,6 +3,9 @@
 [*.{ts,js,md}]
 indent_size = 4
 
+[.*.js]
+indent_size = 4
+
 [docs/*.markdoc]
 charset = utf-8-bom
 indent_style = tab
