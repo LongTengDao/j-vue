@@ -2,11 +2,13 @@
 
 const ___________________________ = _ => console.info(`\n[${_}]:`) || {};
 
-require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map, put }) => {
+require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful, put }) => {
 	
-	const version = await get('src/version');
+	const name = 'j-vue';
+	const Copy = 'LGPL-3.0';
+	const semver = await get('src/version');
 	
-	___________________________`Back-End SFC Compiler: NPM`.___________________________;
+	___________________________`Back-End SFC Compiler: /dist/NPM/*`.___________________________;
 	
 	await build({
 		src: 'src/BackEndSFCCompiler',
@@ -27,11 +29,11 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map,
 			keywords: [ 'Vue', 'SFC' ],
 		},
 		ES: 6,
-		semver: version,
-		name: 'j-vue',
+		semver,
+		name,
 		user: 'LongTengDao',
-		Auth: 龙腾道,
-		Copy: 'LGPL-3.0',
+		Auth,
+		Copy,
 		locate: {
 			'@ltd/j-orderify': ful('../../LongTengDao/j-orderify/dist/ESM/.j-orderify.js'),
 			'@ltd/j-regexp': ful('../../LongTengDao/j-regexp/dist/ESM/.j-regexp.js'),
@@ -45,18 +47,18 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map,
 	
 	const EDITIONS_README_OF_NPM = await get('dist/README.md');
 	
-	___________________________`Front-End Runtime Dependency: UMD, ESM`.___________________________;
+	___________________________`Front-End Runtime Dependency: /dist/UMD/*, /dist/ESM/*`.___________________________;
 	
 	await build({
 		src: 'src/FrontEndRuntimeDependency',
 		UMD: { main_global: 'jVue' },
 		ESM: true,
 		ES: 5,
-		semver: version,
-		name: 'j-vue',
+		semver,
+		name,
 		user: 'LongTengDao@ltd',
-		Auth: 龙腾道,
-		Copy: 'LGPL-3.0',
+		Auth,
+		Copy,
 		Desc: [
 			'对 .vue 文件进行构建后的前端统一依赖。从属于“简计划”。',
 			'The unified front-end dependency for built .vue files. Belong to "Plan J".'
@@ -68,27 +70,19 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道, get, ful, map,
 	
 	const EDITIONS_README_OF_UMD_AND_ESM = await get('dist/README.md');
 	
-	___________________________`Common: TSD, dist Editions README, LICENSE_, DOC'`.___________________________;
-	
-	await map('src/FrontEndRuntimeDependency/module.d.ts', replaceWithVersion(version), 'dist/TSD/j-vue.d.ts');///////////////////
+	___________________________`Common: /dist/README.md, /LICENSE*, /docs/*`.___________________________;
 	
 	await put('dist/README.md', mergeEditionsReadme(EDITIONS_README_OF_NPM, EDITIONS_README_OF_UMD_AND_ESM));
 	
-	await build({ LICENSE_: 'LGPL-3.0', DOC: true });
+	await build({ LICENSE_: Copy, DOC: true });
 	
 });
 
 
-function replaceWithVersion (version) {
-	const EXPORT_D_TS = /(?<=(?:^|[\s;}])(?:export|declare)?\s+(?:const|let|var)\s+version\s*:\s*)string(?=\s*(?:[,;\n\r\u2028\u2029]|$))/;
-	return tsd => tsd.replace(EXPORT_D_TS, `'${version}'`);
-}
-
-
 function mergeEditionsReadme (one, another) {
 	
-	const [en_heading, en_table, en_link, cn_heading, cn_table, cn_link] = one.split('\r\n\r\n');
-	const [, en_table_, en_links, , cn_table_, cn_links] = another.split('\r\n\r\n');
+	const [ en_heading, en_table, en_link, cn_heading, cn_table, cn_link ] = one.split('\r\n\r\n');
+	const [ , en_table_, en_links, , cn_table_, cn_links ] = another.split('\r\n\r\n');
 	
 	return [
 		
@@ -99,7 +93,7 @@ function mergeEditionsReadme (one, another) {
 		en_link,
 		
 		Heading('Front-End Runtime Dependency'),
-		Rows(en_table_, '`TSD/j-vue.d.ts`', '[TypeScript][TS-en] module declaration file.'),
+		en_table_,
 		en_links,
 		
 		cn_heading,
@@ -109,7 +103,7 @@ function mergeEditionsReadme (one, another) {
 		cn_link.replace(/\r\n$/, ''),
 		
 		Heading('前端运行时依赖'),
-		Rows(cn_table_, '`TSD/j-vue.d.ts`', '[TypeScript][TS-zhs] 的模块声明文件。'),
+		cn_table_,
 		cn_links,
 	
 	].join('\r\n\r\n');
@@ -117,18 +111,6 @@ function mergeEditionsReadme (one, another) {
 	function Heading (content) {
 		const NON_ASCII = /[^\x00-\x7F]/ug;
 		return content+'\r\n'+'-'.repeat(content.replace(NON_ASCII, '--').length);
-	}
-	
-	function Rows (rows, th, td) {
-		let index = rows.lastIndexOf('\r\n| `ESM/');
-		if ( index<0 ) { throw Error(); }
-		index = rows.indexOf('\r\n', index+1);
-		if ( index<0 ) { throw Error(); }
-		const NON_ASCII = /[^\x00-\x7F]/gu;
-		return rows.slice(0, index)+
-			'\r\n| '+th+' '.repeat(25-th.replace(NON_ASCII, '  ').length)+' | '+td+' '.repeat(97-td.replace(NON_ASCII, '  ').length)+' |'+
-			'\r\n| '+' '.repeat(25)+' | '+' '.repeat(97)+' |'+
-			rows.slice(index);
 	}
 	
 }

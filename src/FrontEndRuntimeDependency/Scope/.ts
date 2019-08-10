@@ -34,5 +34,6 @@ function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
 		else { return new ObjectScope(keys.match(KEYS) || EMPTY); }
 	}
 }
+Scope.prototype = null as any;
 
 export { Scope as default, KEYS };

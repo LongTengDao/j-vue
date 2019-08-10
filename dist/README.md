@@ -20,8 +20,6 @@ Front-End Runtime Dependency
 | `ESM/j-vue.d.ts`          | The corresponding [TypeScript][TS-en] format API declaration file.                                             |
 | `ESM/.j-vue.js`           | The edition for [`@ltd/j-dev`][jDev-en] further bundling (with global variable reference optimizing reserved). |
 | `ESM/.j-vue.d.ts`         | The corresponding [TypeScript][TS-en] format API declaration file.                                             |
-| `TSD/j-vue.d.ts`          | [TypeScript][TS-en] module declaration file.                                                      |
-|                           |                                                                                                   |
 |                           |                                                                                                                |
 | `UMD/j-vue.js`            | The edition built as [`UMD`][UMD-en] (width source mapper inline).                                             |
 | `UMD/j-vue.d.ts`          | The corresponding [TypeScript][TS-en] format API declaration file.                                             |
@@ -56,8 +54,6 @@ Front-End Runtime Dependency
 | `ESM/j-vue.d.ts`          | 相应的 [TypeScript][TS-zhs] 格式的接口声明文件。                                                               |
 | `ESM/.j-vue.js`           | 供 [`@ltd/j-dev`][jDev-zhs] 二度打包的版本（保留全局变量引用优化）。                                           |
 | `ESM/.j-vue.d.ts`         | 相应的 [TypeScript][TS-zhs] 格式的接口声明文件。                                                               |
-| `TSD/j-vue.d.ts`          | [TypeScript][TS-zhs] 的模块声明文件。                                                             |
-|                           |                                                                                                   |
 |                           |                                                                                                                |
 | `UMD/j-vue.js`            | 封装为 [`UMD`][UMD-zhs] 的版本（内联源映射内容）。                                                             |
 | `UMD/j-vue.d.ts`          | 相应的 [TypeScript][TS-zhs] 格式的接口声明文件。                                                               |
