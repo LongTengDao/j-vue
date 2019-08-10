@@ -1,6 +1,6 @@
 # http://editorconfig.org
 
-[*]
+[{*, .*}]
 indent_size = 4
 
 [/docs/*.markdoc]
