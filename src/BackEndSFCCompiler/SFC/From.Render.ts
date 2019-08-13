@@ -7,35 +7,39 @@ import { StringLiteral } from '@ltd/j-es';
 
 import { compile, Parser, findGlobals, simple, minify } from '../dependencies';
 
-const byStart = (a :Node, b :Node) :number => a.start-b.start;
+const byStart = (a :Identifier, b :Identifier) :number => a.start-b.start;
 
-const shorthand :WeakSet<Node> = new WeakSet;
-const dangerous :WeakSet<Node> = new WeakSet;
+const shorthand :WeakSet<Identifier> = new WeakSet;
+const dangerous :WeakSet<Identifier> = new WeakSet;
 const __Proto__ :String = Object('__proto__');
 const visitors = __null__({
-	ObjectExpression ({ properties } :Node) :void {
-		for ( let index :number = properties!.length; index--; ) {
-			const property = properties![index];
+	ObjectExpression ({ properties } :ObjectExpression) :void {
+		for ( let index :number = properties.length; index--; ) {
+			const property = properties[index];
 			if ( property.shorthand ) { shorthand.add(property.value); }
 		}
 	},
-	ObjectPattern ({ properties } :Node) :void {
-		for ( let index :number = properties!.length; index--; ) {
-			const property = properties![index];
+	ObjectPattern ({ properties } :ObjectPattern) :void {
+		for ( let index :number = properties.length; index--; ) {
+			const property = properties[index];
 			if ( property.shorthand ) {
 				let { value } = property;
-				if ( value.type==='AssignmentPattern' ) { value = value.left!; }
+				if ( value.type==='AssignmentPattern' ) { value = value.left; }
 				if ( value.name==='__proto__' ) { value.name = __Proto__; }
 				shorthand.add(value);
 			}
 		}
 	},
-	VariablePattern (node :Node) :void {
-		if ( node.name!.startsWith('_') ) { dangerous.add(node); }
+	VariablePattern (identifier :Identifier) :void {
+		if ( identifier.name.startsWith('_') ) { dangerous.add(identifier); }
 	},
 });
 
-const parserOptions = __null__({ ecmaVersion: 5 });
+const parserOptions = __null__({
+	ecmaVersion: 5,
+	sourceType: 'module',
+	allowReserved: false,
+});
 const minifyOptions = __null__({
 	warnings: 'verbose',
 	parse: __null__({
@@ -73,7 +77,7 @@ const _C_EXP = /^\(function\(([\w$]+)\){"use strict";return (\1\(.*\))}\);$/s;
 export function NecessaryStringLiteral (body :string) :string {
 	if ( !body.startsWith(with_this__return_) || !body.endsWith(_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
 	const code :string = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
-	const AST :Node = Parser.parse(code, parserOptions);
+	const AST = Parser.parse(code, parserOptions);
 	const globals = findGlobals(AST);
 	if ( globals.size ) {
 		if ( globals.has('_h') ) { throw Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`); }
@@ -83,12 +87,12 @@ export function NecessaryStringLiteral (body :string) :string {
 		simple(AST, visitors);
 		let _code :string = '';
 		let index :number = 0;
-		for ( const node of globals.nodes().sort(byStart) ) {
-			if ( dangerous.has(node) ) { throw Error(`不要对实例下的下划线开头的私有属性“${node.name}”进行写操作！`); }
-			const { start } :Node = node;
+		for ( const identifier of ( globals.nodes() as Identifier[] ).sort(byStart) ) {
+			if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`); }
+			const { start } = identifier;
 			if ( start!==index ) { _code += code.slice(index, start); }
-			const name :string = code.slice(start, index = node.end);
-			if ( shorthand.has(node) ) { _code += node.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
+			const name :string = code.slice(start, index = identifier.end);
+			if ( shorthand.has(identifier) ) { _code += identifier.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
 			_code += `${_vm}.${name}`;
 		}
 		if ( index!==code.length ) { _code += code.slice(index); }
@@ -115,18 +119,26 @@ export function NecessaryStringLiteral (body :string) :string {
 export default function Render (innerHTML :string, ES5 :boolean) :{ render :string, staticRenderFns :string[] } {
 	const { errors, render, staticRenderFns } = compile(innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
-	parserOptions.ecmaVersion = ES5 ? 5 : 2014;
-	minifyOptions.ecma = ES5 ? 5 : 8;
+	minifyOptions.ecma = parserOptions.ecmaVersion = ES5 ? 5 : 2014 as 6;
 	return {
 		render: NecessaryStringLiteral(render),
 		staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),
 	};
 };
 
-type Node = object & {
-	type :string
-	start :number
-	end :number
-	name? :String
-	properties? :{ shorthand :boolean, value :Node & { left? :Node } }[]
+type Identifier = {
+	type :'Identifier',
+	start :number,
+	end :number,
+	name :String,
+};
+type ObjectExpression = {
+	properties :Array<{ shorthand :false } | { shorthand :true, value :Identifier }>,
+};
+type ObjectPattern = {
+	properties :Array<{ shorthand :false } | { shorthand :true, value :Identifier | AssignmentPattern }>,
+};
+type AssignmentPattern = {
+	type :'AssignmentPattern',
+	left :Identifier,
 };

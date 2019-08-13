@@ -5,10 +5,18 @@ import __null__ from '.null';
 
 import { rollup, AcornStage3 } from '../dependencies';
 
+const acorn = __null__({
+	ecmaVersion: 5,
+	sourceType: 'module',
+	allowAwaitOutsideFunction: true,
+});
 const rollupOptions = {
-	onwarn (warning :any) :void { if ( warning.code!=='UNUSED_EXTERNAL_IMPORT' ) { throw warning; } },
+	onwarn (warning :any) :void {
+		if ( typeof warning==='string' ) { throw Error(warning); }
+		if ( warning.code!=='UNUSED_EXTERNAL_IMPORT' ) { throw warning; }
+	},
+	acorn,
 	acornInjectPlugins: [ AcornStage3 ],
-	experimentalTopLevelAwait: true,
 	strictDeprecations: true,
 	treeshake: false,
 };
@@ -40,11 +48,12 @@ export default async function one (sfc :SFC, { 'var': x_var, 'j-vue?*': x_from, 
 	}
 	const main :string = sfc.export('default', x_from) as string;
 	let round :number = 1;
+	acorn.ecmaVersion = x_var==='var' ? 5 : 2014 as 6;
 	const bundle = await rollup(assign(create(null), rollupOptions, {
-		input: '_'.repeat(main.length+1),
+		input: '/'+'_'.repeat(main.length),
 		external: (path :string) :boolean => path!==x_from,
 		plugins: [
-			{
+			__null__({
 				resolveId (path :string) :string {
 					if ( round===1 || path===x_from ) { return path; }
 					throw Error(path);
@@ -71,7 +80,7 @@ export default async function one (sfc :SFC, { 'var': x_var, 'j-vue?*': x_from, 
 					}
 					return sfc.export(x_var, from) as string;
 				},
-			}
+			})
 		],
 	}));
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);

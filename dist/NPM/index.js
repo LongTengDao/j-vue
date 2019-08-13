@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '11.2.0';
+const version = '11.2.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -93,7 +93,7 @@ const Default = (
  * 模块名称：ES
  * 模块功能：ECMAScript 语法相关共享实用程序。从属于“简计划”。
    　　　　　ECMAScript syntax util. Belong to "Plan J".
- * 模块版本：0.8.0
+ * 模块版本：0.8.1
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-es/issues
@@ -3513,7 +3513,11 @@ function Pattern (node     )       {
 	}
 }
 const forAliasRE = /(?<=^\s*\(?).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
-const parserOptions = NULL({ ecmaVersion: 2014 });
+const parserOptions = NULL({
+	ecmaVersion: 2014     ,
+	sourceType: 'module',
+	allowReserved: false,
+});
 function _NAME_test (v_for        )          {
 	const alias         = forAliasRE.exec(v_for) [0];
 	const AST = Parser.parse(`(${alias})=>{}`, parserOptions);
@@ -3858,35 +3862,39 @@ function parseComponent (sfc     , vue        )       {
 
 const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
-const byStart = (a      , b      )         => a.start-b.start;
+const byStart = (a            , b            )         => a.start-b.start;
 
-const shorthand                = new WeakSet;
-const dangerous                = new WeakSet;
+const shorthand                      = new WeakSet;
+const dangerous                      = new WeakSet;
 const __Proto__         = Object('__proto__');
 const visitors = NULL({
-	ObjectExpression ({ properties }      )       {
-		for ( let index         = properties .length; index--; ) {
-			const property = properties [index];
+	ObjectExpression ({ properties }                  )       {
+		for ( let index         = properties.length; index--; ) {
+			const property = properties[index];
 			if ( property.shorthand ) { shorthand.add(property.value); }
 		}
 	},
-	ObjectPattern ({ properties }      )       {
-		for ( let index         = properties .length; index--; ) {
-			const property = properties [index];
+	ObjectPattern ({ properties }               )       {
+		for ( let index         = properties.length; index--; ) {
+			const property = properties[index];
 			if ( property.shorthand ) {
 				let { value } = property;
-				if ( value.type==='AssignmentPattern' ) { value = value.left ; }
+				if ( value.type==='AssignmentPattern' ) { value = value.left; }
 				if ( value.name==='__proto__' ) { value.name = __Proto__; }
 				shorthand.add(value);
 			}
 		}
 	},
-	VariablePattern (node      )       {
-		if ( node.name .startsWith('_') ) { dangerous.add(node); }
+	VariablePattern (identifier            )       {
+		if ( identifier.name.startsWith('_') ) { dangerous.add(identifier); }
 	},
 });
 
-const parserOptions$1 = NULL({ ecmaVersion: 5 });
+const parserOptions$1 = NULL({
+	ecmaVersion: 5,
+	sourceType: 'module',
+	allowReserved: false,
+});
 const minifyOptions = NULL({
 	warnings: 'verbose',
 	parse: NULL({
@@ -3924,7 +3932,7 @@ const _C_EXP = /^\(function\(([\w$]+)\){"use strict";return (\1\(.*\))}\);$/s;
 function NecessaryStringLiteral (body        )         {
 	if ( !body.startsWith(with_this__return_) || !body.endsWith(_$1) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
 	const code         = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
-	const AST       = Parser.parse(code, parserOptions$1);
+	const AST = Parser.parse(code, parserOptions$1);
 	const globals = findGlobals(AST);
 	if ( globals.size ) {
 		if ( globals.has('_h') ) { throw Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`); }
@@ -3934,12 +3942,12 @@ function NecessaryStringLiteral (body        )         {
 		simple(AST, visitors);
 		let _code         = '';
 		let index         = 0;
-		for ( const node of globals.nodes().sort(byStart) ) {
-			if ( dangerous.has(node) ) { throw Error(`不要对实例下的下划线开头的私有属性“${node.name}”进行写操作！`); }
-			const { start }       = node;
+		for ( const identifier of ( globals.nodes()                 ).sort(byStart) ) {
+			if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`); }
+			const { start } = identifier;
 			if ( start!==index ) { _code += code.slice(index, start); }
-			const name         = code.slice(start, index = node.end);
-			if ( shorthand.has(node) ) { _code += node.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
+			const name         = code.slice(start, index = identifier.end);
+			if ( shorthand.has(identifier) ) { _code += identifier.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
 			_code += `${_vm}.${name}`;
 		}
 		if ( index!==code.length ) { _code += code.slice(index); }
@@ -3966,8 +3974,7 @@ function NecessaryStringLiteral (body        )         {
 function Render (innerHTML        , ES5         )                                                {
 	const { errors, render, staticRenderFns } = compile(innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
-	parserOptions$1.ecmaVersion = ES5 ? 5 : 2014;
-	minifyOptions.ecma = ES5 ? 5 : 8;
+	minifyOptions.ecma = parserOptions$1.ecmaVersion = ES5 ? 5 : 2014     ;
 	return {
 		render: NecessaryStringLiteral(render),
 		staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),
@@ -4020,10 +4027,18 @@ function * From (tab        , mode                         , styles         , te
 	
 }
 
+const acorn = NULL({
+	ecmaVersion: 5,
+	sourceType: 'module',
+	allowAwaitOutsideFunction: true,
+});
 const rollupOptions = {
-	onwarn (warning     )       { if ( warning.code!=='UNUSED_EXTERNAL_IMPORT' ) { throw warning; } },
+	onwarn (warning     )       {
+		if ( typeof warning==='string' ) { throw Error(warning); }
+		if ( warning.code!=='UNUSED_EXTERNAL_IMPORT' ) { throw warning; }
+	},
+	acorn,
 	acornInjectPlugins: [ AcornStage3 ],
-	experimentalTopLevelAwait: true,
 	strictDeprecations: true,
 	treeshake: false,
 };
@@ -4055,11 +4070,12 @@ async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, 
 	}
 	const main         = sfc.export('default', x_from)          ;
 	let round         = 1;
+	acorn.ecmaVersion = x_var==='var' ? 5 : 2014     ;
 	const bundle = await rollup(assign(create(null), rollupOptions, {
-		input: '_'.repeat(main.length+1),
+		input: '/'+'_'.repeat(main.length),
 		external: (path        )          => path!==x_from,
 		plugins: [
-			{
+			NULL({
 				resolveId (path        )         {
 					if ( round===1 || path===x_from ) { return path; }
 					throw Error(path);
@@ -4086,7 +4102,7 @@ async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, 
 					}
 					return sfc.export(x_var, from)          ;
 				},
-			}
+			})
 		],
 	}));
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);

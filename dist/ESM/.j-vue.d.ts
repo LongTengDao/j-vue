@@ -13,7 +13,7 @@ declare module 'j-vue?*' {
 	};
 }
 
-export const version :'11.2.0';
+export const version :'11.2.1';
 
 export function Identifier () :string;
 

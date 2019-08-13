@@ -57,7 +57,11 @@ function Pattern (node :any) :void {
 	}
 }
 const forAliasRE = /(?<=^\s*\(?).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
-const parserOptions = __null__({ ecmaVersion: 2014 });
+const parserOptions = __null__({
+	ecmaVersion: 2014 as 6,
+	sourceType: 'module',
+	allowReserved: false,
+});
 function _NAME_test (v_for :string) :boolean {
 	const alias :string = forAliasRE.exec(v_for)![0];
 	const AST = Parser.parse(`(${alias})=>{}`, parserOptions);
