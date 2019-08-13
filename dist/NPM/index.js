@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '11.2.2';
+const version = '11.2.3';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3456,13 +3456,11 @@ class Mustache extends Array         {
 }
 
 const { rollup } = require('rollup');
-const AcornBigint = require('acorn-bigint');
 const AcornClassFields = require('acorn-class-fields');
 const AcornStaticClassFeatures = require('acorn-static-class-features');
 const AcornPrivateMethods = require('acorn-private-methods');
 function AcornStage3 (Parser     ) {
 	return Parser.extend(
-		AcornBigint,
 		AcornClassFields,
 		AcornStaticClassFeatures,
 		AcornPrivateMethods,

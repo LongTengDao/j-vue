@@ -1,11 +1,9 @@
 export const { rollup } = require('rollup');
-const AcornBigint = require('acorn-bigint');
 const AcornClassFields = require('acorn-class-fields');
 const AcornStaticClassFeatures = require('acorn-static-class-features');
 const AcornPrivateMethods = require('acorn-private-methods');
 export function AcornStage3 (Parser :any) {
 	return Parser.extend(
-		AcornBigint,
 		AcornClassFields,
 		AcornStaticClassFeatures,
 		AcornPrivateMethods,
