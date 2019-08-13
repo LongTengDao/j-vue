@@ -2,7 +2,7 @@
 
 const ___________________________ = _ => console.info(`\n[${_}]:`) || {};
 
-require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful, put }) => {
+require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful, map, put }) => {
 	
 	const name = 'j-vue';
 	const Copy = 'LGPL-3.0';
@@ -70,7 +70,9 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 	
 	const EDITIONS_README_OF_UMD_AND_ESM = await get('dist/README.md');
 	
-	___________________________`Common: /dist/README.md, /LICENSE*, /docs/*`.___________________________;
+	___________________________`Common: /dist/TSD/*, /dist/README.md, /LICENSE*, /docs/*`.___________________________;
+	
+	await map('src/FrontEndRuntimeDependency/module.d.ts', replaceWithVersion(semver), 'dist/TSD/j-vue.d.ts');
 	
 	await put('dist/README.md', mergeEditionsReadme(EDITIONS_README_OF_NPM, EDITIONS_README_OF_UMD_AND_ESM));
 	
@@ -78,6 +80,10 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 	
 });
 
+function replaceWithVersion (version) {
+	const EXPORT_D_TS = /(?<=(?:^|[\s;}])(?:export|declare)?\s+(?:const|let|var)\s+version\s*:\s*)string(?=\s*(?:[,;\n\r\u2028\u2029]|$))/;
+	return tsd => tsd.replace(EXPORT_D_TS, `'${version}'`);
+}
 
 function mergeEditionsReadme (one, another) {
 	
@@ -93,7 +99,7 @@ function mergeEditionsReadme (one, another) {
 		en_link,
 		
 		Heading('Front-End Runtime Dependency'),
-		en_table_,
+		Rows(en_table_, '`TSD/j-vue.d.ts`', '[TypeScript][TS-en] module declaration file.'),
 		en_links,
 		
 		cn_heading,
@@ -103,7 +109,7 @@ function mergeEditionsReadme (one, another) {
 		cn_link.replace(/\r\n$/, ''),
 		
 		Heading('前端运行时依赖'),
-		cn_table_,
+		Rows(cn_table_, '`TSD/j-vue.d.ts`', '[TypeScript][TS-zhs] 的模块声明文件。'),
 		cn_links,
 	
 	].join('\r\n\r\n');
@@ -113,5 +119,16 @@ function mergeEditionsReadme (one, another) {
 		return content+'\r\n'+'-'.repeat(content.replace(NON_ASCII, '--').length);
 	}
 	
+	function Rows (rows, th, td) {
+		let index = rows.lastIndexOf('\r\n| `ESM/');
+		if ( index<0 ) { throw Error(); }
+		index = rows.indexOf('\r\n', index+1);
+		if ( index<0 ) { throw Error(); }
+		const NON_ASCII = /[^\x00-\x7F]/gu;
+		return rows.slice(0, index)+
+			'\r\n| '+' '.repeat(25)+' | '+' '.repeat(110)+' |'+
+			'\r\n| '+th+' '.repeat(25-th.replace(NON_ASCII, '  ').length)+' | '+td+' '.repeat(110-td.replace(NON_ASCII, '  ').length)+' |'+
+			rows.slice(index);
+	}
+	
 }
-

@@ -1,18 +1,3 @@
-declare module 'j-vue?*' {
-	export const scope :Scope;
-	export const template :string;
-	export const render :Function;
-	export const staticRenderFns :Function[];
-	export {
-		version,
-		Identifier,
-		Scope,
-		Template, Render, StaticRenderFns,
-		STYLE, Style, remove,
-		exports as default,
-	};
-}
-
 export const version :string;
 
 export function Identifier () :string;
@@ -46,12 +31,14 @@ export function Template (html :string, scope :Scope) :string;
 export function Render (code :string, scope? :Scope) :Render;
 export function StaticRenderFns (codes :string[], scope? :Scope) :Render[];
 
+type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
+
 export const STYLE :{ functional :true, render :Render };
 export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
 export function remove (style :HTMLStyleElement) :typeof remove;
 
 export default exports;
-declare const exports :{
+declare const exports :Readonly<{
 	version :typeof version
 	Identifier :typeof Identifier
 	Scope :typeof Scope
@@ -62,6 +49,4 @@ declare const exports :{
 	Style :typeof Style
 	remove :typeof remove
 	default :typeof exports
-};
-
-type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
+}>;

@@ -1,40 +1,58 @@
 export as namespace jVue;
 export = exports;
-
-declare const exports :{
-	version :'11.2.1'
+declare namespace exports {
 	
-	Identifier () :string
+	export const version :'11.2.2';
 	
-	Scope<Keys extends string = string> (this :Scope[] | Scope | any, keys :string) :ObjectScope<Keys>
-	Scope<Keys extends string = string> (this :Scope[] | Scope | any) :FunctionScope<Keys>
+	export function Identifier () :string;
 	
-	Template (html :string, scope :Scope) :string
+	export const Scope :{
+		<Keys extends string> (this :Scope[] | Scope | any, keys :string) :ObjectScope<Keys>
+		(this :Scope[] | Scope | any) :FunctionScope
+		readonly prototype :null
+	};
+	export type Scope<Keys extends string | void = void> =
+		Keys extends string
+			? ObjectScope<Keys>
+			: FunctionScope;
+	type ObjectScope<Keys extends string> = {
+		readonly [key in Keys] :string
+	} & {
+		readonly $ :(this :ObjectScope<Keys>, css? :string, media? :string) => ObjectScope<Keys>
+		readonly [_] :(string :string) => string
+		readonly _ :never
+	};
+	type FunctionScope = {
+		(...args :any[]) :string
+		readonly prototype :Readonly<object>
+		readonly $ :(this :FunctionScope, css? :string, media? :string) => FunctionScope
+		readonly [_] :(string :string) => string
+		readonly _ :never
+	};
+	const _ :unique symbol;
 	
-	Render (code :string, scope? :Scope) :Render
-	StaticRenderFns (codes :string[], scope? :Scope) :Render[]
+	export function Template (html :string, scope :Scope) :string;
+	export function Render (code :string, scope? :Scope) :Render;
+	export function StaticRenderFns (codes :string[], scope? :Scope) :Render[];
 	
-	Style (css? :string, scope? :Scope) :HTMLStyleElement
-	remove :typeof remove
+	type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
 	
-	STYLE :{ functional :true, render :Render }
+	export const STYLE :{ functional :true, render :Render };
+	export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
+	export function remove (style :HTMLStyleElement) :typeof remove;
 	
-	default :typeof exports
-};
-
-type Scope<Keys extends string = string> = ObjectScope<Keys> | FunctionScope<Keys>;
-type ObjectScope<Keys extends string> = {
-	readonly [key in Keys] :string
-} & {
-	readonly [_] :(string :string) => string
-};
-type FunctionScope<Keys extends string = string> = {
-	(...args :any[]) :string
-	readonly prototype :ObjectScope<Keys>
-	readonly [_] :(string :string) => string
-};
-declare const _ :unique symbol;
-
-declare function remove (style :HTMLStyleElement) :typeof remove;
-
-type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
+	export { exports as default };
+	const exports :Readonly<{
+		version :typeof version
+		Identifier :typeof Identifier
+		Scope :typeof Scope
+		Template :typeof Template
+		Render :typeof Render
+		StaticRenderFns :typeof StaticRenderFns
+		STYLE :typeof STYLE
+		Style :typeof Style
+		remove :typeof remove
+		default :typeof exports
+	}>;
+	
+}

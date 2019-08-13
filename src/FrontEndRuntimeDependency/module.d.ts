@@ -1,8 +1,14 @@
-export as namespace jVue;
-export = exports;
-declare namespace exports {
+declare module 'j-vue?*' {
+	export const scope :import('j-vue').Scope;
+	export const template :string;
+	export const render :Function;
+	export const staticRenderFns :Function[];
+	export * from 'j-vue';
+}
+
+declare module 'j-vue' {
 	
-	export const version :'11.2.2';
+	export const version :string;
 	
 	export function Identifier () :string;
 	
