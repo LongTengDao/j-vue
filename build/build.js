@@ -56,7 +56,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 		ES: 5,
 		semver,
 		name,
-		user: 'LongTengDao@ltd',
+		user: 'LongTengDao',
 		Auth,
 		Copy,
 		Desc: [
