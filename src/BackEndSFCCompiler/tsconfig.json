@@ -4,7 +4,11 @@
 		"baseUrl": "../..",
 		"paths": {
 			"@ltd/*": [ "../../LongTengDao/*/src/export.d", "../../LongTengDao/*/src/default.d" ],
-			"lib:*": [ "lib/*/dist" ]
+			"lib:*": [ "lib/*/dist" ],
+			"acorn": [ "./node_modules/acorn/dist/acorn", "../node_modules/acorn/dist/acorn", "../../node_modules/acorn/dist/acorn", "../../../node_modules/acorn/dist/acorn" ],
+			"rollup": [ "./node_modules/rollup/dist/rollup", "../node_modules/rollup/dist/rollup", "../../node_modules/rollup/dist/rollup", "../../../node_modules/rollup/dist/rollup" ],
+			"terser": [ "./node_modules/terser/tools/terser", "../node_modules/terser/tools/terser", "../../node_modules/terser/tools/terser", "../../../node_modules/terser/tools/terser" ],
+			"vue-template-compiler": [ "./node_modules/vue-template-compiler/types/index" ]
 		},
 		"strict": true,
 		"noImplicitReturns": true,

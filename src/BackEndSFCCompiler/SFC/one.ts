@@ -22,16 +22,16 @@ const rollupOptions = {
 };
 
 const TRUE = __null__({
-	format: 'esm',
+	format: 'esm' as 'esm',
 	sourcemap: true,
 });
 const FALSE = __null__({
-	format: 'esm',
+	format: 'esm' as 'esm',
 	sourcemap: false,
 });
 const INLINE = __null__({
-	format: 'esm',
-	sourcemap: 'inline',
+	format: 'esm' as 'esm',
+	sourcemap: 'inline' as 'inline',
 });
 
 export default async function one (sfc :SFC, { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, map = false, src, lang } :{
@@ -41,7 +41,7 @@ export default async function one (sfc :SFC, { 'var': x_var, 'j-vue?*': x_from, 
 	map? :boolean | 'inline',
 	src? (src :string) :Promise<string>,
 	lang? (lang :string, inner :string) :string | Promise<string>,
-}) :Promise<string | { code :string, map :any }> {
+}) :Promise<string | { code :string, map? :any }> {
 	if ( lang ) {
 		const { script } = sfc;
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner!); }
@@ -85,8 +85,8 @@ export default async function one (sfc :SFC, { 'var': x_var, 'j-vue?*': x_from, 
 	}));
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
 	if ( output.length!==1 ) { throw Error(''+output.length); }
-	const first = output[0];
-	return map===true ? first : first.code;
+	const only = output[0];
+	return map===true ? only : only.code;
 };
 
 type SFC = import('./').default;

@@ -30,21 +30,22 @@ const GT_TNS_EOF = />[\t\n ]+$/;
 
 const _NAME = /^_[a-z]$/;
 const _NAMES :string[] = [];
-function Pattern (node :any) :void {
+function Pattern (node :Pattern) :void {
 	switch ( node.type ) {
 		case 'Identifier':
 			if ( _NAME.test(node.name) ) { _NAMES.push(node.name); }
 			break;
 		case 'ObjectPattern':
-			const { properties } = node;
-			const { length } = properties;
-			for ( let index :number = 0; index<length; ++index ) {
+			for ( let { properties } = node, { length } = properties, index :number = 0; index<length; ++index ) {
 				const property = properties[index];
 				Pattern(property.value || property.argument);
 			}
 			break;
 		case 'ArrayPattern':
-			node.elements.forEach(Pattern);
+			for ( let { elements } = node, { length } = elements, index :number = 0; index<length; ++index ) {
+				const element = elements[index];
+				if ( element ) { Pattern(element); }
+			}
 			break;
 		case 'RestElement':
 			Pattern(node.argument);
@@ -59,12 +60,21 @@ function Pattern (node :any) :void {
 const forAliasRE = /(?<=^\s*\(?).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const parserOptions = __null__({
 	ecmaVersion: 2014 as 6,
-	sourceType: 'module',
+	sourceType: 'module' as 'module',
 	allowReserved: false,
 });
 function _NAME_test (v_for :string) :boolean {
 	const alias :string = forAliasRE.exec(v_for)![0];
-	const AST = Parser.parse(`(${alias})=>{}`, parserOptions);
+	const AST = Parser.parse(`(${alias})=>{}`, parserOptions) as any as {
+		type :'Program',
+		body :Array<{
+			type :'ExpressionStatement',
+			expression :{
+				type :'ArrowFunctionExpression',
+				params :Array<Pattern>,
+			},
+		}>,
+	};
 	const { params } = AST.body[0].expression;
 	_NAMES.length = 0;
 	params.forEach(Pattern);
@@ -203,6 +213,25 @@ export default class Content extends Node {
 		}
 	}
 	
+};
+
+type Pattern = {
+	type :'Identifier',
+	name :string,
+} | {
+	type :'ObjectPattern',
+	properties :Array<{ value :Pattern, argument? :never } | { value? :never, argument :Pattern }>,
+} | {
+	type :'ArrayPattern',
+	elements :Array<Pattern | null>,
+} | {
+	type :'RestElement',
+	argument :Pattern,
+} | {
+	type :'AssignmentPattern',
+	left :Pattern,
+} | {
+	type :'',
 };
 
 type Partial = import('./Template').Partial;

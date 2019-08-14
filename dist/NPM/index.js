@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '11.2.4';
+const version = '11.2.5';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3455,7 +3455,7 @@ class Mustache extends Array         {
 	
 }
 
-const { rollup } = require('rollup');
+const { rollup } = require('rollup')                           ;
 const AcornClassFields = require('acorn-class-fields');
 const AcornStaticClassFeatures = require('acorn-static-class-features');
 const AcornPrivateMethods = require('acorn-private-methods');
@@ -3467,11 +3467,11 @@ function AcornStage3 (Parser     ) {
 	);
 }
 
-const Parser = require('acorn').Parser.extend(AcornStage3);
+const Parser = ( require('acorn')                           ).Parser.extend(AcornStage3);
 const { simple } = require('acorn-walk');
 const findGlobals = require('@ltd/acorn-globals')                                       ;
-const { compile } = require('vue-template-compiler');
-const { minify } = require('terser');
+const { compile } = require('vue-template-compiler')                                          ;
+const { minify } = require('terser')                           ;
 
 const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
@@ -3484,21 +3484,22 @@ const GT_TNS_EOF = />[\t\n ]+$/;
 
 const _NAME = /^_[a-z]$/;
 const _NAMES           = [];
-function Pattern (node     )       {
+function Pattern (node         )       {
 	switch ( node.type ) {
 		case 'Identifier':
 			if ( _NAME.test(node.name) ) { _NAMES.push(node.name); }
 			break;
 		case 'ObjectPattern':
-			const { properties } = node;
-			const { length } = properties;
-			for ( let index         = 0; index<length; ++index ) {
+			for ( let { properties } = node, { length } = properties, index         = 0; index<length; ++index ) {
 				const property = properties[index];
 				Pattern(property.value || property.argument);
 			}
 			break;
 		case 'ArrayPattern':
-			node.elements.forEach(Pattern);
+			for ( let { elements } = node, { length } = elements, index         = 0; index<length; ++index ) {
+				const element = elements[index];
+				if ( element ) { Pattern(element); }
+			}
 			break;
 		case 'RestElement':
 			Pattern(node.argument);
@@ -3513,12 +3514,21 @@ function Pattern (node     )       {
 const forAliasRE = /(?<=^\s*\(?).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const parserOptions = NULL({
 	ecmaVersion: 2014     ,
-	sourceType: 'module',
+	sourceType: 'module'            ,
 	allowReserved: false,
 });
 function _NAME_test (v_for        )          {
 	const alias         = forAliasRE.exec(v_for) [0];
-	const AST = Parser.parse(`(${alias})=>{}`, parserOptions);
+	const AST = Parser.parse(`(${alias})=>{}`, parserOptions)            
+		                
+		             
+			                            
+			             
+				                                
+				                       
+			  
+		   
+	 ;
 	const { params } = AST.body[0].expression;
 	_NAMES.length = 0;
 	params.forEach(Pattern);
@@ -3889,12 +3899,12 @@ const visitors = NULL({
 });
 
 const parserOptions$1 = NULL({
-	ecmaVersion: 5,
-	sourceType: 'module',
+	ecmaVersion: 5         ,
+	sourceType: 'module'            ,
 	allowReserved: false,
 });
 const minifyOptions = NULL({
-	warnings: 'verbose',
+	warnings: 'verbose'             ,
 	parse: NULL({
 		bare_returns: false,
 		html5_comments: false,
@@ -3914,7 +3924,7 @@ const minifyOptions = NULL({
 	}),
 	safari10: true,
 	ie8: false,
-	ecma: 5,
+	ecma: 5         ,
 });
 
 const with_this__return_ = 'with(this){return ';
@@ -3954,7 +3964,7 @@ function NecessaryStringLiteral (body        )         {
 		if ( minified.error ) { throw minified.error; }
 		if ( minified.warnings ) { throw Error(`Terser 压缩警告：\n${minified.warnings.join('\n')}`); }
 		
-		const _vm_c_exp = _VM_C_EXP.exec(minified.code);
+		const _vm_c_exp = _VM_C_EXP.exec(minified.code );
 		if ( !_vm_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
 		return StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
 	}
@@ -3963,7 +3973,7 @@ function NecessaryStringLiteral (body        )         {
 		if ( minified.error ) { throw minified.error; }
 		if ( minified.warnings ) { throw Error(`Terser 压缩警告：\n${minified.warnings.join('\n')}`); }
 		
-		const _c_exp = _C_EXP.exec(minified.code);
+		const _c_exp = _C_EXP.exec(minified.code );
 		if ( !_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
 		return StringLiteral(`,${_c_exp[2]}`);
 	}
@@ -4042,16 +4052,16 @@ const rollupOptions = {
 };
 
 const TRUE = NULL({
-	format: 'esm',
+	format: 'esm'         ,
 	sourcemap: true,
 });
 const FALSE = NULL({
-	format: 'esm',
+	format: 'esm'         ,
 	sourcemap: false,
 });
 const INLINE = NULL({
-	format: 'esm',
-	sourcemap: 'inline',
+	format: 'esm'         ,
+	sourcemap: 'inline'            ,
 });
 
 async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, map = false, src, lang }   
@@ -4061,7 +4071,7 @@ async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, 
 	                         
 	                                    
 	                                                              
- )                                               {
+ )                                                {
 	if ( lang ) {
 		const { script } = sfc;
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner ); }
@@ -4105,8 +4115,8 @@ async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, 
 	}));
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
 	if ( output.length!==1 ) { throw Error(''+output.length); }
-	const first = output[0];
-	return map===true ? first : first.code;
+	const only = output[0];
+	return map===true ? only : only.code;
 }
 
 const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true };

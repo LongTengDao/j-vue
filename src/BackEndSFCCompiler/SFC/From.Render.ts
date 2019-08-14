@@ -36,12 +36,12 @@ const visitors = __null__({
 });
 
 const parserOptions = __null__({
-	ecmaVersion: 5,
-	sourceType: 'module',
+	ecmaVersion: 5 as 5 | 6,
+	sourceType: 'module' as 'module',
 	allowReserved: false,
 });
 const minifyOptions = __null__({
-	warnings: 'verbose',
+	warnings: 'verbose' as 'verbose',
 	parse: __null__({
 		bare_returns: false,
 		html5_comments: false,
@@ -61,7 +61,7 @@ const minifyOptions = __null__({
 	}),
 	safari10: true,
 	ie8: false,
-	ecma: 5,
+	ecma: 5 as 5 | 6,
 });
 
 const with_this__return_ = 'with(this){return ';
@@ -101,7 +101,7 @@ export function NecessaryStringLiteral (body :string) :string {
 		if ( minified.error ) { throw minified.error; }
 		if ( minified.warnings ) { throw Error(`Terser 压缩警告：\n${minified.warnings.join('\n')}`); }
 		
-		const _vm_c_exp = _VM_C_EXP.exec(minified.code);
+		const _vm_c_exp = _VM_C_EXP.exec(minified.code!);
 		if ( !_vm_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
 		return StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
 	}
@@ -110,7 +110,7 @@ export function NecessaryStringLiteral (body :string) :string {
 		if ( minified.error ) { throw minified.error; }
 		if ( minified.warnings ) { throw Error(`Terser 压缩警告：\n${minified.warnings.join('\n')}`); }
 		
-		const _c_exp = _C_EXP.exec(minified.code);
+		const _c_exp = _C_EXP.exec(minified.code!);
 		if ( !_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
 		return StringLiteral(`,${_c_exp[2]}`);
 	}
