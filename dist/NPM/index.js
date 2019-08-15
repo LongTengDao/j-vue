@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '12.0.0';
+const version = '12.0.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3693,7 +3693,7 @@ const PARTIAL = newRegExp`^
 		${AliasName}\s*
 		=\s*
 			${localOrComponentName}
-			(?:\.${className})*
+			(?:\.?|(?:\.${className})*)
 		\s*;
 	\s*)*
 $`;

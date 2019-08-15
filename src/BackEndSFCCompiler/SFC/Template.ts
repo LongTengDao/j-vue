@@ -19,7 +19,7 @@ const PARTIAL = newRegExp`^
 		${AliasName}\s*
 		=\s*
 			${localOrComponentName}
-			(?:\.${className})*
+			(?:\.?|(?:\.${className})*)
 		\s*;
 	\s*)*
 $`;
