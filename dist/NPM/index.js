@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '11.2.5';
+const version = '11.2.6';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -275,7 +275,7 @@ const slice = Array.prototype.slice;
  * 模块名称：j-regexp
  * 模块功能：可读性更好的正则表达式创建方式。从属于“简计划”。
    　　　　　More readable way for creating RegExp. Belong to "Plan J".
- * 模块版本：5.3.0
+ * 模块版本：6.0.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-regexp/issues
@@ -293,37 +293,29 @@ function Source (raw                       , substitutions                      
 	return source.replace(NT, '');
 }
 
-var newRegExp            =
-	/*#__PURE__*/
-	function (newRegExp, createNewRegExpWith) {
-		
-		( function recursion (pickedFlags            , restFlags       )       {
-			if ( restFlags ) {
-				recursion(pickedFlags+restFlags.charAt(0)         , restFlags = restFlags.slice(1)         );
-				recursion(pickedFlags, restFlags);
-			}
-			else if ( pickedFlags ) {
-				newRegExp[pickedFlags] = createNewRegExpWith(pickedFlags);
-			}
-		} )('', 'gimsuy');
-		
-		return newRegExp;
-		
-	}(
-		function newRegExp (template                      )         {
-			return new RegExp(Source(template.raw, slice.call(arguments, 1)));
-		}             ,
-		
-		function createNewRegExpWith (flags       ) {
-			return ( {}        )['newRegExp.'+flags] = function (template                      )         {
-				return new RegExp(Source(template.raw, slice.call(arguments, 1)), flags);
-			};
+                                                                                                     
+function newRegExp (flags_template                               )                     {
+	return typeof flags_template==='string'
+		? function newRegExp (template                      )         {
+			return new RegExp(
+				/*#__PURE__*/Source(
+					template.raw,
+					/*#__PURE__*/slice.call(arguments, 1)
+				),
+				flags_template
+			);
 		}
-	);
+		: new RegExp(
+			/*#__PURE__*/Source(
+				flags_template.raw,
+				/*#__PURE__*/slice.call(arguments, 1)
+			)
+		);
+}
 
 /*¡ j-regexp */
 
-const NONCHARACTER = newRegExp.u`[
+const NONCHARACTER = newRegExp('u')`[
 	\uFDD0-\uFDEF
 	\uFFFE\u{1FFFE}\u{2FFFE}\u{3FFFE}\u{4FFFE}\u{5FFFE}\u{6FFFE}\u{7FFFE}\u{8FFFE}\u{9FFFE}\u{AFFFE}\u{BFFFE}\u{CFFFE}\u{DFFFE}\u{EFFFE}\u{FFFFE}\u{10FFFE}
 	\uFFFF\u{1FFFF}\u{2FFFF}\u{3FFFF}\u{4FFFF}\u{5FFFF}\u{6FFFF}\u{7FFFF}\u{8FFFF}\u{9FFFF}\u{AFFFF}\u{BFFFF}\u{CFFFF}\u{DFFFF}\u{EFFFF}\u{FFFFF}\u{10FFFF}
@@ -353,7 +345,7 @@ const ATTRIBUTE_NAME_VALUE = newRegExp`
 		|
 		${UNQUOTED_ATTRIBUTE_VALUE}
 	)`;
-const ATTRIBUTE = newRegExp.g`
+const ATTRIBUTE = newRegExp('g')`
 	${ATTRIBUTE_NAME}
 	(?:
 		${ASCII_WHITESPACE}*
@@ -407,7 +399,7 @@ const isArray = Array.isArray;
  * 模块名称：j-eol
  * 模块功能：换行符相关共享实用程序。从属于“简计划”。
    　　　　　EOL util. Belong to "Plan J".
- * 模块版本：1.2.0
+ * 模块版本：1.3.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-eol/issues
@@ -476,26 +468,37 @@ function sourcify (group       , needEscape         )         {
 
 /*¡ j-regexp */
 
+var FLAGS = /\/([a-fh-z]*)g([a-fh-z]*)$/;
+
+function removeGlobal (regExp        ) {
+	var flags = FLAGS.exec(''+regExp);
+	return flags ? RegExp(regExp, flags[1]+flags[2]) : regExp;
+}
+
 function EOL                     (allow                , disallow_uniform                              , uniform_disallow                              ) {
 	
+	var DISALLOW        ;
+	var FIRST         ;
 	if ( typeof disallow_uniform==='object' ) {
-		DISALLOW = isArray(disallow_uniform) ? new RegExp(groupify(disallow_uniform)) : disallow_uniform;
+		DISALLOW = isArray(disallow_uniform) ? RegExp(groupify(disallow_uniform)) : removeGlobal(disallow_uniform);
 		FIRST = !uniform_disallow;
 	}
 	else if ( typeof uniform_disallow==='object' ) {
-		DISALLOW = isArray(uniform_disallow) ? new RegExp(groupify(uniform_disallow)) : uniform_disallow;
+		DISALLOW = isArray(uniform_disallow) ? RegExp(groupify(uniform_disallow)) : removeGlobal(uniform_disallow);
 		FIRST = !disallow_uniform;
 	}
 	else {
 		FIRST = !( uniform_disallow || disallow_uniform );
 	}
-	var DISALLOW        ;
-	var FIRST         ;
-	var ALLOW = isArray(allow) ? new RegExp(groupify(allow), FIRST ? '' : 'g') : allow;
+	var ALLOW = isArray(allow)
+		? FIRST
+			? RegExp(groupify(allow))
+			: RegExp(groupify(allow), 'g')
+		: allow;
 	
 	return function EOL (string        )           {
 		if ( DISALLOW && DISALLOW.test(string) ) { throw clearRegExp(SyntaxError)('存在禁用换行符'); }
-		var eols               =                clearRegExp(string.match(ALLOW));
+		var eols = clearRegExp(string.match(ALLOW))                ;
 		if ( !eols ) { return ''; }
 		if ( FIRST ) { return eols[0]; }
 		var eol = eols[0];
@@ -3151,9 +3154,9 @@ const _ = Private
 	                                                                      
   ();
 
-const SCRIPT_END_TAG = newRegExp.i`</script${TAG_EMIT_CHAR}`;
+const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
 
-const JS = newRegExp.i`^\s*(?:
+const JS = newRegExp('i')`^\s*(?:
 	JS|JavaScript(?:\s*1\.\d)?
 	|
 	(?:ES|ECMAScript|ECMAS?)(?:\s*\d+)?
@@ -3193,7 +3196,7 @@ const SELECTOR = newRegExp`^
 	\s*)*
 $`;
 
-const STYLE_END_TAG = newRegExp.i`</style${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG = newRegExp('i')`</style${TAG_EMIT_CHAR}`;
 
 const CSS = /^\s*(?:text\/)?CSS\s*$/i;
 
@@ -3489,29 +3492,38 @@ function Pattern (node         )       {
 		case 'Identifier':
 			if ( _NAME.test(node.name) ) { _NAMES.push(node.name); }
 			break;
-		case 'ObjectPattern':
+		case 'ObjectPattern':// { Pattern }
 			for ( let { properties } = node, { length } = properties, index         = 0; index<length; ++index ) {
 				const property = properties[index];
-				Pattern(property.value || property.argument);
+				switch ( property.type ) {
+					case 'Property':// { key: valuePattern }
+						Pattern(property.value);
+						break;
+					case 'RestElement':// { ...argumentPattern }
+						Pattern(property.argument);
+						break;
+					default:
+						throw Error(`Unrecognized pattern type: ${property.type}`);
+				}
 			}
 			break;
-		case 'ArrayPattern':
+		case 'ArrayPattern':// [ , Pattern ]
 			for ( let { elements } = node, { length } = elements, index         = 0; index<length; ++index ) {
 				const element = elements[index];
 				if ( element ) { Pattern(element); }
 			}
 			break;
 		case 'RestElement':
-			Pattern(node.argument);
+			Pattern(node.argument);// [ ...argumentPattern ] (...argumentPattern)
 			break;
-		case 'AssignmentPattern':
+		case 'AssignmentPattern':// leftPattern = right
 			Pattern(node.left);
 			break;
 		default:
 			throw Error(`Unrecognized pattern type: ${node.type}`);
 	}
 }
-const forAliasRE = /(?<=^\s*\(?).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
+const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const parserOptions = NULL({
 	ecmaVersion: 2014     ,
 	sourceType: 'module'            ,
@@ -3519,7 +3531,7 @@ const parserOptions = NULL({
 });
 function _NAME_test (v_for        )          {
 	const alias         = forAliasRE.exec(v_for) [0];
-	const AST = Parser.parse(`(${alias})=>{}`, parserOptions)            
+	let AST   
 		                
 		             
 			                            
@@ -3529,6 +3541,11 @@ function _NAME_test (v_for        )          {
 			  
 		   
 	 ;
+	try { AST = Parser.parse(`(${alias})=>{}`, parserOptions)       ; }
+	catch (error) {
+		const index         = error.pos-1;
+		throw SyntaxError(`“v-for="${v_for}"”中的内容“${alias.slice(0, index)}”✗“${alias.slice(index)}”解析失败`);
+	}
 	const { params } = AST.body[0].expression;
 	_NAMES.length = 0;
 	params.forEach(Pattern);
@@ -3669,7 +3686,7 @@ class Content extends Node {
 	
 }
 
-const TEMPLATE_END_TAG = newRegExp.i`</template${TAG_EMIT_CHAR}`;
+const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
 const PARTIAL = newRegExp`^
 	\s*(?:

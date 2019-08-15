@@ -12,7 +12,7 @@ import Content from './Template.Content';
 import Element from './Template.Content.Element';
 import { TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE } from './RE';
 
-const TEMPLATE_END_TAG = newRegExp.i`</template${TAG_EMIT_CHAR}`;
+const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
 const PARTIAL = newRegExp`^
 	\s*(?:

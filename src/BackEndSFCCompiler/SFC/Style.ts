@@ -20,7 +20,7 @@ const SELECTOR = newRegExp`^
 	\s*)*
 $`;
 
-const STYLE_END_TAG = newRegExp.i`</style${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG = newRegExp('i')`</style${TAG_EMIT_CHAR}`;
 
 const CSS = /^\s*(?:text\/)?CSS\s*$/i;
 

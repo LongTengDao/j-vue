@@ -1,6 +1,6 @@
 import { newRegExp } from '@ltd/j-regexp';
 
-export const NONCHARACTER = newRegExp.u`[
+export const NONCHARACTER = newRegExp('u')`[
 	\uFDD0-\uFDEF
 	\uFFFE\u{1FFFE}\u{2FFFE}\u{3FFFE}\u{4FFFE}\u{5FFFE}\u{6FFFE}\u{7FFFE}\u{8FFFE}\u{9FFFE}\u{AFFFE}\u{BFFFE}\u{CFFFE}\u{DFFFE}\u{EFFFE}\u{FFFFE}\u{10FFFE}
 	\uFFFF\u{1FFFF}\u{2FFFF}\u{3FFFF}\u{4FFFF}\u{5FFFF}\u{6FFFF}\u{7FFFF}\u{8FFFF}\u{9FFFF}\u{AFFFF}\u{BFFFF}\u{CFFFF}\u{DFFFF}\u{EFFFF}\u{FFFFF}\u{10FFFF}
@@ -30,7 +30,7 @@ export const ATTRIBUTE_NAME_VALUE = newRegExp`
 		|
 		${UNQUOTED_ATTRIBUTE_VALUE}
 	)`;
-export const ATTRIBUTE = newRegExp.g`
+export const ATTRIBUTE = newRegExp('g')`
 	${ATTRIBUTE_NAME}
 	(?:
 		${ASCII_WHITESPACE}*

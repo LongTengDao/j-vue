@@ -4,9 +4,9 @@ import TypeError from '.TypeError';
 
 import { newRegExp } from '@ltd/j-regexp';
 import { TAG_EMIT_CHAR } from './RE';
-const SCRIPT_END_TAG = newRegExp.i`</script${TAG_EMIT_CHAR}`;
+const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
 
-const JS = newRegExp.i`^\s*(?:
+const JS = newRegExp('i')`^\s*(?:
 	JS|JavaScript(?:\s*1\.\d)?
 	|
 	(?:ES|ECMAScript|ECMAS?)(?:\s*\d+)?

@@ -133,12 +133,21 @@ type Identifier = {
 	name :String,
 };
 type ObjectExpression = {
-	properties :Array<{ shorthand :false } | { shorthand :true, value :Identifier }>,
+	properties :Array<{
+		shorthand :false,
+	} | {
+		shorthand :true,
+		value :Identifier,
+	}>,
 };
 type ObjectPattern = {
-	properties :Array<{ shorthand :false } | { shorthand :true, value :Identifier | AssignmentPattern }>,
-};
-type AssignmentPattern = {
-	type :'AssignmentPattern',
-	left :Identifier,
+	properties :Array<{
+		shorthand :false,
+	} | {
+		shorthand :true,
+		value :Identifier | {
+			type :'AssignmentPattern',
+			left :Identifier,
+		},
+	}>,
 };

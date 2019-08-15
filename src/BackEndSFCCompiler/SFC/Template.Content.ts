@@ -35,29 +35,38 @@ function Pattern (node :Pattern) :void {
 		case 'Identifier':
 			if ( _NAME.test(node.name) ) { _NAMES.push(node.name); }
 			break;
-		case 'ObjectPattern':
+		case 'ObjectPattern':// { Pattern }
 			for ( let { properties } = node, { length } = properties, index :number = 0; index<length; ++index ) {
 				const property = properties[index];
-				Pattern(property.value || property.argument);
+				switch ( property.type ) {
+					case 'Property':// { key: valuePattern }
+						Pattern(property.value);
+						break;
+					case 'RestElement':// { ...argumentPattern }
+						Pattern(property.argument);
+						break;
+					default:
+						throw Error(`Unrecognized pattern type: ${property.type}`);
+				}
 			}
 			break;
-		case 'ArrayPattern':
+		case 'ArrayPattern':// [ , Pattern ]
 			for ( let { elements } = node, { length } = elements, index :number = 0; index<length; ++index ) {
 				const element = elements[index];
 				if ( element ) { Pattern(element); }
 			}
 			break;
 		case 'RestElement':
-			Pattern(node.argument);
+			Pattern(node.argument);// [ ...argumentPattern ] (...argumentPattern)
 			break;
-		case 'AssignmentPattern':
+		case 'AssignmentPattern':// leftPattern = right
 			Pattern(node.left);
 			break;
 		default:
 			throw Error(`Unrecognized pattern type: ${node.type}`);
 	}
 }
-const forAliasRE = /(?<=^\s*\(?).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
+const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const parserOptions = __null__({
 	ecmaVersion: 2014 as 6,
 	sourceType: 'module' as 'module',
@@ -65,7 +74,7 @@ const parserOptions = __null__({
 });
 function _NAME_test (v_for :string) :boolean {
 	const alias :string = forAliasRE.exec(v_for)![0];
-	const AST = Parser.parse(`(${alias})=>{}`, parserOptions) as any as {
+	let AST :{
 		type :'Program',
 		body :Array<{
 			type :'ExpressionStatement',
@@ -75,6 +84,11 @@ function _NAME_test (v_for :string) :boolean {
 			},
 		}>,
 	};
+	try { AST = Parser.parse(`(${alias})=>{}`, parserOptions) as any; }
+	catch (error) {
+		const index :number = error.pos-1;
+		throw SyntaxError(`“v-for="${v_for}"”中的内容“${alias.slice(0, index)}”✗“${alias.slice(index)}”解析失败`);
+	}
 	const { params } = AST.body[0].expression;
 	_NAMES.length = 0;
 	params.forEach(Pattern);
@@ -220,7 +234,15 @@ type Pattern = {
 	name :string,
 } | {
 	type :'ObjectPattern',
-	properties :Array<{ value :Pattern, argument? :never } | { value? :never, argument :Pattern }>,
+	properties :Array<{
+		type :'Property',
+		value :Pattern,
+	} | {
+		type :'RestElement',
+		argument :Pattern,
+	} | {
+		type :'',
+	}>,
 } | {
 	type :'ArrayPattern',
 	elements :Array<Pattern | null>,
