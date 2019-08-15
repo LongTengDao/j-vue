@@ -40,12 +40,12 @@ export default class Template extends Block {
 		
 		const _this :Private = _(this);
 		
-		if ( 'abbr.' in attributes ) {
-			const literal = attributes['abbr.'];
-			if ( literal===undefined ) { throw SyntaxError(`template 功能块元素的“abbr.”属性的缺省值写法还没有实现`); }
+		if ( '.abbr' in attributes ) {
+			const literal = attributes['.abbr'];
+			if ( literal===undefined ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
-				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“abbr.”属性语法错误：\n${literal}`); }
-				const abbr :Partial = create(null);
+				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
+				const abbr = create(null) as Partial;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {
@@ -63,9 +63,9 @@ export default class Template extends Block {
 			}
 		}
 		
-		if ( 'scoped:keys' in attributes ) {
-			if ( attributes['scoped:keys']===undefined ) { throw SyntaxError(`template 功能块元素的 scoped:keys 属性必须具有值`); }
-			_this.keys = attributes['scoped:keys'];
+		if ( '.keys' in attributes ) {
+			if ( attributes['.keys']===undefined ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
+			_this.keys = attributes['.keys'];
 		}
 		
 		if ( 'functional' in attributes ) {

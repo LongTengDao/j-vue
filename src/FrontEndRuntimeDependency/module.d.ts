@@ -1,8 +1,8 @@
 declare module 'j-vue?*' {
-	export const scope :import('j-vue').Scope;
+	export const scope :ObjectScope<any> | FunctionScope;
 	export const template :string;
-	export const render :Function;
-	export const staticRenderFns :Function[];
+	export const render :Render;
+	export const staticRenderFns :Render[];
 	export * from 'j-vue';
 }
 
@@ -17,31 +17,11 @@ declare module 'j-vue' {
 		(this :Scope[] | Scope | any) :FunctionScope
 		readonly prototype :null
 	};
-	export type Scope<Keys extends string | void = void> =
-		Keys extends string
-			? ObjectScope<Keys>
-			: FunctionScope;
-	type ObjectScope<Keys extends string> = {
-		readonly [key in Keys] :string
-	} & {
-		readonly $ :(this :ObjectScope<Keys>, css? :string, media? :string) => ObjectScope<Keys>
-		readonly [_] :(string :string) => string
-		readonly _ :never
-	};
-	type FunctionScope = {
-		(...args :any[]) :string
-		readonly prototype :Readonly<object>
-		readonly $ :(this :FunctionScope, css? :string, media? :string) => FunctionScope
-		readonly [_] :(string :string) => string
-		readonly _ :never
-	};
-	const _ :unique symbol;
+	export type Scope<Keys extends string | void = void> = Keys extends string ? ObjectScope<Keys> : FunctionScope;
 	
 	export function Template (html :string, scope :Scope) :string;
 	export function Render (code :string, scope? :Scope) :Render;
 	export function StaticRenderFns (codes :string[], scope? :Scope) :Render[];
-	
-	type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
 	
 	export const STYLE :{ functional :true, render :Render };
 	export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
@@ -62,3 +42,23 @@ declare module 'j-vue' {
 	}>;
 	
 }
+
+type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
+
+type ObjectScope<Keys extends string> = {
+	readonly [key in Keys] :string
+} & {
+	readonly $ :(this :ObjectScope<Keys>, css? :string, media? :string) => ObjectScope<Keys>
+	readonly [_] :(string :string) => string
+	readonly _ :never
+};
+
+type FunctionScope = {
+	(...args :any[]) :string
+	readonly prototype :Readonly<object>
+	readonly $ :(this :FunctionScope, css? :string, media? :string) => FunctionScope
+	readonly [_] :(string :string) => string
+	readonly _ :never
+};
+
+declare const _ :unique symbol;

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '11.2.6';
+const version = '12.0.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3210,12 +3210,12 @@ class Style extends Block          {
 		
 		const _this          = _(this);
 		
-		if ( 'abbr.' in attributes ) {
-			const literal = attributes['abbr.'];
-			if ( literal===undefined$1 ) { throw SyntaxError(`style 功能块元素的“abbr.”属性的缺省值写法还没有实现`); }
+		if ( '.abbr' in attributes ) {
+			const literal = attributes['.abbr'];
+			if ( literal===undefined$1 ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
-				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“abbr.”属性语法错误：\n${literal}`); }
-				const abbr           = create(null);
+				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
+				const abbr = create(null)            ;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {
@@ -3714,12 +3714,12 @@ class Template extends Block {
 		
 		const _this          = _(this);
 		
-		if ( 'abbr.' in attributes ) {
-			const literal = attributes['abbr.'];
-			if ( literal===undefined$1 ) { throw SyntaxError(`template 功能块元素的“abbr.”属性的缺省值写法还没有实现`); }
+		if ( '.abbr' in attributes ) {
+			const literal = attributes['.abbr'];
+			if ( literal===undefined$1 ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
-				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“abbr.”属性语法错误：\n${literal}`); }
-				const abbr          = create(null);
+				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
+				const abbr = create(null)           ;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {
@@ -3737,9 +3737,9 @@ class Template extends Block {
 			}
 		}
 		
-		if ( 'scoped:keys' in attributes ) {
-			if ( attributes['scoped:keys']===undefined$1 ) { throw SyntaxError(`template 功能块元素的 scoped:keys 属性必须具有值`); }
-			_this.keys = attributes['scoped:keys'];
+		if ( '.keys' in attributes ) {
+			if ( attributes['.keys']===undefined$1 ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
+			_this.keys = attributes['.keys'];
 		}
 		
 		if ( 'functional' in attributes ) {

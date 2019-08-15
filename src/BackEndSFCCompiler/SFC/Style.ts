@@ -34,12 +34,12 @@ export default class Style extends Block<'style'> {
 		
 		const _this :Private = _(this);
 		
-		if ( 'abbr.' in attributes ) {
-			const literal = attributes['abbr.'];
-			if ( literal===undefined ) { throw SyntaxError(`style 功能块元素的“abbr.”属性的缺省值写法还没有实现`); }
+		if ( '.abbr' in attributes ) {
+			const literal = attributes['.abbr'];
+			if ( literal===undefined ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
-				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“abbr.”属性语法错误：\n${literal}`); }
-				const abbr :Selector = create(null);
+				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
+				const abbr = create(null) as Selector;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {
