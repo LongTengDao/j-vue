@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '12.0.1';
+const version = '12.1.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -93,14 +93,14 @@ const Default = (
  * 模块名称：ES
  * 模块功能：ECMAScript 语法相关共享实用程序。从属于“简计划”。
    　　　　　ECMAScript syntax util. Belong to "Plan J".
- * 模块版本：0.8.1
+ * 模块版本：0.8.2
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-es/issues
  * 项目主页：https://GitHub.com/LongTengDao/j-es/
  */
 
-var Cf = /[\xAD\u0600-\u0605\u061C\u06DD\u070F\u08E2\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF\uFFF9-\uFFFB]|\uD804\uDCBD|\uD82F[\uDCA0-\uDCA3]|\uD834[\uDD73-\uDD7A]|\uDB40[\uDC01\uDC20-\uDC7F]/g;
+var Cf = /[\xAD\u0600-\u0605\u061C\u06DD\u070F\u08E2\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF\uFFF9-\uFFFB]|\uD804[\uDCBD\uDCCD]|\uD80D[\uDC30-\uDC38]|\uD82F[\uDCA0-\uDCA3]|\uD834[\uDD73-\uDD7A]|\uDB40[\uDC01\uDC20-\uDC7F]/g;
 
 var CANT_IN_SINGLE_QUOTE = /[\n\r'\\\u2028\u2029]/g;
 function staticallyEscape (cant_in_single_quote                              )         {
@@ -3089,6 +3089,25 @@ function Tag (html        , position        , foreign         ) {
 	
 }
 
+const { rollup } = require('rollup')                           ;
+const AcornClassFields = require('acorn-class-fields');
+const AcornStaticClassFeatures = require('acorn-static-class-features');
+const AcornPrivateMethods = require('acorn-private-methods');
+function AcornStage3 (Parser     ) {
+	return Parser.extend(
+		AcornClassFields,
+		AcornStaticClassFeatures,
+		AcornPrivateMethods,
+	);
+}
+
+const transpileModule = require('@ltd/j-ts')                              ;
+const Parser = ( require('acorn')                           ).Parser.extend(AcornStage3);
+const { simple } = require('acorn-walk');
+const findGlobals = require('@ltd/acorn-globals')                                       ;
+const { compile } = require('vue-template-compiler')                                          ;
+const { minify } = require('terser')                           ;
+
 class Block                                    extends NULL {
 	
 	constructor (blockName           , attributes            , emitProperties         , inner                    , END_TAG               ) {
@@ -3165,6 +3184,7 @@ const JS = newRegExp('i')`^\s*(?:
 	|
 	(?:text|application)\/(?:ECMAScript|JavaScript(?:;\s*version\s*=\s*1\.\d)?)
 )\s*$`;
+const TS = /^\s*T(?:S|ypeScript)\s*$/i;
 
 class Script extends Block {
 	
@@ -3175,7 +3195,10 @@ class Script extends Block {
 		if ( inner===undefined$1 ) {
 			inner = this.inner;
 			if ( typeof inner!=='string' ) { throw Error(`自闭合的 script 功能块元素必须自行根据 src 属性加载 inner 值`); }
-			if ( this.lang && !JS.test(this.lang) ) { throw Error(`script 功能块元素如果设置了非 js 的 lang 属性值，那么必须自行提供转译后的 innerJS`); }
+			if ( this.lang && !JS.test(this.lang) ) {
+				if ( TS.test(this.lang) ) { inner = transpileModule(inner); }
+				else { throw Error(`script 功能块元素如果设置了非 js / ts 的 lang 属性值，那么必须自行提供转译后的 innerJS`); }
+			}
 		}
 		return inner;
 	}
@@ -3457,24 +3480,6 @@ class Mustache extends Array         {
 	}
 	
 }
-
-const { rollup } = require('rollup')                           ;
-const AcornClassFields = require('acorn-class-fields');
-const AcornStaticClassFeatures = require('acorn-static-class-features');
-const AcornPrivateMethods = require('acorn-private-methods');
-function AcornStage3 (Parser     ) {
-	return Parser.extend(
-		AcornClassFields,
-		AcornStaticClassFeatures,
-		AcornPrivateMethods,
-	);
-}
-
-const Parser = ( require('acorn')                           ).Parser.extend(AcornStage3);
-const { simple } = require('acorn-walk');
-const findGlobals = require('@ltd/acorn-globals')                                       ;
-const { compile } = require('vue-template-compiler')                                          ;
-const { minify } = require('terser')                           ;
 
 const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;

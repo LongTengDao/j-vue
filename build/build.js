@@ -16,6 +16,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 			description: '.vue single-file component back-end compiler. Belong to "Plan J".／.vue 单文件组件后端编译工具。从属于“简计划”。',
 			dependencies: {
 				'@ltd/acorn-globals': require('../../../LongTengDao/acorn-globals/dist/NPM/package.json').version,
+				'@ltd/j-ts': require('../../../LongTengDao/j-ts/dist/NPM/package.json').version,
 				'acorn': '6.3.0',
 				'acorn-class-fields': '0.3.1',
 				'acorn-private-methods': '0.3.0',

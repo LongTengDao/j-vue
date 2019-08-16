@@ -3,6 +3,7 @@ import Error from '.Error';
 import TypeError from '.TypeError';
 
 import { newRegExp } from '@ltd/j-regexp';
+import { transpileModule } from '../dependencies';
 import { TAG_EMIT_CHAR } from './RE';
 const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
 
@@ -15,6 +16,7 @@ const JS = newRegExp('i')`^\s*(?:
 	|
 	(?:text|application)\/(?:ECMAScript|JavaScript(?:;\s*version\s*=\s*1\.\d)?)
 )\s*$`;
+const TS = /^\s*T(?:S|ypeScript)\s*$/i;
 
 import Block from './Block';
 import _ from './private';
@@ -28,7 +30,10 @@ export default class Script extends Block {
 		if ( inner===undefined ) {
 			inner = this.inner;
 			if ( typeof inner!=='string' ) { throw Error(`自闭合的 script 功能块元素必须自行根据 src 属性加载 inner 值`); }
-			if ( this.lang && !JS.test(this.lang) ) { throw Error(`script 功能块元素如果设置了非 js 的 lang 属性值，那么必须自行提供转译后的 innerJS`); }
+			if ( this.lang && !JS.test(this.lang) ) {
+				if ( TS.test(this.lang) ) { inner = transpileModule(inner); }
+				else { throw Error(`script 功能块元素如果设置了非 js / ts 的 lang 属性值，那么必须自行提供转译后的 innerJS`); }
+			}
 		}
 		return inner;
 	}

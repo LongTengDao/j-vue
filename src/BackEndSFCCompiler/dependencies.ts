@@ -10,6 +10,7 @@ export function AcornStage3 (Parser :any) {
 	);
 }
 
+export const transpileModule = require('@ltd/j-ts') as typeof import('@ltd/j-ts');
 export const Parser = ( require('acorn') as typeof import('acorn') ).Parser.extend(AcornStage3);
 export const { simple } = require('acorn-walk');
 export const findGlobals = require('@ltd/acorn-globals') as typeof import('@ltd/acorn-globals');
