@@ -5,6 +5,7 @@ import Template from './Template';
 import { Render, StaticRenderFns } from './Render, StaticRenderFns';
 import STYLE  from './STYLE';
 import { Style, remove } from './Style, remove';
+import Options from './Options';
 
 export {
 	version,
@@ -14,6 +15,7 @@ export {
 	Render, StaticRenderFns,
 	STYLE,
 	Style, remove,
+	Options,
 };
 
 import Default from '.default';
@@ -26,5 +28,6 @@ export default Default({
 	StaticRenderFns: StaticRenderFns,
 	STYLE: STYLE,
 	Style: Style,
-	remove: remove
+	remove: remove,
+	Options: Options
 });

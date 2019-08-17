@@ -69,8 +69,12 @@ declare module '.RangeError' { export default RangeError; }
 
 declare module '.ReferenceError' { export default ReferenceError; }
 
-declare module '.Reflect.apply' { export default Reflect.apply; }
-declare module '.Reflect.construct' { export default Reflect.construct; }
+declare module '.Reflect.apply' { export default apply;
+	function apply<Target extends (this :any, ...args :any) => any, This extends any, Args extends any[]> (target :Target, thisArg :This, args :Readonly<Args>) :Target extends (this :This, ...args :Args) => infer R ? R : never;
+}
+declare module '.Reflect.construct' { export default construct;
+	function construct<Target extends new (...args :any) => any, Args extends any[], NewTarget extends new (...args :any) => any> (target :Target, args :Readonly<Args>, newTarget? :NewTarget) :Target extends new (...args :Args) => infer R ? R : never;
+}
 declare module '.Reflect.defineProperty' { export default Reflect.defineProperty; }
 declare module '.Reflect.deleteProperty' { export default Reflect.deleteProperty; }
 declare module '.Reflect.ownKeys' { export default ownKeys;
