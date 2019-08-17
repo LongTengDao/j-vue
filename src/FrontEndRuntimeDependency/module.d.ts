@@ -46,7 +46,7 @@ declare module 'j-vue' {
 		[Key in keyof Instance['$options']] :Instance['$options'][Key]
 	} & {
 		data? (this :Instance) :object & { [Key in keyof Instance]? :Instance[Key] },
-		props? :( keyof Instance )[] | object & { [Key in keyof Instance]? :any },
+		props? :( keyof Instance )[] | Extract<object & { [Key in keyof Instance]? :any }, any[]>,
 		propsData? :never,
 		computed? :object & {
 			[Key in keyof Instance]? :{
@@ -91,7 +91,7 @@ declare module 'j-vue' {
 		provide? :object & { [key :string] :keyof Instance } | {
 			(this :Instance) :object & { [key :string] :keyof Instance }
 		},
-		inject? :( keyof Instance )[] | object & { [Key in keyof Instance]? :any },
+		inject? :( keyof Instance )[] | Extract<object & { [Key in keyof Instance]? :any }, any[]>,
 	} & {
 		name? :string,
 		delimiters? :[ '{{', '}}' ],
