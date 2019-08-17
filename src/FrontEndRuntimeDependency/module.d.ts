@@ -1,5 +1,6 @@
 declare module 'j-vue?*' {
-	export const scope :ObjectScope<any> | FunctionScope;
+	export const staticScope :StaticScope<any>;
+	export const dynamicScope :DynamicScope;
 	export const template :string;
 	export const render :Render;
 	export const staticRenderFns :Render[];
@@ -13,11 +14,11 @@ declare module 'j-vue' {
 	export function Identifier () :string;
 	
 	export const Scope :{
-		<Keys extends string> (this :Scope[] | Scope | any, keys :string) :ObjectScope<Keys>
-		(this :Scope[] | Scope | any) :FunctionScope
+		<Keys extends string> (this :Scope[] | Scope | any, keys :string) :StaticScope<Keys>
+		(this :Scope[] | Scope | any) :DynamicScope
 		readonly prototype :null
 	};
-	export type Scope<Keys extends string | void = void> = Keys extends string ? ObjectScope<Keys> : FunctionScope;
+	export type Scope<Keys extends string | void = void> = Keys extends string ? StaticScope<Keys> : DynamicScope;
 	
 	export function Template (html :string, scope :Scope) :string;
 	export function Render (code :string, scope? :Scope) :Render;
@@ -56,7 +57,7 @@ declare module 'j-vue' {
 		}
 		},
 		methods? :object & {
-			[Key in keyof Instance]? :(this :Instance, ...args :any) => any
+			[Key in keyof Instance]? :Instance[Key] & { (this :Instance, ...args :any) :any }
 		},
 		watch? :object & {
 			[Expression :string] :keyof Instance | {
@@ -117,18 +118,18 @@ declare module 'j-vue' {
 
 type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
 
-type ObjectScope<Keys extends string> = {
+type StaticScope<Keys extends string> = {
 	readonly [key in Keys] :string
 } & {
-	readonly $ :(this :ObjectScope<Keys>, css? :string, media? :string) => ObjectScope<Keys>
+	readonly $ :(this :StaticScope<Keys>, css? :string, media? :string) => StaticScope<Keys>
 	readonly [_] :(string :string) => string
 	readonly _ :never
 };
 
-type FunctionScope = {
+type DynamicScope = {
 	(...args :any[]) :string
 	readonly prototype :Readonly<object>
-	readonly $ :(this :FunctionScope, css? :string, media? :string) => FunctionScope
+	readonly $ :(this :DynamicScope, css? :string, media? :string) => DynamicScope
 	readonly [_] :(string :string) => string
 	readonly _ :never
 };

@@ -46,14 +46,14 @@ Back-End SFC Compiler
 		`sfc.export('let'  [, from = 'j-vue'])`
 		---------------------------------------	
 			
-			To generate the component's `scope`、`template`、`render`、`staticRenderFns` self using information export string, according to the contents in `template` and `style` blocks or their `src' attribute. Module content is similar to this:
+			To generate the component's `dynamicScope` (or `staticScope`)、`template`、`render`、`staticRenderFns` self using information export string, according to the contents in `template` and `style` blocks or their `src' attribute. Module content is similar to this:
 			
 			```	.js
 				import * as jVue from 'j-vue';
-				export var scope = jVue.Scope();
-				export var template = jVue.Template('<div />', scope);
-				export var render = jVue.Render('_c("div")', scope);
-				export var staticRenderFns = jVue.StaticRenderFns([], scope);
+				export var dynamicScope = jVue.Scope();
+				export var template = jVue.Template('<div />', dynamicScope);
+				export var render = jVue.Render('_c("div")', dynamicScope);
+				export var staticRenderFns = jVue.StaticRenderFns([], dynamicScope);
 				export * from 'j-vue';
 			
 			When choose `const` or `let`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.

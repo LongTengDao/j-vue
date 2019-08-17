@@ -46,14 +46,14 @@
 		`sfc.export('let'  [, from = 'j-vue'])`
 		---------------------------------------	
 			
-			根据 `template` 块和 `style` 块中的内容，或其 `src` 属性，生成组件自身的 `scope`、`template`、`render`、`staticRenderFns` 信息导出模块字符串。模块内容类似这样：
+			根据 `template` 块和 `style` 块中的内容，或其 `src` 属性，生成组件自身的 `dynamicScope`（或 `staticScope`）、`template`、`render`、`staticRenderFns` 信息导出模块字符串。模块内容类似这样：
 			
 			```	.js
 				import * as jVue from 'j-vue';
-				export var scope = jVue.Scope();
-				export var template = jVue.Template('<div />', scope);
-				export var render = jVue.Render('_vm,_c("div")', scope);
-				export var staticRenderFns = jVue.StaticRenderFns([], scope);
+				export var dynamicScope = jVue.Scope();
+				export var template = jVue.Template('<div />', dynamicScope);
+				export var render = jVue.Render('_vm,_c("div")', dynamicScope);
+				export var staticRenderFns = jVue.StaticRenderFns([], dynamicScope);
 				export * from 'j-vue';
 			
 			当选择 `const` 或 `let` 时，`Render` 和 `StaticRenderFns` 的参数（编译后的模板）也会作为 ES 6 代码进行压缩。

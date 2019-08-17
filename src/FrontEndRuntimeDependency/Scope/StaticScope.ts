@@ -12,40 +12,40 @@ function Search (keys :string[]) {
 	return new RegExp('__'+groupify(keys, false, true)+'__', 'g');
 }
 
-function Replacer (scope :ObjectScope) {
+function Replacer (scope :StaticScope) {
 	return function replacer (__key__ :string) :string { return scope[__key__.slice(2, -2)]; };
 }
 
-type ObjectScope = {
+type StaticScope = {
 	[key :string] :string
 } & {
 	$ :typeof $
 	[_] :(string :string) => string
 };
 
-var ObjectScope = function ObjectScope (this :ObjectScope, keys :string[]) :void {
+var StaticScope = function StaticScope (this :StaticScope, keys :string[]) :void {
 	prepare_(this);
 	this[_] = function _ (string :string) { return string.replace(_search, _replacer); };
 	var _search = Search(keys);
 	var _replacer = Replacer(this);
 	for ( var index :number = keys.length; index; ) { this[keys[--index]] = Identifier(); }
 } as unknown as {
-	new (keys :string[]) :ObjectScope
+	new (keys :string[]) :StaticScope
 };
 
-var SCOPE :ObjectScope =
-	ObjectScope.prototype = /*#__PURE__*/preventExtensions(create(null, { $: PropertyDescriptor($, false, false, false) }));
+var SCOPE :StaticScope = /*#__PURE__*/preventExtensions(create(null, { $: PropertyDescriptor($, false, false, false) }) as StaticScope);
+StaticScope.prototype = SCOPE;
 
-var InheritedObjectScope = function InheritedObjectScope (this :ObjectScope, keys :string[], proto :ObjectScope) :void {
+var InheritedStaticScope = function InheritedStaticScope (this :StaticScope, keys :string[], proto :StaticScope) :void {
 	prepare_(this);
 	this[_] = function _ (string :string) { return string.replace(_search, _replacer); };
 	for ( var index :number = keys.length; index; ) { this[keys[--index]] = Identifier(); }
 	for ( var key in proto ) { /*key==='_' || key==='$' || */keys.push(key); }
 	var _search = Search(keys);
 	var _replacer = Replacer(this);
-	InheritedObjectScope.prototype = SCOPE;
+	InheritedStaticScope.prototype = SCOPE;
 } as unknown as {
-	new (keys :string[], proto :ObjectScope) :ObjectScope
+	new (keys :string[], proto :StaticScope) :StaticScope
 };
 
-export { ObjectScope, SCOPE, InheritedObjectScope };
+export { StaticScope, SCOPE, InheritedStaticScope };

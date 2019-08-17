@@ -21,9 +21,11 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	yield `export * from ${VisibleStringLiteral(from)};${eol}`;
 	yield `import { Scope, Template, Render, StaticRenderFns } from ${VisibleStringLiteral(from)};${eol}${eol}`;
 	
-	yield !template || _(template).keys===undefined
-		? `export ${mode} scope = /*#__PURE__*/Scope()`
-		: `export ${mode} scope = /*#__PURE__*/Scope('${( _(template).keys!.match(KEYS) || [] ).join(',')}')`;
+	const dynamic :boolean = !template || _(template).keys===undefined;
+	const scope :'dynamicScope' | 'staticScope' = dynamic ? 'dynamicScope' : 'staticScope';
+	yield dynamic
+		? `export ${mode} ${scope} = /*#__PURE__*/Scope()`
+		: `export ${mode} ${scope} = /*#__PURE__*/Scope('${( _(template!).keys!.match(KEYS) || [] ).join(',')}')`;
 	for ( const style of styles ) {
 		const { innerCSS } = style;
 		for ( const line of innerCSS.split('\n') ) {
@@ -41,10 +43,10 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	const { render, staticRenderFns } = Render(innerHTML, mode==='var');
 	
 	yield eol;
-	yield `export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, scope);${eol}`;
-	yield `export ${mode} render = /*#__PURE__*/Render(${render}, scope);${eol}`;
+	yield `export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, ${scope});${eol}`;
+	yield `export ${mode} render = /*#__PURE__*/Render(${render}, ${scope});${eol}`;
 	yield staticRenderFns.length
-		? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)}${eol}], scope);${eol}`
+		? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)}${eol}], ${scope});${eol}`
 		: `export ${mode} staticRenderFns = [];${eol}`;
 	for ( const line of template.content.toSource(tab) ) {
 		yield `//${tab}${line.replace(LF_LS_PS, escape_LF_LS_PS)}${eol}`;

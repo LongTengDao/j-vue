@@ -150,7 +150,7 @@ sfc.export('default');
 
 sfc.export('var');
 // import { Scope, Template, Render, StaticRenderFns } from 'j-vue';
-// export var scope = Scope( ... );
+// export var dynamicScope = Scope( ... );
 // export var template = Template( ... );
 // export var render = Render( ... );
 // export var staticRenderFns = StaticRenderFns( ... );

@@ -3,25 +3,25 @@ export const version :string;
 export function Identifier () :string;
 
 export const Scope :{
-	<Keys extends string> (this :Scope[] | Scope | any, keys :string) :ObjectScope<Keys>
-	(this :Scope[] | Scope | any) :FunctionScope
+	<Keys extends string> (this :Scope[] | Scope | any, keys :string) :StaticScope<Keys>
+	(this :Scope[] | Scope | any) :DynamicScope
 	readonly prototype :null
 };
 export type Scope<Keys extends string | void = void> =
 	Keys extends string
-		? ObjectScope<Keys>
-		: FunctionScope;
-type ObjectScope<Keys extends string> = {
+		? StaticScope<Keys>
+		: DynamicScope;
+type StaticScope<Keys extends string> = {
 	readonly [key in Keys] :string
 } & {
-	readonly $ :(this :ObjectScope<Keys>, css? :string, media? :string) => ObjectScope<Keys>
+	readonly $ :(this :StaticScope<Keys>, css? :string, media? :string) => StaticScope<Keys>
 	readonly [_] :(string :string) => string
 	readonly _ :never
 };
-type FunctionScope = {
+type DynamicScope = {
 	(...args :any[]) :string
 	readonly prototype :Readonly<object>
-	readonly $ :(this :FunctionScope, css? :string, media? :string) => FunctionScope
+	readonly $ :(this :DynamicScope, css? :string, media? :string) => DynamicScope
 	readonly [_] :(string :string) => string
 	readonly _ :never
 };
