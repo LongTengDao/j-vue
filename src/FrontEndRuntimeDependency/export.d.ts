@@ -50,3 +50,75 @@ declare const exports :Readonly<{
 	remove :typeof remove
 	default :typeof exports
 }>;
+
+export function Options<Instance> (options :Options<Instance>) :Options<Instance>;
+export type Options<Instance extends object & { $options? :object }> = {
+	[Key in keyof Instance['$options']] :Instance['$options'][Key]
+} & {
+	data? (this :Instance) :object & { [Key in keyof Instance]? :Instance[Key] },
+	props? :( keyof Instance )[] | Extract<object & { [Key in keyof Instance]? :any }, any[]>,
+	propsData? :never,
+	computed? :object & {
+		[Key in keyof Instance]? :{
+		(this :Instance) :Instance[Key]
+	} | object & {
+		get (this :Instance) :Instance[Key], set (this :Instance, value :Instance[Key]) :void
+	}
+	},
+	methods? :object & {
+		[Key in keyof Instance]? :Instance[Key] & { (this :Instance, ...args :any) :any }
+	},
+	watch? :object & {
+		[Expression :string] :keyof Instance | {
+			(this :Instance, value :any, oldVal :any) :void | Promise<void>
+		} | {
+			handler :keyof Instance | { (this :Instance, value :any, oldVal :any) :void | Promise<void> },
+			deep? :boolean,
+			immediate? :boolean,
+		} | ( keyof Instance | {
+			(this :Instance, value :any, oldVal :any) :void | Promise<void>
+		} | {
+			handler :keyof Instance | { (this :Instance, value :any, oldVal :any) :void | Promise<void> },
+			deep? :boolean,
+			immediate? :boolean,
+		} )[]
+	},
+} & {
+	el? :never,
+	renderError? :never,
+} & {
+	[Key in 'beforeCreate' | 'created' | 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'activated' | 'deactivated' | 'beforeDestroy' | 'destroyed']? :(this :Instance) => void | Promise<void>
+} & {
+	errorCaptured? (error :any, vm :any, info :string) :boolean | void,
+} & {
+	directives? :object,
+	filters? :object & { [Key :string] :(this :void, value :any, ...args :any) => any },
+	components? :object,
+} & {
+	parent? :any,
+	mixins? :Options<Instance>[],
+	extends? :Options<Instance>,
+	provide? :object & { [key :string] :keyof Instance } | {
+		(this :Instance) :object & { [key :string] :keyof Instance }
+	},
+	inject? :( keyof Instance )[] | Extract<object & { [Key in keyof Instance]? :any }, any[]>,
+} & {
+	name? :string,
+	delimiters? :[ '{{', '}}' ],
+	model? :object & { prop? :keyof Instance, event? :string },
+	inheritAttrs? :boolean,
+	comments? :false,
+} & ( {
+	functional? :false,
+	template :string,
+} | {
+	functional? :false,
+	render :Render,
+	staticRenderFns :Render[],
+} | {
+	functional? :false,
+	render :Render,
+} | {
+	functional :true,
+	render :Render,
+} );

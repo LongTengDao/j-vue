@@ -1,10 +1,15 @@
 declare module 'j-vue?*' {
-	export const staticScope :StaticScope<any>;
 	export const dynamicScope :DynamicScope;
+	export const staticScope :StaticScope<any>;
 	export const template :string;
 	export const render :Render;
 	export const staticRenderFns :Render[];
 	export * from 'j-vue';
+}
+
+declare module 'j-vue:' {
+	export = Options;
+	type Options<Instance> = import('j-vue').Options<Instance>;
 }
 
 declare module 'j-vue' {
