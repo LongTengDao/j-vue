@@ -1,4 +1,4 @@
-export const version :'13.1.0';
+export const version :'13.2.0';
 
 export function Identifier () :string;
 
@@ -31,9 +31,14 @@ export function Template (html :string, scope :Scope) :string;
 export function Render (code :string, scope? :Scope) :Render;
 export function StaticRenderFns (codes :string[], scope? :Scope) :Render[];
 
-type Render = <CreateElement extends (...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
+type Render<This = any> = This extends void
+	? <CreateElement extends (...args :any[]) => any> (this :void, createElement :CreateElement, context :any) => ReturnType<CreateElement>
+	: <CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
 
-export const STYLE :{ functional :true, render :Render };
+export const STYLE :{
+	functional :true,
+	render :Render<void>,
+};
 export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
 export function remove (style :HTMLStyleElement) :typeof remove;
 
@@ -51,61 +56,72 @@ declare const exports :Readonly<{
 	default :typeof exports
 }>;
 
-export function Options<Instance> (options :Options<Instance>) :Options<Instance>;
-export type Options<Instance extends object & { $options? :object }> = {
-	[Key in keyof Instance['$options']] :Instance['$options'][Key]
+export function Options<This> (options :Options<This>) :Options<This>;
+export type Options<This extends object & { $options? :object }> = {
+	[Key in keyof This['$options']] :This['$options'][Key]
 } & {
-	data? (this :Instance) :object & { [Key in keyof Instance]? :Instance[Key] },
-	props? :( keyof Instance )[] | Extract<object & { [Key in keyof Instance]? :any }, any[]>,
+	data? (this :This) :object & { [Key in keyof This]? :This[Key] },
+	props? :( keyof This )[] | Extract<object & {
+		[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Extract<object & {
+			type? :{ prototype :{} },
+			validator? (this :void, value :any) :value is This[Key],
+		} & ( {
+			required :true,
+			default? :never,
+		} | {
+			required? :false,
+			default? :This[Key] | { (this :void) :This[Key] },
+		} ), any[]>
+	}, any[]>,
 	propsData? :never,
 	computed? :object & {
-		[Key in keyof Instance]? :{
-		(this :Instance) :Instance[Key]
-	} | object & {
-		get (this :Instance) :Instance[Key], set (this :Instance, value :Instance[Key]) :void
-	}
+		[Key in keyof This]? :{
+			(this :This) :This[Key]
+		} | object & {
+			get (this :This) :This[Key], set (this :This, value :This[Key]) :void
+		}
 	},
 	methods? :object & {
-		[Key in keyof Instance]? :Instance[Key] & { (this :Instance, ...args :any) :any }
+		[Key in keyof This]? :This[Key] & { (this :This, ...args :any) :any }
 	},
 	watch? :object & {
-		[Expression :string] :keyof Instance | {
-			(this :Instance, value :any, oldVal :any) :void | Promise<void>
+		[Expression :string] :keyof This | {
+			(this :This, value :any, oldVal :any) :void | Promise<void>
 		} | {
-			handler :keyof Instance | { (this :Instance, value :any, oldVal :any) :void | Promise<void> },
+			handler :keyof This | { (this :This, value :any, oldVal :any) :void | Promise<void> },
 			deep? :boolean,
 			immediate? :boolean,
-		} | ( keyof Instance | {
-			(this :Instance, value :any, oldVal :any) :void | Promise<void>
+		} | ( keyof This | {
+			(this :This, value :any, oldVal :any) :void | Promise<void>
 		} | {
-			handler :keyof Instance | { (this :Instance, value :any, oldVal :any) :void | Promise<void> },
+			handler :keyof This | { (this :This, value :any, oldVal :any) :void | Promise<void> },
 			deep? :boolean,
 			immediate? :boolean,
 		} )[]
 	},
 } & {
 	el? :never,
-	renderError? :never,
+	renderError?<CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement, error :Error) :ReturnType<CreateElement>,
 } & {
-	[Key in 'beforeCreate' | 'created' | 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'activated' | 'deactivated' | 'beforeDestroy' | 'destroyed']? :(this :Instance) => void | Promise<void>
+	[Key in 'beforeCreate' | 'created' | 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'activated' | 'deactivated' | 'beforeDestroy' | 'destroyed']? :(this :This) => void | Promise<void>
 } & {
-	errorCaptured? (error :any, vm :any, info :string) :boolean | void,
+	errorCaptured? (this :This, error :any, vm :any, info :string) :boolean | void,
 } & {
 	directives? :object,
 	filters? :object & { [Key :string] :(this :void, value :any, ...args :any) => any },
 	components? :object,
 } & {
 	parent? :any,
-	mixins? :Options<Instance>[],
-	extends? :Options<Instance>,
-	provide? :object & { [key :string] :keyof Instance } | {
-		(this :Instance) :object & { [key :string] :keyof Instance }
+	mixins? :Options<This>[],
+	extends? :Options<This>,
+	provide? :object & { [key :string] :keyof This } | {
+		(this :This) :object & { [key :string] :keyof This }
 	},
-	inject? :( keyof Instance )[] | Extract<object & { [Key in keyof Instance]? :any }, any[]>,
+	inject? :( keyof This )[] | Extract<object & { [Key in keyof This]? :any }, any[]>,
 } & {
 	name? :string,
 	delimiters? :[ '{{', '}}' ],
-	model? :object & { prop? :keyof Instance, event? :string },
+	model? :object & { prop? :keyof This, event? :string },
 	inheritAttrs? :boolean,
 	comments? :false,
 } & ( {
@@ -113,12 +129,12 @@ export type Options<Instance extends object & { $options? :object }> = {
 	template :string,
 } | {
 	functional? :false,
-	render :Render,
-	staticRenderFns :Render[],
+	render :Render<This>,
+	staticRenderFns :Render<This>[],
 } | {
 	functional? :false,
-	render :Render,
+	render :Render<This>,
 } | {
 	functional :true,
-	render :Render,
+	render :Render<void>,
 } );
