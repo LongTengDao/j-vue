@@ -14,7 +14,8 @@ import { Scope, Style, Template, STYLE } from 'j-vue';
 const scope = Scope();
 
 Style(`
-    .__static__ { border: 1px solid black; }
+    .__static__ { border: 1px solid black; animation: __xxx__; }
+    @keyframes __xxx__ { }
 `, scope);
 
 new Vue({
@@ -49,7 +50,8 @@ That means behaviour below:
 ```js
 
 document.documentElement.firstChild.appendChild(document.createElement('style')).textContent = `
-    .a { border: 1px solid black; }
+    .a { border: 1px solid black; animation: b; }
+    @keyframes b { }
 `;
 
 new Vue({
@@ -95,7 +97,8 @@ So, we can write our `.vue` single-file component like this from now on: (only n
 
 ```vue
 <style>
-    .__static__ { border: 1px solid black; }
+    .__static__ { border: 1px solid black; animation: __xxx__; }
+    @keyframes __xxx__ { }
 </style>
 
 <template>
