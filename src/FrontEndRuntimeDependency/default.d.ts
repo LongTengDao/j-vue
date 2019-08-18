@@ -63,8 +63,8 @@ declare namespace exports {
 		[Key in keyof This['$options']] :This['$options'][Key]
 	} & {
 		data? (this :This) :object & { [Key in keyof This]? :This[Key] },
-		props? :( keyof This )[] | Extract<object & {
-			[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Extract<object & {
+		props? :( keyof This )[] | Exclude<object & {
+			[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Exclude<object & {
 				type? :{ prototype :{} },
 				validator? (this :void, value :any) :value is This[Key],
 			} & ( {
@@ -119,7 +119,7 @@ declare namespace exports {
 		provide? :object & { [key :string] :keyof This } | {
 			(this :This) :object & { [key :string] :keyof This }
 		},
-		inject? :( keyof This )[] | Extract<object & { [Key in keyof This]? :any }, any[]>,
+		inject? :( keyof This )[] | Exclude<object & { [Key in keyof This]? :any }, any[]>,
 	} & {
 		name? :string,
 		delimiters? :[ '{{', '}}' ],

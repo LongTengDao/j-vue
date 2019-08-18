@@ -14,7 +14,7 @@ declare module 'j-vue:' {
 
 declare module 'j-vue' {
 	
-	export const version :'13.2.1';
+	export const version :'13.2.3';
 	
 	export function Identifier () :string;
 	
@@ -55,8 +55,8 @@ declare module 'j-vue' {
 		[Key in keyof This['$options']] :This['$options'][Key]
 	} & {
 		data? (this :This) :object & { [Key in keyof This]? :This[Key] },
-		props? :( keyof This )[] | Extract<object & {
-			[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Extract<object & {
+		props? :( keyof This )[] | Exclude<object & {
+			[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Exclude<object & {
 				type? :{ prototype :{} },
 				validator? (this :void, value :any) :value is This[Key],
 			} & ( {
@@ -111,7 +111,7 @@ declare module 'j-vue' {
 		provide? :object & { [key :string] :keyof This } | {
 			(this :This) :object & { [key :string] :keyof This }
 		},
-		inject? :( keyof This )[] | Extract<object & { [Key in keyof This]? :any }, any[]>,
+		inject? :( keyof This )[] | Exclude<object & { [Key in keyof This]? :any }, any[]>,
 	} & {
 		name? :string,
 		delimiters? :[ '{{', '}}' ],
