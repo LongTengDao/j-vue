@@ -14,7 +14,11 @@ import { Scope, Style, Template, STYLE } from 'j-vue';
 const scope = Scope();
 
 Style(`
-    .__static__ { border: 1px solid black; animation: __xxx__; } @keyframes __xxx__ { }
+    .__static__ {
+        border: 1px solid black;
+        animation: __xxx__;
+    }
+    @keyframes __xxx__ { }
 `, scope);
 
 new Vue({
@@ -23,6 +27,9 @@ new Vue({
         <div class="__static__">
             <STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
             <p :class="{ [scope('dynamic')]: red }">text</p>
+            <p :class="scope({ dynamic: red   })">text (object)</p>
+            <p :class="scope([red && 'dynamic'])">text (array)</p>
+            <p :class="scope( red && 'dynamic' )">text (arguments)</p>
             <button @click="change">change</button>
         </div>
     `, scope),
@@ -49,7 +56,11 @@ That means behaviour below:
 ```js
 
 document.documentElement.firstChild.appendChild(document.createElement('style')).textContent = `
-    .a { border: 1px solid black; animation: b; } @keyframes b { }
+    .a {
+        border: 1px solid black;
+        animation: b;
+    }
+    @keyframes b { }
 `;
 
 new Vue({
@@ -58,6 +69,9 @@ new Vue({
         <div class="a">
             <STYLE> .{{ scope('dynamic') }} { color: red; } </STYLE>
             <p :class="{ [scope('dynamic')]: red }">text</p>
+            <p :class="scope({ dynamic: red   })">text (object)</p>
+            <p :class="scope([red && 'dynamic'])">text (array)</p>
+            <p :class="scope( red && 'dynamic' )">text (arguments)</p>
             <button @click="change">change</button>
         </div>
     `,
@@ -95,7 +109,11 @@ So, we can write our `.vue` single-file component like this from now on: (only n
 
 ```vue
 <style>
-    .__static__ { border: 1px solid black; animation: __xxx__; } @keyframes __xxx__ { }
+    .__static__ {
+        border: 1px solid black;
+        animation: __xxx__;
+    }
+    @keyframes __xxx__ { }
 </style>
 
 <template>
