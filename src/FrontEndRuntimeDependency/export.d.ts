@@ -62,7 +62,7 @@ export type Options<This extends object & { $options? :object }> = {
 	data? (this :This) :object & { [Key in keyof This]? :This[Key] },
 	props? :( keyof This )[] | Exclude<object & {
 		[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Exclude<object & {
-			type? :{ prototype :{} },
+			type? :{ prototype :{} } | { prototype :object }[],
 			validator? (this :void, value :any) :value is This[Key],
 		} & ( {
 			required :true,

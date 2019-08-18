@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'13.3.0';
+	export const version :'13.4.0';
 	
 	export function Identifier () :string;
 	
@@ -66,7 +66,7 @@ declare namespace exports {
 		data? (this :This) :object & { [Key in keyof This]? :This[Key] },
 		props? :( keyof This )[] | Exclude<object & {
 			[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Exclude<object & {
-				type? :{ prototype :{} },
+				type? :{ prototype :{} } | { prototype :object }[],
 				validator? (this :void, value :any) :value is This[Key],
 			} & ( {
 				required :true,
