@@ -1,6 +1,6 @@
 import Error from '.Error';
-import Object from '.Object';
 import WeakSet from '.WeakSet';
+//import Object from '.Object';
 import __null__ from '.null';
 
 import { StringLiteral } from '@ltd/j-es';
@@ -9,9 +9,10 @@ import { compile, Parser, findGlobals, simple, minify } from '../dependencies';
 
 const byStart = (a :Identifier, b :Identifier) :number => a.start-b.start;
 
+const _x = /^_(?![a-z]$)/;
 const shorthand :WeakSet<Identifier> = new WeakSet;
-const dangerous :WeakSet<Identifier> = new WeakSet;
-const __Proto__ :String = Object('__proto__');
+//const dangerous :WeakSet<Identifier> = new WeakSet;
+//const __Proto__ :String = Object('__proto__');
 const visitors = __null__({
 	ObjectExpression ({ properties } :ObjectExpression) :void {
 		for ( let index :number = properties.length; index--; ) {
@@ -25,13 +26,15 @@ const visitors = __null__({
 			if ( property.shorthand ) {
 				let { value } = property;
 				if ( value.type==='AssignmentPattern' ) { value = value.left; }
-				if ( value.name==='__proto__' ) { value.name = __Proto__; }
+				//if ( value.name==='__proto__' ) { value.name = __Proto__; }
 				shorthand.add(value);
 			}
 		}
 	},
 	VariablePattern (identifier :Identifier) :void {
-		if ( identifier.name.startsWith('_') ) { dangerous.add(identifier); }
+		if ( identifier.name.startsWith('_') ) {
+			throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`);//dangerous.add(identifier);
+		}
 	},
 });
 
@@ -80,7 +83,7 @@ export function NecessaryStringLiteral (body :string) :string {
 	const AST = Parser.parse(code, parserOptions);
 	const globals = findGlobals(AST);
 	if ( globals.size ) {
-		if ( globals.has('_h') ) { throw Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`); }
+		//if ( globals.has('_h') ) { throw Error(`jVue 内部设计时错误地认为新版本的 Vue 不会编译生成对“_h”的引用`); }
 		
 		const _vm :string = '$'.repeat(body.length);
 		
@@ -88,12 +91,14 @@ export function NecessaryStringLiteral (body :string) :string {
 		let _code :string = '';
 		let index :number = 0;
 		for ( const identifier of ( globals.nodes() as Identifier[] ).sort(byStart) ) {
-			if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`); }
+			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`); }
+			if ( _x.test(identifier.name as string) ) { throw Error(`不要访问实例下的下划线开头的私有属性（“${identifier.name}”）`); }
 			const { start } = identifier;
 			if ( start!==index ) { _code += code.slice(index, start); }
 			const name :string = code.slice(start, index = identifier.end);
-			if ( shorthand.has(identifier) ) { _code += identifier.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
-			_code += `${_vm}.${name}`;
+			_code += shorthand.has(identifier)
+				? `${name}:${_vm}.${name}`//if ( shorthand.has(identifier) ) { _code += identifier.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
+				: `${_vm}.${name}`;//_code += `${_vm}.${name}`;
 		}
 		if ( index!==code.length ) { _code += code.slice(index); }
 		
