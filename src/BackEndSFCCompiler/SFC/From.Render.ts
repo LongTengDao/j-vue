@@ -13,6 +13,7 @@ const _x = /^_(?![a-z]$)/;
 const shorthand :WeakSet<Identifier> = new WeakSet;
 //const dangerous :WeakSet<Identifier> = new WeakSet;
 //const __Proto__ :String = Object('__proto__');
+let _c :boolean;
 const visitors = __null__({
 	ObjectExpression ({ properties } :ObjectExpression) :void {
 		for ( let index :number = properties.length; index--; ) {
@@ -33,7 +34,7 @@ const visitors = __null__({
 	},
 	VariablePattern (identifier :Identifier) :void {
 		if ( identifier.name.startsWith('_') ) {
-			throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`);//dangerous.add(identifier);
+			if ( _c ) { _c = false; } else { throw Error(`不要对实例下的下划线开头格式的私有属性“${identifier.name}”进行赋值！`); }//dangerous.add(identifier);
 		}
 	},
 });
@@ -87,11 +88,12 @@ export function NecessaryStringLiteral (body :string) :string {
 		
 		const _vm :string = '$'.repeat(body.length);
 		
+		_c = true;
 		simple(AST, visitors);
 		let _code :string = '';
 		let index :number = 0;
 		for ( const identifier of ( globals.nodes() as Identifier[] ).sort(byStart) ) {
-			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`); }
+			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头格式的私有属性“${identifier.name}”进行赋值！`); }
 			if ( _x.test(identifier.name as string) ) { throw Error(`不要访问实例下的下划线开头的私有属性（“${identifier.name}”）`); }
 			const { start } = identifier;
 			if ( start!==index ) { _code += code.slice(index, start); }

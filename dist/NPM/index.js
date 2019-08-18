@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '13.5.0';
+const version = '13.6.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3898,6 +3898,7 @@ const _x = /^_(?![a-z]$)/;
 const shorthand                      = new WeakSet;
 //const dangerous :WeakSet<Identifier> = new WeakSet;
 //const __Proto__ :String = Object('__proto__');
+let _c         ;
 const visitors = NULL({
 	ObjectExpression ({ properties }                  )       {
 		for ( let index         = properties.length; index--; ) {
@@ -3918,7 +3919,7 @@ const visitors = NULL({
 	},
 	VariablePattern (identifier            )       {
 		if ( identifier.name.startsWith('_') ) {
-			throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`);//dangerous.add(identifier);
+			if ( _c ) { _c = false; } else { throw Error(`不要对实例下的下划线开头格式的私有属性“${identifier.name}”进行赋值！`); }//dangerous.add(identifier);
 		}
 	},
 });
@@ -3972,11 +3973,12 @@ function NecessaryStringLiteral (body        )         {
 		
 		const _vm         = '$'.repeat(body.length);
 		
+		_c = true;
 		simple(AST, visitors);
 		let _code         = '';
 		let index         = 0;
 		for ( const identifier of ( globals.nodes()                 ).sort(byStart) ) {
-			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头的私有属性“${identifier.name}”进行写操作！`); }
+			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头格式的私有属性“${identifier.name}”进行赋值！`); }
 			if ( _x.test(identifier.name          ) ) { throw Error(`不要访问实例下的下划线开头的私有属性（“${identifier.name}”）`); }
 			const { start } = identifier;
 			if ( start!==index ) { _code += code.slice(index, start); }
