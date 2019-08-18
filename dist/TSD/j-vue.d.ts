@@ -14,7 +14,7 @@ declare module 'j-vue:' {
 
 declare module 'j-vue' {
 	
-	export const version :'13.4.0';
+	export const version :'13.5.0';
 	
 	export function Identifier () :string;
 	
@@ -51,13 +51,13 @@ declare module 'j-vue' {
 	}>;
 	
 	export function Options<This> (options :Options<This>) :Options<This>;
-	export type Options<This extends object & { $options? :object }> = {
+	export type Options<This extends { $options? :object }> = {
 		[Key in keyof This['$options']] :This['$options'][Key]
 	} & {
-		data? (this :This) :object & { [Key in keyof This]? :This[Key] },
-		props? :( keyof This )[] | Exclude<object & {
-			[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Exclude<object & {
-				type? :{ prototype :{} } | { prototype :object }[],
+		data? (this :This) :{ [Key in keyof This]? :This[Key] },
+		props? :( keyof This )[] | Exclude<{
+			[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Exclude<{
+				type? :{ prototype :object } | { prototype :object }[],
 				validator? (this :void, value :any) :value is This[Key],
 			} & ( {
 				required :true,
@@ -68,17 +68,17 @@ declare module 'j-vue' {
 			} ), any[]>
 		}, any[]>,
 		propsData? :never,
-		computed? :object & {
+		computed? :{
 			[Key in keyof This]? :{
 				(this :This) :This[Key]
-			} | object & {
+			} | {
 				get (this :This) :This[Key], set (this :This, value :This[Key]) :void
 			}
 		},
-		methods? :object & {
+		methods? :{
 			[Key in keyof This]? :This[Key] & { (this :This, ...args :any) :any }
 		},
-		watch? :object & {
+		watch? :{
 			[Expression :string] :keyof This | {
 				(this :This, value :any, oldVal :any) :void | Promise<void>
 			} | {
@@ -102,20 +102,20 @@ declare module 'j-vue' {
 		errorCaptured? (this :This, error :any, vm :any, info :string) :boolean | void,
 	} & {
 		directives? :object,
-		filters? :object & { [Key :string] :(this :void, value :any, ...args :any) => any },
+		filters? :{ [Key :string] :(this :void, value :any, ...args :any) => any },
 		components? :object,
 	} & {
 		parent? :any,
 		mixins? :Options<This>[],
 		extends? :Options<This>,
-		provide? :object & { [key :string] :keyof This } | {
-			(this :This) :object & { [key :string] :keyof This }
+		provide? :{ [key :string] :keyof This } | {
+			(this :This) :{ [key :string] :keyof This }
 		},
-		inject? :( keyof This )[] | Exclude<object & { [Key in keyof This]? :any }, any[]>,
+		inject? :( keyof This )[] | Exclude<{ [Key in keyof This]? :any }, any[]>,
 	} & {
 		name? :string,
 		delimiters? :[ '{{', '}}' ],
-		model? :object & { prop? :keyof This, event? :string },
+		model? :{ prop? :keyof This, event? :string },
 		inheritAttrs? :boolean,
 		comments? :false,
 	} & ( {
