@@ -2,8 +2,8 @@ declare module 'j-vue?*' {
 	export const dynamicScope :DynamicScope;
 	export const staticScope :StaticScope<any>;
 	export const template :string;
-	export const render :Render;
-	export const staticRenderFns :Render[];
+	export const render :Render<any>;
+	export const staticRenderFns :Render<any>[];
 	export * from 'j-vue';
 }
 
@@ -26,12 +26,12 @@ declare module 'j-vue' {
 	export type Scope<Keys extends string | void = void> = Keys extends string ? StaticScope<Keys> : DynamicScope;
 	
 	export function Template (html :string, scope :Scope) :string;
-	export function Render (code :string, scope? :Scope) :Render;
-	export function StaticRenderFns (codes :string[], scope? :Scope) :Render[];
+	export function Render (code :string, scope? :Scope) :Render<any>;
+	export function StaticRenderFns (codes :string[], scope? :Scope) :Render<any>[];
 	
 	export const STYLE :{
 		functional :true,
-		render :Render<void>,
+		render :FunctionalRender,
 	};
 	export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
 	export function remove (style :HTMLStyleElement) :typeof remove;
@@ -130,14 +130,13 @@ declare module 'j-vue' {
 		render :Render<This>,
 	} | {
 		functional :true,
-		render :Render<void>,
+		render :FunctionalRender,
 	} );
 	
 }
 
-type Render<This = any> = This extends void
-	? <CreateElement extends (...args :any[]) => any> (this :void, createElement :CreateElement, context :any) => ReturnType<CreateElement>
-	: <CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
+type Render<This> = <CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
+type FunctionalRender = <CreateElement extends (...args :any[]) => any> (this :void, createElement :CreateElement, context :any) => ReturnType<CreateElement>;
 
 type StaticScope<Keys extends string> = {
 	readonly [key in Keys] :string

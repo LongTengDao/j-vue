@@ -1,9 +1,8 @@
 export as namespace jVue;
-import { Render } from "j-vue";
 export = exports;
 declare namespace exports {
 	
-	export const version :'13.2.0';
+	export const version :'13.2.1';
 	
 	export function Identifier () :string;
 	
@@ -33,16 +32,15 @@ declare namespace exports {
 	const _ :unique symbol;
 	
 	export function Template (html :string, scope :Scope) :string;
-	export function Render (code :string, scope? :Scope) :Render;
-	export function StaticRenderFns (codes :string[], scope? :Scope) :Render[];
+	export function Render (code :string, scope? :Scope) :Render<any>;
+	export function StaticRenderFns (codes :string[], scope? :Scope) :Render<any>[];
 	
-	type Render<This = any> = This extends void
-		? <CreateElement extends (...args :any[]) => any> (this :void, createElement :CreateElement, context :any) => ReturnType<CreateElement>
-		: <CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
+	type Render<This> = <CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
+	type FunctionalRender = <CreateElement extends (...args :any[]) => any> (this :void, createElement :CreateElement, context :any) => ReturnType<CreateElement>;
 	
 	export const STYLE :{
 		functional :true,
-		render :Render<void>,
+		render :FunctionalRender,
 	};
 	export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
 	export function remove (style :HTMLStyleElement) :typeof remove;
@@ -141,7 +139,7 @@ declare namespace exports {
 		render :Render<This>,
 	} | {
 		functional :true,
-		render :Render<void>,
+		render :FunctionalRender,
 	} );
 	
 }
