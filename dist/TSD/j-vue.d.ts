@@ -14,7 +14,7 @@ declare module 'j-vue:' {
 
 declare module 'j-vue' {
 	
-	export const version :'13.6.0';
+	export const version :'13.7.0';
 	
 	export function Identifier () :string;
 	
@@ -30,8 +30,8 @@ declare module 'j-vue' {
 	export function StaticRenderFns (codes :string[], scope? :Scope) :Render<any>[];
 	
 	export const STYLE :{
-		functional :true,
-		render :FunctionalRender,
+		readonly functional :true,
+		readonly render :<CreateElement extends (this :void, ...args :any[]) => any> (this :void, createElement :CreateElement, context :Readonly<{ data :Readonly<{}>, children :Readonly<any[]> }>) => ReturnType<CreateElement>,
 	};
 	export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
 	export function remove (style :HTMLStyleElement) :typeof remove;
@@ -95,7 +95,7 @@ declare module 'j-vue' {
 		},
 	} & {
 		el? :never,
-		renderError?<CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement, error :Error) :ReturnType<CreateElement>,
+		renderError?<CreateElement extends (this :void, ...args :any[]) => any> (this :This, createElement :CreateElement, error :Error) :ReturnType<CreateElement>,
 	} & {
 		[Key in 'beforeCreate' | 'created' | 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'activated' | 'deactivated' | 'beforeDestroy' | 'destroyed']? :(this :This) => void | Promise<void>
 	} & {
@@ -130,13 +130,12 @@ declare module 'j-vue' {
 		render :Render<This>,
 	} | {
 		functional :true,
-		render :FunctionalRender,
+		render<CreateElement extends (this :void, ...args :any[]) => any> (this :void, createElement :CreateElement, context :any) :ReturnType<CreateElement>,
 	} );
 	
 }
 
-type Render<This> = <CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
-type FunctionalRender = <CreateElement extends (...args :any[]) => any> (this :void, createElement :CreateElement, context :any) => ReturnType<CreateElement>;
+type Render<This> = <CreateElement extends (this :void, ...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
 
 type StaticScope<Keys extends string> = {
 	readonly [key in Keys] :string

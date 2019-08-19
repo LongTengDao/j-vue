@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'13.6.0';
+	export const version :'13.7.0';
 	
 	export function Identifier () :string;
 	
@@ -35,12 +35,11 @@ declare namespace exports {
 	export function Render (code :string, scope? :Scope) :Render<any>;
 	export function StaticRenderFns (codes :string[], scope? :Scope) :Render<any>[];
 	
-	type Render<This> = <CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
-	type FunctionalRender = <CreateElement extends (...args :any[]) => any> (this :void, createElement :CreateElement, context :any) => ReturnType<CreateElement>;
+	type Render<This> = <CreateElement extends (this :void, ...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
 	
 	export const STYLE :{
-		functional :true,
-		render :FunctionalRender,
+		readonly functional :true,
+		readonly render :<CreateElement extends (this :void, ...args :any[]) => any> (this :void, createElement :CreateElement, context :Readonly<{ data :Readonly<{}>, children :Readonly<any[]> }>) => ReturnType<CreateElement>,
 	};
 	export function Style (css? :string, scope? :Scope) :HTMLStyleElement;
 	export function remove (style :HTMLStyleElement) :typeof remove;
@@ -104,7 +103,7 @@ declare namespace exports {
 		},
 	} & {
 		el? :never,
-		renderError?<CreateElement extends (...args :any[]) => any> (this :This, createElement :CreateElement, error :Error) :ReturnType<CreateElement>,
+		renderError?<CreateElement extends (this :void, ...args :any[]) => any> (this :This, createElement :CreateElement, error :Error) :ReturnType<CreateElement>,
 	} & {
 		[Key in 'beforeCreate' | 'created' | 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'activated' | 'deactivated' | 'beforeDestroy' | 'destroyed']? :(this :This) => void | Promise<void>
 	} & {
@@ -139,7 +138,7 @@ declare namespace exports {
 		render :Render<This>,
 	} | {
 		functional :true,
-		render :FunctionalRender,
+		render<CreateElement extends (this :void, ...args :any[]) => any> (this :void, createElement :CreateElement, context :any) :ReturnType<CreateElement>,
 	} );
 	
 }
