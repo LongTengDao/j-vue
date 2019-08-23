@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '13.8.0';
+const version = '14.0.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -2982,7 +2982,11 @@ const NULL$1                                   =
 
 /*¡ j-orderify */
 
+const EMPTY = undefined$1;
+
 class Attributes extends NULL$1         {
+	
+	get [Symbol.toStringTag] () { return 'SFC.**.Attributes'; }
 	
 	                                                                
 	                                                                            
@@ -2991,7 +2995,7 @@ class Attributes extends NULL$1         {
 		let literal         = '';
 		for ( const name in this ) {
 			const value = this[name];
-			literal += value===undefined$1 ? ` ${name}` : ` ${name}="${escapeAttributeValue(value)}"`;
+			literal += value===EMPTY ? ` ${name}` : ` ${name}="${escapeAttributeValue(value)}"`;
 		}
 		return literal;
 	}
@@ -3092,7 +3096,7 @@ class Block                                    extends NULL {
 		this.attributes = attributes;
 		if ( inner===undefined$1 ) {
 			if ( emitProperties ) {
-				if ( attributes.src===undefined$1 ) { throw SyntaxError(`自闭合功能块元素必须存在 src 属性值`); }
+				if ( attributes.src===EMPTY ) { throw SyntaxError(`自闭合功能块元素必须存在 src 属性值`); }
 				this.src = attributes.src;
 				if ( 'lang' in attributes ) { throw SyntaxError(`自闭合功能块元素不支持 lang 属性`); }
 			}
@@ -3164,6 +3168,8 @@ const TS = /^\s*T(?:S|ypeScript)\s*$/i;
 
 class Script extends Block {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Script'; }
+	
 	constructor (attributes            , inner                    ) { super('script', attributes, true, inner, SCRIPT_END_TAG); }
 	
 	get innerJS ()         {
@@ -3203,6 +3209,8 @@ const NAME_IN_CSS = /(?<=[\s,>}{\](+~]|\*\/|^)(?:[A-Z][\w-]*)+(?=[\s,>{}[)+~#:.]
 
 class Style extends Block          {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Style'; }
+	
 	constructor (attributes            , inner                    ) {
 		
 		super('style', attributes, true, inner, STYLE_END_TAG);
@@ -3211,7 +3219,7 @@ class Style extends Block          {
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
-			if ( literal===undefined$1 ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
+			if ( literal===EMPTY ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create(null)            ;
@@ -3229,7 +3237,7 @@ class Style extends Block          {
 		}
 		
 		if ( 'media' in attributes ) {
-			if ( attributes.media===undefined$1 ) { throw SyntaxError(`style 功能块元素的 media 属性必须具有值`); }
+			if ( attributes.media===EMPTY ) { throw SyntaxError(`style 功能块元素的 media 属性必须具有值`); }
 			_this.media = attributes.media;
 		}
 		
@@ -3257,6 +3265,8 @@ const _parentNode = Symbol('#parentNode');
 
 class Node {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Node'; }
+	
 	                     
 	get parentNode ()              { return this[_parentNode] || null; }
 	
@@ -3281,6 +3291,8 @@ class Node {
 freeze(Node.prototype);
 
 class Element extends Node {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
 	constructor (localName        , attributes            , partial          ) {
 		super();
@@ -3371,6 +3383,8 @@ freeze(CharacterData.prototype);
 
 class Text extends CharacterData {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
+	
 	constructor (data         = '') {
 		super(data);
 	}
@@ -3395,12 +3409,14 @@ function trimTab (raw        )         {
 	return raw.replace(NT$1, '\n').replace(N, '');
 }
 
-const delimiters_0 = '{{';
-const delimiters_1 = '}}';
+const DELIMITERS_0 = '{{';
+const DELIMITERS_1 = '}}';
 
 class Mustache extends Array         {
 	
-	constructor (raw        , v_pre         ) {
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Mustache'; }
+	
+	constructor (raw        , v_pre         , delimiters_0         = DELIMITERS_0, delimiters_1         = DELIMITERS_1) {
 		// Vue 会优先解析 <tag>，而且还看 tagName，然后才是 {{}}，这和流式解析矛盾，因此要求避免任何潜在的视觉歧义
 		// 如果未来发现不会导致解析报错终止的歧义，则要更严格地，在解码前检查确保连“<”都不存在
 		super();
@@ -3446,7 +3462,7 @@ class Mustache extends Array         {
 		let data         = '';
 		let isTemplate          = true;
 		for ( const each of this ) {
-			if ( each ) { data += isTemplate ? each : `${delimiters_0}${each}${delimiters_1}`; }// 以后如果要完全剔除“\n”，则需要更复杂的保全逻辑（{{'{{{'}}、{{{k:{b:'}\}\}'} } }}），避免本来没有连在一起的连到一起
+			if ( each ) { data += isTemplate ? each : `${DELIMITERS_0}${each}${DELIMITERS_1}`; }// 以后如果要完全剔除“\n”，则需要更复杂的保全逻辑（{{'{{{'}}、{{{k:{b:'}\}\}'} } }}），避免本来没有连在一起的连到一起
 			isTemplate = !isTemplate;
 		}
 		return data;
@@ -3636,6 +3652,8 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 
 class Content extends Node {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content'; }
+	
 	constructor (inner        , abbr          ) {
 		super();
 		if ( inner ) {
@@ -3680,6 +3698,8 @@ const HTML = /^(?:HTML|\s*text\/html\s*)$/i;
 
 class Template extends Block {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template'; }
+	
 	constructor (attributes            , inner                    ) {
 		
 		if ( inner!==undefined$1 && attributes.lang && !HTML.test(attributes.lang) ) {
@@ -3694,7 +3714,7 @@ class Template extends Block {
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
-			if ( literal===undefined$1 ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
+			if ( literal===EMPTY ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create(null)           ;
@@ -3716,13 +3736,13 @@ class Template extends Block {
 		}
 		
 		if ( '.keys' in attributes ) {
-			if ( attributes['.keys']===undefined$1 ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
+			if ( attributes['.keys']===EMPTY ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
 			_this.keys = attributes['.keys'];
 		}
 		
 		if ( 'functional' in attributes ) {
 			throw Error(`jVue 暂未支持编译 functional template，因为无法设想这种实际场景，从而也无法进行相应的功能设计`);
-			//if ( attributes.functional!==undefined ) { throw SyntaxError(`template 功能块元素的 functional 属性必须是空属性`); }
+			//if ( attributes.functional!==EMPTY ) { throw SyntaxError(`template 功能块元素的 functional 属性必须是空属性`); }
 			//_this.functional = true;
 		}
 		
@@ -3757,6 +3777,9 @@ class Template extends Block {
 }
 
 class CustomBlock extends Block {
+	
+	get [Symbol.toStringTag] () { return 'SFC.CustomBlock'; }
+	
 	constructor (blockName        , attributes            , inner                    ) {
 		if ( inner===undefined$1 ) {
 			super(blockName, attributes, false, inner, null);
@@ -3767,6 +3790,7 @@ class CustomBlock extends Block {
 			super(blockName, attributes, false, inner, new RegExp(`^</${blockName}${TAG_EMIT_CHAR}`, 'i'));
 		}
 	}
+	
 }
 
 const SCRIPT_STYLE_TEMPLATE = /^(?:script|style|template)$/i;
@@ -4069,14 +4093,14 @@ const INLINE = NULL({
 	sourcemap: 'inline'            ,
 });
 
-async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, map = false, src, lang }   
+async function one (sfc     , { 'var': x_var, '?j-vue': x_from, 'j-vue': from, map = false, src, lang }   
 	                               
-	                   
+	                  
 	                 
 	                         
 	                                    
 	                                                              
- )                                                {
+ )                                               {
 	if ( lang ) {
 		const { script } = sfc;
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner ); }
@@ -4121,7 +4145,7 @@ async function one (sfc     , { 'var': x_var, 'j-vue?*': x_from, 'j-vue': from, 
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
 	if ( output.length!==1 ) { throw Error(''+output.length); }
 	const only = output[0];
-	return map===true ? only : only.code;
+	return map===true ? { code: only.code, map: only.map } : only.code;
 }
 
 const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true };
@@ -4129,6 +4153,8 @@ const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 const CR_LF = /\r\n?/g;
 
 class SFC extends NULL {
+	
+	get [Symbol.toStringTag] () { return 'SFC'; }
 	
 	bom               ;
 	eol        ;
@@ -4174,7 +4200,7 @@ class SFC extends NULL {
 	
 	export (mode                                         
 		                               
-		                   
+		                  
 		                 
 		                           
 		                                      
@@ -4197,7 +4223,7 @@ class SFC extends NULL {
 			else {
 				if ( template ) {
 					return bom
-						+`import { template } from ${from===undefined$1 ? `'j-vue?*'` : StringLiteral(from)};${eol}`
+						+`import { template } from ${from===undefined$1 ? `'?j-vue'` : StringLiteral(from)};${eol}`
 						+`export default { template: template };`;
 				}
 				else {

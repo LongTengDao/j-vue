@@ -32,7 +32,7 @@ Back-End SFC Compiler
 			
 			In order to avoid unexpected parsing ambiguity, errors will be reported as strictly as possible.
 			
-		`sfc.export('default'[, from = 'j-vue?*'])`
+		`sfc.export('default'[, from = '?j-vue'])`
 		-------------------------------------------	
 			
 			To generate the component's default export content string according to the content in `script` block or its `src' attribute. (For the generated `JavaScript` code is padded line wrapping and indentation as the original file, so source map is not provided.)

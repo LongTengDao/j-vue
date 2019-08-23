@@ -9,6 +9,7 @@ import { newRegExp } from '@ltd/j-regexp';
 import { TOKENS, AliasName, localName, className, TAG_EMIT_CHAR } from './RE';
 import Block from './Block';
 import _ from './private';
+import { EMPTY } from './Attributes';
 
 const SELECTOR = newRegExp`^
 	\s*(?:
@@ -28,6 +29,8 @@ const NAME_IN_CSS = /(?<=[\s,>}{\](+~]|\*\/|^)(?:[A-Z][\w-]*)+(?=[\s,>{}[)+~#:.]
 
 export default class Style extends Block<'style'> {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Style'; }
+	
 	constructor (attributes :Attributes, inner :string | undefined) {
 		
 		super('style', attributes, true, inner, STYLE_END_TAG);
@@ -36,7 +39,7 @@ export default class Style extends Block<'style'> {
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
-			if ( literal===undefined ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
+			if ( literal===EMPTY ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create(null) as Selector;
@@ -54,7 +57,7 @@ export default class Style extends Block<'style'> {
 		}
 		
 		if ( 'media' in attributes ) {
-			if ( attributes.media===undefined ) { throw SyntaxError(`style 功能块元素的 media 属性必须具有值`); }
+			if ( attributes.media===EMPTY ) { throw SyntaxError(`style 功能块元素的 media 属性必须具有值`); }
 			_this.media = attributes.media;
 		}
 		

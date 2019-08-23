@@ -23,6 +23,8 @@ import _ from './private';
 
 export default class Script extends Block {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Script'; }
+	
 	constructor (attributes :Attributes, inner :string | undefined) { super('script', attributes, true, inner, SCRIPT_END_TAG); }
 	
 	get innerJS () :string {

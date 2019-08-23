@@ -23,6 +23,8 @@ freeze(CharacterData.prototype);
 
 export default class Text extends CharacterData {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
+	
 	constructor (data :string = '') {
 		super(data);
 	}

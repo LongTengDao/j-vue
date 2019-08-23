@@ -11,6 +11,7 @@ import Block from './Block';
 import Content from './Template.Content';
 import Element from './Template.Content.Element';
 import { TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE } from './RE';
+import { EMPTY } from './Attributes';
 
 const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
@@ -28,6 +29,8 @@ const HTML = /^(?:HTML|\s*text\/html\s*)$/i;
 
 export default class Template extends Block {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template'; }
+	
 	constructor (attributes :Attributes, inner :string | undefined) {
 		
 		if ( inner!==undefined && attributes.lang && !HTML.test(attributes.lang) ) {
@@ -42,7 +45,7 @@ export default class Template extends Block {
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
-			if ( literal===undefined ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
+			if ( literal===EMPTY ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create(null) as Partial;
@@ -64,13 +67,13 @@ export default class Template extends Block {
 		}
 		
 		if ( '.keys' in attributes ) {
-			if ( attributes['.keys']===undefined ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
+			if ( attributes['.keys']===EMPTY ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
 			_this.keys = attributes['.keys'];
 		}
 		
 		if ( 'functional' in attributes ) {
 			throw Error(`jVue 暂未支持编译 functional template，因为无法设想这种实际场景，从而也无法进行相应的功能设计`);
-			//if ( attributes.functional!==undefined ) { throw SyntaxError(`template 功能块元素的 functional 属性必须是空属性`); }
+			//if ( attributes.functional!==EMPTY ) { throw SyntaxError(`template 功能块元素的 functional 属性必须是空属性`); }
 			//_this.functional = true;
 		}
 		

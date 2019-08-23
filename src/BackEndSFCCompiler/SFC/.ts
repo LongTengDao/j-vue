@@ -23,6 +23,8 @@ import one from './one';
 
 export default class SFC extends NULL {
 	
+	get [Symbol.toStringTag] () { return 'SFC'; }
+	
 	bom :'\uFEFF' | '';
 	eol :string;
 	tab :string;
@@ -67,7 +69,7 @@ export default class SFC extends NULL {
 	
 	export (mode :'default' | 'const' | 'var' | 'let' | {
 		'var' :'const' | 'var' | 'let',
-		'j-vue?*'? :string,
+		'?j-vue'? :string,
 		'j-vue'? :string,
 		'map'? :boolean | 'inline',
 		'src'? (src :string) :Promise<string>,
@@ -90,7 +92,7 @@ export default class SFC extends NULL {
 			else {
 				if ( template ) {
 					return bom
-						+`import { template } from ${from===undefined ? `'j-vue?*'` : StringLiteral(from)};${eol}`
+						+`import { template } from ${from===undefined ? `'?j-vue'` : StringLiteral(from)};${eol}`
 						+`export default { template: template };`;
 				}
 				else {

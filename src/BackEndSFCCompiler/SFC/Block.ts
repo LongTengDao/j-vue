@@ -2,6 +2,8 @@ import SyntaxError from '.SyntaxError';
 import undefined from '.undefined';
 import NULL from '.null';
 
+import { EMPTY } from './Attributes';
+
 export default class Block<BlockName extends string = string> extends NULL {
 	
 	constructor (blockName :BlockName, attributes :Attributes, emitProperties :boolean, inner :string | undefined, END_TAG :RegExp | null) {
@@ -10,7 +12,7 @@ export default class Block<BlockName extends string = string> extends NULL {
 		this.attributes = attributes;
 		if ( inner===undefined ) {
 			if ( emitProperties ) {
-				if ( attributes.src===undefined ) { throw SyntaxError(`自闭合功能块元素必须存在 src 属性值`); }
+				if ( attributes.src===EMPTY ) { throw SyntaxError(`自闭合功能块元素必须存在 src 属性值`); }
 				this.src = attributes.src;
 				if ( 'lang' in attributes ) { throw SyntaxError(`自闭合功能块元素不支持 lang 属性`); }
 			}

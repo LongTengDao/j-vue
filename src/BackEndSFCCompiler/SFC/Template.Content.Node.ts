@@ -5,6 +5,8 @@ const _parentNode = Symbol('#parentNode');
 
 export default class Node {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Node'; }
+	
 	[_parentNode]? :Node;
 	get parentNode () :Node | null { return this[_parentNode] || null; }
 	

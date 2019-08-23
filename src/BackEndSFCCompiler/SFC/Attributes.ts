@@ -6,7 +6,11 @@ import { NULL } from '@ltd/j-orderify';
 
 import * as Entities from './Entities';
 
+export const EMPTY = undefined;
+
 export default class Attributes extends NULL<string> {
+	
+	get [Symbol.toStringTag] () { return 'SFC.**.Attributes'; }
 	
 	[Symbol.toPrimitive] (this :Attributes, hint :'number') :number;
 	[Symbol.toPrimitive] (this :Attributes, hint :'string' | 'default') :string;
@@ -15,7 +19,7 @@ export default class Attributes extends NULL<string> {
 		let literal :string = '';
 		for ( const name in this ) {
 			const value = this[name];
-			literal += value===undefined ? ` ${name}` : ` ${name}="${Entities.escapeAttributeValue(value)}"`;
+			literal += value===EMPTY ? ` ${name}` : ` ${name}="${Entities.escapeAttributeValue(value)}"`;
 		}
 		return literal;
 	}

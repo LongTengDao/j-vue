@@ -8,6 +8,9 @@ import { TAG_EMIT_CHAR, TAG_LIKE } from './RE';
 import Block from './Block';
 
 export default class CustomBlock extends Block {
+	
+	get [Symbol.toStringTag] () { return 'SFC.CustomBlock'; }
+	
 	constructor (blockName :string, attributes :Attributes, inner :string | undefined) {
 		if ( inner===undefined ) {
 			super(blockName, attributes, false, inner, null);
@@ -18,6 +21,7 @@ export default class CustomBlock extends Block {
 			super(blockName, attributes, false, inner, new RegExp(`^</${blockName}${TAG_EMIT_CHAR}`, 'i'));
 		}
 	}
+	
 };
 
 type Attributes = import('./Attributes').default;

@@ -4,6 +4,8 @@ import Node from './Template.Content.Node';
 
 export default class Element extends Node {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
+	
 	constructor (localName :string, attributes :Attributes, partial? :Partial) {
 		super();
 		if ( partial && localName in partial ) {

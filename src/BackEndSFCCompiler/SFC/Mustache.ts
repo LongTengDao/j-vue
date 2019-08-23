@@ -14,12 +14,14 @@ function trimTab (raw :string) :string {
 	return raw.replace(NT, '\n').replace(N, '');
 }
 
-const delimiters_0 = '{{';
-const delimiters_1 = '}}';
+const DELIMITERS_0 = '{{';
+const DELIMITERS_1 = '}}';
 
 export default class Mustache extends Array<string> {
 	
-	constructor (raw :string, v_pre :boolean) {
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Mustache'; }
+	
+	constructor (raw :string, v_pre :boolean, delimiters_0 :string = DELIMITERS_0, delimiters_1 :string = DELIMITERS_1) {
 		// Vue 会优先解析 <tag>，而且还看 tagName，然后才是 {{}}，这和流式解析矛盾，因此要求避免任何潜在的视觉歧义
 		// 如果未来发现不会导致解析报错终止的歧义，则要更严格地，在解码前检查确保连“<”都不存在
 		super();
@@ -65,7 +67,7 @@ export default class Mustache extends Array<string> {
 		let data :string = '';
 		let isTemplate :boolean = true;
 		for ( const each of this ) {
-			if ( each ) { data += isTemplate ? each : `${delimiters_0}${each}${delimiters_1}`; }// 以后如果要完全剔除“\n”，则需要更复杂的保全逻辑（{{'{{{'}}、{{{k:{b:'}\}\}'} } }}），避免本来没有连在一起的连到一起
+			if ( each ) { data += isTemplate ? each : `${DELIMITERS_0}${each}${DELIMITERS_1}`; }// 以后如果要完全剔除“\n”，则需要更复杂的保全逻辑（{{'{{{'}}、{{{k:{b:'}\}\}'} } }}），避免本来没有连在一起的连到一起
 			isTemplate = !isTemplate;
 		}
 		return data;

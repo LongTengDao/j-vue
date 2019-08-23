@@ -201,6 +201,8 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 
 export default class Content extends Node {
 	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content'; }
+	
 	constructor (inner :string, abbr? :Partial) {
 		super();
 		if ( inner ) {

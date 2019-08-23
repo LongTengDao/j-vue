@@ -1,4 +1,4 @@
-declare module 'j-vue?*' {
+declare module '*?j-vue' {
 	export const dynamicScope :DynamicScope;
 	export const staticScope :StaticScope<any>;
 	export const template :string;
@@ -7,7 +7,7 @@ declare module 'j-vue?*' {
 	export * from 'j-vue';
 }
 
-declare module 'j-vue:' {
+declare module ':j-vue' {
 	export = Options;
 	type Options<This> = import('j-vue').Options<This>;
 }

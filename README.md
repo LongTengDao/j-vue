@@ -128,7 +128,7 @@ So, we can write our `.vue` single-file component like this from now on: (only n
 </template>
 
 <script>
-import { template, Scope, STYLE } from 'j-vue?*';
+import { template, Scope, STYLE } from '?j-vue';
 
 new Vue({
     
@@ -163,7 +163,7 @@ const { SFC } = require('j-vue');
 const sfc = new SFC(source);
 
 sfc.export('default');
-// import { ... } from 'j-vue?*';
+// import { ... } from '?j-vue';
 // export default { ... };
 
 sfc.export('var');
