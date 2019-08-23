@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '13.7.0';
+const version = '13.8.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -12,9 +12,6 @@ const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 const create = Object.create;
 
-const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-
-var ownKeys = typeof Reflect==='object' ? Reflect.ownKeys : Object.getOwnPropertyNames;
 const NULL = (
 	/*! j-globals: null (internal) */
 	/*#__PURE__*/ function () {
@@ -24,32 +21,9 @@ const NULL = (
 			}
 			return target;
 		};
-		var DESCRIPTOR = create(null);
-		DESCRIPTOR.enumerable = true;
-		DESCRIPTOR.configurable = true;
-		function getOwnPropertyDescriptors (object) {
-			var descriptorMap = create(null);
-			for ( var keys = ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
-				var key = keys[index];
-				var nullDescriptor = create(DESCRIPTOR);
-				var protoDescriptor = Object_getOwnPropertyDescriptor(object, key);
-				if ( protoDescriptor.hasOwnProperty('value') ) {
-					nullDescriptor.value = protoDescriptor.value;
-					nullDescriptor.writable = true;
-				}
-				else {
-					nullDescriptor.get = protoDescriptor.get;
-					nullDescriptor.set = protoDescriptor.set;
-				}
-				descriptorMap[key] = nullDescriptor;
-			}
-			return descriptorMap;
-		}
-		var NULL = function (object, define) {
+		var NULL = function (object) {
 			if ( object ) {
-				return define
-					? /*#__PURE__*/ create(null, /*#__PURE__*/ getOwnPropertyDescriptors(object))
-					: /*#__PURE__*/ assign(/*#__PURE__*/ create(null), object);
+				return /*#__PURE__*/ assign(/*#__PURE__*/ create(null), object);
 			}
 		};
 		delete NULL.name;
@@ -60,6 +34,8 @@ const NULL = (
 	}()
 	/*¡ j-globals: null (internal) */
 );
+
+const isArray = Array.isArray;
 
 const assign = Object.assign;
 
@@ -93,7 +69,7 @@ const Default = (
  * 模块名称：ES
  * 模块功能：ECMAScript 语法相关共享实用程序。从属于“简计划”。
    　　　　　ECMAScript syntax util. Belong to "Plan J".
- * 模块版本：0.8.2
+ * 模块版本：0.10.2
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-es/issues
@@ -126,9 +102,9 @@ function dynamicallyEscape (char_in_cf        )         {
 
                                            
 
-function StringLiteral (string        )         {
+function StringLiteral (value        )         {
 	return '\''
-		+string
+		+value
 		.replace(CANT_IN_SINGLE_QUOTE, staticallyEscape            )
 		.replace(Cf, dynamicallyEscape            )
 		+'\'';
@@ -275,7 +251,7 @@ const slice = Array.prototype.slice;
  * 模块名称：j-regexp
  * 模块功能：可读性更好的正则表达式创建方式。从属于“简计划”。
    　　　　　More readable way for creating RegExp. Belong to "Plan J".
- * 模块版本：6.0.0
+ * 模块版本：6.1.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-regexp/issues
@@ -327,7 +303,7 @@ const ASCII_ALPHA = /[a-zA-Z]/;
 
 const TOKENS = /[^\s=;]+/g;
 const AliasName = /[A-Z][\w\-]*/;////
-const localOrComponentName = /[A-Za-z][A-Za-z0-9\-]*/;////
+const localOrComponentName = /[A-Za-z][\w\-]*/;////
 const localName$1 = /[a-z][a-z0-9\-]*/;////
 const className = /[\w\-]+/;////
 
@@ -392,8 +368,6 @@ const IS_TAG = newRegExp`
 	${TAG_NAME}
 	${TAG_EMIT_CHAR}
 `;
-
-const isArray = Array.isArray;
 
 /*!
  * 模块名称：j-eol
@@ -2811,6 +2785,8 @@ function unescape (string        , fallback          )         {
 
 const keys = Object.keys;
 
+const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+
 const Object_defineProperties = Object.defineProperties;
 
 const Reflect_apply = Reflect.apply;
@@ -3352,18 +3328,15 @@ class Element extends Node {
 }
 freeze(Element.prototype);
 
+var create$1 = Object.create;
 const PropertyDescriptor = (
 	/*! j-globals: null.PropertyDescriptor (internal) */
 	function () {
 		function __PURE__ (value_get, set_writable, enumerable, configurable) {
-			var propertyDescriptor = create(null);
-			if ( set_writable===true ) {
+			var propertyDescriptor = create$1(null);
+			if ( set_writable===true || set_writable===false ) {
 				propertyDescriptor.value = value_get;
-				propertyDescriptor.writable = true;
-			}
-			else if ( set_writable===false ) {
-				propertyDescriptor.value = value_get;
-				propertyDescriptor.writable = false;
+				propertyDescriptor.writable = set_writable;
 			}
 			else {
 				propertyDescriptor.get = value_get;
@@ -3532,7 +3505,7 @@ const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const parserOptions = NULL({
 	ecmaVersion: 2014     ,
 	sourceType: 'module'            ,
-	allowReserved: false,
+	allowReserved: true,
 });
 function _NAME_test (v_for        )          {
 	const alias         = forAliasRE.exec(v_for) [0];
@@ -3927,7 +3900,7 @@ const visitors = NULL({
 const parserOptions$1 = NULL({
 	ecmaVersion: 5         ,
 	sourceType: 'module'            ,
-	allowReserved: false,
+	allowReserved: true,
 });
 const minifyOptions = NULL({
 	warnings: 'verbose'             ,
@@ -4068,6 +4041,7 @@ function * From (tab        , mode                         , styles         , te
 
 const acorn = NULL({
 	ecmaVersion: 5,
+	allowReserved: true,
 	sourceType: 'module',
 	allowAwaitOutsideFunction: true,
 });

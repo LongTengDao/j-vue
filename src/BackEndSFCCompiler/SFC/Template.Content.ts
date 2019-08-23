@@ -70,7 +70,7 @@ const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const parserOptions = __null__({
 	ecmaVersion: 2014 as 6,
 	sourceType: 'module' as 'module',
-	allowReserved: false,
+	allowReserved: true,
 });
 function _NAME_test (v_for :string) :boolean {
 	const alias :string = forAliasRE.exec(v_for)![0];

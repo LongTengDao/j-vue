@@ -42,7 +42,7 @@ const visitors = __null__({
 const parserOptions = __null__({
 	ecmaVersion: 5 as 5 | 6,
 	sourceType: 'module' as 'module',
-	allowReserved: false,
+	allowReserved: true,
 });
 const minifyOptions = __null__({
 	warnings: 'verbose' as 'verbose',

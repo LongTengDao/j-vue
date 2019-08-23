@@ -6,19 +6,47 @@ declare module '.Array.isArray' { export default isArray;
 declare module '.Array.isArray?=' { export default isArray;
 	function isArray (value :any) :value is any[] | Readonly<any[]>;
 }
+declare module '.Array.prototype' { export default Array.prototype; }
 declare module '.Array.prototype.slice' { export default Array.prototype.slice; }
 
 declare module '.Buffer.from?' { export default Buffer.from; }
 declare module '.Buffer.isBuffer' { export default Buffer.isBuffer; }
 
+declare module '.Date.prototype.valueOf' { export default Date.prototype.valueOf; }
+
 declare module '.Error' { export default Error; }
+declare module '.Error?=' { export default Error; }
+
+declare module '.Infinity' { export default Infinity; }
 
 declare module '.Map' { export default constructor;
 	class constructor<K, V> extends Map<K, V> {
 		constructor (entries? :Iterable<Readonly<{ 0 :K, 1 :V }>>)
 	}
 }
+declare module '.Map.prototype.has?' { export default Map.prototype.has; }
 
+declare module '.Math.floor' { export default Math.floor; }
+
+declare module '.Object' { export default O;
+	type O = Object;
+	const O :typeof Object & {
+		<T extends object> (value :T) :T;
+		(value? :undefined | null) :object;
+		(value :boolean) :Boolean & object;
+		(value :number) :Number & object;
+		(value :string) :String & object;
+		(value :symbol) :Symbol & object;
+		(value :bigint) :BigInt & object;
+		new<T extends object> (value :T) :T;
+		new (value? :undefined | null) :object;
+		new (value :boolean) :Boolean & object;
+		new (value :number) :Number & object;
+		new (value :string) :String & object;
+		new (value :symbol) :Symbol & object;
+		new (value :bigint) :BigInt & object;
+	};
+}
 declare module '.Object.assign' { export default Object.assign; }
 declare module '.Object.create' { export default create;
 	function create                                                                 (proto :null                  ) :object                                                                                           ;
@@ -42,6 +70,7 @@ declare module '.Object.is' { export default Object.is; }
 declare module '.Object.keys' { export default keys;
 	function keys<T extends object> (object :T) :Extract<string, keyof T>[];
 }
+declare module '.Object.prototype' { export default Object.prototype; }
 declare module '.Object.prototype.hasOwnProperty' { export default Object.prototype.hasOwnProperty; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
 declare module '.Object.seal' { export default Object.seal; }
@@ -67,15 +96,19 @@ declare module '.Reflect.set' { export default Reflect.set; }
 
 declare module '.RegExp' { export default RegExp; }
 declare module '.RegExp.prototype' { export default RegExp.prototype; }
+declare module '.RegExp.prototype.test' { export default RegExp.prototype.test; }
 
 declare module '.Set' { export default constructor;
 	class constructor<V> extends Set<V> {
 		constructor (values? :Iterable<V>)
 	}
 }
+declare module '.Set.prototype.has?' { export default Set.prototype.has; }
 
+declare module '.String.fromCharCode' { export default String.fromCharCode; }
 declare module '.String.fromCodePoint' { export default String.fromCodePoint; }
 
+declare module '.Symbol.species?' { export default Symbol.species; }
 declare module '.Symbol.toStringTag?' { export default Symbol.toStringTag; }
 
 declare module '.SyntaxError' { export default SyntaxError; }
@@ -92,6 +125,19 @@ declare module '.WeakSet' { export default constructor;
 	class constructor<V extends object> extends WeakSet<V> {
 		constructor (values? :Iterable<V>)
 	}
+}
+
+declare module '.class.isDate' { export default isDate;
+	function isDate (value :any) :value is Date;
+}
+declare module '.class.isMap' { export default isMap;
+	function isMap (value :any) :value is Map;
+}
+declare module '.class.isRegExp' { export default isRegExp;
+	function isRegExp (value :any) :value is RegExp;
+}
+declare module '.class.isSet' { export default isSet;
+	function isSet (value :any) :value is Set;
 }
 
 declare module '.default' { export default Default;
@@ -111,12 +157,14 @@ declare module '.default?=' { export default Default;
 	type Newable = { new (...args :any) :any };
 }
 
+declare module '.native' { export default _; const _ :never; }
+
 declare module '.null' { export default NULL;
 	const NULL :{
-		new<ValueType extends any> () :NULL<ValueType>,
+		new<ValueType> () :NULL<ValueType>,
 		new () :object,
-		<_ extends never, Object extends object> (object :Object, define? :boolean) :Object,
-		<ValueType> (object :object, define? :boolean) :NULL<ValueType>,
+		<_ extends never, ObjectType extends object> (object :ObjectType) :ObjectType,
+		<ValueType> (object :object) :NULL<ValueType>,
 	};
 	type NULL<ValueType> = {
 		[key :string] :undefined | ValueType,
@@ -157,6 +205,9 @@ declare module '.return' { export default RETURN;
 	function RETURN<T extends any> (value :T) :T;
 }
 
+declare module '.throw.Error' { export default throwError;
+	function throwError (message? :string) :never;
+}
 declare module '.throw.SyntaxError' { export default throwSyntaxError;
 	function throwSyntaxError (message? :string) :never;
 }

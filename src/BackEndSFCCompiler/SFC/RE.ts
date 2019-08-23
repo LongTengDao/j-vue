@@ -12,7 +12,7 @@ const ASCII_ALPHA = /[a-zA-Z]/;
 
 export const TOKENS = /[^\s=;]+/g;
 export const AliasName = /[A-Z][\w\-]*/;////
-export const localOrComponentName = /[A-Za-z][A-Za-z0-9\-]*/;////
+export const localOrComponentName = /[A-Za-z][\w\-]*/;////
 export const localName = /[a-z][a-z0-9\-]*/;////
 export const className = /[\w\-]+/;////
 

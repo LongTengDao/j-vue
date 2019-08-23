@@ -7,6 +7,7 @@ import { rollup, AcornStage3 } from '../dependencies';
 
 const acorn = __null__({
 	ecmaVersion: 5,
+	allowReserved: true,
 	sourceType: 'module',
 	allowAwaitOutsideFunction: true,
 });
