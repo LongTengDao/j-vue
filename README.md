@@ -10,7 +10,9 @@ Now we can use `j-vue` like this to resolve this problem:
 
 ```js
 import { Scope, Style, Template, STYLE } from 'j-vue';
+
 const scope = Scope();
+
 Style(`
     .__static__ {
         border: 1px solid black;
@@ -18,6 +20,7 @@ Style(`
     }
     @keyframes __xxx__ { }
 `, scope);
+
 new Vue({
     template: Template(`
         <div class="__static__">
