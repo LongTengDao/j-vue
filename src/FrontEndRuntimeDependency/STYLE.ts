@@ -5,7 +5,7 @@ function render (createElement :(this :void, ...args :any[]) => any, context :Re
 	return createElement('style', context.data, context.children);
 }
 
-export default create(null, {
+export default create(create(null), {
 	functional: PropertyDescriptor(true as true, false, true, false),
 	render: PropertyDescriptor(render, false, true, false)
 });

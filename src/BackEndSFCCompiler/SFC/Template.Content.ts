@@ -4,7 +4,7 @@ import SyntaxError from '.SyntaxError';
 import ReferenceError from '.ReferenceError';
 import throwSyntaxError from '.throw.SyntaxError';
 import RegExp from '.RegExp';
-import __null__ from '.null';
+import Null from '.null';
 
 import { newRegExp } from '@ltd/j-regexp';
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
@@ -67,7 +67,7 @@ function Pattern (node :Pattern) :void {
 	}
 }
 const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
-const parserOptions = __null__({
+const parserOptions = Null({
 	ecmaVersion: 2014 as 6,
 	sourceType: 'module' as 'module',
 	allowReserved: true,

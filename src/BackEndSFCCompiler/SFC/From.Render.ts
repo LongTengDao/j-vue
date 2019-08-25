@@ -1,7 +1,7 @@
 import Error from '.Error';
 import WeakSet from '.WeakSet';
 //import Object from '.Object';
-import __null__ from '.null';
+import Null from '.null';
 
 import { StringLiteral } from '@ltd/j-es';
 
@@ -14,7 +14,7 @@ const shorthand :WeakSet<Identifier> = new WeakSet;
 //const dangerous :WeakSet<Identifier> = new WeakSet;
 //const __Proto__ :String = Object('__proto__');
 let _c :boolean;
-const visitors = __null__({
+const visitors = Null({
 	ObjectExpression ({ properties } :ObjectExpression) :void {
 		for ( let index :number = properties.length; index--; ) {
 			const property = properties[index];
@@ -39,19 +39,19 @@ const visitors = __null__({
 	},
 });
 
-const parserOptions = __null__({
+const parserOptions = Null({
 	ecmaVersion: 5 as 5 | 6,
 	sourceType: 'module' as 'module',
 	allowReserved: true,
 });
-const minifyOptions = __null__({
+const minifyOptions = Null({
 	warnings: 'verbose' as 'verbose',
-	parse: __null__({
+	parse: Null({
 		bare_returns: false,
 		html5_comments: false,
 		shebang: false,
 	}),
-	compress: __null__({
+	compress: Null({
 		warnings: true,
 		collapse_vars: false,
 		pure_getters: false,

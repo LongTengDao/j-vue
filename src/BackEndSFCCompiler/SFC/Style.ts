@@ -3,6 +3,7 @@ import Error from '.Error';
 import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import create from '.Object.create';
+import NULL from '.null.prototype';
 
 import { newRegExp } from '@ltd/j-regexp';
 
@@ -42,7 +43,7 @@ export default class Style extends Block<'style'> {
 			if ( literal===EMPTY ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create(null) as Selector;
+				const abbr = create(NULL) as Selector;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {

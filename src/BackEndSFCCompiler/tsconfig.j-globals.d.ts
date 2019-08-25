@@ -1,8 +1,5 @@
 
 declare module '.Array' { export default Array; }
-declare module '.Array.isArray' { export default isArray;
-	function isArray (value :any) :value is any[] | Readonly<any[]>;
-}
 declare module '.Array.isArray?=' { export default isArray;
 	function isArray (value :any) :value is any[] | Readonly<any[]>;
 }
@@ -49,17 +46,12 @@ declare module '.Object' { export default O;
 }
 declare module '.Object.assign' { export default Object.assign; }
 declare module '.Object.create' { export default create;
-	function create                                                                 (proto :null                  ) :object                                                                                           ;
-	function create<                  D extends TypedPropertyDescriptorMap<object>> (proto :null, descriptorMap :D) :object & ( D extends TypedPropertyDescriptorMap<infer O> ? O : never )                           ;
-	function create<P extends object                                              > (proto :P                     ) :object &                                                                 { [K in keyof P] :P[K] };
-	function create<P extends object, D extends TypedPropertyDescriptorMap<object>> (proto :P,    descriptorMap :D) :object & ( D extends TypedPropertyDescriptorMap<infer O> ? O : never ) & { [K in keyof P] :P[K] };
+	function create<P extends object | null, D extends TypedPropertyDescriptorMap<object> | void> (proto :P,    descriptorMap? :D) :object & ( D extends TypedPropertyDescriptorMap<infer O> ? O : object ) & ( P extends object ? { [K in keyof P] :P[K] } : object );
 	type TypedPropertyDescriptorMap<O> = { [K in keyof O] :TypedPropertyDescriptor<O[K]> };
 }
 declare module '.Object.create?=' { export default create;
-	function create (proto :null) :object;
-	function create<P extends object> (proto :P) :object & { [K in keyof P] :P[K] };
+	function create<P extends object | null> (proto :P) :P extends object ? object & { [K in keyof P] :P[K] } : object;
 }
-declare module '.Object.defineProperties' { export default Object.defineProperties; }
 declare module '.Object.defineProperty' { export default Object.defineProperty; }
 declare module '.Object.freeze' { export default Object.freeze; }
 declare module '.Object.fromEntries' { export default fromEntries;
@@ -131,13 +123,13 @@ declare module '.class.isDate' { export default isDate;
 	function isDate (value :any) :value is Date;
 }
 declare module '.class.isMap' { export default isMap;
-	function isMap (value :any) :value is Map;
+	function isMap (value :any) :value is Map<any, any>;
 }
 declare module '.class.isRegExp' { export default isRegExp;
 	function isRegExp (value :any) :value is RegExp;
 }
 declare module '.class.isSet' { export default isSet;
-	function isSet (value :any) :value is Set;
+	function isSet (value :any) :value is Set<any>;
 }
 
 declare module '.default' { export default Default;
@@ -185,6 +177,9 @@ declare module '.null' { export default NULL;
 declare module '.null.PropertyDescriptor' { export default PropertyDescriptor;
 	function PropertyDescriptor<V extends any, W extends boolean, E extends boolean, C extends boolean> (value :V, writable :W, enumerable :E, configurable :C) :{ value :V, writable :W, enumerable :E, configurable :C };
 	function PropertyDescriptor<G extends ( () => any ) | undefined, S extends ( (value :any) => void ) | undefined, E extends boolean, C extends boolean> (get :G, set :S, enumerable :E, configurable :C) :{ get :G, set :S, enumerable :E, configurable :C };
+}
+declare module '.null.prototype' { export default NULL;
+	const NULL :object | null;
 }
 
 declare module '.parseInt' { export default parseInt; }

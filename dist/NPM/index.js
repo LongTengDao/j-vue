@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.0.0';
+const version = '14.1.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -13,7 +13,15 @@ const hasOwnProperty = Object.prototype.hasOwnProperty;
 const create = Object.create;
 
 const NULL = (
-	/*! j-globals: null (internal) */
+	/*! j-globals: null.prototype (internal) */
+	Object.create
+		? /*#__PURE__*/ Object.preventExtensions(Object.create(null))
+		: null
+	/*¡ j-globals: null.prototype (internal) */
+);
+
+const NULL$1 = (
+	/*! j-globals: null.constructor (internal) */
 	/*#__PURE__*/ function () {
 		var assign = Object.assign || function assign (target, source) {
 			for ( var key in source ) {
@@ -21,21 +29,29 @@ const NULL = (
 			}
 			return target;
 		};
-		var NULL = function (object) {
+		var NULL$1 = function (object) {
 			if ( object ) {
-				return /*#__PURE__*/ assign(/*#__PURE__*/ create(null), object);
+				return /*#__PURE__*/ assign(/*#__PURE__*/ create(NULL), object);
 			}
 		};
-		delete NULL.name;
+		delete NULL$1.name;
 		//try { delete NULL.length; } catch (error) {}
-		NULL.prototype = null;
-		freeze(NULL);
-		return NULL;
+		NULL$1.prototype = null;
+		freeze(NULL$1);
+		return NULL$1;
 	}()
-	/*¡ j-globals: null (internal) */
+	/*¡ j-globals: null.constructor (internal) */
 );
 
-const isArray = Array.isArray;
+const toString = Object.prototype.toString;
+
+const isArray = (
+	/*! j-globals: Array.isArray (polyfill) */
+	Array.isArray || function isArray (value) {
+		return typeof value==='object' && /*#__PURE__*/ toString.call(value)==='[object Array]';
+	}
+	/*¡ j-globals: Array.isArray (polyfill) */
+);
 
 const assign = Object.assign;
 
@@ -49,13 +65,13 @@ const Default = (
 	/*! j-globals: default (internal) */
 	function Default (exports, addOnOrigin) {
 		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
-			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create(null); }
+			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create(NULL); }
 			if ( assign ) { assign(exports, addOnOrigin); }
 			else { for ( var key in addOnOrigin ) { if ( hasOwnProperty.call(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
 			exports['default'] = exports;
 			typeof exports==='function' && exports.prototype && seal(exports.prototype);
 			if ( toStringTag ) {
-				var descriptor = create(null);
+				var descriptor = create(NULL);
 				descriptor.value = 'Module';
 				defineProperty(exports, toStringTag, descriptor);
 			}
@@ -69,7 +85,7 @@ const Default = (
  * 模块名称：ES
  * 模块功能：ECMAScript 语法相关共享实用程序。从属于“简计划”。
    　　　　　ECMAScript syntax util. Belong to "Plan J".
- * 模块版本：0.10.2
+ * 模块版本：0.11.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-es/issues
@@ -251,7 +267,7 @@ const slice = Array.prototype.slice;
  * 模块名称：j-regexp
  * 模块功能：可读性更好的正则表达式创建方式。从属于“简计划”。
    　　　　　More readable way for creating RegExp. Belong to "Plan J".
- * 模块版本：6.1.0
+ * 模块版本：6.2.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-regexp/issues
@@ -569,7 +585,7 @@ const throwSyntaxError = (
 
 const fromCodePoint = String.fromCodePoint;
 
-const SEMICOLON_ENTITIES = /*#__PURE__*/ NULL({
+const SEMICOLON_ENTITIES = /*#__PURE__*/ NULL$1({
 	Aacute: 'Á',
 	aacute: 'á',
 	Abreve: 'Ă',
@@ -2697,7 +2713,7 @@ const SEMICOLON_ENTITIES = /*#__PURE__*/ NULL({
 	zwnj: '\u200C',
 });
 
-const CONTINUE_ENTITIES = /*#__PURE__*/ NULL({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
+const CONTINUE_ENTITIES = /*#__PURE__*/ NULL$1({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
 
 const ESCAPABLE_INNER_TEXT = /[\t\n\r\x20&<\xA0\u2000-\u200A\u2028\u2029\u202F\u3000]/g;// 除了必须转义的，还有防止被 Vue 编译器剔除的空白
 const escapableInnerTextReplacer = ($0        ) => `&#${$0.charCodeAt(0)};`;
@@ -2707,7 +2723,7 @@ const ESCAPABLE_ATTRIBUTE_VALUE = /["&]/g;
 const escapableAttributeValueReplacer = ($0        ) => $0==='"' ? '&quot;' : '&amp;';
 function escapeAttributeValue (text        )         { return text.replace(ESCAPABLE_ATTRIBUTE_VALUE, escapableAttributeValueReplacer); }
 
-const CONTROL_TO_CHAR = NULL({
+const CONTROL_TO_CHAR = NULL$1({
 	0x80: 0x20AC,
 	0x82: 0x201A,
 	0x83: 0x0192,
@@ -2785,10 +2801,6 @@ function unescape (string        , fallback          )         {
 
 const keys = Object.keys;
 
-const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-
-const Object_defineProperties = Object.defineProperties;
-
 const Reflect_apply = Reflect.apply;
 
 const Reflect_construct = Reflect.construct;
@@ -2805,7 +2817,7 @@ const Reflect_ownKeys = Reflect.ownKeys;
  * 模块名称：j-orderify
  * 模块功能：返回一个能保证给定对象的属性按此后添加顺序排列的 proxy，即使键名是 symbol，或整数 string。从属于“简计划”。
    　　　　　Return a proxy for given object, which can guarantee own keys are in setting order, even if the key name is symbol or int string. Belong to "Plan J".
- * 模块版本：5.3.0
+ * 模块版本：6.0.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-orderify/issues
@@ -2817,13 +2829,13 @@ const target2keeper                          = new WeakMap;
 const proxy2target                         = new WeakMap;
 const target2proxy                         = new WeakMap;
 
-const setDescriptor = /*#__PURE__*/assign(create(null), {
+const setDescriptor = /*#__PURE__*/ assign(create(NULL), {
 	value: undefined$1,
 	writable: true,
 	enumerable: true,
 	configurable: true,
 });
-const handlers = /*#__PURE__*/assign(create(null), {
+const handlers = /*#__PURE__*/ assign(create(NULL), {
 	apply (Function                           , thisArg     , args       ) {
 		return orderify(Reflect_apply(Function, thisArg, args));
 	},
@@ -2864,7 +2876,7 @@ const handlers = /*#__PURE__*/assign(create(null), {
 
 function newProxy                   (target   , keeper        )    {
 	target2keeper.set(target, keeper);
-	const proxy    = new Proxy(target, handlers);
+	const proxy = new Proxy   (target, handlers);
 	proxy2target.set(proxy, target);
 	return proxy;
 }
@@ -2872,7 +2884,7 @@ function newProxy                   (target   , keeper        )    {
 const { orderify } = {
 	orderify                   (object   )    {
 		if ( proxy2target.has(object) ) { return object; }
-		let proxy                = target2proxy.get(object)                 ;
+		let proxy = target2proxy.get(object)                 ;
 		if ( proxy ) { return proxy; }
 		proxy = newProxy(object, new Keeper(Reflect_ownKeys(object)));
 		target2proxy.set(object, proxy);
@@ -2881,7 +2893,7 @@ const { orderify } = {
 };
 
 function PartialDescriptor                               (source   )    {
-	const target    = create(null);
+	const target = create(NULL)     ;
 	if ( source.hasOwnProperty('value') ) {
 		target.value = source.value;
 		if ( source.hasOwnProperty('writable') ) { target.writable = source.writable; }
@@ -2896,95 +2908,29 @@ function PartialDescriptor                               (source   )    {
 	if ( source.hasOwnProperty('configurable') ) { target.configurable = source.configurable; }
 	return target;
 }
-function InternalDescriptor                               (source   )    {
-	const target    = create(null);
-	if ( source.hasOwnProperty('value') ) {
-		target.value = source.value;
-		target.writable = source.writable;
-	}
-	else {
-		target.get = source.get;
-		target.set = source.set;
-	}
-	target.enumerable = source.enumerable;
-	target.configurable = source.configurable;
-	return target;
-}
 
-const { getOwnPropertyDescriptors } = {
-	getOwnPropertyDescriptors                   (object   )                                                    {
-		const descriptors = create(null);
-		const keeper         = new Keeper;
-		const keys = Reflect_ownKeys(object);
-		for ( let length         = keys.length, index         = 0; index<length; ++index ) {
-			const key = keys[index];
-			descriptors[key] = InternalDescriptor(Object_getOwnPropertyDescriptor(object, key) );
-			keeper.add(key);
-		}
-		return newProxy(descriptors, keeper);
+const NULL$2 = /*#__PURE__*/ function (         ) {
+	function throwConstructing ()        { throw TypeError(`Super constructor NULL cannot be invoked with 'new'`); }
+	function throwApplying ()        { throw TypeError(`Super constructor NULL cannot be invoked without 'new'`); }
+	function NULL$1 (            ) {
+		return new.target
+			? new.target===NULL$1
+				? /*#__PURE__*/ throwConstructing()
+				: /*#__PURE__*/ newProxy(this, new Keeper)
+			: /*#__PURE__*/ throwApplying();
 	}
-};
-
-function keeperAddKeys (keeper        , object    )       {
-	const keys        = Reflect_ownKeys(object);
-	for ( let length         = keys.length, index         = 0; index<length; ++index ) {
-		keeper.add(keys[index]);
-	}
-}
-function NULL_from (source           , define         )      {
-	const target = create(null);
-	const keeper         = new Keeper;
-	if ( define ) {
-		if ( isArray(source) ) {
-			for ( let length         = source.length, index         = 0; index<length; ++index ) {
-				const descriptorMap = getOwnPropertyDescriptors(source[index]);
-				Object_defineProperties(target, descriptorMap);
-				keeperAddKeys(keeper, descriptorMap);
-			}
-		}
-		else {
-			const descriptorMap = getOwnPropertyDescriptors(source);
-			Object_defineProperties(target, descriptorMap);
-			keeperAddKeys(keeper, descriptorMap);
-		}
-	}
-	else {
-		if ( isArray(source) ) {
-			assign(target, ...source);
-			for ( let length         = source.length, index         = 0; index<length; ++index ) {
-				keeperAddKeys(keeper, source[index]);
-			}
-		}
-		else {
-			assign(target, source);
-			keeperAddKeys(keeper, source);
-		}
-	}
-	return newProxy(target, keeper);
-}
-function throwConstructing ()        { throw TypeError(`NULL cannot be invoked with 'new'`); }
-const NULL$1                                   =
-	/*#__PURE__*/
-	function (         ) {
-		const NULL      = function                (              source          , define          )    {
-			return new.target
-				? new.target===NULL
-					? /*#__PURE__*/ throwConstructing()
-					: /*#__PURE__*/ newProxy(this, new Keeper)
-				: /*#__PURE__*/ NULL_from(source , define );
-		};
-		NULL.prototype = null;
-		//delete NULL.name;
-		//delete NULL.length;
-		freeze(NULL);
-		return NULL;
-	}();
+	( NULL$1 ).prototype = null;
+	defineProperty(NULL$1, 'name', assign(create(NULL), { value: '' }));
+	//delete NULL.length;
+	freeze(NULL$1);
+	return NULL$1;
+}()                                           ;
 
 /*¡ j-orderify */
 
 const EMPTY = undefined$1;
 
-class Attributes extends NULL$1         {
+class Attributes extends NULL$2         {
 	
 	get [Symbol.toStringTag] () { return 'SFC.**.Attributes'; }
 	
@@ -3088,7 +3034,7 @@ const findGlobals = require('@ltd/acorn-globals')                               
 const { compile } = require('vue-template-compiler')                                          ;
 const { minify } = require('terser')                           ;
 
-class Block                                    extends NULL {
+class Block                                    extends NULL$1 {
 	
 	constructor (blockName           , attributes            , emitProperties         , inner                    , END_TAG               ) {
 		super();
@@ -3127,12 +3073,12 @@ const Private = (
 	typeof WeakMap==='function'
 		? /*#__PURE__*/ function () {
 			var Weak = WeakMap;
-			var GET = create(null);
+			var GET = create(NULL);
 			GET.value = Weak.prototype.get;
-			var SET = create(null);
+			var SET = create(NULL);
 			SET.value = Weak.prototype.set;
 			function add (weak, THIS) {
-				var _THIS = create(null);
+				var _THIS = create(NULL);
 				weak.set(THIS, _THIS);
 				return _THIS;
 			}
@@ -3222,7 +3168,7 @@ class Style extends Block          {
 			if ( literal===EMPTY ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create(null)            ;
+				const abbr = create(NULL)            ;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {
@@ -3345,7 +3291,7 @@ const PropertyDescriptor = (
 	/*! j-globals: null.PropertyDescriptor (internal) */
 	function () {
 		function __PURE__ (value_get, set_writable, enumerable, configurable) {
-			var propertyDescriptor = create$1(null);
+			var propertyDescriptor = create$1(NULL);
 			if ( set_writable===true || set_writable===false ) {
 				propertyDescriptor.value = value_get;
 				propertyDescriptor.writable = set_writable;
@@ -3518,7 +3464,7 @@ function Pattern (node         )       {
 	}
 }
 const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
-const parserOptions = NULL({
+const parserOptions = NULL$1({
 	ecmaVersion: 2014     ,
 	sourceType: 'module'            ,
 	allowReserved: true,
@@ -3717,7 +3663,7 @@ class Template extends Block {
 			if ( literal===EMPTY ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create(null)           ;
+				const abbr = create(NULL)           ;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {
@@ -3896,7 +3842,7 @@ const shorthand                      = new WeakSet;
 //const dangerous :WeakSet<Identifier> = new WeakSet;
 //const __Proto__ :String = Object('__proto__');
 let _c         ;
-const visitors = NULL({
+const visitors = NULL$1({
 	ObjectExpression ({ properties }                  )       {
 		for ( let index         = properties.length; index--; ) {
 			const property = properties[index];
@@ -3921,19 +3867,19 @@ const visitors = NULL({
 	},
 });
 
-const parserOptions$1 = NULL({
+const parserOptions$1 = NULL$1({
 	ecmaVersion: 5         ,
 	sourceType: 'module'            ,
 	allowReserved: true,
 });
-const minifyOptions = NULL({
+const minifyOptions = NULL$1({
 	warnings: 'verbose'             ,
-	parse: NULL({
+	parse: NULL$1({
 		bare_returns: false,
 		html5_comments: false,
 		shebang: false,
 	}),
-	compress: NULL({
+	compress: NULL$1({
 		warnings: true,
 		collapse_vars: false,
 		pure_getters: false,
@@ -4063,7 +4009,7 @@ function * From (tab        , mode                         , styles         , te
 	
 }
 
-const acorn = NULL({
+const acorn = NULL$1({
 	ecmaVersion: 5,
 	allowReserved: true,
 	sourceType: 'module',
@@ -4080,15 +4026,15 @@ const rollupOptions = {
 	treeshake: false,
 };
 
-const TRUE = NULL({
+const TRUE = NULL$1({
 	format: 'esm'         ,
 	sourcemap: true,
 });
-const FALSE = NULL({
+const FALSE = NULL$1({
 	format: 'esm'         ,
 	sourcemap: false,
 });
-const INLINE = NULL({
+const INLINE = NULL$1({
 	format: 'esm'         ,
 	sourcemap: 'inline'            ,
 });
@@ -4108,11 +4054,11 @@ async function one (sfc     , { 'var': x_var, '?j-vue': x_from, 'j-vue': from, m
 	const main         = sfc.export('default', x_from)          ;
 	let round         = 1;
 	acorn.ecmaVersion = x_var==='var' ? 5 : 2014     ;
-	const bundle = await rollup(assign(create(null), rollupOptions, {
+	const bundle = await rollup(assign(create(NULL), rollupOptions, {
 		input: '/'+'_'.repeat(main.length),
 		external: (path        )          => path!==x_from,
 		plugins: [
-			NULL({
+			NULL$1({
 				resolveId (path        )         {
 					if ( round===1 || path===x_from ) { return path; }
 					throw Error(path);
@@ -4152,7 +4098,7 @@ const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throw
 const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 const CR_LF = /\r\n?/g;
 
-class SFC extends NULL {
+class SFC extends NULL$1 {
 	
 	get [Symbol.toStringTag] () { return 'SFC'; }
 	

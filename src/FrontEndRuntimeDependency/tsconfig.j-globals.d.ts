@@ -8,15 +8,11 @@ declare module '.Function' { export default Function; }
 
 declare module '.Object.assign' { export default Object.assign; }
 declare module '.Object.create' { export default create;
-	function create                                                                 (proto :null                  ) :object                                                                                           ;
-	function create<                  D extends TypedPropertyDescriptorMap<object>> (proto :null, descriptorMap :D) :object & ( D extends TypedPropertyDescriptorMap<infer O> ? O : never )                           ;
-	function create<P extends object                                              > (proto :P                     ) :object &                                                                 { [K in keyof P] :P[K] };
-	function create<P extends object, D extends TypedPropertyDescriptorMap<object>> (proto :P,    descriptorMap :D) :object & ( D extends TypedPropertyDescriptorMap<infer O> ? O : never ) & { [K in keyof P] :P[K] };
+	function create<P extends object | null, D extends TypedPropertyDescriptorMap<object> | void> (proto :P,    descriptorMap? :D) :object & ( D extends TypedPropertyDescriptorMap<infer O> ? O : object ) & ( P extends object ? { [K in keyof P] :P[K] } : object );
 	type TypedPropertyDescriptorMap<O> = { [K in keyof O] :TypedPropertyDescriptor<O[K]> };
 }
 declare module '.Object.create?=' { export default create;
-	function create (proto :null) :object;
-	function create<P extends object> (proto :P) :object & { [K in keyof P] :P[K] };
+	function create<P extends object | null> (proto :P) :P extends object ? object & { [K in keyof P] :P[K] } : object;
 }
 declare module '.Object.defineProperty' { export default Object.defineProperty; }
 declare module '.Object.freeze' { export default Object.freeze; }
@@ -51,6 +47,9 @@ declare module '.document.head' { export default document.head; }
 declare module '.null.PropertyDescriptor' { export default PropertyDescriptor;
 	function PropertyDescriptor<V extends any, W extends boolean, E extends boolean, C extends boolean> (value :V, writable :W, enumerable :E, configurable :C) :{ value :V, writable :W, enumerable :E, configurable :C };
 	function PropertyDescriptor<G extends ( () => any ) | undefined, S extends ( (value :any) => void ) | undefined, E extends boolean, C extends boolean> (get :G, set :S, enumerable :E, configurable :C) :{ get :G, set :S, enumerable :E, configurable :C };
+}
+declare module '.null.prototype' { export default NULL;
+	const NULL :object | null;
 }
 
 declare module '.undefined' { export default undefined; }

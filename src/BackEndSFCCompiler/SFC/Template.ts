@@ -3,6 +3,7 @@ import Error from '.Error';
 import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import create from '.Object.create';
+import NULL from '.null.prototype';
 
 import { newRegExp } from '@ltd/j-regexp';
 
@@ -48,7 +49,7 @@ export default class Template extends Block {
 			if ( literal===EMPTY ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
 			else {
 				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create(null) as Partial;
+				const abbr = create(NULL) as Partial;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {

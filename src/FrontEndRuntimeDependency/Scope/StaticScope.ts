@@ -33,7 +33,7 @@ var StaticScope = function StaticScope (this :StaticScope, keys :string[]) :void
 	new (keys :string[]) :StaticScope
 };
 
-var SCOPE :StaticScope = /*#__PURE__*/preventExtensions(create(null, { $: PropertyDescriptor($, false, false, false) }) as StaticScope);
+var SCOPE :StaticScope = /*#__PURE__*/ preventExtensions(create(null, { $: PropertyDescriptor($, false, false, false) }) as StaticScope);
 StaticScope.prototype = SCOPE;
 
 var InheritedStaticScope = function InheritedStaticScope (this :StaticScope, keys :string[], proto :StaticScope) :void {
