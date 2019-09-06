@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.2.0';
+const version = '14.3.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3208,7 +3208,7 @@ class Style extends Block          {
 }
 
 const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
-const slotRE = /^(?:#|v-slot(?::|$))/;
+const slotRE = /^(?:#|v-slot(?::|$)|slot-scope$)/;
 const _v = /^_[a-z]$/;
 const _x = /^_(?![a-z]$)/;
 const $vvv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*|event|set|forceUpdate)$/;
