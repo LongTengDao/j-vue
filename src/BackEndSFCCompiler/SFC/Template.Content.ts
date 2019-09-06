@@ -1,14 +1,14 @@
 import undefined from '.undefined';
-import Error from '.Error';
 import SyntaxError from '.SyntaxError';
-import ReferenceError from '.ReferenceError';
 import throwSyntaxError from '.throw.SyntaxError';
 import RegExp from '.RegExp';
-import Null from '.null';
 
 import { newRegExp } from '@ltd/j-regexp';
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
+import { forAliasRE, slotRE } from './INTERNAL';
+import { EMPTY } from './Attributes';
+import Params from './Params';
 import Node from './Template.Content.Node';
 import Element from './Template.Content.Element';
 import Text from './Template.Content.Text';
@@ -16,8 +16,6 @@ import Mustache from './Mustache';
 import Snippet from './Snippet';
 import { TAG_EMIT_CHAR } from './RE';
 import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from './Tag';
-import { Parser } from '../dependencies';
-import { escapeAttributeValue } from './Entities';
 
 const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
@@ -27,73 +25,6 @@ const TEXTAREA = /^textarea$/i;
 const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
-
-const _NAME = /^_[a-z]$/;
-const _NAMES :string[] = [];
-function Pattern (node :Pattern) :void {
-	switch ( node.type ) {
-		case 'Identifier':
-			if ( _NAME.test(node.name) ) { _NAMES.push(node.name); }
-			break;
-		case 'ObjectPattern':// { Pattern }
-			for ( let { properties } = node, { length } = properties, index :number = 0; index<length; ++index ) {
-				const property = properties[index];
-				switch ( property.type ) {
-					case 'Property':// { key: valuePattern }
-						Pattern(property.value);
-						break;
-					case 'RestElement':// { ...argumentPattern }
-						Pattern(property.argument);
-						break;
-					default:
-						throw Error(`Unrecognized pattern type: ${property.type}`);
-				}
-			}
-			break;
-		case 'ArrayPattern':// [ , Pattern ]
-			for ( let { elements } = node, { length } = elements, index :number = 0; index<length; ++index ) {
-				const element = elements[index];
-				if ( element ) { Pattern(element); }
-			}
-			break;
-		case 'RestElement':
-			Pattern(node.argument);// [ ...argumentPattern ] (...argumentPattern)
-			break;
-		case 'AssignmentPattern':// leftPattern = right
-			Pattern(node.left);
-			break;
-		default:
-			throw Error(`Unrecognized pattern type: ${node.type}`);
-	}
-}
-const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
-const parserOptions = Null({
-	ecmaVersion: 2014 as 6,
-	sourceType: 'module' as 'module',
-	allowReserved: true,
-});
-function _NAME_test (v_for :string) :boolean {
-	const alias :string = forAliasRE.exec(v_for)![0];
-	let AST :{
-		type :'Program',
-		body :Array<{
-			type :'ExpressionStatement',
-			expression :{
-				type :'ArrowFunctionExpression',
-				params :Array<Pattern>,
-			},
-		}>,
-	};
-	try { AST = Parser.parse(`(${alias})=>{}`, parserOptions) as any; }
-	catch (error) {
-		const index :number = error.pos-1;
-		throw SyntaxError(`“v-for="${v_for}"”中的内容“${alias.slice(0, index)}”✗“${alias.slice(index)}”解析失败`);
-	}
-	const { params } = AST.body[0].expression;
-	_NAMES.length = 0;
-	params.forEach(Pattern);
-	return _NAMES.length!==0;
-}
 
 let html :string = '';
 let index :number = 0;
@@ -142,10 +73,19 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 				throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
 			}
 		}
-		if ( !v_pre && 'v-for' in attributes && _NAME_test(attributes['v-for']!) ) {
-			const names :string = _NAMES.join('”“');
-			_NAMES.length = 0;
-			throw ReferenceError(`“v-for="${escapeAttributeValue(attributes['v-for']!)}"”中存在以下划线开头后跟字母的危险变量“${names}”，这可能使得 Vue 模板编译结果以错误的方式运行`);
+		if ( !v_pre ) {
+			if ( 'v-for' in attributes ) {
+				const value = attributes['v-for']!;
+				Params(forAliasRE.exec(value)![0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
+			}
+			for ( const name in attributes ) {
+				if ( slotRE.test(name) ) {
+					const value = attributes[name];
+					value===EMPTY ||
+					Params(value, 0, 1, `${name}="${value}"中`);
+					break;
+				}
+			}
 		}
 		const element :Element = parentNode.appendChild(new Element(xName, attributes, partial));
 		index = tag.end;
@@ -229,33 +169,6 @@ export default class Content extends Node {
 		}
 	}
 	
-};
-
-type Pattern = {
-	type :'Identifier',
-	name :string,
-} | {
-	type :'ObjectPattern',
-	properties :Array<{
-		type :'Property',
-		value :Pattern,
-	} | {
-		type :'RestElement',
-		argument :Pattern,
-	} | {
-		type :'',
-	}>,
-} | {
-	type :'ArrayPattern',
-	elements :Array<Pattern | null>,
-} | {
-	type :'RestElement',
-	argument :Pattern,
-} | {
-	type :'AssignmentPattern',
-	left :Pattern,
-} | {
-	type :'',
 };
 
 type Partial = import('./Template').Partial;

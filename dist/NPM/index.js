@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.1.0';
+const version = '14.2.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -2928,7 +2928,7 @@ const NULL$2 = /*#__PURE__*/ function (         ) {
 
 /*¡ j-orderify */
 
-const EMPTY = undefined$1;
+const EMPTY        = undefined$1;
 
 class Attributes extends NULL$2         {
 	
@@ -3207,6 +3207,95 @@ class Style extends Block          {
 	
 }
 
+const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
+const slotRE = /^(?:#|v-slot(?::|$))/;
+const _v = /^_[a-z]$/;
+const _x = /^_(?![a-z]$)/;
+const $vvv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*|event|set|forceUpdate)$/;
+const $vv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*)$/;
+
+const parserOptions = NULL$1({
+	ecmaVersion: 2014     ,
+	sourceType: 'module'            ,// use strict mode
+	allowReserved: true        ,
+});
+
+const _NAMES           = [];
+const $NAMES           = [];
+
+function Params (parameters        , min        , max        , attribute        ) {
+	let program         ;
+	try { program = Parser.parse(`(${parameters})=>{}`, parserOptions)       ; }
+	catch (error) {
+		const index         = error.pos-1;
+		throw SyntaxError(`${attribute}的内容“${parameters.slice(0, index)}”✗“${parameters.slice(index)}”解析失败`);
+	}
+	const { body } = program;
+	if ( body.length!==1 ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
+	const body_0 = body[0];
+	if ( body_0.type!=='ExpressionStatement' ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
+	const { expression } = body_0;
+	if ( expression.type!=='ArrowFunctionExpression' ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
+	const block = expression.body;
+	if ( block.type!=='BlockStatement' || block.body.length!==0 ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
+	const { params } = expression;
+	const { length } = params;
+	if ( length<min || max<length ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
+	if ( !length ) { return; }
+	_NAMES.length = 0;
+	$NAMES.length = 0;
+	for ( let index = 0; index<length; ++index ) { Pattern(params[index]); }
+	if ( !_NAMES.length && !$NAMES.length ) { return; }
+	const _         = _NAMES.join('”“');
+	const $         = $NAMES.join('”“');
+	_NAMES.length = 0;
+	$NAMES.length = 0;
+	throw ReferenceError(
+		`${attribute}存在`+
+		( _ && `以“_”开头后跟单个小写字母的危险变量“${_}”` )+
+		( _ && $ && `和` )+
+		( $ && `以“$”开头的危险变量“${$}”` )+
+		`，这可能使得 Vue 模板编译结果以错误的方式运行`
+	);
+}
+function Pattern (node         )       {
+	switch ( node.type ) {
+		case 'Identifier':
+			if ( _v.test(node.name) ) { _NAMES.push(node.name); }
+			if ( $vvv.test(node.name) ) { $NAMES.push(node.name); }
+			break;
+		case 'ObjectPattern':// { Pattern }
+			for ( let { properties } = node, { length } = properties, index         = 0; index<length; ++index ) {
+				const property = properties[index];
+				switch ( property.type ) {
+					case 'Property':// { key: valuePattern }
+						Pattern(property.value);
+						break;
+					case 'RestElement':// { ...argumentPattern }
+						Pattern(property.argument);
+						break;
+					default:
+						throw Error(`Unrecognized pattern type: ${property.type}`);
+				}
+			}
+			break;
+		case 'ArrayPattern':// [ , Pattern ]
+			for ( let { elements } = node, { length } = elements, index         = 0; index<length; ++index ) {
+				const element = elements[index];
+				if ( element ) { Pattern(element); }
+			}
+			break;
+		case 'RestElement':
+			Pattern(node.argument);// [ ...argumentPattern ] (...argumentPattern)
+			break;
+		case 'AssignmentPattern':// leftPattern = right
+			Pattern(node.left);
+			break;
+		default:
+			throw Error(`Unrecognized pattern type: ${node.type}`);
+	}
+}
+
 const _parentNode = Symbol('#parentNode');
 
 class Node {
@@ -3425,73 +3514,6 @@ const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
 
-const _NAME = /^_[a-z]$/;
-const _NAMES           = [];
-function Pattern (node         )       {
-	switch ( node.type ) {
-		case 'Identifier':
-			if ( _NAME.test(node.name) ) { _NAMES.push(node.name); }
-			break;
-		case 'ObjectPattern':// { Pattern }
-			for ( let { properties } = node, { length } = properties, index         = 0; index<length; ++index ) {
-				const property = properties[index];
-				switch ( property.type ) {
-					case 'Property':// { key: valuePattern }
-						Pattern(property.value);
-						break;
-					case 'RestElement':// { ...argumentPattern }
-						Pattern(property.argument);
-						break;
-					default:
-						throw Error(`Unrecognized pattern type: ${property.type}`);
-				}
-			}
-			break;
-		case 'ArrayPattern':// [ , Pattern ]
-			for ( let { elements } = node, { length } = elements, index         = 0; index<length; ++index ) {
-				const element = elements[index];
-				if ( element ) { Pattern(element); }
-			}
-			break;
-		case 'RestElement':
-			Pattern(node.argument);// [ ...argumentPattern ] (...argumentPattern)
-			break;
-		case 'AssignmentPattern':// leftPattern = right
-			Pattern(node.left);
-			break;
-		default:
-			throw Error(`Unrecognized pattern type: ${node.type}`);
-	}
-}
-const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
-const parserOptions = NULL$1({
-	ecmaVersion: 2014     ,
-	sourceType: 'module'            ,
-	allowReserved: true,
-});
-function _NAME_test (v_for        )          {
-	const alias         = forAliasRE.exec(v_for) [0];
-	let AST   
-		                
-		             
-			                            
-			             
-				                                
-				                       
-			  
-		   
-	 ;
-	try { AST = Parser.parse(`(${alias})=>{}`, parserOptions)       ; }
-	catch (error) {
-		const index         = error.pos-1;
-		throw SyntaxError(`“v-for="${v_for}"”中的内容“${alias.slice(0, index)}”✗“${alias.slice(index)}”解析失败`);
-	}
-	const { params } = AST.body[0].expression;
-	_NAMES.length = 0;
-	params.forEach(Pattern);
-	return _NAMES.length!==0;
-}
-
 let html         = '';
 let index         = 0;
 let partial                     ;
@@ -3539,10 +3561,19 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 				throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
 			}
 		}
-		if ( !v_pre && 'v-for' in attributes && _NAME_test(attributes['v-for'] ) ) {
-			const names         = _NAMES.join('”“');
-			_NAMES.length = 0;
-			throw ReferenceError(`“v-for="${escapeAttributeValue(attributes['v-for'] )}"”中存在以下划线开头后跟字母的危险变量“${names}”，这可能使得 Vue 模板编译结果以错误的方式运行`);
+		if ( !v_pre ) {
+			if ( 'v-for' in attributes ) {
+				const value = attributes['v-for'] ;
+				Params(forAliasRE.exec(value) [0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
+			}
+			for ( const name in attributes ) {
+				if ( slotRE.test(name) ) {
+					const value = attributes[name];
+					value===EMPTY ||
+					Params(value, 0, 1, `${name}="${value}"中`);
+					break;
+				}
+			}
 		}
 		const element          = parentNode.appendChild(new Element(xName, attributes, partial));
 		index = tag.end;
@@ -3837,9 +3868,8 @@ const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
 const byStart = (a            , b            )         => a.start-b.start;
 
-const _x = /^_(?![a-z]$)/;
-const shorthand                      = new WeakSet;
-//const dangerous :WeakSet<Identifier> = new WeakSet;
+let shorthand                     ;
+//let dangerous :WeakSet<Identifier>;
 //const __Proto__ :String = Object('__proto__');
 let _c         ;
 const visitors = NULL$1({
@@ -3862,37 +3892,40 @@ const visitors = NULL$1({
 	},
 	VariablePattern (identifier            )       {
 		if ( identifier.name.startsWith('_') ) {
-			if ( _c ) { _c = false; } else { throw Error(`不要对实例下的下划线开头格式的私有属性“${identifier.name}”进行赋值！`); }//dangerous.add(identifier);
+			if ( _c ) {
+				throw Error(`不要对实例下的下划线开头格式的私有属性（“${identifier.name}”）进行赋值！`);//dangerous.add(identifier);
+			}
+			_c = true;
 		}
 	},
 });
 
 const parserOptions$1 = NULL$1({
 	ecmaVersion: 5         ,
-	sourceType: 'module'            ,
-	allowReserved: true,
+	sourceType: 'module'            ,// use strict mode
+	allowReserved: true        ,
 });
 const minifyOptions = NULL$1({
 	warnings: 'verbose'             ,
 	parse: NULL$1({
-		bare_returns: false,
-		html5_comments: false,
-		shebang: false,
+		bare_returns: false         ,
+		html5_comments: false         ,
+		shebang: false         ,
 	}),
 	compress: NULL$1({
-		warnings: true,
-		collapse_vars: false,
-		pure_getters: false,
-		side_effects: false,
-		drop_debugger: false,
-		keep_infinity: true,
-		typeofs: false,
-		expression: true,
-		arguments: true,
-		computed_props: true,
+		warnings: true        ,
+		collapse_vars: false         ,
+		pure_getters: false         ,
+		side_effects: false         ,
+		drop_debugger: false         ,
+		keep_infinity: true        ,
+		typeofs: false         ,
+		expression: true        ,
+		arguments: true        ,
+		computed_props: true        ,
 	}),
-	safari10: true,
-	ie8: false,
+	safari10: true        ,
+	ie8: false         ,
 	ecma: 5         ,
 });
 
@@ -3916,16 +3949,20 @@ function NecessaryStringLiteral (body        )         {
 		
 		const _vm         = '$'.repeat(body.length);
 		
-		_c = true;
+		_c = false;
+		shorthand = new WeakSet;
+		//dangerous = new WeakSet;
 		simple(AST, visitors);
 		let _code         = '';
 		let index         = 0;
 		for ( const identifier of ( globals.nodes()                 ).sort(byStart) ) {
-			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头格式的私有属性“${identifier.name}”进行赋值！`); }
-			if ( _x.test(identifier.name          ) ) { throw Error(`不要访问实例下的下划线开头的私有属性（“${identifier.name}”）`); }
+			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头格式的私有属性（“${identifier.name}”）进行赋值！`); }
+			let name         = identifier.name          ;
+			if ( _x.test(name) ) { throw Error(`访问实例下的下划线开头但后面不是单个小写字母的私有属性（“${name}”）是不妥的`); }
+			if ( $vv.test(name) ) { throw Error(`不要尝试在模板中直接访问“$$”后跟若干大小写字母或“$_”后跟 1 以上的数字的实例属性（“${name}”），它们有可能与模板编译时自动生成的运行变量冲突`); }
 			const { start } = identifier;
 			if ( start!==index ) { _code += code.slice(index, start); }
-			const name         = code.slice(start, index = identifier.end);
+			name = code.slice(start, index = identifier.end);
 			_code += shorthand.has(identifier)
 				? `${name}:${_vm}.${name}`//if ( shorthand.has(identifier) ) { _code += identifier.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
 				: `${_vm}.${name}`;//_code += `${_vm}.${name}`;
@@ -4010,10 +4047,10 @@ function * From (tab        , mode                         , styles         , te
 }
 
 const acorn = NULL$1({
-	ecmaVersion: 5,
-	allowReserved: true,
-	sourceType: 'module',
-	allowAwaitOutsideFunction: true,
+	ecmaVersion: 5         ,
+	allowReserved: true        ,
+	sourceType: 'module'            ,
+	allowAwaitOutsideFunction: true        ,
 });
 const rollupOptions = {
 	onwarn (warning     )       {
@@ -4022,17 +4059,17 @@ const rollupOptions = {
 	},
 	acorn,
 	acornInjectPlugins: [ AcornStage3 ],
-	strictDeprecations: true,
-	treeshake: false,
+	strictDeprecations: true        ,
+	treeshake: false         ,
 };
 
 const TRUE = NULL$1({
 	format: 'esm'         ,
-	sourcemap: true,
+	sourcemap: true        ,
 });
 const FALSE = NULL$1({
 	format: 'esm'         ,
-	sourcemap: false,
+	sourcemap: false         ,
 });
 const INLINE = NULL$1({
 	format: 'esm'         ,
@@ -4094,7 +4131,7 @@ async function one (sfc     , { 'var': x_var, '?j-vue': x_from, 'j-vue': from, m
 	return map===true ? { code: only.code, map: only.map } : only.code;
 }
 
-const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true };
+const OPTIONS = { swappable: false         , stripBOM: true        , startsWithASCII: true        , throwError: true         };
 const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 const CR_LF = /\r\n?/g;
 

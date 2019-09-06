@@ -6,7 +6,8 @@ import { NULL } from '@ltd/j-orderify';
 
 import * as Entities from './Entities';
 
-export const EMPTY = undefined;
+export type EMPTY = undefined;
+export const EMPTY :EMPTY = undefined;
 
 export default class Attributes extends NULL<string> {
 	

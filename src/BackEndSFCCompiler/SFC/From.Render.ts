@@ -6,12 +6,12 @@ import Null from '.null';
 import { StringLiteral } from '@ltd/j-es';
 
 import { compile, Parser, findGlobals, simple, minify } from '../dependencies';
+import { _x, $vv } from './INTERNAL';
 
 const byStart = (a :Identifier, b :Identifier) :number => a.start-b.start;
 
-const _x = /^_(?![a-z]$)/;
-const shorthand :WeakSet<Identifier> = new WeakSet;
-//const dangerous :WeakSet<Identifier> = new WeakSet;
+let shorthand :WeakSet<Identifier>;
+//let dangerous :WeakSet<Identifier>;
 //const __Proto__ :String = Object('__proto__');
 let _c :boolean;
 const visitors = Null({
@@ -34,37 +34,40 @@ const visitors = Null({
 	},
 	VariablePattern (identifier :Identifier) :void {
 		if ( identifier.name.startsWith('_') ) {
-			if ( _c ) { _c = false; } else { throw Error(`不要对实例下的下划线开头格式的私有属性“${identifier.name}”进行赋值！`); }//dangerous.add(identifier);
+			if ( _c ) {
+				throw Error(`不要对实例下的下划线开头格式的私有属性（“${identifier.name}”）进行赋值！`);//dangerous.add(identifier);
+			}
+			_c = true;
 		}
 	},
 });
 
 const parserOptions = Null({
 	ecmaVersion: 5 as 5 | 6,
-	sourceType: 'module' as 'module',
-	allowReserved: true,
+	sourceType: 'module' as 'module',// use strict mode
+	allowReserved: true as true,
 });
 const minifyOptions = Null({
 	warnings: 'verbose' as 'verbose',
 	parse: Null({
-		bare_returns: false,
-		html5_comments: false,
-		shebang: false,
+		bare_returns: false as false,
+		html5_comments: false as false,
+		shebang: false as false,
 	}),
 	compress: Null({
-		warnings: true,
-		collapse_vars: false,
-		pure_getters: false,
-		side_effects: false,
-		drop_debugger: false,
-		keep_infinity: true,
-		typeofs: false,
-		expression: true,
-		arguments: true,
-		computed_props: true,
+		warnings: true as true,
+		collapse_vars: false as false,
+		pure_getters: false as false,
+		side_effects: false as false,
+		drop_debugger: false as false,
+		keep_infinity: true as true,
+		typeofs: false as false,
+		expression: true as true,
+		arguments: true as true,
+		computed_props: true as true,
 	}),
-	safari10: true,
-	ie8: false,
+	safari10: true as true,
+	ie8: false as false,
 	ecma: 5 as 5 | 6,
 });
 
@@ -88,16 +91,20 @@ export function NecessaryStringLiteral (body :string) :string {
 		
 		const _vm :string = '$'.repeat(body.length);
 		
-		_c = true;
+		_c = false;
+		shorthand = new WeakSet;
+		//dangerous = new WeakSet;
 		simple(AST, visitors);
 		let _code :string = '';
 		let index :number = 0;
 		for ( const identifier of ( globals.nodes() as Identifier[] ).sort(byStart) ) {
-			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头格式的私有属性“${identifier.name}”进行赋值！`); }
-			if ( _x.test(identifier.name as string) ) { throw Error(`不要访问实例下的下划线开头的私有属性（“${identifier.name}”）`); }
+			//if ( dangerous.has(identifier) ) { throw Error(`不要对实例下的下划线开头格式的私有属性（“${identifier.name}”）进行赋值！`); }
+			let name :string = identifier.name as string;
+			if ( _x.test(name) ) { throw Error(`访问实例下的下划线开头但后面不是单个小写字母的私有属性（“${name}”）是不妥的`); }
+			if ( $vv.test(name) ) { throw Error(`不要尝试在模板中直接访问“$$”后跟若干大小写字母或“$_”后跟 1 以上的数字的实例属性（“${name}”），它们有可能与模板编译时自动生成的运行变量冲突`); }
 			const { start } = identifier;
 			if ( start!==index ) { _code += code.slice(index, start); }
-			const name :string = code.slice(start, index = identifier.end);
+			name = code.slice(start, index = identifier.end);
 			_code += shorthand.has(identifier)
 				? `${name}:${_vm}.${name}`//if ( shorthand.has(identifier) ) { _code += identifier.name==='__proto__' ? `['__proto__']:` : `${name}:`; }
 				: `${_vm}.${name}`;//_code += `${_vm}.${name}`;

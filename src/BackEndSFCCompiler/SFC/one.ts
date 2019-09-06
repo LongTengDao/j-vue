@@ -7,10 +7,10 @@ import Null from '.null';
 import { rollup, AcornStage3 } from '../dependencies';
 
 const acorn = Null({
-	ecmaVersion: 5,
-	allowReserved: true,
-	sourceType: 'module',
-	allowAwaitOutsideFunction: true,
+	ecmaVersion: 5 as 5 | 6,
+	allowReserved: true as true,
+	sourceType: 'module' as 'module',
+	allowAwaitOutsideFunction: true as true,
 });
 const rollupOptions = {
 	onwarn (warning :any) :void {
@@ -19,17 +19,17 @@ const rollupOptions = {
 	},
 	acorn,
 	acornInjectPlugins: [ AcornStage3 ],
-	strictDeprecations: true,
-	treeshake: false,
+	strictDeprecations: true as true,
+	treeshake: false as false,
 };
 
 const TRUE = Null({
 	format: 'esm' as 'esm',
-	sourcemap: true,
+	sourcemap: true as true,
 });
 const FALSE = Null({
 	format: 'esm' as 'esm',
-	sourcemap: false,
+	sourcemap: false as false,
 });
 const INLINE = Null({
 	format: 'esm' as 'esm',

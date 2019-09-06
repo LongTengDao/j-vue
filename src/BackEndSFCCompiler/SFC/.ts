@@ -9,7 +9,7 @@ import NULL from '.null';
 import { StringLiteral } from '@ltd/j-es';
 
 import { NON_SCALAR as SURROGATE_IN_INPUT_STREAM, buffer2object } from '@ltd/j-utf';
-const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true };
+const OPTIONS = { swappable: false as false, stripBOM: true as true, startsWithASCII: true as true, throwError: true as true };
 
 import { NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM } from './RE';
 
