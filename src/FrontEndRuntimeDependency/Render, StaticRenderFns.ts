@@ -11,18 +11,40 @@ var VAR_ :'const ' | 'var ' = /*#__PURE__*/ function () {
 
 function Body (body :string) :string {
 	var index :number = body.indexOf(',');
-	return ( index ? VAR_+body.slice(0, index)+'=this,' : VAR_ )+body.slice(++index, body.indexOf('(', index))+'=this._self._c||this.$createElement;return '+body.slice(index);
+	if ( index<0 ) { return 'return this._m('+body+')'; }
+	var _vm_this = index ? body.slice(0, index)+'=this,' : '';
+	var _c = body.slice(++index, body.indexOf('(', index));
+	var _call = body.slice(index);
+	return VAR_+_vm_this+_c+'=this._self._c;return '+_call;
 }
 
 type Render = <CreateElement extends (this :void, ...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
 
-export function Render (code :string, scope? :Scope) :Render {
-	return /*#__PURE__*/ Function('"use strict";'+Body(scope ? scope[_](code) : code)) as Render;
+function WithStripped (render :Render) {
+	( render as { _withStripped? :true } )._withStripped = true;
+	return render;
 }
 
-export function StaticRenderFns (codes :string[], scope? :Scope) :Render[] {
-	var index = codes.length;
-	if ( scope ) { for ( var scope_ = scope[_]; index--; ) { codes[index] = Body(scope_(codes[index])); } }
-	else { while ( index-- ) { codes[index] = Body(codes[index]); } }
-	return Function('"use strict";return[function(){'+codes.join('},function(){')+'}]')();
+export function Render (code :string | number, scope? :Scope) :Render {
+	return /*#__PURE__*/ WithStripped(
+		/*#__PURE__*/ Function(
+			'"use strict";'+Body(scope ? scope[_](''+code) : ''+code)
+		) as Render
+	);
+}
+
+export function StaticRenderFns (codes :ReadonlyArray<string | number>, scope? :Scope) :Render[] {
+	var index :number = codes.length;
+	var body :string = ']';
+	if ( scope ) {
+		for ( var scope_ = scope[_]; index; ) {
+			body = 'function(){'+Body(scope_(''+codes[--index]))+'},'+body;
+		}
+	}
+	else {
+		while ( index ) {
+			body = 'function(){'+Body(''+codes[--index])+'},'+body;
+		}
+	}
+	return Function('"use strict";return['+body)();
 }

@@ -14,7 +14,7 @@ declare module ':j-vue' {
 
 declare module 'j-vue' {
 	
-	export const version :'14.3.0';
+	export const version :'14.4.0';
 	
 	export function Identifier () :string;
 	
@@ -27,7 +27,7 @@ declare module 'j-vue' {
 	
 	export function Template (html :string, scope :Scope) :string;
 	export function Render (code :string, scope? :Scope) :Render<any>;
-	export function StaticRenderFns (codes :string[], scope? :Scope) :Render<any>[];
+	export function StaticRenderFns (codes :readonly string[], scope? :Scope) :Render<any>[];
 	
 	export const STYLE :{
 		readonly functional :true,

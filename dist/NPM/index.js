@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.3.0';
+const version = '14.4.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3208,7 +3208,7 @@ class Style extends Block          {
 }
 
 const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
-const slotRE = /^(?:#|v-slot(?::|$)|slot-scope$)/;
+const slotRE = /^(?:#|v-slot(?::|$))/;
 const _v = /^_[a-z]$/;
 const _x = /^_(?![a-z]$)/;
 const $vvv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*|event|set|forceUpdate)$/;
@@ -3566,12 +3566,20 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 				const value = attributes['v-for'] ;
 				Params(forAliasRE.exec(value) [0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
 			}
+			if ( xName==='template' && 'scope' in attributes ) {
+				throw SyntaxError(`template scope 已经被 v-slot 取代`);
+			}
+			if ( 'slot-scope' in attributes ) {
+				throw SyntaxError(`slot-scope 已经被 v-slot 取代`);
+			}
+			let already = '';
 			for ( const name in attributes ) {
 				if ( slotRE.test(name) ) {
+					if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
+					already = name;
 					const value = attributes[name];
 					value===EMPTY ||
 					Params(value, 0, 1, `${name}="${value}"中`);
-					break;
 				}
 			}
 		}
@@ -3929,18 +3937,23 @@ const minifyOptions = NULL$1({
 	ecma: 5         ,
 });
 
-const with_this__return_ = 'with(this){return ';
-const with_this__return_$ = with_this__return_.length;
-const _$1 = '}';
-const _$ = -_$1.length;
+const with_this__return__c_ = 'with(this){return _c(';
+const with_this__return_$ = 'with(this){return '.length;
+const __ = ')}';
+const _$ = -'}'.length;
 const _function__c___use_strict__return_ = '(function(_c){"use strict";return ';
 const _function__c___use_strict__return_$ = _function__c___use_strict__return_.length;
 
+const WITH_THIS__RETURN__M_INDEX__ = /^width\(this\){return _m\((\d+)\)}$/;
 const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return \1=this,(\2\(.*\))}\);$/s;
 const _C_EXP = /^\(function\(([\w$]+)\){"use strict";return (\1\(.*\))}\);$/s;
 
 function NecessaryStringLiteral (body        )         {
-	if ( !body.startsWith(with_this__return_) || !body.endsWith(_$1) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
+	if ( !body.startsWith(with_this__return__c_) || !body.endsWith(__) ) {
+		const _index = WITH_THIS__RETURN__M_INDEX__.exec(body);
+		if ( _index ) { return _index[1]; }
+		throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`);
+	}
 	const code         = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
 	const AST = Parser.parse(code, parserOptions$1);
 	const globals = findGlobals(AST);

@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'14.3.0';
+	export const version :'14.4.0';
 	
 	export function Identifier () :string;
 	
@@ -33,7 +33,7 @@ declare namespace exports {
 	
 	export function Template (html :string, scope :Scope) :string;
 	export function Render (code :string, scope? :Scope) :Render<any>;
-	export function StaticRenderFns (codes :string[], scope? :Scope) :Render<any>[];
+	export function StaticRenderFns (codes :readonly string[], scope? :Scope) :Render<any>[];
 	
 	type Render<This> = <CreateElement extends (this :void, ...args :any[]) => any> (this :This, createElement :CreateElement) => ReturnType<CreateElement>;
 	

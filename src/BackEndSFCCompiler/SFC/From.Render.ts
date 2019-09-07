@@ -71,18 +71,23 @@ const minifyOptions = Null({
 	ecma: 5 as 5 | 6,
 });
 
-const with_this__return_ = 'with(this){return ';
-const with_this__return_$ = with_this__return_.length;
-const _ = '}';
-const _$ = -_.length;
+const with_this__return__c_ = 'with(this){return _c(';
+const with_this__return_$ = 'with(this){return '.length;
+const __ = ')}';
+const _$ = -'}'.length;
 const _function__c___use_strict__return_ = '(function(_c){"use strict";return ';
 const _function__c___use_strict__return_$ = _function__c___use_strict__return_.length;
 
+const WITH_THIS__RETURN__M_INDEX__ = /^width\(this\){return _m\((\d+)\)}$/;
 const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return \1=this,(\2\(.*\))}\);$/s;
 const _C_EXP = /^\(function\(([\w$]+)\){"use strict";return (\1\(.*\))}\);$/s;
 
 export function NecessaryStringLiteral (body :string) :string {
-	if ( !body.startsWith(with_this__return_) || !body.endsWith(_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
+	if ( !body.startsWith(with_this__return__c_) || !body.endsWith(__) ) {
+		const _index = WITH_THIS__RETURN__M_INDEX__.exec(body);
+		if ( _index ) { return _index[1]; }
+		throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`);
+	}
 	const code :string = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
 	const AST = Parser.parse(code, parserOptions);
 	const globals = findGlobals(AST);

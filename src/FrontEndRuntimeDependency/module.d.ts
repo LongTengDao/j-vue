@@ -27,7 +27,7 @@ declare module 'j-vue' {
 	
 	export function Template (html :string, scope :Scope) :string;
 	export function Render (code :string, scope? :Scope) :Render<any>;
-	export function StaticRenderFns (codes :string[], scope? :Scope) :Render<any>[];
+	export function StaticRenderFns (codes :readonly string[], scope? :Scope) :Render<any>[];
 	
 	export const STYLE :{
 		readonly functional :true,

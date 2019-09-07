@@ -78,12 +78,20 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 				const value = attributes['v-for']!;
 				Params(forAliasRE.exec(value)![0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
 			}
+			if ( xName==='template' && 'scope' in attributes ) {
+				throw SyntaxError(`template scope 已经被 v-slot 取代`);
+			}
+			if ( 'slot-scope' in attributes ) {
+				throw SyntaxError(`slot-scope 已经被 v-slot 取代`);
+			}
+			let already = '';
 			for ( const name in attributes ) {
 				if ( slotRE.test(name) ) {
+					if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
+					already = name;
 					const value = attributes[name];
 					value===EMPTY ||
 					Params(value, 0, 1, `${name}="${value}"中`);
-					break;
 				}
 			}
 		}
