@@ -1,12 +1,12 @@
 import undefined from '.undefined';
 import SyntaxError from '.SyntaxError';
-import throwSyntaxError from '.throw.SyntaxError';
+import ReferenceError from '.ReferenceError';
 import RegExp from '.RegExp';
 
 import { newRegExp } from '@ltd/j-regexp';
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
-import { forAliasRE, slotRE } from './INTERNAL';
+import { forAliasRE, slotRE, emptySlotScopeToken, BAD_SLOT_NAME, BAD_KEY } from './INTERNAL';
 import { EMPTY } from './Attributes';
 import Params from './Params';
 import Node from './Template.Content.Node';
@@ -51,26 +51,28 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 		}
 		const xName = tag.xName!;
 		if ( type===ELEMENT_END ) {
-			xName===parentNode_xName || throwSyntaxError(parentNode_xName
-				? `在 ${parentNode_xName} 配对的结束标签出现前，出现了预期外的结束标签“</${xName}>”`
-				: `template 块中凭空出现了“</${xName}>”结束标签`
-			);
+			if ( xName!==parentNode_xName ) {
+				throw SyntaxError(parentNode_xName
+					? `在 ${parentNode_xName} 配对的结束标签出现前，出现了预期外的结束标签“</${xName}>”`
+					: `template 块中凭空出现了“</${xName}>”结束标签`
+				);
+			}
 			index = tag.end;
 			return;
 		}
-		xName==='script' && throwSyntaxError(`Vue 不允许 template 中存在 script 标签`);
-		xName==='style' && throwSyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`);
+		if ( xName==='script' ) { throw ReferenceError(`Vue 不允许 template 中存在 script 标签`); }
+		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`); }
 		const attributes :Attributes = tag.attributes!;
 		const v_pre :boolean = V_PRE || 'v-pre' in attributes;
 		if ( !v_pre && ( ':is' in attributes || 'v-bind:is' in attributes ) ) {}
 		else if ( !v_pre && 'is' in attributes ) {
 			if ( !foreign_elements.test(attributes.is!) && FOREIGN_ELEMENTS.test(attributes.is!) ) {
-				throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${attributes.is!}”，不被 Vue 作为组件对待`);
+				throw ReferenceError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${attributes.is!}”，不被 Vue 作为组件对待`);
 			}
 		}
 		else {
 			if ( !foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName) ) {
-				throw SyntaxError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
+				throw ReferenceError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
 			}
 		}
 		if ( !v_pre ) {
@@ -78,11 +80,8 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 				const value = attributes['v-for']!;
 				Params(forAliasRE.exec(value)![0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
 			}
-			if ( xName==='template' && 'scope' in attributes ) {
-				throw SyntaxError(`template scope 已经被 v-slot 取代`);
-			}
-			if ( 'slot-scope' in attributes ) {
-				throw SyntaxError(`slot-scope 已经被 v-slot 取代`);
+			if ( 'slot' in attributes || 'slot-scope' in attributes || xName==='template' && 'scope' in attributes ) {
+				throw SyntaxError(`slot、slot-scope、template scope 均已被 v-slot 取代`);
 			}
 			let already = '';
 			for ( const name in attributes ) {
@@ -90,10 +89,14 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 					if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
 					already = name;
 					const value = attributes[name];
+					if ( value===emptySlotScopeToken ) { throw ReferenceError(`“${emptySlotScopeToken}”是保留字，编译结果相当于留空`); }
 					value===EMPTY ||
 					Params(value, 0, 1, `${name}="${value}"中`);
+					if ( BAD_SLOT_NAME.test(name) ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
 				}
 			}
+			if ( xName==='slot' && BAD_SLOT_NAME.test(attributes['name'] || 'default') ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+			if ( attributes['key']===BAD_KEY ) { throw ReferenceError(`使用“${BAD_KEY}”作为 key 无法按预期工作`); }
 		}
 		const element :Element = parentNode.appendChild(new Element(xName, attributes, partial));
 		index = tag.end;
@@ -119,14 +122,14 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 						xName==='title' ? TITLE_END_TAG :
 							null as never
 			);
-			endTagStart<0 && throwSyntaxError(`template 块中存在未关闭的 ${xName} 标签`);
+			if ( endTagStart<0 ) { throw SyntaxError(`template 块中存在未关闭的 ${xName} 标签`); }
 			endTagStart += index;
 			const expression :string = new Mustache(html.slice(index, endTagStart), v_pre).toExpression();
 			if ( expression ) { attributes['v-text'] = expression; }
 			index = Tag(html, index = endTagStart, foreign).end;
 		}
 		else if ( TEXTAREA.test(xName) ) {
-			throw SyntaxError(
+			throw ReferenceError(
 				`Vue 不会将 textarea 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
 				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
 				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
@@ -134,7 +137,7 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 			);
 		}
 		else if ( RAW_TEXT_ELEMENTS.test(xName) ) {
-			throw SyntaxError(
+			throw ReferenceError(
 				`Vue 不会将 style 或 script 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
 				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
 				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+

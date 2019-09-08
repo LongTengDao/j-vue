@@ -6,5 +6,5 @@ RAW_TEXT_ELEMENTS = script, style
 ESCAPABLE_RAW_TEXT_ELEMENTS = textarea, title
 
 FOREIGN_ELEMENTS = svg, animate, circle, clippath, cursor, defs, desc, ellipse, filter, font-face, foreignObject, g,
-           glyph, image, line, marker, mask, missing-glyph, path, pattern, polygon, polyline, rect, switch,
-           symbol, text, textpath, tspan, use, view
+                   glyph, image, line, marker, mask, missing-glyph, path, pattern, polygon, polyline, rect, switch,
+                   symbol, text, textpath, tspan, use, view
