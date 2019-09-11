@@ -6,7 +6,7 @@ import RegExp from '.RegExp';
 import { newRegExp } from '@ltd/j-regexp';
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
-import { forAliasRE, slotRE, emptySlotScopeToken, BAD_SLOT_NAME, BAD_KEY } from './INTERNAL';
+import { forAliasRE, slotRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF } from './INTERNAL';
 import { EMPTY } from './Attributes';
 import Params from './Params';
 import Node from './Template.Content.Node';
@@ -25,6 +25,7 @@ const TEXTAREA = /^textarea$/i;
 const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
+const V_BIND = /^(?:v-bind)?:([^.]*)/;
 
 let html :string = '';
 let index :number = 0;
@@ -80,23 +81,41 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 				const value = attributes['v-for']!;
 				Params(forAliasRE.exec(value)![0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
 			}
-			if ( 'slot' in attributes || 'slot-scope' in attributes || xName==='template' && 'scope' in attributes ) {
+			if ( xName!=='slot' && 'slot' in attributes || 'slot-scope' in attributes || xName==='template' && 'scope' in attributes ) {
 				throw SyntaxError(`slot、slot-scope、template scope 均已被 v-slot 取代`);
 			}
-			let already = '';
-			for ( const name in attributes ) {
-				if ( slotRE.test(name) ) {
-					if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
-					already = name;
-					const value = attributes[name];
-					if ( value===emptySlotScopeToken ) { throw ReferenceError(`“${emptySlotScopeToken}”是保留字，编译结果相当于留空`); }
-					value===EMPTY ||
-					Params(value, 0, 1, `${name}="${value}"中`);
-					if ( BAD_SLOT_NAME.test(name) ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+			if ( xName==='slot' ) {
+				if ( BAD_SLOT_NAME.test(attributes['name'] || 'default') ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+				for ( let name in attributes ) {
+					const bind = V_BIND.exec(name);
+					if ( bind ) { name = bind[1]; }
+					else if ( name.startsWith('v-') && !SLOT_DIRECTIVE.test(name) || name.startsWith('@') || name.startsWith('#') ) {
+						throw SyntaxError(`slot 组件上除 v-pre、v-once、v-for、v-if、v-else-if、v-else 和 v-bind 以外的指令都会被忽略，如果想要绑定 ${name} 为作用域属性，请使用 v-bind:${name}`);
+					}
+					if ( name===BAD_SCOPE ) {
+						throw ReferenceError(`使用“${BAD_SCOPE}”作为 scope 无法按预期工作`);
+					}
+					if ( name==='key' || name==='ref' || name==='is' ) {
+						throw SyntaxError(`包括 ${name} 在内的 key、ref、is 在 slot 组件上是无效的，即便使用 v-bind 结果也是一样`);
+					}
 				}
 			}
-			if ( xName==='slot' && BAD_SLOT_NAME.test(attributes['name'] || 'default') ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
-			if ( attributes['key']===BAD_KEY ) { throw ReferenceError(`使用“${BAD_KEY}”作为 key 无法按预期工作`); }
+			else {
+				let already = '';
+				for ( const name in attributes ) {
+					if ( slotRE.test(name) ) {
+						if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
+						already = name;
+						const value = attributes[name];
+						if ( value===emptySlotScopeToken ) { throw ReferenceError(`“${emptySlotScopeToken}”是保留字，编译结果相当于留空`); }
+						value===EMPTY ||
+						Params(value, 0, 1, `${name}="${value}"中`);
+						if ( BAD_SLOT_NAME.test(name) ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+					}
+				}
+				if ( attributes['key']===BAD_KEY ) { throw ReferenceError(`使用“${BAD_KEY}”作为 key 无法按预期工作`); }
+				if ( attributes['ref']===BAD_REF ) { throw ReferenceError(`使用“${BAD_REF}”作为 ref 无法按预期工作`); }
+			}
 		}
 		const element :Element = parentNode.appendChild(new Element(xName, attributes, partial));
 		index = tag.end;

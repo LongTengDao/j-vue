@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.5.0';
+const version = '14.6.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -48,7 +48,7 @@ const toString = Object.prototype.toString;
 const isArray = (
 	/*! j-globals: Array.isArray (polyfill) */
 	Array.isArray || function isArray (value) {
-		return typeof value==='object' && /*#__PURE__*/ toString.call(value)==='[object Array]';
+		return /*#__PURE__*/ toString.call(value)==='[object Array]';
 	}
 	/*¡ j-globals: Array.isArray (polyfill) */
 );
@@ -3210,8 +3210,11 @@ class Style extends Block          {
 const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const slotRE = /^(?:#|v-slot(?::|$))/;
 const emptySlotScopeToken = '_empty_';
+const SLOT_DIRECTIVE = /^v-(?:once|for|if|else(?:-if)?|bind)$/;
 const BAD_SLOT_NAME = /^(?:#|v-slot:)[$_]/;// $hasNormal $key $stable __proto__ _normalized ...
+const BAD_SCOPE = '__proto__';
 const BAD_KEY = '__proto__';
+const BAD_REF = '__proto__';
 const _v = /^_[a-z]$/;
 const _x = /^_(?![a-z]$)/;
 const $vvv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*|event|set|forceUpdate)$/;
@@ -3243,7 +3246,7 @@ function Params (parameters        , min        , max        , attribute        
 	if ( block.type!=='BlockStatement' || block.body.length!==0 ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
 	const { params } = expression;
 	const { length } = params;
-	if ( length<min || max<length ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
+	if ( length<min || max<length ) { throw SyntaxError(`${attribute}的内容的解析结果数量 ${length} 不符合预期的 ${min}～${max}`); }
 	if ( !length ) { return; }
 	_NAMES.length = 0;
 	$NAMES.length = 0;
@@ -3516,6 +3519,7 @@ const TEXTAREA = /^textarea$/i;
 const TNS = /^[\t\n ]+$/;
 const SOF_TNS_LT = /^[\t\n ]+</;
 const GT_TNS_EOF = />[\t\n ]+$/;
+const V_BIND = /^(?:v-bind)?:([^.]*)/;
 
 let html         = '';
 let index         = 0;
@@ -3571,23 +3575,41 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 				const value = attributes['v-for'] ;
 				Params(forAliasRE.exec(value) [0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
 			}
-			if ( 'slot' in attributes || 'slot-scope' in attributes || xName==='template' && 'scope' in attributes ) {
+			if ( xName!=='slot' && 'slot' in attributes || 'slot-scope' in attributes || xName==='template' && 'scope' in attributes ) {
 				throw SyntaxError(`slot、slot-scope、template scope 均已被 v-slot 取代`);
 			}
-			let already = '';
-			for ( const name in attributes ) {
-				if ( slotRE.test(name) ) {
-					if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
-					already = name;
-					const value = attributes[name];
-					if ( value===emptySlotScopeToken ) { throw ReferenceError(`“${emptySlotScopeToken}”是保留字，编译结果相当于留空`); }
-					value===EMPTY ||
-					Params(value, 0, 1, `${name}="${value}"中`);
-					if ( BAD_SLOT_NAME.test(name) ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+			if ( xName==='slot' ) {
+				if ( BAD_SLOT_NAME.test(attributes['name'] || 'default') ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+				for ( let name in attributes ) {
+					const bind = V_BIND.exec(name);
+					if ( bind ) { name = bind[1]; }
+					else if ( name.startsWith('v-') && !SLOT_DIRECTIVE.test(name) || name.startsWith('@') || name.startsWith('#') ) {
+						throw SyntaxError(`slot 组件上除 v-pre、v-once、v-for、v-if、v-else-if、v-else 和 v-bind 以外的指令都会被忽略，如果想要绑定 ${name} 为作用域属性，请使用 v-bind:${name}`);
+					}
+					if ( name===BAD_SCOPE ) {
+						throw ReferenceError(`使用“${BAD_SCOPE}”作为 scope 无法按预期工作`);
+					}
+					if ( name==='key' || name==='ref' || name==='is' ) {
+						throw SyntaxError(`包括 ${name} 在内的 key、ref、is 在 slot 组件上是无效的，即便使用 v-bind 结果也是一样`);
+					}
 				}
 			}
-			if ( xName==='slot' && BAD_SLOT_NAME.test(attributes['name'] || 'default') ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
-			if ( attributes['key']===BAD_KEY ) { throw ReferenceError(`使用“${BAD_KEY}”作为 key 无法按预期工作`); }
+			else {
+				let already = '';
+				for ( const name in attributes ) {
+					if ( slotRE.test(name) ) {
+						if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
+						already = name;
+						const value = attributes[name];
+						if ( value===emptySlotScopeToken ) { throw ReferenceError(`“${emptySlotScopeToken}”是保留字，编译结果相当于留空`); }
+						value===EMPTY ||
+						Params(value, 0, 1, `${name}="${value}"中`);
+						if ( BAD_SLOT_NAME.test(name) ) { throw ReferenceError(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+					}
+				}
+				if ( attributes['key']===BAD_KEY ) { throw ReferenceError(`使用“${BAD_KEY}”作为 key 无法按预期工作`); }
+				if ( attributes['ref']===BAD_REF ) { throw ReferenceError(`使用“${BAD_REF}”作为 ref 无法按预期工作`); }
+			}
 		}
 		const element          = parentNode.appendChild(new Element(xName, attributes, partial));
 		index = tag.end;

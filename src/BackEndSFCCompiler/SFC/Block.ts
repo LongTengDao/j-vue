@@ -4,7 +4,7 @@ import NULL from '.null';
 
 import { EMPTY } from './Attributes';
 
-export default class Block<BlockName extends string = string> extends NULL {
+export default abstract class Block<BlockName extends string = string> extends NULL {
 	
 	constructor (blockName :BlockName, attributes :Attributes, emitProperties :boolean, inner :string | undefined, END_TAG :RegExp | null) {
 		super();

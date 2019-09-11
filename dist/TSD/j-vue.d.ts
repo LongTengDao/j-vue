@@ -14,7 +14,7 @@ declare module ':j-vue' {
 
 declare module 'j-vue' {
 	
-	export const version :'14.5.0';
+	export const version :'14.6.0';
 	
 	export function Identifier () :string;
 	
@@ -54,7 +54,7 @@ declare module 'j-vue' {
 	export type Options<This extends { $options? :object }> = {
 		[Key in keyof This['$options']] :This['$options'][Key]
 	} & {
-		data? (this :This) :{ [Key in keyof This]? :This[Key] },
+		data? (this :This, vm :This) :{ [Key in keyof This]? :This[Key] },
 		props? :( keyof This )[] | Exclude<{
 			[Key in keyof This]? :{ prototype :object } | { prototype :object }[] | Exclude<{
 				type? :{ prototype :object } | { prototype :object }[],

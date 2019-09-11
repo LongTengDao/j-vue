@@ -1,6 +1,6 @@
 
 declare module '.Array.isArray' { export default isArray;
-	function isArray (value :any) :value is any[] | Readonly<any[]>;
+	function isArray (value :any) :value is readonly any[];
 }
 declare module '.Array.prototype.slice' { export default Array.prototype.slice; }
 

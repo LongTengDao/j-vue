@@ -32,7 +32,7 @@ export default function Params (parameters :string, min :number, max :number, at
 	if ( block.type!=='BlockStatement' || block.body.length!==0 ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
 	const { params } = expression;
 	const { length } = params;
-	if ( length<min || max<length ) { throw SyntaxError(`${attribute}的内容的解析结果不符合预期`); }
+	if ( length<min || max<length ) { throw SyntaxError(`${attribute}的内容的解析结果数量 ${length} 不符合预期的 ${min}～${max}`); }
 	if ( !length ) { return; }
 	_NAMES.length = 0;
 	$NAMES.length = 0;
