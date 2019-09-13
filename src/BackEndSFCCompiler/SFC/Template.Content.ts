@@ -30,8 +30,10 @@ const V_BIND = /^(?:v-bind)?:([^.]*)/;
 let html :string = '';
 let index :number = 0;
 let partial :Partial | undefined;
+let delimiters_0 :string = '';
+let delimiters_1 :string = '';
 
-function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean, FOREIGN :boolean) :void {
+function parseAppend (parentNode_xName :string, parentNode :Content | Element, V_PRE :boolean, FOREIGN :boolean) :void {
 	for ( ; ; ) {
 		const tag = Tag(html, index, FOREIGN);
 		const { type } = tag;
@@ -41,7 +43,7 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 			return;
 		}
 		if ( type===TEXT ) {
-			const data :string = new Mustache(tag.raw!, V_PRE).toData();
+			const data :string = new Mustache(tag.raw!, V_PRE, delimiters_0, delimiters_1).toData();
 			data && parentNode.appendChild(new Text(data));
 			index = tag.end;
 			continue;
@@ -77,6 +79,7 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 			}
 		}
 		if ( !v_pre ) {
+			if ( 'v-cloak' in attributes ) { throw SyntaxError(`单文件组件模板中不可能用到 v-cloak 指令`); }
 			if ( 'v-for' in attributes ) {
 				const value = attributes['v-for']!;
 				Params(forAliasRE.exec(value)![0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
@@ -92,12 +95,8 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 					else if ( name.startsWith('v-') && !SLOT_DIRECTIVE.test(name) || name.startsWith('@') || name.startsWith('#') ) {
 						throw SyntaxError(`slot 组件上除 v-pre、v-once、v-for、v-if、v-else-if、v-else 和 v-bind 以外的指令都会被忽略，如果想要绑定 ${name} 为作用域属性，请使用 v-bind:${name}`);
 					}
-					if ( name===BAD_SCOPE ) {
-						throw ReferenceError(`使用“${BAD_SCOPE}”作为 scope 无法按预期工作`);
-					}
-					if ( name==='key' || name==='ref' || name==='is' ) {
-						throw SyntaxError(`包括 ${name} 在内的 key、ref、is 在 slot 组件上是无效的，即便使用 v-bind 结果也是一样`);
-					}
+					if ( name===BAD_SCOPE ) { throw ReferenceError(`使用“${BAD_SCOPE}”作为 scope 无法按预期工作`); }
+					if ( name==='key' || name==='ref' || name==='is' ) { throw SyntaxError(`包括 ${name} 在内的 key、ref、is 在 slot 组件上是无效的，即便使用 v-bind 结果也是一样`); }
 				}
 			}
 			else {
@@ -143,7 +142,7 @@ function parseAppend (parentNode_xName :string, parentNode :Node, V_PRE :boolean
 			);
 			if ( endTagStart<0 ) { throw SyntaxError(`template 块中存在未关闭的 ${xName} 标签`); }
 			endTagStart += index;
-			const expression :string = new Mustache(html.slice(index, endTagStart), v_pre).toExpression();
+			const expression :string = new Mustache(html.slice(index, endTagStart), v_pre, delimiters_0, delimiters_1).toExpression();
 			if ( expression ) { attributes['v-text'] = expression; }
 			index = Tag(html, index = endTagStart, foreign).end;
 		}
@@ -173,10 +172,12 @@ export default class Content extends Node {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content'; }
 	
-	constructor (inner :string, abbr? :Partial) {
+	constructor (inner :string, _ :Private) {
 		super();
 		if ( inner ) {
-			partial = abbr;
+			delimiters_0 = _.delimiters_0;
+			delimiters_1 = _.delimiters_1;
+			partial = _.abbr;
 			html = inner;
 			index = 0;
 			try { parseAppend('', this, false, false); }
@@ -193,7 +194,7 @@ export default class Content extends Node {
 		}
 	}
 	
-	* toSource (tab :string = '\t') :IterableIterator<string> {
+	* toSource (this :Content, tab :string = '\t') :IterableIterator<string> {
 		for ( const childNode of this.childNodes ) {
 			yield * childNode.toSource(tab);
 		}
@@ -201,5 +202,6 @@ export default class Content extends Node {
 	
 };
 
+type Private = import('./Template').Private;
 type Partial = import('./Template').Partial;
 type Attributes = import('./Attributes').default;

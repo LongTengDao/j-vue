@@ -1,21 +1,16 @@
 import freeze from '.Object.freeze';
-import defineProperty from '.Object.defineProperty';
-import PropertyDescriptor from '.null.PropertyDescriptor';
 
 import Node from './Template.Content.Node';
 import * as Entities from './Entities';
 
-const childNodesPropertyDescriptor = PropertyDescriptor(/*#__PURE__*/freeze([]), true, false, true);
-
-class CharacterData extends Node {
+abstract class CharacterData extends Node {
 	
 	constructor (data :string) {
-		super();
-		defineProperty(this, 'childNodes', childNodesPropertyDescriptor);
+		super(true);
 		this.data = data;
 	}
 	
-	data :string;
+	readonly data :string;
 	
 }
 
@@ -33,7 +28,7 @@ export default class Text extends CharacterData {
 		return Entities.escapeInnerText(this.data);
 	}
 	
-	* toSource () :IterableIterator<string> {
+	* toSource (this :Text) :IterableIterator<string> {
 		yield * this.outerHTML.split('&#10;');
 	}
 	

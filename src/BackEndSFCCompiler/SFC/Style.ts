@@ -3,6 +3,7 @@ import Error from '.Error';
 import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import create from '.Object.create';
+import freeze from '.Object.freeze';
 import NULL from '.null.prototype';
 
 import { newRegExp } from '@ltd/j-regexp';
@@ -81,6 +82,8 @@ export default class Style extends Block<'style'> {
 	}
 	
 };
+
+freeze(Style.prototype);
 
 export type Private = object & {
 	abbr? :Selector

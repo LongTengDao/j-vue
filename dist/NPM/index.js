@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.6.0';
+const version = '14.7.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -20,7 +20,7 @@ const NULL = (
 	/*¡ j-globals: null.prototype (internal) */
 );
 
-const NULL$1 = (
+const Null = (
 	/*! j-globals: null.constructor (internal) */
 	/*#__PURE__*/ function () {
 		var assign = Object.assign || function assign (target, source) {
@@ -585,7 +585,7 @@ const throwSyntaxError = (
 
 const fromCodePoint = String.fromCodePoint;
 
-const SEMICOLON_ENTITIES = /*#__PURE__*/ NULL$1({
+const SEMICOLON_ENTITIES = /*#__PURE__*/ Null({
 	Aacute: 'Á',
 	aacute: 'á',
 	Abreve: 'Ă',
@@ -2713,7 +2713,7 @@ const SEMICOLON_ENTITIES = /*#__PURE__*/ NULL$1({
 	zwnj: '\u200C',
 });
 
-const CONTINUE_ENTITIES = /*#__PURE__*/ NULL$1({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
+const CONTINUE_ENTITIES = /*#__PURE__*/ Null({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
 
 const ESCAPABLE_INNER_TEXT = /[\t\n\r\x20&<\xA0\u2000-\u200A\u2028\u2029\u202F\u3000]/g;// 除了必须转义的，还有防止被 Vue 编译器剔除的空白
 const escapableInnerTextReplacer = ($0        ) => `&#${$0.charCodeAt(0)};`;
@@ -2723,7 +2723,7 @@ const ESCAPABLE_ATTRIBUTE_VALUE = /["&]/g;
 const escapableAttributeValueReplacer = ($0        ) => $0==='"' ? '&quot;' : '&amp;';
 function escapeAttributeValue (text        )         { return text.replace(ESCAPABLE_ATTRIBUTE_VALUE, escapableAttributeValueReplacer); }
 
-const CONTROL_TO_CHAR = NULL$1({
+const CONTROL_TO_CHAR = Null({
 	0x80: 0x20AC,
 	0x82: 0x201A,
 	0x83: 0x0192,
@@ -2909,7 +2909,7 @@ function PartialDescriptor                               (source   )    {
 	return target;
 }
 
-const NULL$2 = /*#__PURE__*/ function (         ) {
+const NULL$1 = /*#__PURE__*/ function (         ) {
 	function throwConstructing ()        { throw TypeError(`Super constructor NULL cannot be invoked with 'new'`); }
 	function throwApplying ()        { throw TypeError(`Super constructor NULL cannot be invoked without 'new'`); }
 	function NULL$1 (            ) {
@@ -2930,7 +2930,7 @@ const NULL$2 = /*#__PURE__*/ function (         ) {
 
 const EMPTY        = undefined$1;
 
-class Attributes extends NULL$2         {
+class Attributes extends NULL$1         {
 	
 	get [Symbol.toStringTag] () { return 'SFC.**.Attributes'; }
 	
@@ -3034,10 +3034,9 @@ const findGlobals = require('@ltd/acorn-globals')                               
 const { compile } = require('vue-template-compiler')                                          ;
 const { minify } = require('terser')                           ;
 
-class Block                                    extends NULL$1 {
+class Block                                    {
 	
 	constructor (blockName           , attributes            , emitProperties         , inner                    , END_TAG               ) {
-		super();
 		this.blockName = blockName;
 		this.attributes = attributes;
 		if ( inner===undefined$1 ) {
@@ -3060,13 +3059,14 @@ class Block                                    extends NULL$1 {
 		}
 	}
 	
-	blockName           ;
-	attributes            ;
+	         blockName           ;
+	         attributes            ;
 	inner         ;
-	src         ;
-	lang         ;
+	         src         ;
+	         lang         ;
 	
 }
+freeze(Block.prototype);
 
 const Private = (
 	/*! j-globals: private (internal) */
@@ -3136,6 +3136,7 @@ class Script extends Block {
 	}
 	
 }
+freeze(Script.prototype);
 
 const SELECTOR = newRegExp`^
 	\s*(?:
@@ -3206,6 +3207,7 @@ class Style extends Block          {
 	}
 	
 }
+freeze(Style.prototype);
 
 const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const slotRE = /^(?:#|v-slot(?::|$))/;
@@ -3220,7 +3222,7 @@ const _x = /^_(?![a-z]$)/;
 const $vvv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*|event|set|forceUpdate)$/;
 const $vv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*)$/;
 
-const parserOptions = NULL$1({
+const parserOptions = Null({
 	ecmaVersion: 2014     ,
 	sourceType: 'module'            ,// use strict mode
 	allowReserved: true        ,
@@ -3302,7 +3304,9 @@ function Pattern (node         )       {
 	}
 }
 
-const _parentNode = Symbol('#parentNode');
+const _parentNode                = Symbol('#parentNode');
+
+const childNodes = /*#__PURE__*/freeze([])      ;
 
 class Node {
 	
@@ -3311,7 +3315,11 @@ class Node {
 	[_parentNode]       ;
 	get parentNode ()              { return this[_parentNode] || null; }
 	
-	         childNodes                           = new Array;
+	         childNodes                          ;
+	
+	constructor (voidElement          ) {
+		this.childNodes = voidElement ? childNodes : new Array;
+	}
 	
 	get firstChild ()              {
 		return this.childNodes.length ? this.childNodes[0] : null;
@@ -3321,7 +3329,7 @@ class Node {
 		return this.childNodes.length ? this.childNodes[this.childNodes.length-1] : null;
 	}
 	
-	appendChild                           (node   )    {
+	appendChild                              (                         node      )       {
 		if ( node[_parentNode] ) { node[_parentNode] .childNodes.splice(node[_parentNode] .childNodes.indexOf(node), 1); }
 		node[_parentNode] = this;
 		this.childNodes.push(node);
@@ -3352,8 +3360,8 @@ class Element extends Node {
 		this.attributes = attributes;
 	}
 	
-	localName        ;
-	attributes            ;
+	         localName        ;
+	         attributes            ;
 	
 	get outerHTML ()         {
 		let innerHTML         = '';
@@ -3363,7 +3371,7 @@ class Element extends Node {
 			: `<${this.localName}${this.attributes} />`;
 	}
 	
-	* toSource (tab         = '\t')                           {
+	* toSource (               tab         = '\t')                           {
 		if ( this.childNodes.length ) {
 			yield `<${this.localName}${this.attributes}>`;
 			for ( const childNode of this.childNodes ) {
@@ -3381,42 +3389,14 @@ class Element extends Node {
 }
 freeze(Element.prototype);
 
-var create$1 = Object.create;
-const PropertyDescriptor = (
-	/*! j-globals: null.PropertyDescriptor (internal) */
-	function () {
-		function __PURE__ (value_get, set_writable, enumerable, configurable) {
-			var propertyDescriptor = create$1(NULL);
-			if ( set_writable===true || set_writable===false ) {
-				propertyDescriptor.value = value_get;
-				propertyDescriptor.writable = set_writable;
-			}
-			else {
-				propertyDescriptor.get = value_get;
-				propertyDescriptor.set = set_writable;
-			}
-			propertyDescriptor.enumerable = enumerable;
-			propertyDescriptor.configurable = configurable;
-			return propertyDescriptor;
-		}
-		return function PropertyDescriptor (value_get, set_writable, enumerable, configurable) {
-			return /*#__PURE__*/ __PURE__(value_get, set_writable, enumerable, configurable);
-		};
-	}()
-	/*¡ j-globals: null.PropertyDescriptor (internal) */
-);
-
-const childNodesPropertyDescriptor = PropertyDescriptor(/*#__PURE__*/freeze([]), true, false, true);
-
 class CharacterData extends Node {
 	
 	constructor (data        ) {
-		super();
-		defineProperty(this, 'childNodes', childNodesPropertyDescriptor);
+		super(true);
 		this.data = data;
 	}
 	
-	data        ;
+	         data        ;
 	
 }
 
@@ -3434,7 +3414,7 @@ class Text extends CharacterData {
 		return escapeInnerText(this.data);
 	}
 	
-	* toSource ()                           {
+	* toSource (          )                           {
 		yield * this.outerHTML.split('&#10;');
 	}
 	
@@ -3457,7 +3437,7 @@ class Mustache extends Array         {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Mustache'; }
 	
-	constructor (raw        , v_pre         , delimiters_0         = DELIMITERS_0, delimiters_1         = DELIMITERS_1) {
+	constructor (raw        , v_pre         , delimiters_0        , delimiters_1        ) {
 		// Vue 会优先解析 <tag>，而且还看 tagName，然后才是 {{}}，这和流式解析矛盾，因此要求避免任何潜在的视觉歧义
 		// 如果未来发现不会导致解析报错终止的歧义，则要更严格地，在解码前检查确保连“<”都不存在
 		super();
@@ -3524,8 +3504,10 @@ const V_BIND = /^(?:v-bind)?:([^.]*)/;
 let html         = '';
 let index         = 0;
 let partial                     ;
+let delimiters_0         = '';
+let delimiters_1         = '';
 
-function parseAppend (parentNode_xName        , parentNode      , V_PRE         , FOREIGN         )       {
+function parseAppend (parentNode_xName        , parentNode                   , V_PRE         , FOREIGN         )       {
 	for ( ; ; ) {
 		const tag = Tag(html, index, FOREIGN);
 		const { type } = tag;
@@ -3535,7 +3517,7 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 			return;
 		}
 		if ( type===TEXT ) {
-			const data         = new Mustache(tag.raw , V_PRE).toData();
+			const data         = new Mustache(tag.raw , V_PRE, delimiters_0, delimiters_1).toData();
 			data && parentNode.appendChild(new Text(data));
 			index = tag.end;
 			continue;
@@ -3571,6 +3553,7 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 			}
 		}
 		if ( !v_pre ) {
+			if ( 'v-cloak' in attributes ) { throw SyntaxError(`单文件组件模板中不可能用到 v-cloak 指令`); }
 			if ( 'v-for' in attributes ) {
 				const value = attributes['v-for'] ;
 				Params(forAliasRE.exec(value) [0], 1, 3, `“v-for="${value}"”中的“of/in”前`);
@@ -3586,12 +3569,8 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 					else if ( name.startsWith('v-') && !SLOT_DIRECTIVE.test(name) || name.startsWith('@') || name.startsWith('#') ) {
 						throw SyntaxError(`slot 组件上除 v-pre、v-once、v-for、v-if、v-else-if、v-else 和 v-bind 以外的指令都会被忽略，如果想要绑定 ${name} 为作用域属性，请使用 v-bind:${name}`);
 					}
-					if ( name===BAD_SCOPE ) {
-						throw ReferenceError(`使用“${BAD_SCOPE}”作为 scope 无法按预期工作`);
-					}
-					if ( name==='key' || name==='ref' || name==='is' ) {
-						throw SyntaxError(`包括 ${name} 在内的 key、ref、is 在 slot 组件上是无效的，即便使用 v-bind 结果也是一样`);
-					}
+					if ( name===BAD_SCOPE ) { throw ReferenceError(`使用“${BAD_SCOPE}”作为 scope 无法按预期工作`); }
+					if ( name==='key' || name==='ref' || name==='is' ) { throw SyntaxError(`包括 ${name} 在内的 key、ref、is 在 slot 组件上是无效的，即便使用 v-bind 结果也是一样`); }
 				}
 			}
 			else {
@@ -3637,7 +3616,7 @@ function parseAppend (parentNode_xName        , parentNode      , V_PRE         
 			);
 			if ( endTagStart<0 ) { throw SyntaxError(`template 块中存在未关闭的 ${xName} 标签`); }
 			endTagStart += index;
-			const expression         = new Mustache(html.slice(index, endTagStart), v_pre).toExpression();
+			const expression         = new Mustache(html.slice(index, endTagStart), v_pre, delimiters_0, delimiters_1).toExpression();
 			if ( expression ) { attributes['v-text'] = expression; }
 			index = Tag(html, index = endTagStart, foreign).end;
 		}
@@ -3667,10 +3646,12 @@ class Content extends Node {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content'; }
 	
-	constructor (inner        , abbr          ) {
+	constructor (inner        , _         ) {
 		super();
 		if ( inner ) {
-			partial = abbr;
+			delimiters_0 = _.delimiters_0;
+			delimiters_1 = _.delimiters_1;
+			partial = _.abbr;
 			html = inner;
 			index = 0;
 			try { parseAppend('', this, false, false); }
@@ -3687,7 +3668,7 @@ class Content extends Node {
 		}
 	}
 	
-	* toSource (tab         = '\t')                           {
+	* toSource (               tab         = '\t')                           {
 		for ( const childNode of this.childNodes ) {
 			yield * childNode.toSource(tab);
 		}
@@ -3759,6 +3740,24 @@ class Template extends Block {
 			//_this.functional = true;
 		}
 		
+		let notYet = true;
+		for ( const name in attributes ) {
+			if ( name.startsWith('.delimiters:') ) {
+				if ( !notYet ) { throw SyntaxError(`template 功能块只能存在一个 .delimiters:* 格式的属性`); }
+				notYet = false;
+				const delimiters = attributes[name];
+				if ( !delimiters ) { throw SyntaxError(`template 功能块的 ${name} 属性值不得为空`); }
+				const { 0: delimiters_0, 1: delimiters_1, length } = delimiters.split(name.slice(12));
+				if ( !delimiters_0 || !delimiters_1 || length!==2 ) { throw SyntaxError(`template 功能块的 ${name}="${attributes[name]}" 属性存在语法错误`); }
+				_this.delimiters_0 = delimiters_0;
+				_this.delimiters_1 = delimiters_1;
+			}
+		}
+		if ( notYet ) {
+			_this.delimiters_0 = DELIMITERS_0;
+			_this.delimiters_1 = DELIMITERS_1;
+		}
+		
 	}
 	
 	get content ()          {
@@ -3771,8 +3770,10 @@ class Template extends Block {
 			_this.cache = inner;
 		}
 		if ( _this.content && _this.cache===inner ) { return _this.content; }
+		const content = new Content(inner, _this);
+		_this.content = content;
 		_this.cache = inner;
-		return _this.content = new Content(inner, _this.abbr);
+		return content;
 	}
 	
 	get innerHTML ()         {
@@ -3788,6 +3789,7 @@ class Template extends Block {
 	}
 	
 }
+freeze(Template.prototype);
 
 class CustomBlock extends Block {
 	
@@ -3805,6 +3807,7 @@ class CustomBlock extends Block {
 	}
 	
 }
+freeze(CustomBlock.prototype);
 
 const SCRIPT_STYLE_TEMPLATE = /^(?:script|style|template)$/i;
 const NON_EOL = /[^\n]+/g;
@@ -3908,7 +3911,7 @@ let shorthand                     ;
 //let dangerous :WeakSet<Identifier>;
 //const __Proto__ :String = Object('__proto__');
 let _c         ;
-const visitors = NULL$1({
+const visitors = Null({
 	ObjectExpression ({ properties }                  )       {
 		for ( let index         = properties.length; index--; ) {
 			const property = properties[index];
@@ -3936,19 +3939,19 @@ const visitors = NULL$1({
 	},
 });
 
-const parserOptions$1 = NULL$1({
+const parserOptions$1 = Null({
 	ecmaVersion: 5         ,
 	sourceType: 'module'            ,// use strict mode
 	allowReserved: true        ,
 });
-const minifyOptions = NULL$1({
+const minifyOptions = Null({
 	warnings: 'verbose'             ,
-	parse: NULL$1({
+	parse: Null({
 		bare_returns: false         ,
 		html5_comments: false         ,
 		shebang: false         ,
 	}),
-	compress: NULL$1({
+	compress: Null({
 		warnings: true        ,
 		collapse_vars: false         ,
 		pure_getters: false         ,
@@ -4087,7 +4090,7 @@ function * From (tab        , mode                         , styles         , te
 	
 }
 
-const acorn = NULL$1({
+const acorn = Null({
 	ecmaVersion: 5         ,
 	allowReserved: true        ,
 	sourceType: 'module'            ,
@@ -4104,15 +4107,15 @@ const rollupOptions = {
 	treeshake: false         ,
 };
 
-const TRUE = NULL$1({
+const TRUE = Null({
 	format: 'esm'         ,
 	sourcemap: true        ,
 });
-const FALSE = NULL$1({
+const FALSE = Null({
 	format: 'esm'         ,
 	sourcemap: false         ,
 });
-const INLINE = NULL$1({
+const INLINE = Null({
 	format: 'esm'         ,
 	sourcemap: 'inline'            ,
 });
@@ -4136,7 +4139,7 @@ async function one (sfc     , { 'var': x_var, '?j-vue': x_from, 'j-vue': from, m
 		input: '/'+'_'.repeat(main.length),
 		external: (path        )          => path!==x_from,
 		plugins: [
-			NULL$1({
+			Null({
 				resolveId (path        )         {
 					if ( round===1 || path===x_from ) { return path; }
 					throw Error(path);
@@ -4176,7 +4179,7 @@ const OPTIONS = { swappable: false         , stripBOM: true        , startsWithA
 const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 const CR_LF = /\r\n?/g;
 
-class SFC extends NULL$1 {
+class SFC {
 	
 	get [Symbol.toStringTag] () { return 'SFC'; }
 	
@@ -4185,8 +4188,6 @@ class SFC extends NULL$1 {
 	tab        ;
 	
 	constructor (vue                 ) {
-		
-		super();
 		
 		if ( typeof vue==='string' ) {
 			if ( NON_SCALAR.test(vue) ) { throw Error(`.vue 文件所基于的 HTML 字符流中禁止出现落单的代理对码点（U+D800〜U+DFFF）`); }
@@ -4222,7 +4223,7 @@ class SFC extends NULL$1 {
 	template                  = null;
 	         customBlocks                = [];
 	
-	export (mode                                         
+	export (           mode                                         
 		                               
 		                  
 		                 

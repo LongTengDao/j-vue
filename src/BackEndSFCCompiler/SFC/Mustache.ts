@@ -14,14 +14,14 @@ function trimTab (raw :string) :string {
 	return raw.replace(NT, '\n').replace(N, '');
 }
 
-const DELIMITERS_0 = '{{';
-const DELIMITERS_1 = '}}';
+export const DELIMITERS_0 = '{{';
+export const DELIMITERS_1 = '}}';
 
 export default class Mustache extends Array<string> {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Mustache'; }
 	
-	constructor (raw :string, v_pre :boolean, delimiters_0 :string = DELIMITERS_0, delimiters_1 :string = DELIMITERS_1) {
+	constructor (raw :string, v_pre :boolean, delimiters_0 :string, delimiters_1 :string) {
 		// Vue 会优先解析 <tag>，而且还看 tagName，然后才是 {{}}，这和流式解析矛盾，因此要求避免任何潜在的视觉歧义
 		// 如果未来发现不会导致解析报错终止的歧义，则要更严格地，在解码前检查确保连“<”都不存在
 		super();

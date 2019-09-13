@@ -168,10 +168,6 @@ declare module '.null' { export default NULL;
 		constructor? :ValueType,
 	};
 }
-declare module '.null.PropertyDescriptor' { export default PropertyDescriptor;
-	function PropertyDescriptor<V extends any, W extends boolean, E extends boolean, C extends boolean> (value :V, writable :W, enumerable :E, configurable :C) :{ value :V, writable :W, enumerable :E, configurable :C };
-	function PropertyDescriptor<G extends ( () => any ) | undefined, S extends ( (value :any) => void ) | undefined, E extends boolean, C extends boolean> (get :G, set :S, enumerable :E, configurable :C) :{ get :G, set :S, enumerable :E, configurable :C };
-}
 declare module '.null.prototype' { export default NULL;
 	const NULL :object | null;
 }

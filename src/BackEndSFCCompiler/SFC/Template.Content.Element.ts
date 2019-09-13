@@ -23,8 +23,8 @@ export default class Element extends Node {
 		this.attributes = attributes;
 	}
 	
-	localName :string;
-	attributes :Attributes;
+	readonly localName :string;
+	readonly attributes :Attributes;
 	
 	get outerHTML () :string {
 		let innerHTML :string = '';
@@ -34,7 +34,7 @@ export default class Element extends Node {
 			: `<${this.localName}${this.attributes} />`;
 	}
 	
-	* toSource (tab :string = '\t') :IterableIterator<string> {
+	* toSource (this :Element, tab :string = '\t') :IterableIterator<string> {
 		if ( this.childNodes.length ) {
 			yield `<${this.localName}${this.attributes}>`;
 			for ( const childNode of this.childNodes ) {

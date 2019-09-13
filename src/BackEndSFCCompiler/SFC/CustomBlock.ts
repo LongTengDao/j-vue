@@ -1,5 +1,6 @@
-import undefined from '.undefined';
 import SyntaxError from '.SyntaxError';
+import freeze from '.Object.freeze';
+import undefined from '.undefined';
 import RegExp from '.RegExp';
 
 import { ESCAPABLE_RAW_TEXT_ELEMENTS } from 'lib:elements';
@@ -23,5 +24,7 @@ export default class CustomBlock extends Block {
 	}
 	
 };
+
+freeze(CustomBlock.prototype);
 
 type Attributes = import('./Attributes').default;

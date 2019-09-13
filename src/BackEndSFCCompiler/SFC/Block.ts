@@ -1,13 +1,12 @@
 import SyntaxError from '.SyntaxError';
+import freeze from '.Object.freeze';
 import undefined from '.undefined';
-import NULL from '.null';
 
 import { EMPTY } from './Attributes';
 
-export default abstract class Block<BlockName extends string = string> extends NULL {
+export default abstract class Block<BlockName extends string = string> {
 	
 	constructor (blockName :BlockName, attributes :Attributes, emitProperties :boolean, inner :string | undefined, END_TAG :RegExp | null) {
-		super();
 		this.blockName = blockName;
 		this.attributes = attributes;
 		if ( inner===undefined ) {
@@ -30,12 +29,14 @@ export default abstract class Block<BlockName extends string = string> extends N
 		}
 	}
 	
-	blockName :BlockName;
-	attributes :Attributes;
+	readonly blockName :BlockName;
+	readonly attributes :Attributes;
 	inner? :string;
-	src? :string;
-	lang? :string;
+	readonly src? :string;
+	readonly lang? :string;
 	
 };
+
+freeze(Block.prototype);
 
 type Attributes = import('./Attributes').default;

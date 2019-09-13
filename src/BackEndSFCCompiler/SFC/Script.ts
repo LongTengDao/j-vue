@@ -1,6 +1,7 @@
-import undefined from '.undefined';
 import Error from '.Error';
 import TypeError from '.TypeError';
+import freeze from '.Object.freeze';
+import undefined from '.undefined';
 
 import { newRegExp } from '@ltd/j-regexp';
 import { transpileModule } from '../dependencies';
@@ -45,6 +46,8 @@ export default class Script extends Block {
 	}
 	
 };
+
+freeze(Script.prototype);
 
 export type Private = object & {
 	innerJS? :string

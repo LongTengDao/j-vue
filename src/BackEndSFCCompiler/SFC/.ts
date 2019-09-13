@@ -21,7 +21,7 @@ import parseComponent from './parseComponent';
 import From from './From';
 import one from './one';
 
-export default class SFC extends NULL {
+export default class SFC {
 	
 	get [Symbol.toStringTag] () { return 'SFC'; }
 	
@@ -30,8 +30,6 @@ export default class SFC extends NULL {
 	tab :string;
 	
 	constructor (vue :string | Buffer) {
-		
-		super();
 		
 		if ( typeof vue==='string' ) {
 			if ( SURROGATE_IN_INPUT_STREAM.test(vue) ) { throw Error(`.vue 文件所基于的 HTML 字符流中禁止出现落单的代理对码点（U+D800〜U+DFFF）`); }
@@ -67,7 +65,7 @@ export default class SFC extends NULL {
 	template :Template | null = null;
 	readonly customBlocks :CustomBlock[] = [];
 	
-	export (mode :'default' | 'const' | 'var' | 'let' | {
+	export (this :SFC, mode :'default' | 'const' | 'var' | 'let' | {
 		'var' :'const' | 'var' | 'let',
 		'?j-vue'? :string,
 		'j-vue'? :string,

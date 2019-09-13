@@ -3,6 +3,7 @@ import Error from '.Error';
 import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import create from '.Object.create';
+import freeze from '.Object.freeze';
 import NULL from '.null.prototype';
 
 import { newRegExp } from '@ltd/j-regexp';
@@ -13,6 +14,7 @@ import Content from './Template.Content';
 import Element from './Template.Content.Element';
 import { TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE } from './RE';
 import { EMPTY } from './Attributes';
+import { DELIMITERS_0, DELIMITERS_1 } from './Mustache';
 
 const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
@@ -78,6 +80,24 @@ export default class Template extends Block {
 			//_this.functional = true;
 		}
 		
+		let notYet = true;
+		for ( const name in attributes ) {
+			if ( name.startsWith('.delimiters:') ) {
+				if ( !notYet ) { throw SyntaxError(`template 功能块只能存在一个 .delimiters:* 格式的属性`); }
+				notYet = false;
+				const delimiters = attributes[name];
+				if ( !delimiters ) { throw SyntaxError(`template 功能块的 ${name} 属性值不得为空`); }
+				const { 0: delimiters_0, 1: delimiters_1, length } = delimiters.split(name.slice(12));
+				if ( !delimiters_0 || !delimiters_1 || length!==2 ) { throw SyntaxError(`template 功能块的 ${name}="${attributes[name]}" 属性存在语法错误`); }
+				_this.delimiters_0 = delimiters_0;
+				_this.delimiters_1 = delimiters_1;
+			}
+		}
+		if ( notYet ) {
+			_this.delimiters_0 = DELIMITERS_0;
+			_this.delimiters_1 = DELIMITERS_1;
+		}
+		
 	}
 	
 	get content () :Content {
@@ -90,8 +110,10 @@ export default class Template extends Block {
 			_this.cache = inner;
 		}
 		if ( _this.content && _this.cache===inner ) { return _this.content; }
+		const content = new Content(inner, _this);
+		_this.content = content;
 		_this.cache = inner;
-		return _this.content = new Content(inner, _this.abbr);
+		return content;
 	}
 	
 	get innerHTML () :string {
@@ -108,6 +130,8 @@ export default class Template extends Block {
 	
 };
 
+freeze(Template.prototype);
+
 export type Private = object & {
 	abbr? :Partial
 	keys? :string
@@ -115,6 +139,8 @@ export type Private = object & {
 	cache? :string
 	content? :Content
 	innerHTML? :string
+	delimiters_0 :string
+	delimiters_1 :string
 };
 export type Partial = { [xName :string] :{ tagName :string, class :string } };
 type Attributes = import('./Attributes').default;
