@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.7.0';
+const version = '14.7.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3221,6 +3221,7 @@ const _v = /^_[a-z]$/;
 const _x = /^_(?![a-z]$)/;
 const $vvv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*|event|set|forceUpdate)$/;
 const $vv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*)$/;
+const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
 
 const parserOptions = Null({
 	ecmaVersion: 2014     ,
@@ -3424,6 +3425,9 @@ freeze(Text.prototype);
 const NT$1 = /\n\t+/g;
 const N = /^\n|\n$/g;
 
+const OPEN_LIKE = /{(?:{+|$)/g;
+const escapeOpenLike = ($$        ) => `{{'${$$}'}}`;
+
 function trimTab (raw        )         {
 	//Entities.test(raw);// 以后如果要完全剔除“\n”，则需要要先检查解码的正确性，防止“&l”“t;”连起来
 	//return raw.replace(/\n\t*/g, '');
@@ -3462,7 +3466,9 @@ class Mustache extends Array         {
 			const insEnd         = raw.indexOf(delimiters_1, insStart+2);
 			insEnd<0 && throwSyntaxError(`template 块中存在未关闭的插值模板标记“${delimiters_0}”，虽然 Vue 会将其作为普通文字处理，但这种情况本身极有可能是误以为插值语法可以包含标签造成的`);
 			index = insStart+2;
+			index===insEnd && throwSyntaxError(`插值不为空可能导致 Vue 尝试匹配更长的结果而造成错误`);
 			data = unescape(raw.slice(index, insEnd));
+			BAD_INS.test(data) && throwSyntaxError(`插值中存在 CR（后无 LF）、LS（U+2028）、PS（U+2029）会导致 Vue 无法按预期解析`);
 			data.includes(delimiters_1) && throwSyntaxError(`对“${delimiters_1}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码`);
 			this.push(data);
 			index = insEnd+2;
@@ -3483,8 +3489,15 @@ class Mustache extends Array         {
 		let data         = '';
 		let isTemplate          = true;
 		for ( const each of this ) {
-			if ( each ) { data += isTemplate ? each : `${DELIMITERS_0}${each}${DELIMITERS_1}`; }// 以后如果要完全剔除“\n”，则需要更复杂的保全逻辑（{{'{{{'}}、{{{k:{b:'}\}\}'} } }}），避免本来没有连在一起的连到一起
-			isTemplate = !isTemplate;
+			if ( isTemplate ) {
+				data += each.replace(OPEN_LIKE, escapeOpenLike);
+				isTemplate = false;
+			}
+			else {
+				data.includes('}}') && throwSyntaxError(`插值中不能存在原生结束标记“}}”，因为可能出现“{{ {'}}':{ }} }}”的情况，没有简单的方式进行统一转义`);
+				data += `{{${each.endsWith('}') ? each+' ' : each}}}`;
+				isTemplate = true;
+			}
 		}
 		return data;
 	}

@@ -10,3 +10,4 @@ export const _v = /^_[a-z]$/;
 export const _x = /^_(?![a-z]$)/;
 export const $vvv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*|event|set|forceUpdate)$/;
 export const $vv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*)$/;
+export const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
