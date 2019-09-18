@@ -1,10 +1,19 @@
 
+declare module '.Array' { export default Array; }
 declare module '.Array.isArray' { export default isArray;
 	function isArray (value :any) :value is readonly any[];
 }
+declare module '.Array.isArray?=' { export default isArray;
+	function isArray (value :any) :value is readonly any[];
+}
+declare module '.Array.prototype' { export default Array.prototype; }
 declare module '.Array.prototype.slice' { export default Array.prototype.slice; }
 
 declare module '.Function' { export default Function; }
+
+declare module '.Infinity' { export default Infinity; }
+
+declare module '.Math.floor' { export default Math.floor; }
 
 declare module '.Object.assign' { export default Object.assign; }
 declare module '.Object.create' { export default create;
@@ -17,12 +26,19 @@ declare module '.Object.create?=' { export default create;
 declare module '.Object.defineProperty' { export default Object.defineProperty; }
 declare module '.Object.freeze' { export default Object.freeze; }
 declare module '.Object.preventExtensions' { export default Object.preventExtensions; }
+declare module '.Object.prototype' { export default Object.prototype; }
 declare module '.Object.prototype.hasOwnProperty' { export default Object.prototype.hasOwnProperty; }
+declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
 declare module '.Object.seal' { export default Object.seal; }
 
 declare module '.RegExp' { export default RegExp; }
 
+declare module '.String.fromCharCode' { export default String.fromCharCode; }
+
+declare module '.Symbol.species?' { export default Symbol.species; }
 declare module '.Symbol.toStringTag?' { export default Symbol.toStringTag; }
+
+declare module '.class.isPrimitive' { export default class.isPrimitive; }
 
 declare module '.default' { export default Default;
 	function Default<Exports extends Readonly<{ [key :string] :any, default? :Module<Exports> }>> (exports :Exports) :Module<Exports>;
@@ -43,6 +59,8 @@ declare module '.default?=' { export default Default;
 
 declare module '.document' { export default document; }
 declare module '.document.head' { export default document.head; }
+
+declare module '.native' { export default _; const _ :never; }
 
 declare module '.null.PropertyDescriptor' { export default PropertyDescriptor;
 	function PropertyDescriptor<V extends any, W extends boolean, E extends boolean, C extends boolean> (value :V, writable :W, enumerable :E, configurable :C) :{ value :V, writable :W, enumerable :E, configurable :C };

@@ -5,8 +5,8 @@ import Null from '.null';
 
 import { StringLiteral } from '@ltd/j-es';
 
-import { compile, Parser, findGlobals, simple, minify } from '../dependencies';
-import { _x, $vv } from './INTERNAL';
+import { compile, Parser, findGlobals, simple, minify } from '../../dependencies';
+import { _x, $vv } from '../INTERNAL';
 
 const byStart = (a :Identifier, b :Identifier) :number => a.start-b.start;
 
@@ -16,14 +16,14 @@ let shorthand :WeakSet<Identifier>;
 let _c :boolean;
 const visitors = Null({
 	ObjectExpression ({ properties } :ObjectExpression) :void {
-		for ( let index :number = properties.length; index--; ) {
-			const property = properties[index];
+		for ( let index :number = properties.length; index; ) {
+			const property = properties[--index];
 			if ( property.shorthand ) { shorthand.add(property.value); }
 		}
 	},
 	ObjectPattern ({ properties } :ObjectPattern) :void {
-		for ( let index :number = properties.length; index--; ) {
-			const property = properties[index];
+		for ( let index :number = properties.length; index; ) {
+			const property = properties[--index];
 			if ( property.shorthand ) {
 				let { value } = property;
 				if ( value.type==='AssignmentPattern' ) { value = value.left; }

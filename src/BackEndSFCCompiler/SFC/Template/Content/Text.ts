@@ -1,12 +1,13 @@
 import freeze from '.Object.freeze';
 
-import Node from './Template.Content.Node';
-import * as Entities from './Entities';
+import Node from './Node';
+import * as Entities from '../../Entities';
 
 abstract class CharacterData extends Node {
 	
-	constructor (data :string) {
-		super(true);
+	protected constructor (data :string) {
+		super();
+		this.void();
 		this.data = data;
 	}
 	
@@ -28,7 +29,7 @@ export default class Text extends CharacterData {
 		return Entities.escapeInnerText(this.data);
 	}
 	
-	* toSource (this :Text) :IterableIterator<string> {
+	* beautify (this :Text) :IterableIterator<string> {
 		yield * this.outerHTML.split('&#10;');
 	}
 	

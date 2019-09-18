@@ -6,7 +6,7 @@ import { EMPTY } from './Attributes';
 
 export default abstract class Block<BlockName extends string = string> {
 	
-	constructor (blockName :BlockName, attributes :Attributes, emitProperties :boolean, inner :string | undefined, END_TAG :RegExp | null) {
+	protected constructor (blockName :BlockName, attributes :Attributes, emitProperties :boolean, inner :string | undefined, END_TAG :RegExp | null) {
 		this.blockName = blockName;
 		this.attributes = attributes;
 		if ( inner===undefined ) {

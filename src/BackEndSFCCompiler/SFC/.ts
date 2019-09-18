@@ -4,7 +4,6 @@ import SyntaxError from '.SyntaxError';
 import isBuffer from '.Buffer.isBuffer';
 import freeze from '.Object.freeze';
 import undefined from '.undefined';
-import NULL from '.null';
 
 import { StringLiteral } from '@ltd/j-es';
 
@@ -18,7 +17,7 @@ const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 const CR_LF = /\r\n?/g;
 
 import parseComponent from './parseComponent';
-import From from './From';
+import From from './From/';
 import one from './one';
 
 export default class SFC {
@@ -110,6 +109,6 @@ export default class SFC {
 freeze(SFC.prototype);
 
 import Script from './Script';
-import Style from './Style';
-import Template from './Template';
+import Style from './Style/';
+import Template from './Template/';
 import CustomBlock from './CustomBlock';

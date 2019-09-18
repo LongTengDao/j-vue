@@ -3,6 +3,7 @@ declare module '.Array' { export default Array; }
 declare module '.Array.isArray?=' { export default isArray;
 	function isArray (value :any) :value is readonly any[];
 }
+declare module '.Array.prototype' { export default Array.prototype; }
 declare module '.Array.prototype.slice' { export default Array.prototype.slice; }
 
 declare module '.Buffer.from?' { export default Buffer.from; }
@@ -21,6 +22,8 @@ declare module '.Map' { export default constructor;
 	}
 }
 declare module '.Map.prototype.has?' { export default Map.prototype.has; }
+
+declare module '.Math.floor' { export default Math.floor; }
 
 declare module '.Object' { export default O;
 	type O = Object;
@@ -61,6 +64,7 @@ declare module '.Object.is' { export default Object.is; }
 declare module '.Object.keys' { export default keys;
 	function keys<T extends object> (object :T) :Extract<string, keyof T>[];
 }
+declare module '.Object.prototype' { export default Object.prototype; }
 declare module '.Object.prototype.hasOwnProperty' { export default Object.prototype.hasOwnProperty; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
 declare module '.Object.seal' { export default Object.seal; }
@@ -95,8 +99,10 @@ declare module '.Set' { export default constructor;
 }
 declare module '.Set.prototype.has?' { export default Set.prototype.has; }
 
+declare module '.String.fromCharCode' { export default String.fromCharCode; }
 declare module '.String.fromCodePoint' { export default String.fromCodePoint; }
 
+declare module '.Symbol.species?' { export default Symbol.species; }
 declare module '.Symbol.toStringTag?' { export default Symbol.toStringTag; }
 
 declare module '.SyntaxError' { export default SyntaxError; }
@@ -121,6 +127,7 @@ declare module '.class.isDate' { export default isDate;
 declare module '.class.isMap' { export default isMap;
 	function isMap (value :any) :value is Map<any, any>;
 }
+declare module '.class.isPrimitive' { export default class.isPrimitive; }
 declare module '.class.isRegExp' { export default isRegExp;
 	function isRegExp (value :any) :value is RegExp;
 }
@@ -144,6 +151,8 @@ declare module '.default?=' { export default Default;
 	type Callable = (...args :any) => any;
 	type Newable = { new (...args :any) :any };
 }
+
+declare module '.native' { export default _; const _ :never; }
 
 declare module '.null' { export default NULL;
 	const NULL :{

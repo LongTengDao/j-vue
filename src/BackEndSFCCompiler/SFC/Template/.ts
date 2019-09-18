@@ -8,13 +8,13 @@ import NULL from '.null.prototype';
 
 import { newRegExp } from '@ltd/j-regexp';
 
-import _ from './private';
-import Block from './Block';
-import Content from './Template.Content';
-import Element from './Template.Content.Element';
-import { TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE } from './RE';
-import { EMPTY } from './Attributes';
-import { DELIMITERS_0, DELIMITERS_1 } from './Mustache';
+import _ from '../private';
+import Block from '../Block';
+import Content from './Content/';
+import Element from './Content/Element';
+import { TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE } from '../RE';
+import { EMPTY } from '../Attributes';
+import { DELIMITERS_0, DELIMITERS_1 } from '../Mustache';
 
 const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
@@ -52,8 +52,9 @@ export default class Template extends Block {
 			else {
 				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create(NULL) as Partial;
-				for ( const pair of literal.split(';') ) {
-					const tokens = pair.match(TOKENS);
+				const pairs = literal.split(';');
+				for ( let index = pairs.length; index; ) {
+					const tokens = pairs[--index].match(TOKENS);
 					if ( tokens ) {
 						const xName :string = tokens[0];
 						const localName_class :string[] = tokens[1].split('.');
@@ -117,9 +118,9 @@ export default class Template extends Block {
 	}
 	
 	get innerHTML () :string {
-		const { childNodes } = this.content;
-		if ( childNodes.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
-		const rootNode = childNodes[0];
+		const { content } = this;
+		if ( content.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
+		const rootNode = content.firstChild;
 		if ( !( rootNode instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
 		return rootNode.outerHTML;
 	}
@@ -143,4 +144,4 @@ export type Private = object & {
 	delimiters_1 :string
 };
 export type Partial = { [xName :string] :{ tagName :string, class :string } };
-type Attributes = import('./Attributes').default;
+type Attributes = import('../Attributes').default;

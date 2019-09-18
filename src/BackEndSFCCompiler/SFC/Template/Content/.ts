@@ -6,16 +6,16 @@ import RegExp from '.RegExp';
 import { newRegExp } from '@ltd/j-regexp';
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
-import { forAliasRE, slotRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF } from './INTERNAL';
-import { EMPTY } from './Attributes';
-import Params from './Params';
-import Node from './Template.Content.Node';
-import Element from './Template.Content.Element';
-import Text from './Template.Content.Text';
-import Mustache from './Mustache';
-import Snippet from './Snippet';
-import { TAG_EMIT_CHAR } from './RE';
-import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from './Tag';
+import { forAliasRE, slotRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF } from '../../INTERNAL';
+import { EMPTY } from '../../Attributes';
+import Params from '../../Params';
+import Node from './Node';
+import Element from './Element';
+import Text from './Text';
+import Mustache from '../../Mustache';
+import Snippet from '../../Snippet';
+import { TAG_EMIT_CHAR } from '../../RE';
+import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from '../../Tag';
 
 const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
@@ -52,17 +52,18 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 			index = tag.end;
 			continue;
 		}
-		const xName = tag.xName!;
+		const XName = tag.xName!;
 		if ( type===ELEMENT_END ) {
-			if ( xName!==parentNode_xName ) {
+			if ( XName!==parentNode_xName ) {
 				throw SyntaxError(parentNode_xName
-					? `在 ${parentNode_xName} 配对的结束标签出现前，出现了预期外的结束标签“</${xName}>”`
-					: `template 块中凭空出现了“</${xName}>”结束标签`
+					? `在 ${parentNode_xName} 配对的结束标签出现前，出现了预期外的结束标签“</${XName}>”`
+					: `template 块中凭空出现了“</${XName}>”结束标签`
 				);
 			}
 			index = tag.end;
 			return;
 		}
+		const xName = partial && XName in partial ? partial[XName].tagName : XName;
 		if ( xName==='script' ) { throw ReferenceError(`Vue 不允许 template 中存在 script 标签`); }
 		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`); }
 		const attributes :Attributes = tag.attributes!;
@@ -116,7 +117,7 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 				if ( attributes['ref']===BAD_REF ) { throw ReferenceError(`使用“${BAD_REF}”作为 ref 无法按预期工作`); }
 			}
 		}
-		const element :Element = parentNode.appendChild(new Element(xName, attributes, partial));
+		const element :Element = parentNode.appendChild(new Element(xName, attributes, partial && partial[XName]));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName) ) { continue; }
 		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
@@ -163,7 +164,7 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 			);
 		}
 		else {
-			parseAppend(xName, element, v_pre, foreign);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
+			parseAppend(XName, element, v_pre, foreign);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
 		}
 	}
 }
@@ -189,19 +190,19 @@ export default class Content extends Node {
 				partial = undefined;
 				html = '';
 			}
-			if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.childNodes.shift(); }
-			if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.childNodes.pop(); }
+			if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.shift(); }
+			if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.pop(); }
 		}
 	}
 	
-	* toSource (this :Content, tab :string = '\t') :IterableIterator<string> {
-		for ( const childNode of this.childNodes ) {
-			yield * childNode.toSource(tab);
+	* beautify (this :Content, tab :string = '\t') :IterableIterator<string> {
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			yield * this[index].beautify(tab);
 		}
 	}
 	
 };
 
-type Private = import('./Template').Private;
-type Partial = import('./Template').Partial;
-type Attributes = import('./Attributes').default;
+type Private = import('../').Private;
+type Partial = import('../').Partial;
+type Attributes = import('../../Attributes').default;

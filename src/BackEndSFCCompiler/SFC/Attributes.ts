@@ -11,7 +11,7 @@ export const EMPTY :EMPTY = undefined;
 
 export default class Attributes extends NULL<string> {
 	
-	get [Symbol.toStringTag] () { return 'SFC.**.Attributes'; }
+	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	
 	[Symbol.toPrimitive] (this :Attributes, hint :'number') :number;
 	[Symbol.toPrimitive] (this :Attributes, hint :'string' | 'default') :string;

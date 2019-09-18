@@ -6,8 +6,8 @@ import { VOID_ELEMENTS } from 'lib:elements';
 import Snippet from './Snippet';
 import { Tag, ELEMENT_START, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT } from './Tag';
 import Script from './Script';
-import Style from './Style';
-import Template from './Template';
+import Style from './Style/';
+import Template from './Template/';
 import CustomBlock from './CustomBlock';
 
 const SCRIPT_STYLE_TEMPLATE = /^(?:script|style|template)$/i;

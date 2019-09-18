@@ -2,9 +2,9 @@ import undefined from '.undefined';
 
 import { StringLiteral } from '@ltd/j-es';
 
-import KEYS from '../../FrontEndRuntimeDependency/Scope/KEYS';
-import _ from './private';
-import Render from './From.Render';
+import KEYS from '../../../FrontEndRuntimeDependency/Scope/KEYS';
+import _ from '../private';
+import Render from './Render';
 
 const NULo = /^\0[0-7]/;
 const LS_PS = /[\u2028\u2029]/g;
@@ -27,14 +27,13 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 		? `export ${mode} ${scope} = /*#__PURE__*/Scope()`
 		: `export ${mode} ${scope} = /*#__PURE__*/Scope('${( _(template!).keys!.match(KEYS) || [] ).join(',')}')`;
 	for ( const style of styles ) {
-		const { innerCSS } = style;
-		for ( const line of innerCSS.split('\n') ) {
-			yield `${eol}//${line.replace(LS_PS, escape_LS_PS)}`;
+		for ( const line of style.sheet.beautify(tab) ) {
+			yield `${eol}//${tab}${line.replace(LS_PS, escape_LS_PS)}`;
 		}
 		const { media } = _(style);
 		yield media===undefined
-			? `${eol}.$(${StringLiteral(innerCSS)})`
-			: `${eol}.$(${StringLiteral(innerCSS)}, ${StringLiteral(media)})`;
+			? `${eol}.$(${StringLiteral(style.innerCSS)})`
+			: `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(media)})`;
 	}
 	yield `;${eol}`;
 	
@@ -48,11 +47,11 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	yield staticRenderFns.length
 		? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)}${eol}], ${scope});${eol}`
 		: `export ${mode} staticRenderFns = [];${eol}`;
-	for ( const line of template.content.toSource(tab) ) {
+	for ( const line of template.content.beautify(tab) ) {
 		yield `//${tab}${line.replace(LF_LS_PS, escape_LF_LS_PS)}${eol}`;
 	}
 	
 };
 
-type Style = import('./Style').default;
-type Template = import('./Template').default;
+type Style = import('../Style/').default;
+type Template = import('../Template/').default;

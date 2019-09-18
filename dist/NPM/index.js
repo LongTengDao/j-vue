@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.7.1';
+const version = '14.8.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -10,48 +10,17 @@ const undefined$1 = void 0;
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
-const create = Object.create;
-
-const NULL = (
-	/*! j-globals: null.prototype (internal) */
-	Object.create
-		? /*#__PURE__*/ Object.preventExtensions(Object.create(null))
-		: null
-	/*¡ j-globals: null.prototype (internal) */
-);
-
-const Null = (
-	/*! j-globals: null.constructor (internal) */
-	/*#__PURE__*/ function () {
-		var assign = Object.assign || function assign (target, source) {
-			for ( var key in source ) {
-				if ( hasOwnProperty.call(source, key) ) { target[key] = source[key]; }
-			}
-			return target;
-		};
-		var NULL$1 = function (object) {
-			if ( object ) {
-				return /*#__PURE__*/ assign(/*#__PURE__*/ create(NULL), object);
-			}
-		};
-		delete NULL$1.name;
-		//try { delete NULL.length; } catch (error) {}
-		NULL$1.prototype = null;
-		freeze(NULL$1);
-		return NULL$1;
-	}()
-	/*¡ j-globals: null.constructor (internal) */
-);
-
 const toString = Object.prototype.toString;
 
-const isArray = (
+const IsArray = (
 	/*! j-globals: Array.isArray (polyfill) */
 	Array.isArray || function isArray (value) {
 		return /*#__PURE__*/ toString.call(value)==='[object Array]';
 	}
 	/*¡ j-globals: Array.isArray (polyfill) */
 );
+
+const create = Object.create;
 
 const assign = Object.assign;
 
@@ -60,6 +29,14 @@ const toStringTag = typeof Symbol!=='undefined' ? Symbol.toStringTag : undefined
 const defineProperty = Object.defineProperty;
 
 const seal = Object.seal;
+
+const NULL = (
+	/*! j-globals: null.prototype (internal) */
+	Object.create
+		? /*#__PURE__*/ Object.preventExtensions(Object.create(null))
+		: null
+	/*¡ j-globals: null.prototype (internal) */
+);
 
 const Default = (
 	/*! j-globals: default (internal) */
@@ -261,13 +238,11 @@ function buffer2object (buffer        , options          )                      
 
 /*¡ j-utf */
 
-const slice = Array.prototype.slice;
-
 /*!
  * 模块名称：j-regexp
  * 模块功能：可读性更好的正则表达式创建方式。从属于“简计划”。
    　　　　　More readable way for creating RegExp. Belong to "Plan J".
- * 模块版本：6.2.0
+ * 模块版本：6.2.1
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-regexp/issues
@@ -275,34 +250,34 @@ const slice = Array.prototype.slice;
  */
 
 var NT = /[\n\t]/g;
+var SEARCH_ESCAPE = /\\./g;
+function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
+var flags        ;
+var u         ;
 
-function Source (raw                       , substitutions                       )         {
-	var source         = raw[0];
-	for ( var length         = substitutions.length, index         = 0; index<length; ) {
-		var substitution                  = substitutions[index];
-		source += ( substitution instanceof RegExp ? substitution.source : substitution )+raw[++index];
+function RE (template                      ) {
+	var raw = template.raw;
+	var source = raw[0];
+	for ( var length = arguments.length, index = 1; index<length; ++index ) {
+		var values = arguments[index];
+		source += ( values instanceof RegExp ? values.source : values )+raw[index];
 	}
-	return source.replace(NT, '');
+	if ( u ) { source = source.replace(SEARCH_ESCAPE, graveAccentReplacer); }
+	return RegExp(source.replace(NT, ''), flags);
 }
 
-                                                                                                     
-function newRegExp (flags_template                               )                     {
-	return typeof flags_template==='string'
-		? function newRegExp (template                      )         {
-			return new RegExp(
-				/*#__PURE__*/Source(
-					template.raw,
-					/*#__PURE__*/slice.call(arguments, 1)
-				),
-				flags_template
-			);
-		}
-		: new RegExp(
-			/*#__PURE__*/Source(
-				flags_template.raw,
-				/*#__PURE__*/slice.call(arguments, 1)
-			)
-		);
+function newRegExp (template_flags                               )                                                          {
+	if ( typeof template_flags==='object' ) {
+		flags = '';
+		u = false;
+		return /*#__PURE__*/ RE.apply(null, arguments       );
+	}
+	var U = /*#__PURE__*/ template_flags.indexOf('u')>=0;
+	return function newRegExp (template                      )         {
+		flags = template_flags;
+		u = U;
+		return /*#__PURE__*/ RE.apply(null, arguments       );
+	};
 }
 
 /*¡ j-regexp */
@@ -470,17 +445,17 @@ function EOL                     (allow                , disallow_uniform       
 	var DISALLOW        ;
 	var FIRST         ;
 	if ( typeof disallow_uniform==='object' ) {
-		DISALLOW = isArray(disallow_uniform) ? RegExp(groupify(disallow_uniform)) : removeGlobal(disallow_uniform);
+		DISALLOW = IsArray(disallow_uniform) ? RegExp(groupify(disallow_uniform)) : removeGlobal(disallow_uniform);
 		FIRST = !uniform_disallow;
 	}
 	else if ( typeof uniform_disallow==='object' ) {
-		DISALLOW = isArray(uniform_disallow) ? RegExp(groupify(uniform_disallow)) : removeGlobal(uniform_disallow);
+		DISALLOW = IsArray(uniform_disallow) ? RegExp(groupify(uniform_disallow)) : removeGlobal(uniform_disallow);
 		FIRST = !disallow_uniform;
 	}
 	else {
 		FIRST = !( uniform_disallow || disallow_uniform );
 	}
-	var ALLOW = isArray(allow)
+	var ALLOW = IsArray(allow)
 		? FIRST
 			? RegExp(groupify(allow))
 			: RegExp(groupify(allow), 'g')
@@ -584,6 +559,31 @@ const throwSyntaxError = (
 );
 
 const fromCodePoint = String.fromCodePoint;
+
+var create$1 = Object.create;
+
+const Null = (
+	/*! j-globals: null.constructor (internal) */
+	/*#__PURE__*/ function () {
+		var assign = Object.assign || function assign (target, source) {
+			for ( var key in source ) {
+				if ( hasOwnProperty.call(source, key) ) { target[key] = source[key]; }
+			}
+			return target;
+		};
+		var NULL$1 = function (object) {
+			if ( object ) {
+				return /*#__PURE__*/ assign(/*#__PURE__*/ create$1(NULL), object);
+			}
+		};
+		delete NULL$1.name;
+		//try { delete NULL.length; } catch (error) {}
+		NULL$1.prototype = null;
+		freeze(NULL$1);
+		return NULL$1;
+	}()
+	/*¡ j-globals: null.constructor (internal) */
+);
 
 const SEMICOLON_ENTITIES = /*#__PURE__*/ Null({
 	Aacute: 'Á',
@@ -2932,7 +2932,7 @@ const EMPTY        = undefined$1;
 
 class Attributes extends NULL$1         {
 	
-	get [Symbol.toStringTag] () { return 'SFC.**.Attributes'; }
+	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	
 	                                                                
 	                                                                            
@@ -3036,7 +3036,7 @@ const { minify } = require('terser')                           ;
 
 class Block                                    {
 	
-	constructor (blockName           , attributes            , emitProperties         , inner                    , END_TAG               ) {
+	          constructor (blockName           , attributes            , emitProperties         , inner                    , END_TAG               ) {
 		this.blockName = blockName;
 		this.attributes = attributes;
 		if ( inner===undefined$1 ) {
@@ -3094,9 +3094,9 @@ const Private = (
 );
 
 const _ = Private  
-	                                                                
 	                                                                  
-	                                                                      
+	                                                                  
+	                                                                        
   ();
 
 const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
@@ -3138,6 +3138,959 @@ class Script extends Block {
 }
 freeze(Script.prototype);
 
+const {
+	
+	'url': url,
+	'prefix(': prefix_,
+	'domain(': domain_,
+	
+	charset,
+	import: _import,
+	namespace,
+	
+	media,
+	page,
+	'font-face': font_face,
+	keyframes,
+	supports,
+	document,
+	
+} = new Proxy(create(NULL)                                                    , {
+	get (is, keyword        ) {
+		const KEYWORD = keyword.toUpperCase();
+		const { length } = keyword;
+		return is[keyword] = function (text        )          {
+			if ( text.length!==length ) { return false; }
+			let index = 0;
+			do {
+				const char = text[index];
+				if ( char!==keyword[index] && char!==KEYWORD[index] ) { return false; }
+			}
+			while ( ++index<length )
+			return true;
+		};
+	}
+});
+
+const nonASCII = /\x80-\uFFFF/;
+const hex_digit = /[0-9A-Fa-f]/;
+const escape = newRegExp`
+	\\
+	(?:
+		${hex_digit}{1,6}
+		(?:[\t\n\f ]|\r\n?)?
+		|
+		[^\n\f\r]
+	)
+`;
+const ws = /\t\n\f\r /;
+const ident_token = newRegExp`
+	(?:
+		--
+	|
+		-?
+		(?:
+			[A-Z_a-z${nonASCII}]
+		|
+			${escape}
+		)
+	)
+	(?:
+		[\-\w${nonASCII}]
+	|
+		${escape}
+	)*
+`;
+const hash_token = newRegExp`
+	#
+	(?:
+		[\-\w${nonASCII}]
+	|
+		${escape}
+	)*
+`;
+const string_token = newRegExp`
+	"
+	(?:\\(?:\r\n?|.)|[^\\"\n\f\r])*
+	"?
+|
+	'
+	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
+	'?
+`;
+const url_token = newRegExp`
+	[uU][rR][lL]
+	(?:
+		\(
+		[${ws}]*
+		(?![${ws}"'])
+		(?:
+			${escape}
+		|
+			[^)]
+		)*
+		\)?
+	|
+		-[pP][rR][eE][fF][iI][xX]
+		\(
+		(?!
+			[${ws}]*
+			(?:
+				${string_token}
+				[${ws}]*
+			)?
+			\)
+		)
+	)
+|
+	[dD][oO][mM][aA][iI][nN]
+	\(
+	(?!
+		[${ws}]*
+		(?:
+			[a-zA-Z\d\-.:]*
+		|
+			${string_token}
+		)
+		[${ws}]*
+		\)
+	)
+`;
+const number_token = newRegExp`
+	[-+]?
+	(?:\d+(?:\.\d+|\d+)|\.\d+)
+	(?:[eE][+-]?\d+)?
+`;
+const CDO_token = '<!--';
+const CDC_token = '-->';
+
+const TOKEN = newRegExp('gs')`
+	(?:
+		[${ws}]+
+	|
+		/\*.*?\*/
+	)+
+|
+	/\*.*
+|
+	${url_token}
+	|
+	${ident_token}\(?
+	|
+	@${ident_token}
+|
+	${number_token}(?:${ident_token}|%)?
+|
+	${hash_token}
+|
+	${string_token}
+|
+	${CDO_token}
+|
+	${CDC_token}
+|
+	.
+`;
+
+const URL_REST = newRegExp`
+	^
+	[${ws}]*
+	(?:${escape}|[${ws}"'()\\])*
+	[${ws}]*
+	\)
+	$
+`;
+const NUMBER = /[\d.]/;
+const COMMENT$1 = /\/\*.*?\*\//g;
+
+const comment = 'c';
+const whitespace = 'w';
+const ident = 'i';
+const at_keyword = 'a';
+const function$ = 'f';
+const hash = 'h';
+const string = 's';
+const number = 'n';
+const dimension = 'd';
+const percentage = 'p';
+const url$1 = 'u';
+
+function Numeric (literal        ) {
+	const rest = literal.replace(number_token, '');
+	return rest ? rest==='%' ? percentage : dimension : number;
+}
+
+                                                                                       
+	                                                                                   
+	                                                                                    
+function Type (literal        )       {
+	switch ( literal[0] ) {
+		case '\t':
+		case '\n':
+		case '\f':
+		case '\r':
+		case ' ':
+			return whitespace;
+		case '!':
+			return literal       ;
+		case '"':
+			if ( literal.endsWith('"') && literal!=='"' ) { return string; }
+			throw SyntaxError(`存在未闭合的字符串`);
+		case '#':
+			return hash;
+		case '$':
+		case '%':
+		case '&':
+			return literal                   ;
+		case '\'':
+			if ( literal.endsWith('\'') && literal!=='\'' ) { return string; }
+			throw SyntaxError(`存在未闭合的字符串`);
+		case '(':
+		case ')':
+		case '*':
+			return literal                   ;
+		case '+':
+			return literal==='+' ? literal : Numeric(literal);
+		case ',':
+			return literal       ;
+		case '-':
+			if ( literal==='-' ) { return literal; }
+			if ( NUMBER.test(literal[1]) ) { return Numeric(literal); }
+			if ( literal==='-->' ) { throw SyntaxError(`CSS 中不需要 -->`); }
+			break;
+		case '.':
+			return literal==='.' ? literal : Numeric(literal);
+		case '/':
+			if ( literal==='/' ) { return literal; }
+			literal = literal.replace(COMMENT$1, '');
+			if ( literal ) {
+				if ( literal.startsWith('/') ) { throw SyntaxError(`存在未闭合的注释`); }
+				return whitespace;
+			}
+			return comment;
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			return Numeric(literal);
+		case ':':
+		case ';':
+			return literal             ;
+		case '<':
+			if ( literal==='<' ) { return literal; }
+			throw SyntaxError(`CSS 中不需要 <!--`);
+		case '=':
+		case '>':
+		case '?':
+			return literal                   ;
+		case '@':
+			return literal==='@' ? literal : at_keyword;
+		case '[':
+			return literal       ;
+		case '\\':
+			if ( literal==='\\' ) { throw SyntaxError(`存在残破的转义`); }
+			break;
+		case ']':
+		case '^':
+		case '`':
+		case '{':
+		case '|':
+		case '}':
+		case '~':
+			return literal                                           ;
+		case 'u':
+		case 'U':
+			if ( literal.length>3 && url(literal.slice(0, 3)) ) {
+				const char = literal[3];
+				if ( char==='(' ) {
+					if ( URL_REST.test(literal.slice(4)) ) { return url$1; }
+					throw SyntaxError(`url(bad)`);
+				}
+				else if ( char==='-' && prefix_(literal.slice(4)) ) {
+					throw SyntaxError(`url-prefix(bad)`);
+				}
+			}
+			break;
+		case 'd':
+		case 'D':
+			if ( domain_(literal) ) { throw SyntaxError(`domain(bad)`); }
+			break;
+	}
+	return literal.replace(ident_token, '') ? function$ : ident;
+}
+
+let literal        ;
+let type      ;
+
+function parse (sheet       , source        ) {
+	if ( !source ) { return sheet; }
+	const literals           = source.match(TOKEN) ;
+	let layer        = sheet;
+	const { length } = literals;
+	let index = 0;
+	do {
+		type = Type(literal = literals[index]);
+		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了上下文不允许的内容 ${literal}：\n${literals.slice(0, index).join('')}`);
+	}
+	while ( ++index<length )
+	return layer;
+}
+
+function clear () { literal = ''; }
+
+class TypeSelector {
+	
+	         parent                                  ;
+	cssText        ;
+	
+	constructor (parent                                  , literal        ) {
+		this.parent = parent;
+		this.cssText = literal;
+	}
+	
+}
+freeze(TypeSelector.prototype);
+
+class SquareBracketBlock extends Array         {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.SquareBracketBlock'; }
+	
+	         parent                                  ;
+	
+	constructor (parent                                  ) {
+		super();
+		this.parent = parent;
+	}
+	
+	appendToken (                        )                                                               {
+		switch ( type ) {
+			case ']':
+				const { length } = this;
+				if ( length ) {
+					const last = this[length-1];
+					if ( last===' ' || last==='/**/' ) { this.length = length-1; }
+				}
+				return this.parent;
+			case whitespace:
+				this.length && this.push(' ');
+				return this;
+			case ident:
+			case '~':
+			case '|':
+			case '^':
+			case '$':
+			case '*':
+			case '=':
+			case string:
+				this.push(literal);
+				return this;
+			case comment:
+				this.length && this.push('/**/');
+				return this;
+		}
+	}
+	
+	get cssText ()         { return `[${this.join('')}]`; }
+	
+}
+freeze(SquareBracketBlock.prototype);
+
+class ParenthesisBlock extends Array                                                                {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.ParenthesisBlock'; }
+	
+	         parent                                                         ;
+	         name        ;
+	
+	constructor (parent                                                         , name        ) {
+		super();
+		this.parent = parent;
+		this.name = name;
+	}
+	
+	appendToken (                      )                                                                                      {
+		switch ( type ) {
+			case whitespace:
+				this.push(' ');
+				return this;
+			case function$:
+			case '(':
+				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
+				this.push(parenthesisBlock);
+				return parenthesisBlock;
+			case '[':
+				const squareBracketBlock = new SquareBracketBlock(this);
+				this.push(squareBracketBlock);
+				return squareBracketBlock;
+			case ')':
+				return this.parent;
+			case comment:
+				this.push('/**/');
+				return this;
+			case ']':
+			case '{':
+			case '}':
+			case '`':
+			case '^':
+			case '@':
+			case '<':
+			case '=':
+			case ';':
+			case '&':
+			case '%':
+			case at_keyword:
+				return;
+		}
+		this.push(literal);
+		return this;
+	}
+	
+	get cssText ()         {
+		let cssText = '';
+		for ( let index = this.length; index; ) {
+			const child = this[--index];
+			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
+		}
+		return `${this.name}(${cssText})`;
+	}
+	
+}
+freeze(ParenthesisBlock.prototype);
+
+class Declaration extends Array                            {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.Declaration'; }
+	
+	         parent                                ;
+	         name        ;
+	colon          = false;
+	semicolon          = false;
+	
+	constructor (parent                                , name        ) {
+		super();
+		this.parent = parent;
+		this.name = name;
+	}
+	
+	appendToken (                 )                                                                                                 {
+		if ( this.colon ) {
+			switch ( type ) {
+				case ';':
+					this.semicolon = true;
+					return this.parent;
+				case function$:
+					const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
+					this.push(parenthesisBlock);
+					return parenthesisBlock;
+				case '}':
+					return this.parent.appendToken()                           ;
+				case '?':
+				case '/':
+				case '-':
+				case '+':
+				case ',':
+				case '*':
+				case '!':
+				case comment:
+				case whitespace:
+				case ident:
+				case hash:
+				case string:
+				case number:
+				case dimension:
+				case percentage:
+				case url$1:
+					this.push(literal);
+					return this;
+			}
+		}
+		else {
+			if ( type===':' ) {
+				this.colon = true;
+				return this;
+			}
+			if ( type===whitespace || type===comment ) { return this; }
+		}
+	}
+	
+	get cssText ()         {
+		let cssText = '';
+		for ( let index = this.length; index; ) {
+			const child = this[--index];
+			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
+		}
+		return `${this.name}:${cssText};`;
+	}
+	
+	* beautify ()                           {
+		let cssText = '';
+		for ( let index = this.length; index; ) {
+			const child = this[--index];
+			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
+		}
+		return `${this.name}:${cssText.startsWith(' ') ? '' : ' '}${cssText};`;
+	}
+	
+}
+freeze(Declaration.prototype);
+
+class Declarations extends Array              {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.QualifiedRule.Declarations'; }
+	
+	         parent               ;
+	
+	constructor (parent               ) {
+		super();
+		this.parent = parent;
+	}
+	
+	appendToken (                  )                                                              {
+		switch ( type ) {
+			case whitespace:
+			case comment:
+				return this;
+			case ident:
+				const declaration = new Declaration(this, literal);
+				this.push(declaration);
+				return declaration;
+			case '}':
+				return this.parent.parent;
+		}
+	}
+	
+}
+
+freeze(Declarations.prototype);
+
+function replaceTypeSelector (func                  , typeSelectors                ) {
+	const { length } = func;
+	let index = 0;
+	let is = true;
+	while ( index<length ) {
+		const item = func[index];
+		if ( item===':' || item==='.' ) { is = false; }
+		else {
+			if ( item instanceof ParenthesisBlock ) { replaceTypeSelector(item, typeSelectors); }
+			else if ( is && typeof item==='string' && / /.test(item) ) { typeSelectors.push(func[index] = new TypeSelector(func, item)); }
+			is = true;
+		}
+		++index;
+	}
+}
+
+class QualifiedRule extends Array                                                                {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.QualifiedRule'; }
+	
+	         parent                         ;
+	         block              ;
+	        not                 = '';
+	        func                   ;
+	         typeSelectors                 = [];
+	
+	constructor (parent                         ) {
+		super();
+		this.parent = parent;
+		this.block = new Declarations(this);
+	}
+	
+	appendToken (                   )                                                                              {
+		const { func } = this;
+		if ( func ) {
+			replaceTypeSelector(func, this.typeSelectors);
+			this.func = undefined$1;
+		}
+		switch ( type ) {
+			case whitespace:
+				this.push(' ');
+				this.not = '';
+				return this;
+			case '.':
+			case ':':
+				this.push(literal);
+				this.not = type;
+				return this;
+			case ident:
+				if ( this.not ) {
+					this.push(literal);
+					this.not = '';
+				}
+				else {
+					const typeSelector = new TypeSelector(this, literal);
+					this.typeSelectors.push(typeSelector);
+					this.push(typeSelector);
+				}
+				return this;
+			case ',':
+			case '*':
+			case '+':
+			case '>':
+			case '~':
+			case '|':
+			case '!':
+			case '$':
+			case '/':
+			case hash:
+			case percentage:// not style rule
+				this.push(literal);
+				this.not = '';
+				return this;
+			case '[':
+				const squareBracketBlock = new SquareBracketBlock(this);
+				this.push(squareBracketBlock);
+				this.not = '';
+				return squareBracketBlock;
+			case function$:
+				if ( this.not!==':' ) { return; }
+				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
+				this.push(parenthesisBlock);
+				this.func = parenthesisBlock;
+				this.not = '';
+				return parenthesisBlock;
+			case '{':
+				return this.block;
+			case comment:
+				this.push('/**/');
+				return this;
+		}
+	}
+	
+	get selectorText ()         {
+		let selectorText = '';
+		for ( let index = this.length; index; ) {
+			const child = this[--index];
+			selectorText = ( typeof child==='string' ? child : child.cssText )+selectorText;
+		}
+		return selectorText;
+	}
+	
+	get cssText ()         {
+		const { block } = this;
+		let blockText = '';
+		for ( let index = block.length; index; ) {
+			blockText = block[--index].cssText+blockText;
+		}
+		return `${this.selectorText}{${blockText}}`;
+	}
+	
+	* beautify (                   )                           {
+		const { block } = this;
+		const { length } = block;
+		if ( length ) {
+			const blockTexts = [];
+			for ( let index = 0; index<length; ++index ) {
+				blockTexts.push(block[index].cssText);
+			}
+			const blockText = blockTexts.join(' ');
+			const { selectorText } = this;
+			yield `${selectorText}${selectorText.endsWith(' ') ? '' : ' '}{${blockText.startsWith(' ') ? '' : ' '}${blockText}${blockText.endsWith(' ') ? '' : ' '}}`;
+		}
+	}
+	
+}
+freeze(QualifiedRule.prototype);
+
+class Multi extends Array {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.Multi'; }
+	
+	         parent                 ;
+	declaration             ;
+	styleRule               ;
+	d     ;
+	sr     ;
+	
+	constructor (parent                 ) {
+		super();
+		this.parent = parent;
+		this.d = this.declaration = new Declaration(parent, literal);
+		this.sr = ( this.styleRule = new QualifiedRule(parent) ).appendToken();// may not style rule
+	}
+	
+	appendToken (           ) {
+		const d = this.d.appendToken();
+		const sr = this.sr.appendToken();
+		if ( d && sr ) {
+			this.d = d;
+			this.sr = sr;
+			return this;
+		}
+		if ( d ) {
+			this.parent.push(this.declaration);
+			return d;
+		}
+		if ( sr ) {
+			this.parent.push(this.styleRule);
+			return sr;
+		}
+	}
+	
+}
+
+freeze(Multi.prototype);
+
+class DeclarationList extends Array                                       {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.DeclarationList'; }
+	
+	         parent        ;
+	                 noAt          = false;
+	                 noQualified          = false;
+	                 noDeclaration          = false;
+	
+	constructor (parent        ) {
+		super();
+		this.parent = parent;
+		const parent_parent = parent.parent;
+		if ( parent_parent instanceof DeclarationList && page(parent_parent.parent.name) ) {
+			this.noAt = true;
+			this.noQualified = true;
+			return;
+		}
+		const { name } = parent;
+		if ( media(name) ) { this.noDeclaration = true; }
+		else if ( keyframes(name) ) {
+			this.noAt = true;
+			this.noDeclaration = true;
+		}
+		else if ( font_face(name) ) {
+			this.noAt = true;
+			this.noQualified = true;
+		}
+		else if ( page(name) ) { this.noQualified = true; }
+		else if ( supports(name) || document(name) ) { this.noDeclaration = true; }
+	}
+	
+	appendToken (                     )                                                                                                     {
+		switch ( type ) {
+			case whitespace:
+			case comment:
+				return this;
+			case at_keyword:
+				if ( this.noAt ) { return; }
+				const atRule = new AtRule(this, literal.slice(1));
+				this.push(atRule);
+				return atRule;
+			case ident:
+				if ( this.noDeclaration ) {
+					if ( this.noQualified ) { return; }
+					const styleRule = new QualifiedRule(this);// may not style rule
+					this.push(styleRule);
+					return styleRule.appendToken()                 ;
+				}
+				if ( this.noQualified ) {
+					const declaration = new Declaration(this, literal);
+					this.push(declaration);
+					return declaration;
+				}
+				return new Multi(this);
+			case '*':
+			case '.':
+			case ':':
+			case '[':
+			case '|':
+			case '$':
+			case hash:
+			case percentage:// not style rule
+				if ( this.noQualified ) { return; }
+				const styleRule = new QualifiedRule(this);
+				this.push(styleRule);
+				return styleRule.appendToken()                                      ;
+			case '}':
+				return this.parent.parent;
+		}
+	}
+	
+}
+
+freeze(DeclarationList.prototype);
+
+class AtRule extends Array                                                 {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule'; }
+	
+	         parent                         ;
+	         name        ;
+	block                  ;
+	semicolon          = false;
+	
+	constructor (parent                         , name        ) {
+		super();
+		this.parent = parent;
+		this.name = name;
+	}
+	
+	appendToken (            )                                                                                  {
+		switch ( type ) {
+			case whitespace:
+				this.push(' ');
+				return this;
+			case function$:
+			case '(':
+				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
+				this.push(parenthesisBlock);
+				return parenthesisBlock;
+			case ident:
+			case hash:
+			case string:
+			case url$1:
+			case ':':
+				this.push(literal);
+				return this;
+			case '{': {
+				const { name } = this;
+				if ( charset(name) || _import(name) || namespace(name) ) { return; }
+				return this.block = new DeclarationList(this);
+			}
+			case ';': {
+				const { name } = this;
+				if ( media(name) || page(name) || font_face(name) || keyframes(name) || supports(name) || document(name) ) { return; }
+				this.semicolon = true;
+				return this.parent;
+			}
+			case '}':
+				const { name } = this;
+				if ( media(name) || page(name) || font_face(name) || keyframes(name) || supports(name) || document(name) ) { return; }
+				return this.parent.appendToken()                           ;
+			case comment:
+				this.push('/**/');
+				return this;
+		}
+	}
+	
+	get cssText ()         {
+		let atText = '';
+		for ( let index = this.length; index; ) {
+			const child = this[--index];
+			atText = ( typeof child==='string' ? child : child.cssText )+atText;
+		}
+		const { block } = this;
+		if ( block ) {
+			let blockText = '';
+			for ( let index = block.length; index; ) {
+				blockText = block[--index].cssText+blockText;
+			}
+			return `@${this.name}${atText}{${blockText}}`;
+		}
+		else {
+			return `@${this.name}${atText};`;
+		}
+	}
+	
+	* beautify (              tab         = '\t')                           {
+		let atText = '';
+		for ( let index = this.length; index; ) {
+			const child = this[--index];
+			atText = ( typeof child==='string' ? child : child.cssText )+atText;
+		}
+		const { block } = this;
+		if ( block ) {
+			yield `@${this.name}${atText}{`;
+			for ( let index = 0, { length } = block; index<length; ++index ) {
+				for ( const line of block[index].beautify(tab) ) {
+					yield tab+line;
+				}
+			}
+			yield `}`;
+		}
+		else {
+			yield `@${this.name}${atText};`;
+		}
+	}
+	
+}
+freeze(AtRule.prototype);
+
+const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
+const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
+const CHANGES = /[\x80-\x9F]/;
+
+function replaceComponentName (rules                                            , abbr          ) {
+	for ( let index = rules.length; index; ) {
+		const rule = rules[--index];
+		if ( rule instanceof QualifiedRule ) {
+			const { typeSelectors } = rule;
+			for ( let index = typeSelectors.length; index; ) {
+				const typeSelector = typeSelectors[--index];
+				typeSelector.cssText = abbr(typeSelector.cssText);
+			}
+		}
+		else if ( rule instanceof AtRule ) {
+			const { block } = rule;
+			if ( block && !keyframes(rule.name) ) { replaceComponentName(block, abbr); }
+		}
+	}
+}
+
+class Sheet extends Array                         {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet'; }
+	
+	constructor (inner        , abbr           ) {
+		if ( !inner ) { return; }
+		if ( inner.includes('\uFEFF') ) { throw SyntaxError(`不知如何处理 CSS 中的 BOM 字面量`); }
+		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 U+00 或残破的代理对码点字面量会被替换为 U+FFFD，请避免使用`); }
+		if ( NON_PRINTABLE.test(inner) ) { throw SyntaxError(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
+		if ( CHANGES.test(inner) ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 CSS 3 之间表现不同，请避免使用`); }
+		super();
+		let layer;
+		try { layer = parse(this, inner); }
+		finally { clear(); }
+		if ( layer!==this ) {
+			const { parent } = layer;
+			if ( parent===this && parent instanceof AtRule && !parent.block ) ;
+			else { throw SyntaxError(`CSS 结构不完整`); }
+		}
+		abbr && replaceComponentName(this, abbr);
+	}
+	
+	appendToken (           )                                                                           {
+		switch ( type ) {
+			case whitespace:
+			case comment:
+				return this;
+			case at_keyword:
+				const atRule = new AtRule(this, literal.slice(1));
+				this.push(atRule);
+				return atRule;
+			case ident:
+			case '*':
+			case '.':
+			case ':':
+			case '[':
+			case '|':
+			case '$':
+			case hash:
+				const styleRule = new QualifiedRule(this);
+				this.push(styleRule);
+				return styleRule.appendToken()                                    ;
+		}
+	}
+	
+	get cssText ()         {
+		let cssText = '';
+		for ( let index = this.length; index; ) {
+			cssText = this[--index].cssText+cssText;
+		}
+		return cssText;
+	}
+	
+	* beautify (             tab         = '\t')                           {
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			yield * this[index].beautify(tab);
+		}
+	}
+	
+}
+freeze(Sheet.prototype);
+
 const SELECTOR = newRegExp`^
 	\s*(?:
 		${AliasName}\s*
@@ -3152,7 +4105,7 @@ const STYLE_END_TAG = newRegExp('i')`</style${TAG_EMIT_CHAR}`;
 
 const CSS = /^\s*(?:text\/)?CSS\s*$/i;
 
-const NAME_IN_CSS = /(?<=[\s,>}{\](+~]|\*\/|^)(?:[A-Z][\w-]*)+(?=[\s,>{}[)+~#:.]|\/\*|$)/g;
+const defaultSelector = (componentName        )         => `.__${componentName}__`;
 
 class Style extends Block          {
 	
@@ -3166,7 +4119,7 @@ class Style extends Block          {
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
-			if ( literal===EMPTY ) { throw SyntaxError(`style 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
+			if ( literal===EMPTY ) { _this.abbr = defaultSelector; }
 			else {
 				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create(NULL)            ;
@@ -3174,12 +4127,13 @@ class Style extends Block          {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {
 						const componentName         = tokens[0];
-						abbr[componentName] = tokens.length>1
-							? tokens[1]
-							: `.__${componentName}__`;
+						abbr[componentName] = tokens.length>1 ? tokens[1] : defaultSelector(componentName);
 					}
 				}
-				_this.abbr = abbr;
+				_this.abbr = (componentName        )         => {
+					if ( componentName in abbr ) { return abbr[componentName]; }
+					throw Error(`style 块中存在被遗漏的伪标签名 ${componentName} 选择器`);
+				};
 			}
 		}
 		
@@ -3190,16 +4144,23 @@ class Style extends Block          {
 		
 	}
 	
-	get innerCSS ()         {
-		let inner                     = _(this).innerCSS;
+	get sheet ()        {
+		const _this          = _(this);
+		let inner                     = _this.innerCSS;
 		if ( inner===undefined$1 ) {
 			inner = this.inner;
 			if ( typeof inner!=='string' ) { throw Error(`自闭合的 style 功能块元素必须自行根据 src 属性加载 inner 值`); }
 			if ( this.lang && !CSS.test(this.lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
 		}
-		const { abbr } = _(this);
-		if ( abbr ) { inner = inner.replace(NAME_IN_CSS, (componentName        )         => componentName in abbr ? abbr[componentName] : componentName); }
-		return inner;
+		if ( _this.sheet && _this.cache===inner ) { return _this.sheet; }
+		const sheet = new Sheet(inner, _this.abbr);
+		_this.sheet = sheet;
+		_this.cache = inner;
+		return sheet;
+	}
+	
+	get innerCSS ()         {
+		return this.sheet.cssText;
 	}
 	set innerCSS (value        ) {
 		if ( typeof           value!=='string' ) { throw TypeError(`innerCSS 只能被赋值字符串`); }
@@ -3307,33 +4268,25 @@ function Pattern (node         )       {
 
 const _parentNode                = Symbol('#parentNode');
 
-const childNodes = /*#__PURE__*/freeze([])      ;
+const VOID                             = Null({ value: 0, writable: false, enumerable: false, configurable: false });
 
-class Node {
+class Node extends Array                 {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Node'; }
 	
 	[_parentNode]       ;
 	get parentNode ()              { return this[_parentNode] || null; }
 	
-	         childNodes                          ;
+	void () { defineProperty(this, 'length', VOID); }
 	
-	constructor (voidElement          ) {
-		this.childNodes = voidElement ? childNodes : new Array;
-	}
-	
-	get firstChild ()              {
-		return this.childNodes.length ? this.childNodes[0] : null;
-	}
-	
-	get lastChild ()              {
-		return this.childNodes.length ? this.childNodes[this.childNodes.length-1] : null;
-	}
+	get childNodes ()                           { return this; }
+	get firstChild ()              { return this.length ? this[0] : null; }
+	get lastChild ()              { return this.length ? this[this.length-1] : null; }
 	
 	appendChild                              (                         node      )       {
-		if ( node[_parentNode] ) { node[_parentNode] .childNodes.splice(node[_parentNode] .childNodes.indexOf(node), 1); }
+		if ( node[_parentNode] ) { node[_parentNode] .splice(node[_parentNode] .indexOf(node), 1); }
 		node[_parentNode] = this;
-		this.childNodes.push(node);
+		this.push(node);
 		return node;
 	}
 	
@@ -3344,10 +4297,10 @@ class Element extends Node {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
-	constructor (localName        , attributes            , partial          ) {
+	constructor (localName        , attributes            , partial                    ) {
 		super();
-		if ( partial && localName in partial ) {
-			const { tagName, class: classNames } = partial[localName];
+		if ( partial ) {
+			const classNames = partial.class;
 			if ( classNames ) {
 				attributes.class = 'class' in attributes
 					? attributes.class
@@ -3355,7 +4308,6 @@ class Element extends Node {
 						: classNames
 					: classNames;
 			}
-			localName = tagName;
 		}
 		this.localName = localName;
 		this.attributes = attributes;
@@ -3366,17 +4318,19 @@ class Element extends Node {
 	
 	get outerHTML ()         {
 		let innerHTML         = '';
-		for ( const childNode of this.childNodes ) { innerHTML += childNode.outerHTML; }
+		for ( let index = this.length; index; ) {
+			innerHTML = this[--index].outerHTML+innerHTML;
+		}
 		return innerHTML
 			? `<${this.localName}${this.attributes}>${innerHTML}</${this.localName}>`
 			: `<${this.localName}${this.attributes} />`;
 	}
 	
-	* toSource (               tab         = '\t')                           {
-		if ( this.childNodes.length ) {
+	* beautify (               tab         = '\t')                           {
+		if ( this.length ) {
 			yield `<${this.localName}${this.attributes}>`;
-			for ( const childNode of this.childNodes ) {
-				for ( const line of childNode.toSource(tab) ) {
+			for ( let index = 0, { length } = this; index<length; ++index ) {
+				for ( const line of this[index].beautify(tab) ) {
 					yield `${tab}${line}`;
 				}
 			}
@@ -3392,8 +4346,9 @@ freeze(Element.prototype);
 
 class CharacterData extends Node {
 	
-	constructor (data        ) {
-		super(true);
+	          constructor (data        ) {
+		super();
+		this.void();
 		this.data = data;
 	}
 	
@@ -3415,7 +4370,7 @@ class Text extends CharacterData {
 		return escapeInnerText(this.data);
 	}
 	
-	* toSource (          )                           {
+	* beautify (          )                           {
 		yield * this.outerHTML.split('&#10;');
 	}
 	
@@ -3539,17 +4494,18 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 			index = tag.end;
 			continue;
 		}
-		const xName = tag.xName ;
+		const XName = tag.xName ;
 		if ( type===ELEMENT_END ) {
-			if ( xName!==parentNode_xName ) {
+			if ( XName!==parentNode_xName ) {
 				throw SyntaxError(parentNode_xName
-					? `在 ${parentNode_xName} 配对的结束标签出现前，出现了预期外的结束标签“</${xName}>”`
-					: `template 块中凭空出现了“</${xName}>”结束标签`
+					? `在 ${parentNode_xName} 配对的结束标签出现前，出现了预期外的结束标签“</${XName}>”`
+					: `template 块中凭空出现了“</${XName}>”结束标签`
 				);
 			}
 			index = tag.end;
 			return;
 		}
+		const xName = partial && XName in partial ? partial[XName].tagName : XName;
 		if ( xName==='script' ) { throw ReferenceError(`Vue 不允许 template 中存在 script 标签`); }
 		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`); }
 		const attributes             = tag.attributes ;
@@ -3603,7 +4559,7 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 				if ( attributes['ref']===BAD_REF ) { throw ReferenceError(`使用“${BAD_REF}”作为 ref 无法按预期工作`); }
 			}
 		}
-		const element          = parentNode.appendChild(new Element(xName, attributes, partial));
+		const element          = parentNode.appendChild(new Element(xName, attributes, partial && partial[XName]));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName) ) { continue; }
 		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
@@ -3650,7 +4606,7 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 			);
 		}
 		else {
-			parseAppend(xName, element, v_pre, foreign);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
+			parseAppend(XName, element, v_pre, foreign);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
 		}
 	}
 }
@@ -3676,14 +4632,14 @@ class Content extends Node {
 				partial = undefined$1;
 				html = '';
 			}
-			if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.childNodes.shift(); }
-			if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.childNodes.pop(); }
+			if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.shift(); }
+			if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.pop(); }
 		}
 	}
 	
-	* toSource (               tab         = '\t')                           {
-		for ( const childNode of this.childNodes ) {
-			yield * childNode.toSource(tab);
+	* beautify (               tab         = '\t')                           {
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			yield * this[index].beautify(tab);
 		}
 	}
 	
@@ -3725,8 +4681,9 @@ class Template extends Block {
 			else {
 				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create(NULL)           ;
-				for ( const pair of literal.split(';') ) {
-					const tokens = pair.match(TOKENS);
+				const pairs = literal.split(';');
+				for ( let index = pairs.length; index; ) {
+					const tokens = pairs[--index].match(TOKENS);
 					if ( tokens ) {
 						const xName         = tokens[0];
 						const localName_class           = tokens[1].split('.');
@@ -3790,9 +4747,9 @@ class Template extends Block {
 	}
 	
 	get innerHTML ()         {
-		const { childNodes } = this.content;
-		if ( childNodes.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
-		const rootNode = childNodes[0];
+		const { content } = this;
+		if ( content.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
+		const rootNode = content.firstChild;
 		if ( !( rootNode instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
 		return rootNode.outerHTML;
 	}
@@ -3926,14 +4883,14 @@ let shorthand                     ;
 let _c         ;
 const visitors = Null({
 	ObjectExpression ({ properties }                  )       {
-		for ( let index         = properties.length; index--; ) {
-			const property = properties[index];
+		for ( let index         = properties.length; index; ) {
+			const property = properties[--index];
 			if ( property.shorthand ) { shorthand.add(property.value); }
 		}
 	},
 	ObjectPattern ({ properties }               )       {
-		for ( let index         = properties.length; index--; ) {
-			const property = properties[index];
+		for ( let index         = properties.length; index; ) {
+			const property = properties[--index];
 			if ( property.shorthand ) {
 				let { value } = property;
 				if ( value.type==='AssignmentPattern' ) { value = value.left; }
@@ -4076,14 +5033,13 @@ function * From (tab        , mode                         , styles         , te
 		? `export ${mode} ${scope} = /*#__PURE__*/Scope()`
 		: `export ${mode} ${scope} = /*#__PURE__*/Scope('${( _(template ).keys .match(KEYS) || [] ).join(',')}')`;
 	for ( const style of styles ) {
-		const { innerCSS } = style;
-		for ( const line of innerCSS.split('\n') ) {
-			yield `${eol}//${line.replace(LS_PS, escape_LS_PS)}`;
+		for ( const line of style.sheet.beautify(tab) ) {
+			yield `${eol}//${tab}${line.replace(LS_PS, escape_LS_PS)}`;
 		}
 		const { media } = _(style);
 		yield media===undefined$1
-			? `${eol}.$(${StringLiteral(innerCSS)})`
-			: `${eol}.$(${StringLiteral(innerCSS)}, ${StringLiteral(media)})`;
+			? `${eol}.$(${StringLiteral(style.innerCSS)})`
+			: `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(media)})`;
 	}
 	yield `;${eol}`;
 	
@@ -4097,7 +5053,7 @@ function * From (tab        , mode                         , styles         , te
 	yield staticRenderFns.length
 		? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)}${eol}], ${scope});${eol}`
 		: `export ${mode} staticRenderFns = [];${eol}`;
-	for ( const line of template.content.toSource(tab) ) {
+	for ( const line of template.content.beautify(tab) ) {
 		yield `//${tab}${line.replace(LF_LS_PS, escape_LF_LS_PS)}${eol}`;
 	}
 	

@@ -1,15 +1,15 @@
 import freeze from '.Object.freeze';
 
-import Node from './Template.Content.Node';
+import Node from './Node';
 
 export default class Element extends Node {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
-	constructor (localName :string, attributes :Attributes, partial? :Partial) {
+	constructor (localName :string, attributes :Attributes, partial? :{ class :string }) {
 		super();
-		if ( partial && localName in partial ) {
-			const { tagName, class: classNames } = partial[localName];
+		if ( partial ) {
+			const classNames = partial.class;
 			if ( classNames ) {
 				attributes.class = 'class' in attributes
 					? attributes.class
@@ -17,7 +17,6 @@ export default class Element extends Node {
 						: classNames
 					: classNames;
 			}
-			localName = tagName;
 		}
 		this.localName = localName;
 		this.attributes = attributes;
@@ -28,17 +27,19 @@ export default class Element extends Node {
 	
 	get outerHTML () :string {
 		let innerHTML :string = '';
-		for ( const childNode of this.childNodes ) { innerHTML += childNode.outerHTML; }
+		for ( let index = this.length; index; ) {
+			innerHTML = this[--index].outerHTML+innerHTML;
+		}
 		return innerHTML
 			? `<${this.localName}${this.attributes}>${innerHTML}</${this.localName}>`
 			: `<${this.localName}${this.attributes} />`;
 	}
 	
-	* toSource (this :Element, tab :string = '\t') :IterableIterator<string> {
-		if ( this.childNodes.length ) {
+	* beautify (this :Element, tab :string = '\t') :IterableIterator<string> {
+		if ( this.length ) {
 			yield `<${this.localName}${this.attributes}>`;
-			for ( const childNode of this.childNodes ) {
-				for ( const line of childNode.toSource(tab) ) {
+			for ( let index = 0, { length } = this; index<length; ++index ) {
+				for ( const line of this[index].beautify(tab) ) {
 					yield `${tab}${line}`;
 				}
 			}
@@ -53,5 +54,4 @@ export default class Element extends Node {
 
 freeze(Element.prototype);
 
-type Partial = import('./Template').Partial;
-type Attributes = import('./Attributes').default;
+type Attributes = import('../../Attributes').default;
