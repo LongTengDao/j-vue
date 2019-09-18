@@ -1,4 +1,4 @@
-export const version :'14.11.1';
+export const version :'14.11.2';
 
 export function Identifier () :string;
 

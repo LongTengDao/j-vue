@@ -1,4 +1,5 @@
 import Error from '.Error';
+import URIError from '.URIError';
 import assign from '.Object.assign';
 import create from '.Object.create';
 import NULL from '.null.prototype';
@@ -58,7 +59,7 @@ export default async function one (sfc :SFC, { 'var': x_var, '?j-vue': x_from, '
 			Null({
 				resolveId (path :string) :string {
 					if ( round===1 || path===x_from ) { return path; }
-					throw Error(path);
+					throw URIError(path);
 				},
 				async load () :Promise<string> {
 					if ( round===1 ) {

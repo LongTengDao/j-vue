@@ -10,7 +10,7 @@ import AtRule from './AtRule';
 
 const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
-const CHANGES = /[\x80-\x9F]/;
+const NOT_CHANGES = /\\.|[^\\\x80-\x9F]+/gs;
 
 function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList, abbr? :Replacer) {
 	for ( let index = rules.length; index; ) {
@@ -47,10 +47,10 @@ export default class Sheet extends Array<AtRule | QualifiedRule> {
 	
 	constructor (inner :string, abbr? :Replacer) {
 		if ( !inner ) { return; }
-		if ( inner.startsWith('\uFEFF') ) { throw SyntaxError(`不知如何处理 CSS 中起始的 BOM 字面量`); }
-		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 U+00 或残破的代理对码点字面量会被替换为 U+FFFD，请避免使用`); }
+		if ( inner[0]==='\uFEFF' ) { throw SyntaxError(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
+		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
 		if ( NON_PRINTABLE.test(inner) ) { throw SyntaxError(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
-		if ( CHANGES.test(inner) ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 CSS 3 之间表现不同，请避免使用`); }
+		if ( inner.replace(NOT_CHANGES, '') ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
 		super();
 		try { TOKEN.parse(this, inner); }
 		finally { TOKEN.clear(); }

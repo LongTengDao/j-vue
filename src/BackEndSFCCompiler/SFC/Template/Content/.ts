@@ -1,12 +1,17 @@
 import undefined from '.undefined';
+import Error from '.Error';
 import SyntaxError from '.SyntaxError';
 import ReferenceError from '.ReferenceError';
 import RegExp from '.RegExp';
 
 import { newRegExp } from '@ltd/j-regexp';
+import { NON_SCALAR as SURROGATE_IN_INPUT_STREAM } from '@ltd/j-utf';
+
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
 import { forAliasRE, slotRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF } from '../../INTERNAL';
+import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR } from '../../RE';
+import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from '../../Tag';
 import { EMPTY } from '../../Attributes';
 import Params from '../../Params';
 import Node from './Node';
@@ -14,8 +19,6 @@ import Element from './Element';
 import Text from './Text';
 import Mustache from '../../Mustache';
 import Snippet from '../../Snippet';
-import { TAG_EMIT_CHAR } from '../../RE';
-import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from '../../Tag';
 
 const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
@@ -174,25 +177,27 @@ export default class Content extends Node {
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content'; }
 	
 	constructor (inner :string, _ :Private) {
+		if ( !inner ) { return; }
+		if ( SURROGATE_IN_INPUT_STREAM.test(inner) ) { throw Error(`HTML 字符流中禁止出现落单的代理对码点（U+D800〜U+DFFF）`); }
+		if ( NONCHARACTER_IN_INPUT_STREAM.test(inner) ) { throw Error(`HTML 字符流中禁止出现永久未定义字符码点（U+FDD0〜U+FDEF、U+[00-10]FFFE、U+[00-10]FFFF）`); }
+		if ( CONTROL_CHARACTER_IN_INPUT_STREAM.test(inner) ) { throw Error(`HTML 字符流中禁止出现除 NUL 空（U+00）、TAB 水平制表（U+09）、LF 换行（U+0A）、FF 换页（U+0C）、CR 回车（U+0D）之外的控制字符（U+00〜U+1F、U+7F〜U+9F）`); }
+		delimiters_0 = _.delimiters_0;
+		delimiters_1 = _.delimiters_1;
+		partial = _.abbr;
+		html = inner;
+		index = 0;
 		super();
-		if ( inner ) {
-			delimiters_0 = _.delimiters_0;
-			delimiters_1 = _.delimiters_1;
-			partial = _.abbr;
-			html = inner;
-			index = 0;
-			try { parseAppend('', this, false, false); }
-			catch (error) {
-				error.message = `${error.message}：\n${Snippet(inner, index)}`;
-				throw error;
-			}
-			finally {
-				partial = undefined;
-				html = '';
-			}
-			if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.shift(); }
-			if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.pop(); }
+		try { parseAppend('', this, false, false); }
+		catch (error) {
+			error.message = `${error.message}：\n${Snippet(inner, index)}`;
+			throw error;
 		}
+		finally {
+			partial = undefined;
+			html = '';
+		}
+		if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.shift(); }
+		if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.pop(); }
 	}
 	
 	* beautify (this :Content, tab :string = '\t') :IterableIterator<string> {

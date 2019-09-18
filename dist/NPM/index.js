@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.11.1';
+const version = '14.11.2';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3102,7 +3102,7 @@ const _ = Private
 const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
 
 const JS = newRegExp('i')`^\s*(?:
-	JS|JavaScript(?:\s*1\.\d)?
+	JS|JavaScript(?:\s*1\.\d)?|JSX
 	|
 	(?:ES|ECMAScript|ECMAS?)(?:\s*\d+)?
 	|
@@ -3111,6 +3111,7 @@ const JS = newRegExp('i')`^\s*(?:
 	(?:text|application)\/(?:ECMAScript|JavaScript(?:;\s*version\s*=\s*1\.\d)?)
 )\s*$`;
 const TS = /^\s*T(?:S|ypeScript)\s*$/i;
+const TSX = /^\s*TSX\s*$/i;
 
 class Script extends Block {
 	
@@ -3122,10 +3123,12 @@ class Script extends Block {
 		let inner                     = _(this).innerJS;
 		if ( inner===undefined$1 ) {
 			inner = this.inner;
-			if ( typeof inner!=='string' ) { throw Error(`自闭合的 script 功能块元素必须自行根据 src 属性加载 inner 值`); }
-			if ( this.lang && !JS.test(this.lang) ) {
-				if ( TS.test(this.lang) ) { inner = transpileModule(inner); }
-				else { throw Error(`script 功能块元素如果设置了非 js / ts 的 lang 属性值，那么必须自行提供转译后的 innerJS`); }
+			if ( typeof inner!=='string' ) { throw Error(`自闭合的 script 功能块元素必须自行加载 src 属性所要求的 inner 值`); }
+			const { lang } = this;
+			if ( lang && !JS.test(lang) ) {
+				if ( TS.test(lang) ) { inner = transpileModule(inner, false); }
+				else if ( TSX.test(lang) ) { inner = transpileModule(inner, true); }
+				else { throw Error(`script 功能块元素如果设置了非 js / jsx / ts / tsx 的 lang 属性值，那么必须自行提供转译后的 innerJS`); }
 			}
 		}
 		return inner;
@@ -4003,7 +4006,7 @@ freeze(AtRule.prototype);
 
 const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
-const CHANGES = /[\x80-\x9F]/;
+const NOT_CHANGES = /\\.|[^\\\x80-\x9F]+/gs;
 
 function replaceComponentName (rules                                            , abbr           ) {
 	for ( let index = rules.length; index; ) {
@@ -4040,10 +4043,10 @@ class Sheet extends Array                         {
 	
 	constructor (inner        , abbr           ) {
 		if ( !inner ) { return; }
-		if ( inner.startsWith('\uFEFF') ) { throw SyntaxError(`不知如何处理 CSS 中起始的 BOM 字面量`); }
-		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 U+00 或残破的代理对码点字面量会被替换为 U+FFFD，请避免使用`); }
+		if ( inner[0]==='\uFEFF' ) { throw SyntaxError(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
+		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
 		if ( NON_PRINTABLE.test(inner) ) { throw SyntaxError(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
-		if ( CHANGES.test(inner) ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 CSS 3 之间表现不同，请避免使用`); }
+		if ( inner.replace(NOT_CHANGES, '') ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
 		super();
 		try { parse(this, inner); }
 		finally { clear(); }
@@ -4160,7 +4163,8 @@ class Style extends Block          {
 		if ( inner===undefined$1 ) {
 			inner = this.inner;
 			if ( typeof inner!=='string' ) { throw Error(`自闭合的 style 功能块元素必须自行根据 src 属性加载 inner 值`); }
-			if ( this.lang && !CSS.test(this.lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
+			const { lang } = this;
+			if ( lang && !CSS.test(lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
 		}
 		if ( _this.sheet && _this.cache===inner ) { return _this.sheet; }
 		const sheet = new Sheet(inner, _this.abbr);
@@ -4626,25 +4630,27 @@ class Content extends Node {
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content'; }
 	
 	constructor (inner        , _         ) {
+		if ( !inner ) { return; }
+		if ( NON_SCALAR.test(inner) ) { throw Error(`HTML 字符流中禁止出现落单的代理对码点（U+D800〜U+DFFF）`); }
+		if ( NONCHARACTER.test(inner) ) { throw Error(`HTML 字符流中禁止出现永久未定义字符码点（U+FDD0〜U+FDEF、U+[00-10]FFFE、U+[00-10]FFFF）`); }
+		if ( CONTROL_CHARACTER.test(inner) ) { throw Error(`HTML 字符流中禁止出现除 NUL 空（U+00）、TAB 水平制表（U+09）、LF 换行（U+0A）、FF 换页（U+0C）、CR 回车（U+0D）之外的控制字符（U+00〜U+1F、U+7F〜U+9F）`); }
+		delimiters_0 = _.delimiters_0;
+		delimiters_1 = _.delimiters_1;
+		partial = _.abbr;
+		html = inner;
+		index = 0;
 		super();
-		if ( inner ) {
-			delimiters_0 = _.delimiters_0;
-			delimiters_1 = _.delimiters_1;
-			partial = _.abbr;
-			html = inner;
-			index = 0;
-			try { parseAppend('', this, false, false); }
-			catch (error) {
-				error.message = `${error.message}：\n${Snippet(inner, index)}`;
-				throw error;
-			}
-			finally {
-				partial = undefined$1;
-				html = '';
-			}
-			if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.shift(); }
-			if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.pop(); }
+		try { parseAppend('', this, false, false); }
+		catch (error) {
+			error.message = `${error.message}：\n${Snippet(inner, index)}`;
+			throw error;
 		}
+		finally {
+			partial = undefined$1;
+			html = '';
+		}
+		if ( this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) ) { this.shift(); }
+		if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.pop(); }
 	}
 	
 	* beautify (               tab         = '\t')                           {
@@ -4745,7 +4751,7 @@ class Template extends Block {
 		let inner                     = _this.innerHTML;
 		if ( inner===undefined$1 ) {
 			inner = this.inner;
-			if ( typeof inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
+			if ( typeof inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行加载 src 属性所要求的 inner 值`); }
 			if ( this.lang && !HTML.test(this.lang) ) { throw Error(`template 功能块元素如果设置了非 html 的 lang 属性值，那么必须自行提供转译后的 innerHTML`); }
 			_this.cache = inner;
 		}
@@ -4790,12 +4796,16 @@ class CustomBlock extends Block {
 freeze(CustomBlock.prototype);
 
 const SCRIPT_STYLE_TEMPLATE = /^(?:script|style|template)$/i;
-const NON_EOL = /[^\n]+/g;
+const NON_EOL = /[^\n\r\u2028\u2029]+/g;
 const NON_TAB$1 = /[^\t ]/g;
 
 function parseComponent (sfc     , vue        )       {
 	
-	let index         = 0;
+	const eol = sfc.eol || '\n';
+	const eol_0 = eol[0];
+	const eol_length = eol.length;
+	
+	let index = 0;
 	
 	function throwSyntaxError(message        )        {
 		const error              = SyntaxError(message);
@@ -4803,10 +4813,10 @@ function parseComponent (sfc     , vue        )       {
 		throw error;
 	}
 	
-	for ( const length         = vue.length; index!==length; ) {
+	for ( const { length } = vue; index!==length; ) {
 		
-		if ( vue[index]==='\n' ) {
-			++index;
+		if ( vue[index]===eol_0 ) {
+			index += eol_length;
 			continue;
 		}
 		
@@ -4842,11 +4852,12 @@ function parseComponent (sfc     , vue        )       {
 		if ( tag.type===ELEMENT_START ) {
 			VOID_ELEMENTS.test(blockName) && throwSyntaxError(`.vue 文件中的自定义块如果是 HTML void 元素（无论大小写），必须自闭合使用、并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`);
 			index===length && throwSyntaxError(`开始标签后缺少结束标签“</${blockName}>”`);
-			if ( vue.startsWith('\n', index) ) {
-				const innerStart         = index+1;
-				const endTagStart         = vue.indexOf(`\n</${blockName}>`, index)+1 || throwSyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`);
+			if ( vue.startsWith(eol_0, index) ) {
+				const innerStart = index+eol_length;
+				const endTagStart = vue.indexOf(`${eol}</${blockName}>`, index)+eol_length;
+				endTagStart<eol_length && throwSyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`);
 				index = endTagStart+3+blockName.length;
-				inner = endTagStart===innerStart || endTagStart===innerStart+1 ? '' : vue.slice(innerStart, endTagStart-1);
+				inner = endTagStart===innerStart || endTagStart-eol_length===innerStart ? '' : vue.slice(innerStart, endTagStart-eol_length);
 				if ( blockName!=='style' ) {
 					inner =
 						checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '')+
@@ -4854,13 +4865,14 @@ function parseComponent (sfc     , vue        )       {
 				}
 			}
 			else {
-				const innerStart         = index;
-				index = vue.indexOf('\n', index);
+				const innerStart = index;
+				index = vue.indexOf(eol_0, index);
 				if ( index<0 ) { index = length; }
 				vue.endsWith(`</${blockName}>`, index) || throwSyntaxError(`开始标签后不紧跟换行则启用单行块模式，该行应以对应的结束标签结尾`);
 				inner = vue.slice(innerStart, index-3-blockName.length);
 				if ( blockName!=='style' ) {
-					const lastLineStart         = vue.lastIndexOf('\n', innerStart)+1;
+					const previousLineEnd = vue.lastIndexOf(eol_0, innerStart);
+					const lastLineStart = previousLineEnd<0 ? 0 : previousLineEnd+eol_length;
 					inner =
 						checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '')+
 						checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB$1, ' ')+
@@ -4875,7 +4887,7 @@ function parseComponent (sfc     , vue        )       {
 		else { sfc.customBlocks.push(new CustomBlock(blockName, tag.attributes , inner)); }
 		
 		if ( index!==length ) {
-			if ( vue.startsWith('\n', index) ) { ++index; }
+			if ( vue.startsWith(eol_0, index) ) { index += eol_length; }
 			else if ( !vue.startsWith('<!', index) ) { throwSyntaxError(`顶级标签的结束标签后的同一行内不应有除注释以外的内容`); }
 		}
 		
@@ -5121,7 +5133,7 @@ async function one (sfc     , { 'var': x_var, '?j-vue': x_from, 'j-vue': from, m
 			Null({
 				resolveId (path        )         {
 					if ( round===1 || path===x_from ) { return path; }
-					throw Error(path);
+					throw URIError(path);
 				},
 				async load ()                  {
 					if ( round===1 ) {
@@ -5154,42 +5166,44 @@ async function one (sfc     , { 'var': x_var, '?j-vue': x_from, 'j-vue': from, m
 	return map===true ? { code: only.code, map: only.map } : only.code;
 }
 
-const OPTIONS = { swappable: false         , stripBOM: true        , startsWithASCII: true        , throwError: true         };
+const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true }         ;
 const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
-const CR_LF = /\r\n?/g;
 
 class SFC {
 	
 	get [Symbol.toStringTag] () { return 'SFC'; }
 	
 	bom               ;
-	eol        ;
+	eol                               ;
 	tab        ;
 	
 	constructor (vue                 ) {
 		
-		if ( typeof vue==='string' ) {
+		if ( isBuffer(vue) ) {
+			try {
+				const { BOM, string } = buffer2object(vue, OPTIONS);
+				this.bom = BOM;
+				vue = string;
+			}
+			catch (error) { throw Error(`无法解码 Buffer，请确认它是 UTF-8 或 UTF-16 编码的，并且不存在非 Unicode 标量值（U+D800〜U+DFFF）的代理对码点，或超出了 U+10FFFF）`); }
+		}
+		else if ( typeof vue==='string' ) {
 			if ( NON_SCALAR.test(vue) ) { throw Error(`.vue 文件所基于的 HTML 字符流中禁止出现落单的代理对码点（U+D800〜U+DFFF）`); }
 			this.bom = '';
-		}
-		else if ( isBuffer(vue) ) {
-			try { ( { BOM: this.bom, string: vue } = buffer2object(vue, OPTIONS) ); }
-			catch (error) { throw Error(`无法解码 Buffer，请确认它是 UTF-8 或 UTF-16 编码的，并且不存在非 Unicode 标量值（U+D800〜U+DFFF 的代理对码点，或超出了 U+10FFFF）`); }
 		}
 		else { throw TypeError(`new SFC(vue) 时参数只能是 string 或 Buffer`); }
 		
 		if ( NONCHARACTER.test(vue) ) { throw Error(`.vue 文件所基于的 HTML 字符流中禁止出现永久未定义字符码点（U+FDD0〜U+FDEF、U+[00-10]FFFE、U+[00-10]FFFF）`); }
-		if ( CONTROL_CHARACTER.test(vue) ) { throw Error(`.vue 文件所基于的 HTML 字符流中禁止出现除空（U+00）、水平制表（U+09）、换行（U+0A）、换页（U+0C）、回车（U+0D）之外的控制字符（U+00〜U+1F、U+7F〜U+9F）`); }
+		if ( CONTROL_CHARACTER.test(vue) ) { throw Error(`.vue 文件所基于的 HTML 字符流中禁止出现除 NUL 空（U+00）、TAB 水平制表（U+09）、LF 换行（U+0A）、FF 换页（U+0C）、CR 回车（U+0D）之外的控制字符（U+00〜U+1F、U+7F〜U+9F）`); }
 		
 		try { this.eol = VUE_EOL(vue); }
 		catch (error) {
 			throw SyntaxError(
 				`.vue 文件的换行符必须是 LF（U+0A）、CRLF（U+0D U+0A）或 CR（U+0D）中的唯一一个`+
 				`，而且`+// script 标签内容前
-				`不得包含对 JS 是换行符、而对 HTML 和 CSS 不是换行符的 U+2028 或 U+2029，也不得包含对 CSS 是换行符、而对 HTML 和 JS 不是换行符的 U+0C`//，否则源图映射的行号和列号可能出错
+				`不得包含对 JS 是换行符、而对 HTML 和 CSS 不是换行符的 LS（U+2028）或 PS（U+2029），也不得包含对 CSS 是换行符、而对 HTML 和 JS 不是换行符的 FF（U+0C）`//，否则源图映射的行号和列号可能出错
 			);
 		}
-		if ( CR_LF.test(this.eol) ) { vue = vue.replace(CR_LF, '\n'); }
 		
 		this.tab = vue.includes('\t') ? '\t' : '';
 		

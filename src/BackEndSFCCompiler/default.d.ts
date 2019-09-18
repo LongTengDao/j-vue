@@ -8,7 +8,7 @@ declare namespace exports {
 		constructor (vue :string | Buffer);
 		
 		bom :'\uFEFF' | '';
-		eol :string;
+		eol :'\n' | '\r\n' | '\r' | '\u2028' | '\u2029' | '';
 		tab :string;
 		
 		readonly script :null | {

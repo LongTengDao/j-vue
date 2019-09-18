@@ -106,7 +106,7 @@ export default class Template extends Block {
 		let inner :string | undefined = _this.innerHTML;
 		if ( inner===undefined ) {
 			inner = this.inner;
-			if ( typeof inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行（根据 src 属性）加载 inner 值`); }
+			if ( typeof inner!=='string' ) { throw Error(`自闭合的 template 功能块元素必须自行加载 src 属性所要求的 inner 值`); }
 			if ( this.lang && !HTML.test(this.lang) ) { throw Error(`template 功能块元素如果设置了非 html 的 lang 属性值，那么必须自行提供转译后的 innerHTML`); }
 			_this.cache = inner;
 		}
