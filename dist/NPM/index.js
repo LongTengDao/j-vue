@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.10.0';
+const version = '14.11.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -4005,10 +4005,10 @@ const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
 const CHANGES = /[\x80-\x9F]/;
 
-function replaceComponentName (rules                                            , abbr          ) {
+function replaceComponentName (rules                                            , abbr           ) {
 	for ( let index = rules.length; index; ) {
 		const rule = rules[--index];
-		if ( rule instanceof QualifiedRule ) {
+		if ( abbr && rule instanceof QualifiedRule ) {
 			const { typeSelectors } = rule;
 			for ( let index = typeSelectors.length; index; ) {
 				const typeSelector = typeSelectors[--index];
@@ -4017,7 +4017,19 @@ function replaceComponentName (rules                                            
 		}
 		else if ( rule instanceof AtRule ) {
 			const { block } = rule;
-			if ( block && !keyframes(rule.name) ) { replaceComponentName(block, abbr); }
+			if ( block ) {
+				if ( keyframes(rule.name) ) {
+					for ( let index = block.length; index; ) {
+						const qualifiedRule = block[--index]                 ;
+						const typeSelector = qualifiedRule[0];
+						if ( typeSelector instanceof TypeSelector ) {
+							qualifiedRule[0] = typeSelector.cssText;
+							qualifiedRule.typeSelectors.length = 0;
+						}
+					}
+				}
+				else { replaceComponentName(block, abbr); }
+			}
 		}
 	}
 }
@@ -4035,7 +4047,7 @@ class Sheet extends Array                         {
 		super();
 		try { parse(this, inner); }
 		finally { clear(); }
-		abbr && replaceComponentName(this, abbr);
+		replaceComponentName(this, abbr);
 	}
 	
 	appendToken (           )                                                                           {

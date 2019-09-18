@@ -4,6 +4,7 @@ import freeze from '.Object.freeze';
 
 import * as is from './is';
 import * as TOKEN from './TOKEN';
+import TypeSelector from './TypeSelector';
 import QualifiedRule from './QualifiedRule';
 import AtRule from './AtRule';
 
@@ -11,10 +12,10 @@ const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
 const CHANGES = /[\x80-\x9F]/;
 
-function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList, abbr :Replacer) {
+function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList, abbr? :Replacer) {
 	for ( let index = rules.length; index; ) {
 		const rule = rules[--index];
-		if ( rule instanceof QualifiedRule ) {
+		if ( abbr && rule instanceof QualifiedRule ) {
 			const { typeSelectors } = rule;
 			for ( let index = typeSelectors.length; index; ) {
 				const typeSelector = typeSelectors[--index];
@@ -23,7 +24,19 @@ function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList
 		}
 		else if ( rule instanceof AtRule ) {
 			const { block } = rule;
-			if ( block && !is.keyframes(rule.name) ) { replaceComponentName(block, abbr); }
+			if ( block ) {
+				if ( is.keyframes(rule.name) ) {
+					for ( let index = block.length; index; ) {
+						const qualifiedRule = block[--index] as QualifiedRule;
+						const typeSelector = qualifiedRule[0];
+						if ( typeSelector instanceof TypeSelector ) {
+							qualifiedRule[0] = typeSelector.cssText;
+							qualifiedRule.typeSelectors.length = 0;
+						}
+					}
+				}
+				else { replaceComponentName(block, abbr); }
+			}
 		}
 	}
 }
@@ -41,7 +54,7 @@ export default class Sheet extends Array<AtRule | QualifiedRule> {
 		super();
 		try { TOKEN.parse(this, inner); }
 		finally { TOKEN.clear(); }
-		abbr && replaceComponentName(this, abbr);
+		replaceComponentName(this, abbr);
 	}
 	
 	appendToken (this :Sheet) :Sheet | AtRule | QualifiedRule | SquareBracketBlock | Declaration | void {
