@@ -127,6 +127,11 @@ const URL_REST = newRegExp`
 `;
 const NUMBER = /[\d.]/;
 const COMMENT = /\/\*.*?\*\//g;
+const FUNCTION = newRegExp`
+	^
+	${ident_token}\(
+	$
+`;
 
 export const comment = 'c';
 export const whitespace = 'w';
@@ -141,7 +146,14 @@ export const percentage = 'p';
 export const url = 'u';
 
 function IdentLike (literal :string) {
-	return literal.replace(ident_token, '') ? function$ : ident;
+	if ( !literal.endsWith('(') || literal.endsWith('\\(') && !FUNCTION.test(literal) ) { return ident; }
+	if ( is.url(literal.slice(0, 3)) ) {
+		const char = literal[3];
+		if ( char==='(' ) { return URL_REST.test(literal.slice(4)) ? url : throwSyntaxError(`bad-url-token`); }
+		else if ( char==='-' && is.prefix_(literal.slice(4)) ) { throw SyntaxError(`function-token "url-prefix" 不在标准中，而它此刻的内容又存在歧义`); }
+	}
+	else if ( is.domain_(literal) ) { throw SyntaxError(`function-token "domain" 不在标准中，而它此刻的内容又存在歧义`); }
+	return function$;
 }
 
 function Numeric (literal :string) {
@@ -149,8 +161,8 @@ function Numeric (literal :string) {
 	return rest ? rest==='%' ? percentage : dimension : number;
 }
 
-export type Type = 'c' | 'w' | 'i' | 'a' | 'f' | 'h' | 's' | 'n' | 'd' | 'p' | 'u' | ''
-	| '!' | '$' | '%' | '&' | '(' | ')' | '*' | '+' | ',' | '-' | '.' | '/' | ':'// '#'
+export type Type = 'c' | 'w' | 'i' | 'a' | 'f' | 'h' | 's' | 'n' | 'd' | 'p' | 'u'// | '\\'
+	| '!' | '$' | '%' | '&' | '(' | ')' | '*' | '+' | ',' | '-' | '.' | '/' | ':'// | '#'
 	| ';' | '<' | '=' | '>' | '?' | '@' | '[' | ']' | '^' | '`' | '{' | '|' | '}' | '~';
 function Type (literal :string) :Type {
 	switch ( literal[0] ) {
@@ -163,8 +175,7 @@ function Type (literal :string) :Type {
 		case '!':
 			return literal as '!';
 		case '"':
-			if ( literal.endsWith('"') && literal!=='"' ) { return string; }
-			throw SyntaxError(`bad-string-token`);
+			return literal.endsWith('"') && literal!=='"' ? string : throwSyntaxError(`bad-string-token`);
 		case '#':
 			return hash;
 		case '$':
@@ -172,8 +183,7 @@ function Type (literal :string) :Type {
 		case '&':
 			return literal as '$' | '%' | '&';
 		case '\'':
-			if ( literal.endsWith('\'') && literal!=='\'' ) { return string; }
-			throw SyntaxError(`bad-string-token`);
+			return literal.endsWith('\'') && literal!=='\'' ? string : throwSyntaxError(`bad-string-token`);
 		case '(':
 		case ')':
 		case '*':
@@ -185,18 +195,18 @@ function Type (literal :string) :Type {
 		case '-':
 			if ( literal==='-' ) { return literal; }
 			if ( NUMBER.test(literal[1]) ) { return Numeric(literal); }
-			if ( literal==='-->' ) { throw SyntaxError(`CDC-token`); }
+			if ( literal==='-->' ) { throw SyntaxError(`用于 SFC 的 CSS 中不应用到 CDC-token`); }
 			break;
 		case '.':
 			return literal==='.' ? literal : Numeric(literal);
 		case '/':
 			if ( literal==='/' ) { return literal; }
 			literal = literal.replace(COMMENT, '');
-			if ( literal ) {
-				if ( literal.startsWith('/') ) { throw SyntaxError(`bad-comment-token`); }
-				return whitespace;
-			}
-			return comment;
+			return literal
+				? literal.startsWith('/')
+					? throwSyntaxError(`bad-comment-token`)
+					: whitespace
+				: comment;
 		case '0':
 		case '1':
 		case '2':
@@ -212,8 +222,7 @@ function Type (literal :string) :Type {
 		case ';':
 			return literal as ':' | ';';
 		case '<':
-			if ( literal==='<' ) { return literal; }
-			throw SyntaxError(`CDO-token`);
+			return literal==='<' ? literal : throwSyntaxError(`用于 SFC 的 CSS 中不应用到 CDO-token`);
 		case '=':
 		case '>':
 		case '?':
@@ -233,45 +242,31 @@ function Type (literal :string) :Type {
 		case '}':
 		case '~':
 			return literal as ']' | '^' | '`' | '{' | '|' | '}' | '~';
-		case 'u':
-		case 'U':
-			if ( literal.length>3 && is.url(literal.slice(0, 3)) ) {
-				const char = literal[3];
-				if ( char==='(' ) {
-					if ( URL_REST.test(literal.slice(4)) ) { return url; }
-					throw SyntaxError(`bad-url-token`);
-				}
-				else if ( char==='-' && is.prefix_(literal.slice(4)) ) {
-					throw SyntaxError(`url-prefix(...)`);
-				}
-			}
-			break;
-		case 'd':
-		case 'D':
-			if ( is.domain_(literal) ) { throw SyntaxError(`domain(...)`); }
-			break;
 	}
 	return IdentLike(literal);
 }
 
-export let literal :string;
+export let literal :string = '';
 export let type :Type;
 
-export function parse (sheet :Sheet, source :string) :Layer {
-	if ( !source ) { return sheet; }
-	const literals :string[] = source.match(TOKEN)!;
+export function parse (sheet :Sheet, source :string) {
 	let layer :Layer = sheet;
+	const literals :string[] = source.match(TOKEN) || [];
 	const { length } = literals;
-	let index = 0;
-	do {
-		type = Type(literal = literals[index]);
+	let types = '';
+	for ( let index = 0; index<length; ++index ) { types += Type(literals[index]); }
+	for ( let index = 0; index<length; ++index ) {
+		type = ( types as string & { [index :number] :Type } )[index];
+		literal = literals[index];
 		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了上下文不允许的内容 ${literal}：\n${literals.slice(0, index).join('')}`);
 	}
-	while ( ++index<length )
-	return layer;
+	if ( layer!==sheet ) {
+		const { parent } = layer;
+		parent===sheet && !parent.block || throwSyntaxError(`CSS 终止处尚有未完成的结构`);
+	}
 }
 
 export function clear () { literal = ''; }
 
-type Layer = { parent? :Layer, appendToken () : Layer | void };
+type Layer = { parent? :Layer, block? :object, appendToken () : Layer | void };
 type Sheet = import('./').default;

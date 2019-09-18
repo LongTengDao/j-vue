@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.9.0';
+const version = '14.10.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3294,6 +3294,11 @@ const URL_REST = newRegExp`
 `;
 const NUMBER = /[\d.]/;
 const COMMENT$1 = /\/\*.*?\*\//g;
+const FUNCTION = newRegExp`
+	^
+	${ident_token}\(
+	$
+`;
 
 const comment = 'c';
 const whitespace = 'w';
@@ -3308,7 +3313,14 @@ const percentage = 'p';
 const url$1 = 'u';
 
 function IdentLike (literal        ) {
-	return literal.replace(ident_token, '') ? function$ : ident;
+	if ( !literal.endsWith('(') || literal.endsWith('\\(') && !FUNCTION.test(literal) ) { return ident; }
+	if ( url(literal.slice(0, 3)) ) {
+		const char = literal[3];
+		if ( char==='(' ) { return URL_REST.test(literal.slice(4)) ? url$1 : throwSyntaxError(`bad-url-token`); }
+		else if ( char==='-' && prefix_(literal.slice(4)) ) { throw SyntaxError(`function-token "url-prefix" 不在标准中，而它此刻的内容又存在歧义`); }
+	}
+	else if ( domain_(literal) ) { throw SyntaxError(`function-token "domain" 不在标准中，而它此刻的内容又存在歧义`); }
+	return function$;
 }
 
 function Numeric (literal        ) {
@@ -3316,8 +3328,8 @@ function Numeric (literal        ) {
 	return rest ? rest==='%' ? percentage : dimension : number;
 }
 
-                                                                                       
-	                                                                                   
+                                                                                           
+	                                                                                     
 	                                                                                    
 function Type (literal        )       {
 	switch ( literal[0] ) {
@@ -3330,8 +3342,7 @@ function Type (literal        )       {
 		case '!':
 			return literal       ;
 		case '"':
-			if ( literal.endsWith('"') && literal!=='"' ) { return string; }
-			throw SyntaxError(`bad-string-token`);
+			return literal.endsWith('"') && literal!=='"' ? string : throwSyntaxError(`bad-string-token`);
 		case '#':
 			return hash;
 		case '$':
@@ -3339,8 +3350,7 @@ function Type (literal        )       {
 		case '&':
 			return literal                   ;
 		case '\'':
-			if ( literal.endsWith('\'') && literal!=='\'' ) { return string; }
-			throw SyntaxError(`bad-string-token`);
+			return literal.endsWith('\'') && literal!=='\'' ? string : throwSyntaxError(`bad-string-token`);
 		case '(':
 		case ')':
 		case '*':
@@ -3352,18 +3362,18 @@ function Type (literal        )       {
 		case '-':
 			if ( literal==='-' ) { return literal; }
 			if ( NUMBER.test(literal[1]) ) { return Numeric(literal); }
-			if ( literal==='-->' ) { throw SyntaxError(`CDC-token`); }
+			if ( literal==='-->' ) { throw SyntaxError(`用于 SFC 的 CSS 中不应用到 CDC-token`); }
 			break;
 		case '.':
 			return literal==='.' ? literal : Numeric(literal);
 		case '/':
 			if ( literal==='/' ) { return literal; }
 			literal = literal.replace(COMMENT$1, '');
-			if ( literal ) {
-				if ( literal.startsWith('/') ) { throw SyntaxError(`bad-comment-token`); }
-				return whitespace;
-			}
-			return comment;
+			return literal
+				? literal.startsWith('/')
+					? throwSyntaxError(`bad-comment-token`)
+					: whitespace
+				: comment;
 		case '0':
 		case '1':
 		case '2':
@@ -3379,8 +3389,7 @@ function Type (literal        )       {
 		case ';':
 			return literal             ;
 		case '<':
-			if ( literal==='<' ) { return literal; }
-			throw SyntaxError(`CDO-token`);
+			return literal==='<' ? literal : throwSyntaxError(`用于 SFC 的 CSS 中不应用到 CDO-token`);
 		case '=':
 		case '>':
 		case '?':
@@ -3400,42 +3409,28 @@ function Type (literal        )       {
 		case '}':
 		case '~':
 			return literal                                           ;
-		case 'u':
-		case 'U':
-			if ( literal.length>3 && url(literal.slice(0, 3)) ) {
-				const char = literal[3];
-				if ( char==='(' ) {
-					if ( URL_REST.test(literal.slice(4)) ) { return url$1; }
-					throw SyntaxError(`bad-url-token`);
-				}
-				else if ( char==='-' && prefix_(literal.slice(4)) ) {
-					throw SyntaxError(`url-prefix(...)`);
-				}
-			}
-			break;
-		case 'd':
-		case 'D':
-			if ( domain_(literal) ) { throw SyntaxError(`domain(...)`); }
-			break;
 	}
 	return IdentLike(literal);
 }
 
-let literal        ;
+let literal         = '';
 let type      ;
 
-function parse (sheet       , source        )        {
-	if ( !source ) { return sheet; }
-	const literals           = source.match(TOKEN) ;
+function parse (sheet       , source        ) {
 	let layer        = sheet;
+	const literals           = source.match(TOKEN) || [];
 	const { length } = literals;
-	let index = 0;
-	do {
-		type = Type(literal = literals[index]);
+	let types = '';
+	for ( let index = 0; index<length; ++index ) { types += Type(literals[index]); }
+	for ( let index = 0; index<length; ++index ) {
+		type = ( types                                       )[index];
+		literal = literals[index];
 		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了上下文不允许的内容 ${literal}：\n${literals.slice(0, index).join('')}`);
 	}
-	while ( ++index<length )
-	return layer;
+	if ( layer!==sheet ) {
+		const { parent } = layer;
+		parent===sheet && !parent.block || throwSyntaxError(`CSS 终止处尚有未完成的结构`);
+	}
 }
 
 function clear () { literal = ''; }
@@ -4033,19 +4028,13 @@ class Sheet extends Array                         {
 	
 	constructor (inner        , abbr           ) {
 		if ( !inner ) { return; }
-		if ( inner.includes('\uFEFF') ) { throw SyntaxError(`不知如何处理 CSS 中的 BOM 字面量`); }
+		if ( inner.startsWith('\uFEFF') ) { throw SyntaxError(`不知如何处理 CSS 中起始的 BOM 字面量`); }
 		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 U+00 或残破的代理对码点字面量会被替换为 U+FFFD，请避免使用`); }
 		if ( NON_PRINTABLE.test(inner) ) { throw SyntaxError(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
 		if ( CHANGES.test(inner) ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 CSS 3 之间表现不同，请避免使用`); }
 		super();
-		let layer;
-		try { layer = parse(this, inner); }
+		try { parse(this, inner); }
 		finally { clear(); }
-		if ( layer!==this ) {
-			const { parent } = layer;
-			if ( parent===this && parent instanceof AtRule && !parent.block ) ;
-			else { throw SyntaxError(`CSS 结构不完整`); }
-		}
 		abbr && replaceComponentName(this, abbr);
 	}
 	
@@ -4056,13 +4045,16 @@ class Sheet extends Array                         {
 				return this;
 			case at_keyword:
 				const name = literal.slice(1);
-				if ( charset(name) ) { throw SyntaxError(`@charset`); }
-				if ( _import(name) ) {
-					for ( let index = this.length; index; ) {
-						const rule = this[--index];
-						if ( !( rule instanceof AtRule ) || !_import(rule.name) ) { return; }
-					}
+				if ( charset(name) ) {
+					//if ( this.length ) { return; }
+					throw SyntaxError(`用于 SFC 的 CSS 中不应用到 @charset`);// return new AtRule(this, name);
 				}
+				//if ( is._import(name) ) {
+				//	for ( let index = this.length; index; ) {
+				//		const rule = this[--index];
+				//		if ( !( rule instanceof AtRule ) || !is._import(rule.name) ) { return; }
+				//	}
+				//}
 				const atRule = new AtRule(this, name);
 				this.push(atRule);
 				return atRule;

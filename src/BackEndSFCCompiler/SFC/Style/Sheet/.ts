@@ -34,19 +34,13 @@ export default class Sheet extends Array<AtRule | QualifiedRule> {
 	
 	constructor (inner :string, abbr? :Replacer) {
 		if ( !inner ) { return; }
-		if ( inner.includes('\uFEFF') ) { throw SyntaxError(`不知如何处理 CSS 中的 BOM 字面量`); }
+		if ( inner.startsWith('\uFEFF') ) { throw SyntaxError(`不知如何处理 CSS 中起始的 BOM 字面量`); }
 		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 U+00 或残破的代理对码点字面量会被替换为 U+FFFD，请避免使用`); }
 		if ( NON_PRINTABLE.test(inner) ) { throw SyntaxError(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
 		if ( CHANGES.test(inner) ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 CSS 3 之间表现不同，请避免使用`); }
 		super();
-		let layer;
-		try { layer = TOKEN.parse(this, inner); }
+		try { TOKEN.parse(this, inner); }
 		finally { TOKEN.clear(); }
-		if ( layer!==this ) {
-			const { parent } = layer;
-			if ( parent===this && parent instanceof AtRule && !parent.block ) {}
-			else { throw SyntaxError(`CSS 结构不完整`); }
-		}
 		abbr && replaceComponentName(this, abbr);
 	}
 	
@@ -57,13 +51,16 @@ export default class Sheet extends Array<AtRule | QualifiedRule> {
 				return this;
 			case TOKEN.at_keyword:
 				const name = TOKEN.literal.slice(1);
-				if ( is.charset(name) ) { throw SyntaxError(`@charset`); }
-				if ( is._import(name) ) {
-					for ( let index = this.length; index; ) {
-						const rule = this[--index];
-						if ( !( rule instanceof AtRule ) || !is._import(rule.name) ) { return; }
-					}
+				if ( is.charset(name) ) {
+					//if ( this.length ) { return; }
+					throw SyntaxError(`用于 SFC 的 CSS 中不应用到 @charset`);// return new AtRule(this, name);
 				}
+				//if ( is._import(name) ) {
+				//	for ( let index = this.length; index; ) {
+				//		const rule = this[--index];
+				//		if ( !( rule instanceof AtRule ) || !is._import(rule.name) ) { return; }
+				//	}
+				//}
 				const atRule = new AtRule(this, name);
 				this.push(atRule);
 				return atRule;
