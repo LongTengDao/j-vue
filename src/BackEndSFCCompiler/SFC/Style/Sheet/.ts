@@ -56,7 +56,15 @@ export default class Sheet extends Array<AtRule | QualifiedRule> {
 			case TOKEN.comment:
 				return this;
 			case TOKEN.at_keyword:
-				const atRule = new AtRule(this, TOKEN.literal.slice(1));
+				const name = TOKEN.literal.slice(1);
+				if ( is.charset(name) ) { throw SyntaxError(`@charset`); }
+				if ( is._import(name) ) {
+					for ( let index = this.length; index; ) {
+						const rule = this[--index];
+						if ( !( rule instanceof AtRule ) || !is._import(rule.name) ) { return; }
+					}
+				}
+				const atRule = new AtRule(this, name);
 				this.push(atRule);
 				return atRule;
 			case TOKEN.ident:

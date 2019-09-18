@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.8.0';
+const version = '14.9.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3235,10 +3235,6 @@ const url_token = newRegExp`
 		\(
 		(?!
 			[${ws}]*
-			(?:
-				${string_token}
-				[${ws}]*
-			)?
 			\)
 		)
 	)
@@ -3247,11 +3243,7 @@ const url_token = newRegExp`
 	\(
 	(?!
 		[${ws}]*
-		(?:
-			[a-zA-Z\d\-.:]*
-		|
-			${string_token}
-		)
+		[a-zA-Z\d\-.:]*
 		[${ws}]*
 		\)
 	)
@@ -3315,6 +3307,10 @@ const dimension = 'd';
 const percentage = 'p';
 const url$1 = 'u';
 
+function IdentLike (literal        ) {
+	return literal.replace(ident_token, '') ? function$ : ident;
+}
+
 function Numeric (literal        ) {
 	const rest = literal.replace(number_token, '');
 	return rest ? rest==='%' ? percentage : dimension : number;
@@ -3335,7 +3331,7 @@ function Type (literal        )       {
 			return literal       ;
 		case '"':
 			if ( literal.endsWith('"') && literal!=='"' ) { return string; }
-			throw SyntaxError(`存在未闭合的字符串`);
+			throw SyntaxError(`bad-string-token`);
 		case '#':
 			return hash;
 		case '$':
@@ -3344,7 +3340,7 @@ function Type (literal        )       {
 			return literal                   ;
 		case '\'':
 			if ( literal.endsWith('\'') && literal!=='\'' ) { return string; }
-			throw SyntaxError(`存在未闭合的字符串`);
+			throw SyntaxError(`bad-string-token`);
 		case '(':
 		case ')':
 		case '*':
@@ -3356,7 +3352,7 @@ function Type (literal        )       {
 		case '-':
 			if ( literal==='-' ) { return literal; }
 			if ( NUMBER.test(literal[1]) ) { return Numeric(literal); }
-			if ( literal==='-->' ) { throw SyntaxError(`CSS 中不需要 -->`); }
+			if ( literal==='-->' ) { throw SyntaxError(`CDC-token`); }
 			break;
 		case '.':
 			return literal==='.' ? literal : Numeric(literal);
@@ -3364,7 +3360,7 @@ function Type (literal        )       {
 			if ( literal==='/' ) { return literal; }
 			literal = literal.replace(COMMENT$1, '');
 			if ( literal ) {
-				if ( literal.startsWith('/') ) { throw SyntaxError(`存在未闭合的注释`); }
+				if ( literal.startsWith('/') ) { throw SyntaxError(`bad-comment-token`); }
 				return whitespace;
 			}
 			return comment;
@@ -3384,7 +3380,7 @@ function Type (literal        )       {
 			return literal             ;
 		case '<':
 			if ( literal==='<' ) { return literal; }
-			throw SyntaxError(`CSS 中不需要 <!--`);
+			throw SyntaxError(`CDO-token`);
 		case '=':
 		case '>':
 		case '?':
@@ -3394,7 +3390,7 @@ function Type (literal        )       {
 		case '[':
 			return literal       ;
 		case '\\':
-			if ( literal==='\\' ) { throw SyntaxError(`存在残破的转义`); }
+			if ( literal==='\\' ) { throw SyntaxError(`bad escape`); }
 			break;
 		case ']':
 		case '^':
@@ -3410,25 +3406,25 @@ function Type (literal        )       {
 				const char = literal[3];
 				if ( char==='(' ) {
 					if ( URL_REST.test(literal.slice(4)) ) { return url$1; }
-					throw SyntaxError(`url(bad)`);
+					throw SyntaxError(`bad-url-token`);
 				}
 				else if ( char==='-' && prefix_(literal.slice(4)) ) {
-					throw SyntaxError(`url-prefix(bad)`);
+					throw SyntaxError(`url-prefix(...)`);
 				}
 			}
 			break;
 		case 'd':
 		case 'D':
-			if ( domain_(literal) ) { throw SyntaxError(`domain(bad)`); }
+			if ( domain_(literal) ) { throw SyntaxError(`domain(...)`); }
 			break;
 	}
-	return literal.replace(ident_token, '') ? function$ : ident;
+	return IdentLike(literal);
 }
 
 let literal        ;
 let type      ;
 
-function parse (sheet       , source        ) {
+function parse (sheet       , source        )        {
 	if ( !source ) { return sheet; }
 	const literals           = source.match(TOKEN) ;
 	let layer        = sheet;
@@ -3563,7 +3559,7 @@ class ParenthesisBlock extends Array                                            
 }
 freeze(ParenthesisBlock.prototype);
 
-class Declaration extends Array                            {
+class Declaration extends Array                            {// property or descriptor
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.Declaration'; }
 	
@@ -3875,7 +3871,9 @@ class DeclarationList extends Array                                       {
 				return this;
 			case at_keyword:
 				if ( this.noAt ) { return; }
-				const atRule = new AtRule(this, literal.slice(1));
+				const name = literal.slice(1);
+				if ( charset(name) || _import(name) ) { return; }
+				const atRule = new AtRule(this, name);
 				this.push(atRule);
 				return atRule;
 			case ident:
@@ -3946,7 +3944,7 @@ class AtRule extends Array                                                 {
 				return this;
 			case '{': {
 				const { name } = this;
-				if ( charset(name) || _import(name) || namespace(name) ) { return; }
+				if ( /*is.charset(name) || */_import(name) || namespace(name) ) { return; }
 				return this.block = new DeclarationList(this);
 			}
 			case ';': {
@@ -4057,7 +4055,15 @@ class Sheet extends Array                         {
 			case comment:
 				return this;
 			case at_keyword:
-				const atRule = new AtRule(this, literal.slice(1));
+				const name = literal.slice(1);
+				if ( charset(name) ) { throw SyntaxError(`@charset`); }
+				if ( _import(name) ) {
+					for ( let index = this.length; index; ) {
+						const rule = this[--index];
+						if ( !( rule instanceof AtRule ) || !_import(rule.name) ) { return; }
+					}
+				}
+				const atRule = new AtRule(this, name);
 				this.push(atRule);
 				return atRule;
 			case ident:

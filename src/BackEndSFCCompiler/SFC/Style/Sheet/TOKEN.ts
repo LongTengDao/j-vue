@@ -68,10 +68,6 @@ const url_token = newRegExp`
 		\(
 		(?!
 			[${ws}]*
-			(?:
-				${string_token}
-				[${ws}]*
-			)?
 			\)
 		)
 	)
@@ -80,11 +76,7 @@ const url_token = newRegExp`
 	\(
 	(?!
 		[${ws}]*
-		(?:
-			[a-zA-Z\d\-.:]*
-		|
-			${string_token}
-		)
+		[a-zA-Z\d\-.:]*
 		[${ws}]*
 		\)
 	)
@@ -148,6 +140,10 @@ export const dimension = 'd';
 export const percentage = 'p';
 export const url = 'u';
 
+function IdentLike (literal :string) {
+	return literal.replace(ident_token, '') ? function$ : ident;
+}
+
 function Numeric (literal :string) {
 	const rest = literal.replace(number_token, '');
 	return rest ? rest==='%' ? percentage : dimension : number;
@@ -168,7 +164,7 @@ function Type (literal :string) :Type {
 			return literal as '!';
 		case '"':
 			if ( literal.endsWith('"') && literal!=='"' ) { return string; }
-			throw SyntaxError(`存在未闭合的字符串`);
+			throw SyntaxError(`bad-string-token`);
 		case '#':
 			return hash;
 		case '$':
@@ -177,7 +173,7 @@ function Type (literal :string) :Type {
 			return literal as '$' | '%' | '&';
 		case '\'':
 			if ( literal.endsWith('\'') && literal!=='\'' ) { return string; }
-			throw SyntaxError(`存在未闭合的字符串`);
+			throw SyntaxError(`bad-string-token`);
 		case '(':
 		case ')':
 		case '*':
@@ -189,7 +185,7 @@ function Type (literal :string) :Type {
 		case '-':
 			if ( literal==='-' ) { return literal; }
 			if ( NUMBER.test(literal[1]) ) { return Numeric(literal); }
-			if ( literal==='-->' ) { throw SyntaxError(`CSS 中不需要 -->`); }
+			if ( literal==='-->' ) { throw SyntaxError(`CDC-token`); }
 			break;
 		case '.':
 			return literal==='.' ? literal : Numeric(literal);
@@ -197,7 +193,7 @@ function Type (literal :string) :Type {
 			if ( literal==='/' ) { return literal; }
 			literal = literal.replace(COMMENT, '');
 			if ( literal ) {
-				if ( literal.startsWith('/') ) { throw SyntaxError(`存在未闭合的注释`); }
+				if ( literal.startsWith('/') ) { throw SyntaxError(`bad-comment-token`); }
 				return whitespace;
 			}
 			return comment;
@@ -217,7 +213,7 @@ function Type (literal :string) :Type {
 			return literal as ':' | ';';
 		case '<':
 			if ( literal==='<' ) { return literal; }
-			throw SyntaxError(`CSS 中不需要 <!--`);
+			throw SyntaxError(`CDO-token`);
 		case '=':
 		case '>':
 		case '?':
@@ -227,7 +223,7 @@ function Type (literal :string) :Type {
 		case '[':
 			return literal as '[';
 		case '\\':
-			if ( literal==='\\' ) { throw SyntaxError(`存在残破的转义`); }
+			if ( literal==='\\' ) { throw SyntaxError(`bad escape`); }
 			break;
 		case ']':
 		case '^':
@@ -243,25 +239,25 @@ function Type (literal :string) :Type {
 				const char = literal[3];
 				if ( char==='(' ) {
 					if ( URL_REST.test(literal.slice(4)) ) { return url; }
-					throw SyntaxError(`url(bad)`);
+					throw SyntaxError(`bad-url-token`);
 				}
 				else if ( char==='-' && is.prefix_(literal.slice(4)) ) {
-					throw SyntaxError(`url-prefix(bad)`);
+					throw SyntaxError(`url-prefix(...)`);
 				}
 			}
 			break;
 		case 'd':
 		case 'D':
-			if ( is.domain_(literal) ) { throw SyntaxError(`domain(bad)`); }
+			if ( is.domain_(literal) ) { throw SyntaxError(`domain(...)`); }
 			break;
 	}
-	return literal.replace(ident_token, '') ? function$ : ident;
+	return IdentLike(literal);
 }
 
 export let literal :string;
 export let type :Type;
 
-export function parse (sheet :Sheet, source :string) {
+export function parse (sheet :Sheet, source :string) :Layer {
 	if ( !source ) { return sheet; }
 	const literals :string[] = source.match(TOKEN)!;
 	let layer :Layer = sheet;

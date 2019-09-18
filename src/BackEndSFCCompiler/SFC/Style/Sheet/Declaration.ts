@@ -4,7 +4,7 @@ import freeze from '.Object.freeze';
 import * as TOKEN from './TOKEN';
 import ParenthesisBlock from './ParenthesisBlock';
 
-export default class Declaration extends Array<ParenthesisBlock | string> {
+export default class Declaration extends Array<ParenthesisBlock | string> {// property or descriptor
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.Declaration'; }
 	
