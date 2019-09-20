@@ -1,7 +1,5 @@
 import SyntaxError from '.SyntaxError';
 import throwSyntaxError from '.throw.SyntaxError';
-import fromCodePoint from '.String.fromCodePoint';
-import parseInt from '.parseInt';
 
 import { newRegExp } from '@ltd/j-regexp';
 
@@ -18,17 +16,6 @@ const escape = newRegExp`
 		[^\n\f\r]
 	)
 `;
-const ESCAPED = newRegExp`
-	\\
-	(?:
-		(${hex_digit}{1,6})
-		(?:[\t\n\f ]|\r\n?)?
-		|
-		[^\n\f\r]
-	)
-`;
-const escapedReplacer = (match :string, p1 :string) => p1 ? fromCodePoint(parseInt(p1, 16)) : match.slice(1);
-export const unescape = (literal :string) => literal.replace(ESCAPED, escapedReplacer);
 const ws = /\t\n\f\r /;
 export const ident_token = newRegExp`
 	(?:
@@ -64,17 +51,6 @@ const string_token = newRegExp`
 	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
 	'?
 `;
-const URL_VALUE = newRegExp`
-	(?:
-		${escape}
-	|
-		[^ws]
-	)*
-`;
-export function valueOfURL (url_token :string) {
-	const value = URL_VALUE.exec(url_token.slice(4, -1));
-	return value ? value[0] : '';
-}
 const url_token = newRegExp`
 	[uU][rR][lL]
 	(?:

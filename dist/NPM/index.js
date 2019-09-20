@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.11.3';
+const version = '14.12.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3206,17 +3206,6 @@ const escape = newRegExp`
 		[^\n\f\r]
 	)
 `;
-const ESCAPED = newRegExp`
-	\\
-	(?:
-		(${hex_digit}{1,6})
-		(?:[\t\n\f ]|\r\n?)?
-		|
-		[^\n\f\r]
-	)
-`;
-const escapedReplacer = (match        , p1        ) => p1 ? fromCodePoint(parseInt(p1, 16)) : match.slice(1);
-const unescape$1 = (literal        ) => literal.replace(ESCAPED, escapedReplacer);
 const ws = /\t\n\f\r /;
 const ident_token = newRegExp`
 	(?:
@@ -3252,17 +3241,6 @@ const string_token = newRegExp`
 	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
 	'?
 `;
-const URL_VALUE = newRegExp`
-	(?:
-		${escape}
-	|
-		[^ws]
-	)*
-`;
-function valueOfURL (url_token        ) {
-	const value = URL_VALUE.exec(url_token.slice(4, -1));
-	return value ? value[0] : '';
-}
 const url_token = newRegExp`
 	[uU][rR][lL]
 	(?:
@@ -3558,16 +3536,16 @@ class ParenthesisBlock extends Array                                            
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.ParenthesisBlock'; }
 	
-	         parent                                                                      ;
+	         parent                                                         ;
 	         name        ;
 	
-	constructor (parent                                                                      , name        ) {
+	constructor (parent                                                         , name        ) {
 		super();
 		this.parent = parent;
 		this.name = name;
 	}
 	
-	appendToken (                      )                                                                                                   {
+	appendToken (                      )                                                                                      {
 		switch ( type ) {
 			case whitespace:
 				this.push(' ');
@@ -4034,7 +4012,7 @@ class DeclarationList extends Array                                             
 			case at_keyword:
 				if ( this.noAt ) { return; }
 				const name = literal$1.slice(1);
-				if ( charset(name) || _import(name) ) { return; }
+				if ( charset(name) || _import(name) || namespace(name) ) { return; }
 				const atRule = _keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name);
 				this.push(atRule);
 				return atRule;
@@ -4106,7 +4084,7 @@ class AtRule extends Array                                                 {
 				return this;
 			case '{': {
 				const { name } = this;
-				if ( /*is.charset(name) || is._import(name) || */namespace(name) ) { return; }
+				if ( /*is.charset(name) || */_import(name) || namespace(name) ) { return; }
 				return this.block = new DeclarationList(this);
 			}
 			case ';': {
@@ -4168,122 +4146,6 @@ class AtRule extends Array                                                 {
 }
 freeze(AtRule.prototype);
 
-function MediaQueryList (rule            ) {
-	let mediaQueryList = '';
-	for ( let index = rule.length; index; ) {
-		const child = rule[--index];
-		mediaQueryList = ( typeof child==='string' ? child : child.cssText )+mediaQueryList;
-	}
-	return mediaQueryList;
-}
-
-class ImportRule extends Array                            {
-	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.ImportRule'; }
-	
-	         parent       ;
-	                 keyword        ;
-	        urlLiteral                            = '';
-	get block () { return !!this.mediaBlock || !this.urlLiteral; }
-	
-	constructor (parent       , keyword        ) {
-		super();
-		this.parent = parent;
-		this.keyword = keyword;
-	}
-	
-	appendToken (                )                                               {
-		if ( this.urlLiteral ) {
-			switch ( type ) {
-				case whitespace:
-					this.push(' ');
-					return this;
-				case function$:
-				case '(':
-					const parenthesisBlock = new ParenthesisBlock(this, literal$1.slice(0, -1));
-					this.push(parenthesisBlock);
-					return parenthesisBlock;
-				case ident:
-				case ',':
-					this.push(literal$1);
-					return this;
-				case ';':
-					return this.parent;
-				case comment:
-					this.push('/**/');
-					return this;
-			}
-		}
-		else {
-			switch ( type ) {
-				case whitespace:
-				case comment:
-					return this;
-				case function$:
-					const name = literal$1.slice(0, -1);
-					if ( !url(name) ) { return; }
-					return this.urlLiteral = new ParenthesisBlock(this, name);
-				case string:
-				case url$1:
-					this.urlLiteral = literal$1;
-					return this;
-			}
-		}
-	}
-	
-	get cssText ()         {
-		const mediaQueryList = MediaQueryList(this);
-		const { mediaBlock } = this;
-		if ( mediaBlock ) {
-			if ( mediaQueryList ) {
-				return `@media${mediaQueryList.startsWith(' ') ? '' : ' '}${mediaQueryList}${mediaQueryList.endsWith(' ') ? '' : ' '}{${mediaBlock.cssText}}`;
-			}
-			else {
-				return mediaBlock.cssText;
-			}
-		}
-		else {
-			return `@${this.keyword} ${this.urlLiteral}${mediaQueryList};`;
-		}
-	}
-	
-	* beautify (                  tab         )                           {
-		const mediaQueryList = MediaQueryList(this);
-		const { mediaBlock } = this;
-		if ( mediaBlock ) {
-			if ( mediaQueryList ) {
-				yield `@media${mediaQueryList.startsWith(' ') ? '' : ' '}${mediaQueryList}${mediaQueryList.endsWith(' ') ? '' : ' '}{`;
-				for ( const line of mediaBlock.beautify(tab) ) {
-					yield tab+line;
-				}
-				yield `}`;
-			}
-			else {
-				yield * mediaBlock.beautify(tab);
-			}
-		}
-		else {
-			yield `@${this.keyword} ${this.urlLiteral}${mediaQueryList};`;
-		}
-	}
-	
-	get url () {
-		const { urlLiteral } = this;
-		return unescape$1(
-			urlLiteral instanceof ParenthesisBlock ? ( urlLiteral[0]           ).slice(1, -1) :
-				urlLiteral.startsWith('"') || urlLiteral.startsWith('\'') ? urlLiteral.slice(1, -1) :
-					valueOfURL(urlLiteral)
-		);
-	}
-	                           
-	        mediaBlock             
-		                
-		                                                  
-	  ;
-	
-}
-freeze(ImportRule.prototype);
-
 const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
 const NOT_CHANGES = /\\.|[^\\\x80-\x9F]+/gs;
@@ -4295,26 +4157,26 @@ const __KEY__ = newRegExp('i')`
 
 function isScoped (literal        ) { return __KEY__.test(literal); }
 
-function replaceComponentName (rules                                            , abbr                      , isScoped                              ) {
-	for ( let index = rules.length; index; ) {
-		const rule = rules[--index];
+function replaceComponentName (rules                                            , start        , abbr                      , isScoped                              ) {
+	for ( let index = start, { length } = rules; index<length; ++index ) {
+		const rule = rules[index];
 		if ( rule instanceof QualifiedRule ) {
 			const { typeSelectors, classSelectors } = rule;
 			if ( abbr ) {
-				for ( let index = typeSelectors.length; index; ) {
-					const typeSelector = typeSelectors[--index];
+				for ( let index = 0, { length } = typeSelectors; index<length; ++index ) {
+					const typeSelector = typeSelectors[index];
 					const { cssText } = typeSelector;
 					if ( AliasName.test(cssText) ) { typeSelector.cssText = abbr(cssText); }
 				}
 			}
-			for ( let index = classSelectors.length; index; ) {
-				const { literal } = classSelectors[--index];
+			for ( let index = 0, { length } = classSelectors; index<length; ++index ) {
+				const { literal } = classSelectors[index];
 				isScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
 			}
 		}
 		else if ( rule instanceof AtRule ) {
 			const { block } = rule;
-			if ( block ) { replaceComponentName(block, abbr, isScoped); }
+			if ( block ) { replaceComponentName(block, 0, abbr, isScoped); }
 		}
 		else if ( rule instanceof KeyframesRule ) {
 			const literal = rule.keyframesNameLiteral;
@@ -4323,24 +4185,34 @@ function replaceComponentName (rules                                            
 	}
 }
 
-class Sheet extends Array                                                      {
+class Sheet extends Array                                         {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet'; }
 	
+	        imports_length = 0;
+	        namespaces_length = 0;
+	
 	constructor (inner        , { abbr, sfc: { template } }                       ) {
+		super();
 		if ( !inner ) { return; }
 		if ( inner[0]==='\uFEFF' ) { throw SyntaxError(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
 		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
 		if ( NON_PRINTABLE.test(inner) ) { throw SyntaxError(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
 		if ( inner.replace(NOT_CHANGES, '') ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
-		super();
 		try { parse(this, inner); }
 		finally { clear(); }
 		const keys = template && _(template).keys;
-		replaceComponentName(this, abbr, keys ? function isScoped (literal        ) { return __KEY__.test(literal) && keys.includes(literal.slice(2, -2)); } : isScoped);
+		replaceComponentName(
+			this,
+			this.imports_length+this.namespaces_length,
+			abbr,
+			keys
+				? function isScoped (literal        ) { return __KEY__.test(literal) && keys.includes(literal.slice(2, -2)); }
+				: isScoped
+		);
 	}
 	
-	appendToken (           )                                                                                                        {
+	appendToken (           )                                                                                           {
 		switch ( type ) {
 			case whitespace:
 			case comment:
@@ -4353,17 +4225,13 @@ class Sheet extends Array                                                      {
 				}
 				let atRule;
 				if ( _import(name) ) {
-					for ( let index = this.length; index; ) {
-						const rule = this[--index];
-						if ( !( rule instanceof ImportRule ) ) { return; }
-					}
-					atRule = new ImportRule(this, name);
+					if ( this.length!==this.imports_length ) { return; }
+					++this.imports_length;
+					atRule = new AtRule(this, name);
 				}
 				else if ( namespace(name) ) {
-					for ( let index = this.length; index; ) {
-						const rule = this[--index];
-						if ( !( rule instanceof ImportRule ) && !( rule instanceof AtRule && namespace(rule.name) ) ) { return; }
-					}
+					if ( this.length!==this.imports_length+this.namespaces_length ) { return; }
+					++this.namespaces_length;
 					atRule = new AtRule(this, name);
 				}
 				else { atRule = _keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name); }
@@ -4385,34 +4253,15 @@ class Sheet extends Array                                                      {
 	
 	get cssText ()         {
 		let cssText = '';
-		for ( let index = this.length; index; ) {
-			const rule = this[--index];
-			if ( !( rule instanceof ImportRule ) || rule.block ) {
-				cssText = rule.cssText+cssText;
-			}
-		}
-		for ( let index = this.length; index; ) {
-			const rule = this[--index];
-			if ( rule instanceof ImportRule && !rule.block ) {
-				cssText = rule.cssText+cssText;
-			}
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			cssText += this[index].cssText;
 		}
 		return cssText;
 	}
 	
 	* beautify (             tab         = '\t')                           {
-		const { length } = this;
-		for ( let index = 0; index<length; ++index ) {
-			const rule = this[index];
-			if ( rule instanceof ImportRule && !rule.block ) {
-				yield * rule.beautify(tab);
-			}
-		}
-		for ( let index = 0; index<length; ++index ) {
-			const rule = this[index];
-			if ( !( rule instanceof ImportRule ) || rule.block ) {
-				yield * rule.beautify(tab);
-			}
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			yield * this[index].beautify(tab);
 		}
 	}
 	

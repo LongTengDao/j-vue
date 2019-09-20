@@ -88,7 +88,7 @@ export class DeclarationList extends Array<AtRule | KeyframesRule | QualifiedRul
 			case TOKEN.at_keyword:
 				if ( this.noAt ) { return; }
 				const name = TOKEN.literal.slice(1);
-				if ( is.charset(name) || is._import(name) ) { return; }
+				if ( is.charset(name) || is._import(name) || is.namespace(name) ) { return; }
 				const atRule = is._keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name);
 				this.push(atRule);
 				return atRule;
@@ -160,7 +160,7 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 				return this;
 			case '{': {
 				const { name } = this;
-				if ( /*is.charset(name) || is._import(name) || */is.namespace(name) ) { return; }
+				if ( /*is.charset(name) || */is._import(name) || is.namespace(name) ) { return; }
 				return this.block = new DeclarationList(this);
 			}
 			case ';': {

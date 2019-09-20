@@ -14,7 +14,6 @@ import * as TOKEN from './TOKEN';
 import QualifiedRule from './QualifiedRule';
 import AtRule from './AtRule';
 import KeyframesRule from './KeyframesRule';
-import ImportRule from './ImportRule';
 
 const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
@@ -27,26 +26,26 @@ const __KEY__ = newRegExp('i')`
 
 function isScoped (literal :string) { return __KEY__.test(literal); }
 
-function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList, abbr :Replacer | undefined, isScoped :(literal :string) => boolean) {
-	for ( let index = rules.length; index; ) {
-		const rule = rules[--index];
+function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList, start :number, abbr :Replacer | undefined, isScoped :(literal :string) => boolean) {
+	for ( let index = start, { length } = rules; index<length; ++index ) {
+		const rule = rules[index];
 		if ( rule instanceof QualifiedRule ) {
 			const { typeSelectors, classSelectors } = rule;
 			if ( abbr ) {
-				for ( let index = typeSelectors.length; index; ) {
-					const typeSelector = typeSelectors[--index];
+				for ( let index = 0, { length } = typeSelectors; index<length; ++index ) {
+					const typeSelector = typeSelectors[index];
 					const { cssText } = typeSelector;
 					if ( AliasName.test(cssText) ) { typeSelector.cssText = abbr(cssText); }
 				}
 			}
-			for ( let index = classSelectors.length; index; ) {
-				const { literal } = classSelectors[--index];
+			for ( let index = 0, { length } = classSelectors; index<length; ++index ) {
+				const { literal } = classSelectors[index];
 				isScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
 			}
 		}
 		else if ( rule instanceof AtRule ) {
 			const { block } = rule;
-			if ( block ) { replaceComponentName(block, abbr, isScoped); }
+			if ( block ) { replaceComponentName(block, 0, abbr, isScoped); }
 		}
 		else if ( rule instanceof KeyframesRule ) {
 			const literal = rule.keyframesNameLiteral;
@@ -55,24 +54,34 @@ function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList
 	}
 }
 
-export default class Sheet extends Array<AtRule | KeyframesRule | ImportRule | QualifiedRule> {
+export default class Sheet extends Array<AtRule | KeyframesRule | QualifiedRule> {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet'; }
 	
+	private imports_length = 0;
+	private namespaces_length = 0;
+	
 	constructor (inner :string, { abbr, sfc: { template } } :import('../').Private) {
+		super();
 		if ( !inner ) { return; }
 		if ( inner[0]==='\uFEFF' ) { throw SyntaxError(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
 		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
 		if ( NON_PRINTABLE.test(inner) ) { throw SyntaxError(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
 		if ( inner.replace(NOT_CHANGES, '') ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
-		super();
 		try { TOKEN.parse(this, inner); }
 		finally { TOKEN.clear(); }
 		const keys = template && _(template).keys;
-		replaceComponentName(this, abbr, keys ? function isScoped (literal :string) { return __KEY__.test(literal) && keys.includes(literal.slice(2, -2)); } : isScoped);
+		replaceComponentName(
+			this,
+			this.imports_length+this.namespaces_length,
+			abbr,
+			keys
+				? function isScoped (literal :string) { return __KEY__.test(literal) && keys.includes(literal.slice(2, -2)); }
+				: isScoped
+		);
 	}
 	
-	appendToken (this :Sheet) :Sheet | AtRule | KeyframesRule | ImportRule | QualifiedRule | SquareBracketBlock | Declaration | void {
+	appendToken (this :Sheet) :Sheet | AtRule | KeyframesRule | QualifiedRule | SquareBracketBlock | Declaration | void {
 		switch ( TOKEN.type ) {
 			case TOKEN.whitespace:
 			case TOKEN.comment:
@@ -85,17 +94,13 @@ export default class Sheet extends Array<AtRule | KeyframesRule | ImportRule | Q
 				}
 				let atRule;
 				if ( is._import(name) ) {
-					for ( let index = this.length; index; ) {
-						const rule = this[--index];
-						if ( !( rule instanceof ImportRule ) ) { return; }
-					}
-					atRule = new ImportRule(this, name);
+					if ( this.length!==this.imports_length ) { return; }
+					++this.imports_length;
+					atRule = new AtRule(this, name);
 				}
 				else if ( is.namespace(name) ) {
-					for ( let index = this.length; index; ) {
-						const rule = this[--index];
-						if ( !( rule instanceof ImportRule ) && !( rule instanceof AtRule && is.namespace(rule.name) ) ) { return; }
-					}
+					if ( this.length!==this.imports_length+this.namespaces_length ) { return; }
+					++this.namespaces_length;
 					atRule = new AtRule(this, name);
 				}
 				else { atRule = is._keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name); }
@@ -117,34 +122,15 @@ export default class Sheet extends Array<AtRule | KeyframesRule | ImportRule | Q
 	
 	get cssText () :string {
 		let cssText = '';
-		for ( let index = this.length; index; ) {
-			const rule = this[--index];
-			if ( !( rule instanceof ImportRule ) || rule.block ) {
-				cssText = rule.cssText+cssText;
-			}
-		}
-		for ( let index = this.length; index; ) {
-			const rule = this[--index];
-			if ( rule instanceof ImportRule && !rule.block ) {
-				cssText = rule.cssText+cssText;
-			}
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			cssText += this[index].cssText;
 		}
 		return cssText;
 	}
 	
 	* beautify (this :Sheet, tab :string = '\t') :IterableIterator<string> {
-		const { length } = this;
-		for ( let index = 0; index<length; ++index ) {
-			const rule = this[index];
-			if ( rule instanceof ImportRule && !rule.block ) {
-				yield * rule.beautify(tab);
-			}
-		}
-		for ( let index = 0; index<length; ++index ) {
-			const rule = this[index];
-			if ( !( rule instanceof ImportRule ) || rule.block ) {
-				yield * rule.beautify(tab);
-			}
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			yield * this[index].beautify(tab);
 		}
 	}
 	
