@@ -35,17 +35,19 @@ export default function Identifier () :string {
 	
 	//return latestIdentifier.join('')+'_';
 	var identifier :string = latestIdentifier.join('');
-	switch ( identifier ) {
-		case 'auto':
-		case 'contents':
-		case 'default':
-		case 'inherit':
-		case 'initial':
-		case 'none':
-		case 'span':
-		case 'unset':
-			lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter as 'e' | 't' | 'l'];
-			identifier = latestIdentifier.join('');
+	if ( lastIndex>2 ) {
+		switch ( identifier ) {
+			case 'auto':
+			case 'none':
+			case 'span':
+			case 'unset':
+			case 'default':
+			case 'inherit':
+			case 'initial':
+			case 'contents':
+				lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter as 'e' | 'l' | 'n' | 'o' | 's' | 't'];
+				identifier = latestIdentifier.join('');
+		}
 	}
 	return identifier;
 	

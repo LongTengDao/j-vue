@@ -24,7 +24,7 @@ function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
 	if ( keys===undefined ) {
 		if ( isArray(this) ) { return DynamicScope(mix(this as Scope[])); }
 		else if ( this instanceof StaticScope ) { return DynamicScope(create(this)); }
-		else if ( typeof this==='function' && this.prototype instanceof StaticScope ) { return DynamicScope(create(this.prototype)); }
+		else if ( typeof this==='function' && this.prototype instanceof StaticScope ) { return DynamicScope(create(this.prototype as StaticScope)); }
 		else { return DynamicScope(create(SCOPE)); }
 	}
 	else {
