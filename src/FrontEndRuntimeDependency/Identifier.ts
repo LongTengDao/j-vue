@@ -33,11 +33,21 @@ export default function Identifier () :string {
 		lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter];
 	}
 	
-	//var identifier :string = latestIdentifier.join('');
-	//if ( isReservedWord(identifier) ) { lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter]; return latestIdentifier.join(''); }
-	//return identifier;
-	
-	return latestIdentifier.join('');
+	//return latestIdentifier.join('')+'_';
+	var identifier :string = latestIdentifier.join('');
+	switch ( identifier ) {
+		case 'auto':
+		case 'contents':
+		case 'default':
+		case 'inherit':
+		case 'initial':
+		case 'none':
+		case 'span':
+		case 'unset':
+			lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter as 'e' | 't' | 'l'];
+			identifier = latestIdentifier.join('');
+	}
+	return identifier;
 	
 };
 

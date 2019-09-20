@@ -34,11 +34,13 @@ export default class Style extends Block<'style'> {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style'; }
 	
-	constructor (attributes :Attributes, inner :string | undefined) {
+	constructor (attributes :Attributes, inner :string | undefined, sfc :SFC) {
 		
 		super('style', attributes, true, inner, STYLE_END_TAG);
 		
 		const _this :Private = _(this);
+		
+		_this.sfc = sfc;
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
@@ -77,7 +79,7 @@ export default class Style extends Block<'style'> {
 			if ( lang && !CSS.test(lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
 		}
 		if ( _this.sheet && _this.cache===inner ) { return _this.sheet; }
-		const sheet = new Sheet(inner, _this.abbr);
+		const sheet = new Sheet(inner, _this);
 		_this.sheet = sheet;
 		_this.cache = inner;
 		return sheet;
@@ -101,7 +103,9 @@ export type Private = object & {
 	cache? :string
 	sheet? :Sheet
 	innerCSS? :string
+	sfc :SFC
 };
 export type Replacer = (componentName :string) => string;
 type Selector = { [componentName :string] :string };
 type Attributes = import('../Attributes').default;
+type SFC = import('../').default;

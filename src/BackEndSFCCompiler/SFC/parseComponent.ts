@@ -97,7 +97,7 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 		}
 		
 		if ( blockName==='template' ) { sfc.template = new Template(tag.attributes!, inner); }
-		else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes!, inner)); }
+		else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes!, inner, sfc)); }
 		else if ( blockName==='script' ) { sfc.script = new Script(tag.attributes!, inner); }
 		else { sfc.customBlocks.push(new CustomBlock(blockName, tag.attributes!, inner)); }
 		

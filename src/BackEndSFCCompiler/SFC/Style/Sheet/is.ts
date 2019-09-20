@@ -1,22 +1,31 @@
 import Proxy from '.Proxy';
 import create from '.Object.create';
 import NULL from '.null.prototype';
+
+export { DEFAULT as default };
 export const {
-	
-	'url': url,
-	'prefix(': prefix_,
-	'domain(': domain_,
 	
 	charset,
 	import: _import,
 	namespace,
-	
 	media,
 	page,
 	'font-face': font_face,
-	keyframes,
+	//keyframes,
 	supports,
 	document,
+	
+	url,
+	'prefix(': prefix_,
+	'domain(': domain_,
+	
+	from,
+	to,
+	none,
+	default: DEFAULT,
+	inherit,
+	initial,
+	unset,
 	
 } = new Proxy(create(NULL) as { [keyword :string] :(text :string) => boolean }, {
 	get (is, keyword :string) {
@@ -34,3 +43,6 @@ export const {
 		};
 	}
 });
+
+const _KEYFRAMES = /^(?:-[a-zA-Z]+-)[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
+export const _keyframes = (keyword :string) => _KEYFRAMES.test(keyword);

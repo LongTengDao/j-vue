@@ -2,23 +2,22 @@ import Array from '.Array';
 import freeze from '.Object.freeze';
 
 import * as TOKEN from './TOKEN';
-import TypeSelector from './TypeSelector';
 import SquareBracketBlock from './SquareBracketBlock';
 
-export default class ParenthesisBlock extends Array<ParenthesisBlock | SquareBracketBlock | TypeSelector | string> {
+export default class ParenthesisBlock extends Array<ParenthesisBlock | SquareBracketBlock | TypeSelector | ClassSelector | string> {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.ParenthesisBlock'; }
 	
-	readonly parent :AtRule | QualifiedRule | Declaration | ParenthesisBlock;
+	readonly parent :AtRule | ImportRule | QualifiedRule | Declaration | ParenthesisBlock;
 	readonly name :string;
 	
-	constructor (parent :AtRule | QualifiedRule | Declaration | ParenthesisBlock, name :string) {
+	constructor (parent :AtRule | ImportRule | QualifiedRule | Declaration | ParenthesisBlock, name :string) {
 		super();
 		this.parent = parent;
 		this.name = name;
 	}
 	
-	appendToken (this :ParenthesisBlock) :AtRule | QualifiedRule | Declaration | ParenthesisBlock | SquareBracketBlock | void {
+	appendToken (this :ParenthesisBlock) :AtRule | ImportRule | QualifiedRule | Declaration | ParenthesisBlock | SquareBracketBlock | void {
 		switch ( TOKEN.type ) {
 			case TOKEN.whitespace:
 				this.push(' ');
@@ -69,5 +68,8 @@ export default class ParenthesisBlock extends Array<ParenthesisBlock | SquareBra
 freeze(ParenthesisBlock.prototype);
 
 type AtRule = import('./AtRule').default;
+type ImportRule = import('./ImportRule').default;
 type QualifiedRule = import('./QualifiedRule').default;
 type Declaration = import('./Declaration').default;
+type TypeSelector = import('./Selector').TypeSelector;
+type ClassSelector = import('./Selector').ClassSelector;

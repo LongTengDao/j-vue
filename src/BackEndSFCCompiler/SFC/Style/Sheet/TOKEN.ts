@@ -1,5 +1,7 @@
 import SyntaxError from '.SyntaxError';
 import throwSyntaxError from '.throw.SyntaxError';
+import fromCodePoint from '.String.fromCodePoint';
+import parseInt from '.parseInt';
 
 import { newRegExp } from '@ltd/j-regexp';
 
@@ -16,8 +18,19 @@ const escape = newRegExp`
 		[^\n\f\r]
 	)
 `;
+const ESCAPED = newRegExp`
+	\\
+	(?:
+		(${hex_digit}{1,6})
+		(?:[\t\n\f ]|\r\n?)?
+		|
+		[^\n\f\r]
+	)
+`;
+const escapedReplacer = (match :string, p1 :string) => p1 ? fromCodePoint(parseInt(p1, 16)) : match.slice(1);
+export const unescape = (literal :string) => literal.replace(ESCAPED, escapedReplacer);
 const ws = /\t\n\f\r /;
-const ident_token = newRegExp`
+export const ident_token = newRegExp`
 	(?:
 		--
 	|
@@ -51,6 +64,17 @@ const string_token = newRegExp`
 	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
 	'?
 `;
+const URL_VALUE = newRegExp`
+	(?:
+		${escape}
+	|
+		[^ws]
+	)*
+`;
+export function valueOfURL (url_token :string) {
+	const value = URL_VALUE.exec(url_token.slice(4, -1));
+	return value ? value[0] : '';
+}
 const url_token = newRegExp`
 	[uU][rR][lL]
 	(?:
@@ -175,7 +199,7 @@ function Type (literal :string) :Type {
 		case '!':
 			return literal as '!';
 		case '"':
-			return literal.endsWith('"') && literal!=='"' ? string : throwSyntaxError(`bad-string-token`);
+			return literal.endsWith('"') && literal!=='"' ? literal.includes('\t') ? throwSyntaxError(`CSS 2 不允许字符串中存在 TAB`) : string : throwSyntaxError(`bad-string-token`);
 		case '#':
 			return hash;
 		case '$':
@@ -183,7 +207,7 @@ function Type (literal :string) :Type {
 		case '&':
 			return literal as '$' | '%' | '&';
 		case '\'':
-			return literal.endsWith('\'') && literal!=='\'' ? string : throwSyntaxError(`bad-string-token`);
+			return literal.endsWith('\'') && literal!=='\'' ? literal.includes('\t') ? throwSyntaxError(`CSS 2 不允许字符串中存在 TAB`) : string : throwSyntaxError(`bad-string-token`);
 		case '(':
 		case ')':
 		case '*':
@@ -268,5 +292,5 @@ export function parse (sheet :Sheet, source :string) {
 
 export function clear () { literal = ''; }
 
-type Layer = { parent? :Layer, block? :object, appendToken () : Layer | void };
+type Layer = { parent? :Layer, block? :any, appendToken () : Layer | void };
 type Sheet = import('./').default;

@@ -8,6 +8,8 @@ import NULL from '.null.prototype';
 
 import { newRegExp } from '@ltd/j-regexp';
 
+import KEYS from '../../../FrontEndRuntimeDependency/Scope/KEYS';
+
 import _ from '../private';
 import Block from '../Block';
 import Content from './Content/';
@@ -72,7 +74,7 @@ export default class Template extends Block {
 		
 		if ( '.keys' in attributes ) {
 			if ( attributes['.keys']===EMPTY ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
-			_this.keys = attributes['.keys'];
+			_this.keys = attributes['.keys']!.match(KEYS) || [];
 		}
 		
 		if ( 'functional' in attributes ) {
@@ -135,7 +137,7 @@ freeze(Template.prototype);
 
 export type Private = object & {
 	abbr? :Partial
-	keys? :string
+	keys? :string[]
 	functional? :boolean
 	cache? :string
 	content? :Content

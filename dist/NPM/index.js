@@ -1,12 +1,20 @@
 ﻿'use strict';
 
-const version = '14.11.2';
+const version = '14.11.3';
 
 const isBuffer = Buffer.isBuffer;
 
 const freeze = Object.freeze;
 
 const undefined$1 = void 0;
+
+const warnGlobal = (
+	/*! j-globals: throw.Error (internal) */
+	function throwError (message) {
+		throw Error(message);
+	}
+	/*¡ j-globals: throw.Error (internal) */
+);
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -3141,22 +3149,31 @@ class Script extends Block {
 }
 freeze(Script.prototype);
 
+const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
+
 const {
-	
-	'url': url,
-	'prefix(': prefix_,
-	'domain(': domain_,
 	
 	charset,
 	import: _import,
 	namespace,
-	
 	media,
 	page,
 	'font-face': font_face,
-	keyframes,
+	//keyframes,
 	supports,
 	document,
+	
+	url,
+	'prefix(': prefix_,
+	'domain(': domain_,
+	
+	from: from$1,
+	to,
+	none,
+	default: DEFAULT,
+	inherit,
+	initial,
+	unset,
 	
 } = new Proxy(create(NULL)                                                    , {
 	get (is, keyword        ) {
@@ -3175,6 +3192,9 @@ const {
 	}
 });
 
+const _KEYFRAMES = /^(?:-[a-zA-Z]+-)[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
+const _keyframes = (keyword        ) => _KEYFRAMES.test(keyword);
+
 const nonASCII = /\x80-\uFFFF/;
 const hex_digit = /[0-9A-Fa-f]/;
 const escape = newRegExp`
@@ -3186,6 +3206,17 @@ const escape = newRegExp`
 		[^\n\f\r]
 	)
 `;
+const ESCAPED = newRegExp`
+	\\
+	(?:
+		(${hex_digit}{1,6})
+		(?:[\t\n\f ]|\r\n?)?
+		|
+		[^\n\f\r]
+	)
+`;
+const escapedReplacer = (match        , p1        ) => p1 ? fromCodePoint(parseInt(p1, 16)) : match.slice(1);
+const unescape$1 = (literal        ) => literal.replace(ESCAPED, escapedReplacer);
 const ws = /\t\n\f\r /;
 const ident_token = newRegExp`
 	(?:
@@ -3221,6 +3252,17 @@ const string_token = newRegExp`
 	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
 	'?
 `;
+const URL_VALUE = newRegExp`
+	(?:
+		${escape}
+	|
+		[^ws]
+	)*
+`;
+function valueOfURL (url_token        ) {
+	const value = URL_VALUE.exec(url_token.slice(4, -1));
+	return value ? value[0] : '';
+}
 const url_token = newRegExp`
 	[uU][rR][lL]
 	(?:
@@ -3345,7 +3387,7 @@ function Type (literal        )       {
 		case '!':
 			return literal       ;
 		case '"':
-			return literal.endsWith('"') && literal!=='"' ? string : throwSyntaxError(`bad-string-token`);
+			return literal.endsWith('"') && literal!=='"' ? literal.includes('\t') ? throwSyntaxError(`CSS 2 不允许字符串中存在 TAB`) : string : throwSyntaxError(`bad-string-token`);
 		case '#':
 			return hash;
 		case '$':
@@ -3353,7 +3395,7 @@ function Type (literal        )       {
 		case '&':
 			return literal                   ;
 		case '\'':
-			return literal.endsWith('\'') && literal!=='\'' ? string : throwSyntaxError(`bad-string-token`);
+			return literal.endsWith('\'') && literal!=='\'' ? literal.includes('\t') ? throwSyntaxError(`CSS 2 不允许字符串中存在 TAB`) : string : throwSyntaxError(`bad-string-token`);
 		case '(':
 		case ')':
 		case '*':
@@ -3416,7 +3458,7 @@ function Type (literal        )       {
 	return IdentLike(literal);
 }
 
-let literal         = '';
+let literal$1         = '';
 let type      ;
 
 function parse (sheet       , source        ) {
@@ -3427,8 +3469,8 @@ function parse (sheet       , source        ) {
 	for ( let index = 0; index<length; ++index ) { types += Type(literals[index]); }
 	for ( let index = 0; index<length; ++index ) {
 		type = ( types                                       )[index];
-		literal = literals[index];
-		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了上下文不允许的内容 ${literal}：\n${literals.slice(0, index).join('')}`);
+		literal$1 = literals[index];
+		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了上下文不允许的内容 ${literal$1}：\n${literals.slice(0, index).join('')}`);
 	}
 	if ( layer!==sheet ) {
 		const { parent } = layer;
@@ -3436,7 +3478,7 @@ function parse (sheet       , source        ) {
 	}
 }
 
-function clear () { literal = ''; }
+function clear () { literal$1 = ''; }
 
 class TypeSelector {
 	
@@ -3449,7 +3491,24 @@ class TypeSelector {
 	}
 	
 }
+
 freeze(TypeSelector.prototype);
+
+class ClassSelector {
+	
+	         parent                                  ;
+	         literal        ;
+	
+	constructor (parent                                  , literal        ) {
+		this.parent = parent;
+		this.literal = literal;
+	}
+	
+	get cssText () { return `.${this.literal}`; }
+	
+}
+
+freeze(ClassSelector.prototype);
 
 class SquareBracketBlock extends Array         {
 	
@@ -3482,7 +3541,7 @@ class SquareBracketBlock extends Array         {
 			case '*':
 			case '=':
 			case string:
-				this.push(literal);
+				this.push(literal$1);
 				return this;
 			case comment:
 				this.length && this.push('/**/');
@@ -3495,27 +3554,27 @@ class SquareBracketBlock extends Array         {
 }
 freeze(SquareBracketBlock.prototype);
 
-class ParenthesisBlock extends Array                                                                {
+class ParenthesisBlock extends Array                                                                                {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.ParenthesisBlock'; }
 	
-	         parent                                                         ;
+	         parent                                                                      ;
 	         name        ;
 	
-	constructor (parent                                                         , name        ) {
+	constructor (parent                                                                      , name        ) {
 		super();
 		this.parent = parent;
 		this.name = name;
 	}
 	
-	appendToken (                      )                                                                                      {
+	appendToken (                      )                                                                                                   {
 		switch ( type ) {
 			case whitespace:
 				this.push(' ');
 				return this;
 			case function$:
 			case '(':
-				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
+				const parenthesisBlock = new ParenthesisBlock(this, literal$1.slice(0, -1));
 				this.push(parenthesisBlock);
 				return parenthesisBlock;
 			case '[':
@@ -3541,7 +3600,7 @@ class ParenthesisBlock extends Array                                            
 			case at_keyword:
 				return;
 		}
-		this.push(literal);
+		this.push(literal$1);
 		return this;
 	}
 	
@@ -3579,7 +3638,7 @@ class Declaration extends Array                            {// property or descr
 					this.semicolon = true;
 					return this.parent;
 				case function$:
-					const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
+					const parenthesisBlock = new ParenthesisBlock(this, literal$1.slice(0, -1));
 					this.push(parenthesisBlock);
 					return parenthesisBlock;
 				case '}':
@@ -3600,7 +3659,7 @@ class Declaration extends Array                            {// property or descr
 				case dimension:
 				case percentage:
 				case url$1:
-					this.push(literal);
+					this.push(literal$1);
 					return this;
 			}
 		}
@@ -3634,6 +3693,8 @@ class Declaration extends Array                            {// property or descr
 }
 freeze(Declaration.prototype);
 
+const IDENT = newRegExp`^${ident_token}$`;
+
 class Declarations extends Array              {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.QualifiedRule.Declarations'; }
@@ -3645,13 +3706,13 @@ class Declarations extends Array              {
 		this.parent = parent;
 	}
 	
-	appendToken (                  )                                                              {
+	appendToken (                  )                                                                              {
 		switch ( type ) {
 			case whitespace:
 			case comment:
 				return this;
 			case ident:
-				const declaration = new Declaration(this, literal);
+				const declaration = new Declaration(this, literal$1);
 				this.push(declaration);
 				return declaration;
 			case '}':
@@ -3663,42 +3724,60 @@ class Declarations extends Array              {
 
 freeze(Declarations.prototype);
 
-function replaceTypeSelector (func                  , typeSelectors                ) {
+function replaceTypeSelector (func                  , qualifiedRule               ) {
+	const dotIndexes = [];
+	let dotIndex = 0;
 	const { length } = func;
 	let index = 0;
-	let is = true;
+	let not = '';
 	while ( index<length ) {
 		const item = func[index];
-		if ( item===':' || item==='.' ) { is = false; }
-		else {
-			if ( item instanceof ParenthesisBlock ) { replaceTypeSelector(item, typeSelectors); }
-			else if ( is && typeof item==='string' && / /.test(item) ) { typeSelectors.push(func[index] = new TypeSelector(func, item)); }
-			is = true;
+		if ( item===':' ) { not = item; }
+		else if ( item==='.' ) {
+			not = item;
+			dotIndex = index;
+		}
+		else if ( item!=='/**/' ) {
+			if ( item instanceof ParenthesisBlock ) { replaceTypeSelector(item, qualifiedRule); }
+			else if ( typeof item==='string' ) {
+				if ( IDENT.test(item) ) {
+					if ( not==='' ) { qualifiedRule.typeSelectors.push(func[index] = new TypeSelector(func, item)); }
+					else if ( not==='.' ) {
+						dotIndexes.push(dotIndex);
+						qualifiedRule.classSelectors.push(func[index] = new ClassSelector(func, item));
+					}
+				}
+			}
+			not = '';
 		}
 		++index;
 	}
+	index = dotIndexes.length;
+	while ( index ) { func.splice(dotIndexes[--index], 1); }
 }
 
-class QualifiedRule extends Array                                                                {
+class QualifiedRule extends Array                                                                                {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.QualifiedRule'; }
 	
-	         parent                         ;
+	         parent                                         ;
 	         block              ;
 	        not                 = '';
+	        dotIndex         = 0;
 	        func                   ;
 	         typeSelectors                 = [];
+	         classSelectors                  = [];
 	
-	constructor (parent                         ) {
+	constructor (parent                                         ) {
 		super();
 		this.parent = parent;
 		this.block = new Declarations(this);
 	}
 	
-	appendToken (                   )                                                                              {
+	appendToken (                     not          )                                                                              {
 		const { func } = this;
 		if ( func ) {
-			replaceTypeSelector(func, this.typeSelectors);
+			replaceTypeSelector(func, this);
 			this.func = undefined$1;
 		}
 		switch ( type ) {
@@ -3706,21 +3785,27 @@ class QualifiedRule extends Array                                               
 				this.push(' ');
 				this.not = '';
 				return this;
-			case '.':
 			case ':':
-				this.push(literal);
-				this.not = type;
+				this.push(this.not = type);
+				return this;
+			case '.':
+				this.push(this.not = type);
+				this.dotIndex = this.length-1;
 				return this;
 			case ident:
-				if ( this.not ) {
-					this.push(literal);
-					this.not = '';
-				}
+				if ( this.not===':' || not ) { this.push(literal$1); }
 				else {
-					const typeSelector = new TypeSelector(this, literal);
-					this.typeSelectors.push(typeSelector);
-					this.push(typeSelector);
+					let selector;
+					if ( this.not==='.' ) {
+						this.classSelectors.push(selector = new ClassSelector(this, literal$1));
+						this.splice(this.dotIndex, 1);
+					}
+					else {
+						this.typeSelectors.push(selector = new TypeSelector(this, literal$1));
+					}
+					this.push(selector);
 				}
+				this.not = '';
 				return this;
 			case ',':
 			case '*':
@@ -3733,7 +3818,7 @@ class QualifiedRule extends Array                                               
 			case '/':
 			case hash:
 			case percentage:// not style rule
-				this.push(literal);
+				this.push(literal$1);
 				this.not = '';
 				return this;
 			case '[':
@@ -3743,7 +3828,7 @@ class QualifiedRule extends Array                                               
 				return squareBracketBlock;
 			case function$:
 				if ( this.not!==':' ) { return; }
-				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
+				const parenthesisBlock = new ParenthesisBlock(this, literal$1.slice(0, -1));
 				this.push(parenthesisBlock);
 				this.func = parenthesisBlock;
 				this.not = '';
@@ -3774,7 +3859,7 @@ class QualifiedRule extends Array                                               
 		return `${this.selectorText}{${blockText}}`;
 	}
 	
-	* beautify (                   )                           {
+	* beautify (                     tab         )                           {
 		const { block } = this;
 		const { length } = block;
 		if ( length ) {
@@ -3791,6 +3876,85 @@ class QualifiedRule extends Array                                               
 }
 freeze(QualifiedRule.prototype);
 
+const isCSSWideKeywords = (literal        ) => inherit(literal) || initial(literal) || unset(literal);
+const notCustomIdent = (literal        ) => DEFAULT(literal) || isCSSWideKeywords(literal);
+
+class KeyframesRule extends Array                {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.KeyframesRule'; }
+	
+	         parent                         ;
+	                 keyword        ;
+	keyframesNameLiteral         = '';
+	        blocked          = false;
+	get block () { return true         ; }
+	
+	constructor (parent                         , keyword        ) {
+		super();
+		this.parent = parent;
+		this.keyword = keyword;
+	}
+	
+	appendToken (                   )                                                                 {
+		switch ( type ) {
+			case whitespace:
+			case comment:
+				return this;
+			case ident:
+				if ( this.blocked ) {
+					if ( !from$1(literal$1) && !to(literal$1) ) { return; }
+					const qualifiedRule = new QualifiedRule(this);
+					this.push(qualifiedRule);
+					return qualifiedRule.appendToken(true)                 ;
+				}
+				else {
+					const { keyframesNameLiteral } = this;
+					if ( keyframesNameLiteral ) { return; }
+					if ( none(literal$1) || notCustomIdent(literal$1) ) { return; }
+					this.keyframesNameLiteral = literal$1;
+					return this;
+				}
+			case string:
+				if ( this.keyframesNameLiteral ) { return; }
+				this.keyframesNameLiteral = literal$1;
+				return this;
+			case '{':
+				if ( !this.keyframesNameLiteral || this.blocked ) { return; }
+				this.blocked = true;
+				return this;
+			case '}':
+				if ( !this.blocked ) { return; }
+				return this.parent;
+			case percentage:
+				if ( !this.blocked ) { return; }
+				const qualifiedRule = new QualifiedRule(this);
+				this.push(qualifiedRule);
+				return qualifiedRule.appendToken()                 ;
+		}
+	}
+	
+	get cssText ()         {
+		const { keyframesNameLiteral } = this;
+		let blockText = '';
+		for ( let index = this.length; index; ) {
+			blockText = this[--index].cssText+blockText;
+		}
+		return `@${this.keyword}${keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? '' : ' '}${keyframesNameLiteral}{${blockText}}`;
+	}
+	
+	* beautify (                     tab         = '\t')                           {
+		yield `@${this.keyword} ${this.keyframesNameLiteral} {`;
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			for ( const line of this[index].beautify(tab) ) {
+				yield tab+line;
+			}
+		}
+		yield `}`;
+	}
+	
+}
+freeze(KeyframesRule.prototype);
+
 class Multi extends Array {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.Multi'; }
@@ -3804,7 +3968,7 @@ class Multi extends Array {
 	constructor (parent                 ) {
 		super();
 		this.parent = parent;
-		this.d = this.declaration = new Declaration(parent, literal);
+		this.d = this.declaration = new Declaration(parent, literal$1);
 		this.sr = ( this.styleRule = new QualifiedRule(parent) ).appendToken();// may not style rule
 	}
 	
@@ -3830,7 +3994,7 @@ class Multi extends Array {
 
 freeze(Multi.prototype);
 
-class DeclarationList extends Array                                       {
+class DeclarationList extends Array                                                       {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.DeclarationList'; }
 	
@@ -3850,10 +4014,10 @@ class DeclarationList extends Array                                       {
 		}
 		const { name } = parent;
 		if ( media(name) ) { this.noDeclaration = true; }
-		else if ( keyframes(name) ) {
-			this.noAt = true;
-			this.noDeclaration = true;
-		}
+		//else if ( is._keyframes(name) ) {
+		//	this.noAt = true;
+		//	this.noDeclaration = true;
+		//}
 		else if ( font_face(name) ) {
 			this.noAt = true;
 			this.noQualified = true;
@@ -3862,16 +4026,16 @@ class DeclarationList extends Array                                       {
 		else if ( supports(name) || document(name) ) { this.noDeclaration = true; }
 	}
 	
-	appendToken (                     )                                                                                                     {
+	appendToken (                     )                                                                                                                     {
 		switch ( type ) {
 			case whitespace:
 			case comment:
 				return this;
 			case at_keyword:
 				if ( this.noAt ) { return; }
-				const name = literal.slice(1);
+				const name = literal$1.slice(1);
 				if ( charset(name) || _import(name) ) { return; }
-				const atRule = new AtRule(this, name);
+				const atRule = _keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name);
 				this.push(atRule);
 				return atRule;
 			case ident:
@@ -3882,7 +4046,7 @@ class DeclarationList extends Array                                       {
 					return styleRule.appendToken()                 ;
 				}
 				if ( this.noQualified ) {
-					const declaration = new Declaration(this, literal);
+					const declaration = new Declaration(this, literal$1);
 					this.push(declaration);
 					return declaration;
 				}
@@ -3894,7 +4058,7 @@ class DeclarationList extends Array                                       {
 			case '|':
 			case '$':
 			case hash:
-			case percentage:// not style rule
+			//case TOKEN.percentage:// not style rule
 				if ( this.noQualified ) { return; }
 				const styleRule = new QualifiedRule(this);
 				this.push(styleRule);
@@ -3930,30 +4094,30 @@ class AtRule extends Array                                                 {
 				return this;
 			case function$:
 			case '(':
-				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
+				const parenthesisBlock = new ParenthesisBlock(this, literal$1.slice(0, -1));
 				this.push(parenthesisBlock);
 				return parenthesisBlock;
 			case ident:
-			case hash:
 			case string:
 			case url$1:
 			case ':':
-				this.push(literal);
+			case ',':
+				this.push(literal$1);
 				return this;
 			case '{': {
 				const { name } = this;
-				if ( /*is.charset(name) || */_import(name) || namespace(name) ) { return; }
+				if ( /*is.charset(name) || is._import(name) || */namespace(name) ) { return; }
 				return this.block = new DeclarationList(this);
 			}
 			case ';': {
 				const { name } = this;
-				if ( media(name) || page(name) || font_face(name) || keyframes(name) || supports(name) || document(name) ) { return; }
+				if ( media(name) || page(name) || font_face(name) || /*is._keyframes(name) || */supports(name) || document(name) ) { return; }
 				this.semicolon = true;
 				return this.parent;
 			}
 			case '}':
 				const { name } = this;
-				if ( media(name) || page(name) || font_face(name) || keyframes(name) || supports(name) || document(name) ) { return; }
+				if ( media(name) || page(name) || font_face(name) || /*is._keyframes(name) || */supports(name) || document(name) ) { return; }
 				return this.parent.appendToken()                           ;
 			case comment:
 				this.push('/**/');
@@ -4004,44 +4168,166 @@ class AtRule extends Array                                                 {
 }
 freeze(AtRule.prototype);
 
+function MediaQueryList (rule            ) {
+	let mediaQueryList = '';
+	for ( let index = rule.length; index; ) {
+		const child = rule[--index];
+		mediaQueryList = ( typeof child==='string' ? child : child.cssText )+mediaQueryList;
+	}
+	return mediaQueryList;
+}
+
+class ImportRule extends Array                            {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.ImportRule'; }
+	
+	         parent       ;
+	                 keyword        ;
+	        urlLiteral                            = '';
+	get block () { return !!this.mediaBlock || !this.urlLiteral; }
+	
+	constructor (parent       , keyword        ) {
+		super();
+		this.parent = parent;
+		this.keyword = keyword;
+	}
+	
+	appendToken (                )                                               {
+		if ( this.urlLiteral ) {
+			switch ( type ) {
+				case whitespace:
+					this.push(' ');
+					return this;
+				case function$:
+				case '(':
+					const parenthesisBlock = new ParenthesisBlock(this, literal$1.slice(0, -1));
+					this.push(parenthesisBlock);
+					return parenthesisBlock;
+				case ident:
+				case ',':
+					this.push(literal$1);
+					return this;
+				case ';':
+					return this.parent;
+				case comment:
+					this.push('/**/');
+					return this;
+			}
+		}
+		else {
+			switch ( type ) {
+				case whitespace:
+				case comment:
+					return this;
+				case function$:
+					const name = literal$1.slice(0, -1);
+					if ( !url(name) ) { return; }
+					return this.urlLiteral = new ParenthesisBlock(this, name);
+				case string:
+				case url$1:
+					this.urlLiteral = literal$1;
+					return this;
+			}
+		}
+	}
+	
+	get cssText ()         {
+		const mediaQueryList = MediaQueryList(this);
+		const { mediaBlock } = this;
+		if ( mediaBlock ) {
+			if ( mediaQueryList ) {
+				return `@media${mediaQueryList.startsWith(' ') ? '' : ' '}${mediaQueryList}${mediaQueryList.endsWith(' ') ? '' : ' '}{${mediaBlock.cssText}}`;
+			}
+			else {
+				return mediaBlock.cssText;
+			}
+		}
+		else {
+			return `@${this.keyword} ${this.urlLiteral}${mediaQueryList};`;
+		}
+	}
+	
+	* beautify (                  tab         )                           {
+		const mediaQueryList = MediaQueryList(this);
+		const { mediaBlock } = this;
+		if ( mediaBlock ) {
+			if ( mediaQueryList ) {
+				yield `@media${mediaQueryList.startsWith(' ') ? '' : ' '}${mediaQueryList}${mediaQueryList.endsWith(' ') ? '' : ' '}{`;
+				for ( const line of mediaBlock.beautify(tab) ) {
+					yield tab+line;
+				}
+				yield `}`;
+			}
+			else {
+				yield * mediaBlock.beautify(tab);
+			}
+		}
+		else {
+			yield `@${this.keyword} ${this.urlLiteral}${mediaQueryList};`;
+		}
+	}
+	
+	get url () {
+		const { urlLiteral } = this;
+		return unescape$1(
+			urlLiteral instanceof ParenthesisBlock ? ( urlLiteral[0]           ).slice(1, -1) :
+				urlLiteral.startsWith('"') || urlLiteral.startsWith('\'') ? urlLiteral.slice(1, -1) :
+					valueOfURL(urlLiteral)
+		);
+	}
+	                           
+	        mediaBlock             
+		                
+		                                                  
+	  ;
+	
+}
+freeze(ImportRule.prototype);
+
 const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
 const NOT_CHANGES = /\\.|[^\\\x80-\x9F]+/gs;
+const __KEY__ = newRegExp('i')`
+	^
+	__${KEYS}__
+	$
+`;
 
-function replaceComponentName (rules                                            , abbr           ) {
+function isScoped (literal        ) { return __KEY__.test(literal); }
+
+function replaceComponentName (rules                                            , abbr                      , isScoped                              ) {
 	for ( let index = rules.length; index; ) {
 		const rule = rules[--index];
-		if ( abbr && rule instanceof QualifiedRule ) {
-			const { typeSelectors } = rule;
-			for ( let index = typeSelectors.length; index; ) {
-				const typeSelector = typeSelectors[--index];
-				typeSelector.cssText = abbr(typeSelector.cssText);
+		if ( rule instanceof QualifiedRule ) {
+			const { typeSelectors, classSelectors } = rule;
+			if ( abbr ) {
+				for ( let index = typeSelectors.length; index; ) {
+					const typeSelector = typeSelectors[--index];
+					const { cssText } = typeSelector;
+					if ( AliasName.test(cssText) ) { typeSelector.cssText = abbr(cssText); }
+				}
+			}
+			for ( let index = classSelectors.length; index; ) {
+				const { literal } = classSelectors[--index];
+				isScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
 			}
 		}
 		else if ( rule instanceof AtRule ) {
 			const { block } = rule;
-			if ( block ) {
-				if ( keyframes(rule.name) ) {
-					for ( let index = block.length; index; ) {
-						const qualifiedRule = block[--index]                 ;
-						const typeSelector = qualifiedRule[0];
-						if ( typeSelector instanceof TypeSelector ) {
-							qualifiedRule[0] = typeSelector.cssText;
-							qualifiedRule.typeSelectors.length = 0;
-						}
-					}
-				}
-				else { replaceComponentName(block, abbr); }
-			}
+			if ( block ) { replaceComponentName(block, abbr, isScoped); }
+		}
+		else if ( rule instanceof KeyframesRule ) {
+			const literal = rule.keyframesNameLiteral;
+			isScoped(literal.startsWith('"') || literal.startsWith('\'') ? literal.slice(1, -1) : literal) || warnGlobal(`@keyframes ${literal} 将对全局生效`);
 		}
 	}
 }
 
-class Sheet extends Array                         {
+class Sheet extends Array                                                      {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet'; }
 	
-	constructor (inner        , abbr           ) {
+	constructor (inner        , { abbr, sfc: { template } }                       ) {
 		if ( !inner ) { return; }
 		if ( inner[0]==='\uFEFF' ) { throw SyntaxError(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
 		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
@@ -4050,27 +4336,37 @@ class Sheet extends Array                         {
 		super();
 		try { parse(this, inner); }
 		finally { clear(); }
-		replaceComponentName(this, abbr);
+		const keys = template && _(template).keys;
+		replaceComponentName(this, abbr, keys ? function isScoped (literal        ) { return __KEY__.test(literal) && keys.includes(literal.slice(2, -2)); } : isScoped);
 	}
 	
-	appendToken (           )                                                                           {
+	appendToken (           )                                                                                                        {
 		switch ( type ) {
 			case whitespace:
 			case comment:
 				return this;
 			case at_keyword:
-				const name = literal.slice(1);
+				const name = literal$1.slice(1);
 				if ( charset(name) ) {
-					//if ( this.length ) { return; }
+					if ( this.length ) { return; }
 					throw SyntaxError(`用于 SFC 的 CSS 中不应用到 @charset`);// return new AtRule(this, name);
 				}
-				//if ( is._import(name) ) {
-				//	for ( let index = this.length; index; ) {
-				//		const rule = this[--index];
-				//		if ( !( rule instanceof AtRule ) || !is._import(rule.name) ) { return; }
-				//	}
-				//}
-				const atRule = new AtRule(this, name);
+				let atRule;
+				if ( _import(name) ) {
+					for ( let index = this.length; index; ) {
+						const rule = this[--index];
+						if ( !( rule instanceof ImportRule ) ) { return; }
+					}
+					atRule = new ImportRule(this, name);
+				}
+				else if ( namespace(name) ) {
+					for ( let index = this.length; index; ) {
+						const rule = this[--index];
+						if ( !( rule instanceof ImportRule ) && !( rule instanceof AtRule && namespace(rule.name) ) ) { return; }
+					}
+					atRule = new AtRule(this, name);
+				}
+				else { atRule = _keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name); }
 				this.push(atRule);
 				return atRule;
 			case ident:
@@ -4090,14 +4386,33 @@ class Sheet extends Array                         {
 	get cssText ()         {
 		let cssText = '';
 		for ( let index = this.length; index; ) {
-			cssText = this[--index].cssText+cssText;
+			const rule = this[--index];
+			if ( !( rule instanceof ImportRule ) || rule.block ) {
+				cssText = rule.cssText+cssText;
+			}
+		}
+		for ( let index = this.length; index; ) {
+			const rule = this[--index];
+			if ( rule instanceof ImportRule && !rule.block ) {
+				cssText = rule.cssText+cssText;
+			}
 		}
 		return cssText;
 	}
 	
 	* beautify (             tab         = '\t')                           {
-		for ( let index = 0, { length } = this; index<length; ++index ) {
-			yield * this[index].beautify(tab);
+		const { length } = this;
+		for ( let index = 0; index<length; ++index ) {
+			const rule = this[index];
+			if ( rule instanceof ImportRule && !rule.block ) {
+				yield * rule.beautify(tab);
+			}
+		}
+		for ( let index = 0; index<length; ++index ) {
+			const rule = this[index];
+			if ( !( rule instanceof ImportRule ) || rule.block ) {
+				yield * rule.beautify(tab);
+			}
 		}
 	}
 	
@@ -4124,11 +4439,13 @@ class Style extends Block          {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style'; }
 	
-	constructor (attributes            , inner                    ) {
+	constructor (attributes            , inner                    , sfc     ) {
 		
 		super('style', attributes, true, inner, STYLE_END_TAG);
 		
 		const _this          = _(this);
+		
+		_this.sfc = sfc;
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
@@ -4167,7 +4484,7 @@ class Style extends Block          {
 			if ( lang && !CSS.test(lang) ) { throw Error(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
 		}
 		if ( _this.sheet && _this.cache===inner ) { return _this.sheet; }
-		const sheet = new Sheet(inner, _this.abbr);
+		const sheet = new Sheet(inner, _this);
 		_this.sheet = sheet;
 		_this.cache = inner;
 		return sheet;
@@ -4717,7 +5034,7 @@ class Template extends Block {
 		
 		if ( '.keys' in attributes ) {
 			if ( attributes['.keys']===EMPTY ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
-			_this.keys = attributes['.keys'];
+			_this.keys = attributes['.keys'] .match(KEYS) || [];
 		}
 		
 		if ( 'functional' in attributes ) {
@@ -4882,7 +5199,7 @@ function parseComponent (sfc     , vue        )       {
 		}
 		
 		if ( blockName==='template' ) { sfc.template = new Template(tag.attributes , inner); }
-		else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes , inner)); }
+		else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes , inner, sfc)); }
 		else if ( blockName==='script' ) { sfc.script = new Script(tag.attributes , inner); }
 		else { sfc.customBlocks.push(new CustomBlock(blockName, tag.attributes , inner)); }
 		
@@ -4894,8 +5211,6 @@ function parseComponent (sfc     , vue        )       {
 	}
 	
 }
-
-const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
 const byStart = (a            , b            )         => a.start-b.start;
 
@@ -5035,10 +5350,9 @@ function Render (innerHTML        , ES5         )                               
 }
 
 const NULo = /^\0[0-7]/;
-const LS_PS = /[\u2028\u2029]/g;
-const LF_LS_PS = /[\n\u2028\u2029]/g;
-const escape_LS_PS = ($0        )         => $0==='\u2028' ? '\\002028' : '\\002029';
-const escape_LF_LS_PS = ($0        )         => $0==='\n' ? '&#x0A;' : $0==='\u2028' ? '&#x2028;' : '&#x2029;';
+const LF_CR_LS_PS = /[\n\r\u2028\u2029]/g;
+const escapeCSS_LF_CR_LS_PS = ($0        )         => $0==='\n' ? '\\00000A' : $0==='\r' ? '\\00000D' : $0==='\u2028' ? '\\002028' : '\\002029';
+const escapeHTML_LF_CR_LS_PS = ($0        )         => $0==='\n' ? '&#x0A;' : $0==='\r' ? '&#0D;' : $0==='\u2028' ? '&#x2028;' : '&#x2029;';
 function VisibleStringLiteral (id        )         {
 	const literal         = StringLiteral(id);
 	return id.startsWith('\0') ? ( NULo.test(id) ? `'\\x00` : `'\\0` )+literal.slice(2) : literal;
@@ -5049,14 +5363,14 @@ function * From (tab        , mode                         , styles         , te
 	yield `export * from ${VisibleStringLiteral(from)};${eol}`;
 	yield `import { Scope, Template, Render, StaticRenderFns } from ${VisibleStringLiteral(from)};${eol}${eol}`;
 	
-	const dynamic          = !template || _(template).keys===undefined$1;
+	const dynamic          = !template || !_(template).keys;
 	const scope                                 = dynamic ? 'dynamicScope' : 'staticScope';
 	yield dynamic
 		? `export ${mode} ${scope} = /*#__PURE__*/Scope()`
-		: `export ${mode} ${scope} = /*#__PURE__*/Scope('${( _(template ).keys .match(KEYS) || [] ).join(',')}')`;
+		: `export ${mode} ${scope} = /*#__PURE__*/Scope('${_(template ).keys .join(',')}')`;
 	for ( const style of styles ) {
 		for ( const line of style.sheet.beautify(tab) ) {
-			yield `${eol}//${tab}${line.replace(LS_PS, escape_LS_PS)}`;
+			yield `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
 		}
 		const { media } = _(style);
 		yield media===undefined$1
@@ -5076,7 +5390,7 @@ function * From (tab        , mode                         , styles         , te
 		? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)}${eol}], ${scope});${eol}`
 		: `export ${mode} staticRenderFns = [];${eol}`;
 	for ( const line of template.content.beautify(tab) ) {
-		yield `//${tab}${line.replace(LF_LS_PS, escape_LF_LS_PS)}${eol}`;
+		yield `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`;
 	}
 	
 }

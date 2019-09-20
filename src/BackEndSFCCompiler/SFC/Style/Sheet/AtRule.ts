@@ -7,6 +7,7 @@ import SquareBracketBlock from './SquareBracketBlock';
 import ParenthesisBlock from './ParenthesisBlock';
 import Declaration from './Declaration';
 import QualifiedRule from './QualifiedRule';
+import KeyframesRule from './KeyframesRule';
 
 class Multi extends Array {
 	
@@ -47,7 +48,7 @@ class Multi extends Array {
 
 freeze(Multi.prototype);
 
-export class DeclarationList extends Array<AtRule | QualifiedRule | Declaration> {
+export class DeclarationList extends Array<AtRule | KeyframesRule | QualifiedRule | Declaration> {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.DeclarationList'; }
 	
@@ -67,10 +68,10 @@ export class DeclarationList extends Array<AtRule | QualifiedRule | Declaration>
 		}
 		const { name } = parent;
 		if ( is.media(name) ) { this.noDeclaration = true; }
-		else if ( is.keyframes(name) ) {
-			this.noAt = true;
-			this.noDeclaration = true;
-		}
+		//else if ( is._keyframes(name) ) {
+		//	this.noAt = true;
+		//	this.noDeclaration = true;
+		//}
 		else if ( is.font_face(name) ) {
 			this.noAt = true;
 			this.noQualified = true;
@@ -79,7 +80,7 @@ export class DeclarationList extends Array<AtRule | QualifiedRule | Declaration>
 		else if ( is.supports(name) || is.document(name) ) { this.noDeclaration = true; }
 	}
 	
-	appendToken (this :DeclarationList) :Sheet | DeclarationList | AtRule | QualifiedRule | SquareBracketBlock | Declaration | Multi | void {
+	appendToken (this :DeclarationList) :Sheet | DeclarationList | AtRule | KeyframesRule | QualifiedRule | SquareBracketBlock | Declaration | Multi | void {
 		switch ( TOKEN.type ) {
 			case TOKEN.whitespace:
 			case TOKEN.comment:
@@ -88,7 +89,7 @@ export class DeclarationList extends Array<AtRule | QualifiedRule | Declaration>
 				if ( this.noAt ) { return; }
 				const name = TOKEN.literal.slice(1);
 				if ( is.charset(name) || is._import(name) ) { return; }
-				const atRule = new AtRule(this, name);
+				const atRule = is._keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name);
 				this.push(atRule);
 				return atRule;
 			case TOKEN.ident:
@@ -111,7 +112,7 @@ export class DeclarationList extends Array<AtRule | QualifiedRule | Declaration>
 			case '|':
 			case '$':
 			case TOKEN.hash:
-			case TOKEN.percentage:// not style rule
+			//case TOKEN.percentage:// not style rule
 				if ( this.noQualified ) { return; }
 				const styleRule = new QualifiedRule(this);
 				this.push(styleRule);
@@ -151,26 +152,26 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 				this.push(parenthesisBlock);
 				return parenthesisBlock;
 			case TOKEN.ident:
-			case TOKEN.hash:
 			case TOKEN.string:
 			case TOKEN.url:
 			case ':':
+			case ',':
 				this.push(TOKEN.literal);
 				return this;
 			case '{': {
 				const { name } = this;
-				if ( /*is.charset(name) || */is._import(name) || is.namespace(name) ) { return; }
+				if ( /*is.charset(name) || is._import(name) || */is.namespace(name) ) { return; }
 				return this.block = new DeclarationList(this);
 			}
 			case ';': {
 				const { name } = this;
-				if ( is.media(name) || is.page(name) || is.font_face(name) || is.keyframes(name) || is.supports(name) || is.document(name) ) { return; }
+				if ( is.media(name) || is.page(name) || is.font_face(name) || /*is._keyframes(name) || */is.supports(name) || is.document(name) ) { return; }
 				this.semicolon = true;
 				return this.parent;
 			}
 			case '}':
 				const { name } = this;
-				if ( is.media(name) || is.page(name) || is.font_face(name) || is.keyframes(name) || is.supports(name) || is.document(name) ) { return; }
+				if ( is.media(name) || is.page(name) || is.font_face(name) || /*is._keyframes(name) || */is.supports(name) || is.document(name) ) { return; }
 				return this.parent.appendToken() as Sheet | DeclarationList;
 			case TOKEN.comment:
 				this.push('/**/');
