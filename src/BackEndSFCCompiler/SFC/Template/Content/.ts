@@ -83,6 +83,7 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 			}
 		}
 		if ( !v_pre ) {
+			if ( 'inline-template' in attributes ) { throw Error(`j-vue 暂不支持包含 inline-template 的模板编译`); }
 			if ( 'v-cloak' in attributes ) { throw SyntaxError(`单文件组件模板中不可能用到 v-cloak 指令`); }
 			if ( 'v-for' in attributes ) {
 				const value = attributes['v-for']!;

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.13.0';
+const version = '14.13.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -4702,6 +4702,7 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 			}
 		}
 		if ( !v_pre ) {
+			if ( 'inline-template' in attributes ) { throw Error(`j-vue 暂不支持包含 inline-template 的模板编译`); }
 			if ( 'v-cloak' in attributes ) { throw SyntaxError(`单文件组件模板中不可能用到 v-cloak 指令`); }
 			if ( 'v-for' in attributes ) {
 				const value = attributes['v-for'] ;
