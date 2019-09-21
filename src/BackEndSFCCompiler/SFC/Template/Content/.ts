@@ -68,18 +68,26 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 		}
 		const xName = partial && XName in partial ? partial[XName].tagName : XName;
 		if ( xName==='script' ) { throw ReferenceError(`Vue 不允许 template 中存在 script 标签`); }
-		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件）`); }
+		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件，或在其它标签上设置“is="style"”）`); }
+		if ( xName==='plaintext' ) { throw Error(`plaintext 标签没有结束方式，不适用于 template 书写（真需要时，考虑在其它标签上设置“is="plaintext"”）`); }
 		const attributes :Attributes = tag.attributes!;
 		const v_pre :boolean = V_PRE || 'v-pre' in attributes;
 		if ( !v_pre && ( ':is' in attributes || 'v-bind:is' in attributes ) ) {}
 		else if ( !v_pre && 'is' in attributes ) {
-			if ( !foreign_elements.test(attributes.is!) && FOREIGN_ELEMENTS.test(attributes.is!) ) {
-				throw ReferenceError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${attributes.is!}”，不被 Vue 作为组件对待`);
+			const { is } = attributes;
+			if ( ( is==='xmp' || is==='plaintext' ) && 'v-html' in attributes ) {
+				throw Error(`请避免在已废弃的 xmp、plaintext 元素上使用 v-html，它的实际行为是 v-text`);
 			}
+			if ( !foreign_elements.test(is!) && FOREIGN_ELEMENTS.test(is!) ) {
+				throw ReferenceError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${is!}”，不被 Vue 作为组件对待`);
+			}
+		}
+		else if ( !v_pre && xName==='xmp' && 'v-html' in attributes ) {
+			throw Error(`请避免在已废弃的 xmp 标签上使用 v-html，它的实际行为是 v-text`);
 		}
 		else {
 			if ( !foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName) ) {
-				throw ReferenceError(`SVG 命名空间中的 foreign 元素的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
+				throw ReferenceError(`SVG 命名空间中的 foreign 标签的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
 			}
 		}
 		if ( !v_pre ) {
@@ -127,10 +135,18 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
 			throw SyntaxError(`开放标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
 		}
+		if ( xName==='xmp' ) {
+			throw Error(
+				`已废弃的 xmp 标签被开放使用时，需将内容完全按原状对待，`+
+				`jVue 虽可以通过 v-text 模拟这一行为、避免被 Vue 按标签嵌套模式解析，`+
+				`但由于缺乏相关约定，不确定如何处理插值和空白，所以无法处理。`+
+				( v_pre ? `v-pre 时虽然不再存在插值，但却也无法使用 v-text。` : `` )
+			);
+		}
 		const foreign :boolean = FOREIGN || xName==='svg' || xName==='math';
 		// iframe：Vue 运行所必须的 IE9+ 刚好允许其中嵌套标签
 		// pre
-		if ( xName==='textarea' || xName==='title' || xName==='STYLE' ) {
+		if ( xName==='textarea' || xName==='STYLE' || xName==='title' ) {
 			if ( 'v-text' in attributes || 'v-html' in attributes || v_pre ) {
 				throw SyntaxError((
 					xName==='textarea' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（形如标签的文本会被剔除）` :
@@ -149,7 +165,11 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 			endTagStart += index;
 			const expression :string = new Mustache(html.slice(index, endTagStart), v_pre, delimiters_0, delimiters_1).toExpression();
 			if ( expression ) { attributes['v-text'] = expression; }
-			index = Tag(html, index = endTagStart, foreign).end;
+			const tag = Tag(html, index = endTagStart, foreign);
+			if ( tag.xName!==xName ) {
+				throw SyntaxError(`${xName} 的结束标记 ${html.slice(endTagStart, tag.end)} 不符合严谨性预期`);
+			}
+			index = tag.end;
 		}
 		else if ( TEXTAREA.test(xName) ) {
 			throw ReferenceError(

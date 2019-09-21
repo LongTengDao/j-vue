@@ -45,6 +45,7 @@ export default function Identifier () :string {
 			case 'inherit':
 			case 'initial':
 			case 'contents':
+			case 'notranslate':
 				lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter as 'e' | 'l' | 'n' | 'o' | 's' | 't'];
 				identifier = latestIdentifier.join('');
 		}
