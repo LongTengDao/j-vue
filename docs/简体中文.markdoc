@@ -46,23 +46,31 @@
 		`sfc.export('let'  [, from = 'j-vue'])`
 		---------------------------------------	
 			
-			根据 `template` 块和 `style` 块中的内容，或其 `src` 属性，生成组件自身的 `dynamicScope`（或 `staticScope`）、`template`、`render`、`staticRenderFns` 信息导出模块字符串。模块内容类似这样：
+			当第二个参数 `from` 缺省或为字符串时，代表引入 jVue 前端运行时依赖库的模块名。
+			
+			这时，会根据 `template` 块和 `style` 块中的内容，或其 `src` 属性，生成组件自身的 `dynamicScope`（或 `staticScope`）、`template`、`render`、`staticRenderFns` 信息导出模块字符串。
+			`j-vue` 中的内容也会一并导出，以便于使用。
+			模块内容类似这样：
 			
 			```	.js
-				import * as jVue from 'j-vue';
-				export var dynamicScope = jVue.Scope();
-				export var template = jVue.Template('<div />', dynamicScope);
-				export var render = jVue.Render('_vm,_c("div")', dynamicScope);
-				export var staticRenderFns = jVue.StaticRenderFns([], dynamicScope);
+				import { Scope, Template, Render, StaticRenderFns } from 'j-vue';
+				export var dynamicScope = Scope();
+				export var template = Template('<div />', dynamicScope);
+				export var render = Render('_vm,_c("div")', dynamicScope);
+				export var staticRenderFns = StaticRenderFns([], dynamicScope);
 				export * from 'j-vue';
 			
-			当选择 `const` 或 `let` 时，`Render` 和 `StaticRenderFns` 的参数（编译后的模板）也会作为 ES 6 代码进行压缩。
+			当使用 `'const'` 或 `'let'` 时，`Render` 和 `StaticRenderFns` 的参数（编译后的模板）也会作为 ES 6 代码进行压缩。
+			
+			当第二个参数 `from` 为 `null` 时，表示 `template` 和 `style` 块并不需要防冲突处理（一般用于会使用 Shadow DOM 的场景）。这时的导出内容是：
+			
+			```	.js
+				export var styles = [];
+				export var template = '<div />';
+				export var render = function () { var _vm = this, _c = _vm._self_c; return _c('div'); };
+				export var staticRenderFns = [];
 			
 			注意：如果 `template` 块存在非 `html`（或语义近似值）的 `lang` 属性，或任何 `style` 块存在非 `css`（或语义近似值）的 `lang` 属性，那么用户必须自行（根据其 `inner` 属性中的内容）转码，并赋值给其 `innerHTML` / `innerCSS` 属性。
-			
-			第二个参数 `from`，是用于引入 jVue 前端运行时依赖库的模块名。
-			
-			`j-vue` 中的内容也会一并导出，以便于使用。
 	
 前端运行时依赖
 --------------	

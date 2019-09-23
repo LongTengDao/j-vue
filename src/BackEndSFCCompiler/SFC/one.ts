@@ -37,10 +37,10 @@ const INLINE = Null({
 	sourcemap: 'inline' as 'inline',
 });
 
-export default async function one (sfc :SFC, { 'var': x_var, '?j-vue': x_from, 'j-vue': from, map = false, src, lang } :{
+export default async function one (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = from===null ? '?j-vue=' : '?j-vue', map = false, src, lang } :{
 	'var' :'const' | 'var' | 'let',
 	'?j-vue'? :string,
-	'j-vue'? :string,
+	'j-vue'? :string | null,
 	map? :boolean | 'inline',
 	src? (src :string) :Promise<string>,
 	lang? (lang :string, inner :string) :string | Promise<string>,

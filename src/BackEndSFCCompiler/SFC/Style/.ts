@@ -34,13 +34,11 @@ export default class Style extends Block<'style'> {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style'; }
 	
-	constructor (attributes :Attributes, inner :string | undefined, sfc :SFC) {
+	constructor (attributes :Attributes, inner :string | undefined) {
 		
 		super('style', attributes, true, inner, STYLE_END_TAG);
 		
 		const _this :Private = _(this);
-		
-		_this.sfc = sfc;
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
@@ -103,9 +101,7 @@ export type Private = object & {
 	cache? :string
 	sheet? :Sheet
 	innerCSS? :string
-	sfc :SFC
 };
 export type Replacer = (componentName :string) => string;
 type Selector = { [componentName :string] :string };
 type Attributes = import('../Attributes').default;
-type SFC = import('../').default;

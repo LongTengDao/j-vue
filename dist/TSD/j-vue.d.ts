@@ -1,3 +1,10 @@
+declare module '*?j-vue=' {
+	export const styles :string[];
+	export const template :string;
+	export const render :Render<any>;
+	export const staticRenderFns :Render<any>[];
+}
+
 declare module '*?j-vue' {
 	export const dynamicScope :DynamicScope;
 	export const staticScope :StaticScope<any>;
@@ -14,7 +21,7 @@ declare module ':j-vue' {
 
 declare module 'j-vue' {
 	
-	export const version :'14.13.2';
+	export const version :'15.0.0';
 	
 	export function Identifier () :string;
 	

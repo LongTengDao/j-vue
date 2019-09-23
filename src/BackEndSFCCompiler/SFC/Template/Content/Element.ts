@@ -6,17 +6,14 @@ export default class Element extends Node {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
-	constructor (localName :string, attributes :Attributes, partial? :{ class :string }) {
+	constructor (localName :string, attributes :Attributes, __class__? :string) {
 		super();
-		if ( partial ) {
-			const classNames = partial.class;
-			if ( classNames ) {
-				attributes.class = 'class' in attributes
-					? attributes.class
-						? classNames+' '+attributes.class
-						: classNames
-					: classNames;
-			}
+		if ( __class__ ) {
+			attributes.class = 'class' in attributes
+				? attributes.class
+					? __class__+' '+attributes.class
+					: __class__
+				: __class__;
 		}
 		this.localName = localName;
 		this.attributes = attributes;

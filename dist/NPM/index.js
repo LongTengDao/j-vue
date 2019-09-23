@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '14.13.2';
+const version = '15.0.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -302,7 +302,11 @@ const ASCII_ALPHA = /[a-zA-Z]/;
 
 const TOKENS = /[^\s=;]+/g;
 const AliasName = /[A-Z][\w\-]*/;////
+const _AliasName_ = newRegExp`^${AliasName}$`;
+const isAliasName = (name        ) => _AliasName_.test(name);
 const localOrComponentName = /[A-Za-z][\w\-]*/;////
+const _localOrComponentName_ = newRegExp`^${localOrComponentName}$`;
+const isLocalOrComponentName = (name        ) => _localOrComponentName_.test(name);
 const localName$1 = /[a-z][a-z0-9\-]*/;////
 const className = /[_a-zA-Z][\w\-]*/;////
 
@@ -3078,26 +3082,30 @@ freeze(Block.prototype);
 
 const Private = (
 	/*! j-globals: private (internal) */
-	typeof WeakMap==='function'
-		? /*#__PURE__*/ function () {
-			var Weak = WeakMap;
-			var GET = create(NULL);
-			GET.value = Weak.prototype.get;
-			var SET = create(NULL);
-			SET.value = Weak.prototype.set;
-			function add (weak, THIS) {
-				var _THIS = create(NULL);
-				weak.set(THIS, _THIS);
-				return _THIS;
-			}
-			return function Private () {
-				var weak = /*#__PURE__*/ defineProperty(/*#__PURE__*/ defineProperty(/*#__PURE__*/ new Weak, 'get', GET), 'set', SET);
-				return function _ (THIS) {
-					return /*#__PURE__*/ weak.get(THIS) || /*#__PURE__*/ add(weak, THIS);
-				};
+	/*#__PURE__*/ function (WeakMap) {
+		var GET = create(NULL);
+		GET.value = WeakMap.prototype.get;
+		var SET = create(NULL);
+		SET.value = WeakMap.prototype.set;
+		function set (weak, THIS, _THIS) {
+			weak.set(THIS, _THIS);
+			return _THIS;
+		}
+		function Null () { return create(NULL); }
+		return function Private (PRIVATE) {
+			var weak = /*#__PURE__*/defineProperty(/*#__PURE__*/defineProperty(/*#__PURE__*/new WeakMap, 'get', GET), 'set', SET);
+			var _This = PRIVATE===undefined$1
+				? Null
+				: typeof PRIVATE==='function'
+					? 'prototype' in PRIVATE
+						? function (THIS) { return new PRIVATE(THIS); }
+						: function (THIS) { return PRIVATE(THIS); }
+					: function () { return create(PRIVATE); };
+			return function _ (THIS) {
+				return /*#__PURE__*/weak.get(THIS) || /*#__PURE__*/set(weak, THIS, /*#__PURE__*/_This(THIS));
 			};
-		}()
-		: function Private () { return checkNewline; }
+		};
+	}(WeakMap)
 	/*¡ j-globals: private (internal) */
 );
 
@@ -3148,8 +3156,6 @@ class Script extends Block {
 	
 }
 freeze(Script.prototype);
-
-const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
 const {
 	
@@ -4149,38 +4155,46 @@ freeze(AtRule.prototype);
 const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
 const NOT_CHANGES = /\\.|[^\\\x80-\x9F]+/gs;
-const __KEY__ = newRegExp('i')`
-	^
-	__${KEYS}__
-	$
-`;
 
-function isScoped (literal        ) { return __KEY__.test(literal); }
-
-function replaceComponentName (rules                                            , start        , abbr                      , isScoped                              ) {
+function replaceComponentName (rules                                            , start        , abbr          ) {
 	for ( let index = start, { length } = rules; index<length; ++index ) {
 		const rule = rules[index];
-		if ( rule instanceof QualifiedRule ) {
-			const { typeSelectors, classSelectors } = rule;
-			if ( abbr ) {
+		switch ( rule.constructor ) {
+			case QualifiedRule:
+				const { typeSelectors } = rule                 ;
 				for ( let index = 0, { length } = typeSelectors; index<length; ++index ) {
 					const typeSelector = typeSelectors[index];
 					const { cssText } = typeSelector;
-					if ( AliasName.test(cssText) ) { typeSelector.cssText = abbr(cssText); }
+					if ( isAliasName(cssText) ) { typeSelector.cssText = abbr(cssText); }
 				}
-			}
-			for ( let index = 0, { length } = classSelectors; index<length; ++index ) {
-				const { literal } = classSelectors[index];
-				isScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
-			}
+				break;
+			case AtRule:
+				const { block } = rule          ;
+				if ( block ) { replaceComponentName(block, 0, abbr); }
+				break;
 		}
-		else if ( rule instanceof AtRule ) {
-			const { block } = rule;
-			if ( block ) { replaceComponentName(block, 0, abbr, isScoped); }
-		}
-		else if ( rule instanceof KeyframesRule ) {
-			const literal = rule.keyframesNameLiteral;
-			isScoped(literal.startsWith('"') || literal.startsWith('\'') ? literal.slice(1, -1) : literal) || warnGlobal(`@keyframes ${literal} 将对全局生效`);
+	}
+}
+
+function checkScoped (rules                                            , start        , _checkScoped                              ) {
+	for ( let index = start, { length } = rules; index<length; ++index ) {
+		const rule = rules[index];
+		switch ( rule.constructor ) {
+			case QualifiedRule:
+				const { classSelectors } = rule                 ;
+				for ( let index = 0, { length } = classSelectors; index<length; ++index ) {
+					const { literal } = classSelectors[index];
+					_checkScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
+				}
+				break;
+			case AtRule:
+				const { block } = rule          ;
+				if ( block ) { checkScoped(block, 0, _checkScoped); }
+				break;
+			case KeyframesRule:
+				const { keyframesNameLiteral } = rule                 ;
+				_checkScoped(keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? keyframesNameLiteral.slice(1, -1) : keyframesNameLiteral) || warnGlobal(`@keyframes ${keyframesNameLiteral} 将对全局生效`);
+				break;
 		}
 	}
 }
@@ -4192,7 +4206,7 @@ class Sheet extends Array                                         {
 	        imports_length = 0;
 	        namespaces_length = 0;
 	
-	constructor (inner        , { abbr, sfc: { template } }                       ) {
+	constructor (inner        , { abbr }                       ) {
 		super();
 		if ( !inner ) { return; }
 		if ( inner[0]==='\uFEFF' ) { throw SyntaxError(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
@@ -4201,15 +4215,11 @@ class Sheet extends Array                                         {
 		if ( inner.replace(NOT_CHANGES, '') ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
 		try { parse(this, inner); }
 		finally { clear(); }
-		const keys = template && _(template).keys;
-		replaceComponentName(
-			this,
-			this.imports_length+this.namespaces_length,
-			abbr,
-			keys
-				? function isScoped (literal        ) { return __KEY__.test(literal) && keys.includes(literal.slice(2, -2)); }
-				: isScoped
-		);
+		abbr && replaceComponentName(this, this.imports_length+this.namespaces_length, abbr);
+	}
+	
+	checkScoped (_checkScoped                              ) {
+		checkScoped(this, this.imports_length+this.namespaces_length, _checkScoped);
 	}
 	
 	appendToken (           )                                                                                           {
@@ -4288,13 +4298,11 @@ class Style extends Block          {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style'; }
 	
-	constructor (attributes            , inner                    , sfc     ) {
+	constructor (attributes            , inner                    ) {
 		
 		super('style', attributes, true, inner, STYLE_END_TAG);
 		
 		const _this          = _(this);
-		
-		_this.sfc = sfc;
 		
 		if ( '.abbr' in attributes ) {
 			const literal = attributes['.abbr'];
@@ -4349,6 +4357,8 @@ class Style extends Block          {
 	
 }
 freeze(Style.prototype);
+
+const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
 
 const forAliasRE = /(?<=^\s*(?:\(|(?!\())).*?(?=\)?\s+(?:in|of)\s+.*$)/s;
 const slotRE = /^(?:#|v-slot(?::|$))/;
@@ -4477,17 +4487,14 @@ class Element extends Node {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
-	constructor (localName        , attributes            , partial                    ) {
+	constructor (localName        , attributes            , __class__         ) {
 		super();
-		if ( partial ) {
-			const classNames = partial.class;
-			if ( classNames ) {
-				attributes.class = 'class' in attributes
-					? attributes.class
-						? classNames+' '+attributes.class
-						: classNames
-					: classNames;
-			}
+		if ( __class__ ) {
+			attributes.class = 'class' in attributes
+				? attributes.class
+					? __class__+' '+attributes.class
+					: __class__
+				: __class__;
 		}
 		this.localName = localName;
 		this.attributes = attributes;
@@ -4685,7 +4692,22 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 			index = tag.end;
 			return;
 		}
-		const xName = partial && XName in partial ? partial[XName].tagName : XName;
+		let xName        ;
+		let __class__;
+		if ( partial && isAliasName(XName) ) {
+			if ( XName in partial ) {
+				const _ = partial[XName];
+				xName = _.tagName;
+				__class__ = _.class;
+			}
+			else if ( '' in partial ) {
+				xName = partial[''].tagName;
+				__class__ = `__${XName}__`;
+			}
+			else { xName = XName; }
+		}
+		else { xName = XName; }
+		xName = partial && XName in partial ? partial[XName].tagName : XName;
 		if ( xName==='script' ) { throw ReferenceError(`Vue 不允许 template 中存在 script 标签`); }
 		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件，或在其它标签上设置“is="style"”）`); }
 		if ( xName==='plaintext' ) { throw Error(`plaintext 标签没有结束方式，不适用于 template 书写（真需要时，考虑在其它标签上设置“is="plaintext"”）`); }
@@ -4748,7 +4770,7 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 				if ( attributes['ref']===BAD_REF ) { throw ReferenceError(`使用“${BAD_REF}”作为 ref 无法按预期工作`); }
 			}
 		}
-		const element          = parentNode.appendChild(new Element(xName, attributes, partial && partial[XName]));
+		const element          = parentNode.appendChild(new Element(xName, attributes, __class__));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName) ) { continue; }
 		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
@@ -4859,6 +4881,11 @@ const PARTIAL = newRegExp`^
 		\s*;
 	\s*)*
 $`;
+const PARTIAL_WITH_TAG = newRegExp`^
+	\s*(?:
+		${AliasName}\s*;
+	\s*)*
+$`;
 
 const HTML = /^(?:HTML|\s*text\/html\s*)$/i;
 
@@ -4878,33 +4905,58 @@ class Template extends Block {
 		
 		const _this          = _(this);
 		
-		if ( '.abbr' in attributes ) {
-			const literal = attributes['.abbr'];
-			if ( literal===EMPTY ) { throw SyntaxError(`template 功能块元素的“.abbr”属性的缺省值写法还没有实现`); }
-			else {
-				if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create(NULL)           ;
-				const pairs = literal.split(';');
-				for ( let index = pairs.length; index; ) {
-					const tokens = pairs[--index].match(TOKENS);
-					if ( tokens ) {
-						const xName         = tokens[0];
-						const localName_class           = tokens[1].split('.');
-						abbr[xName] = {
-							tagName: localName_class.shift() ,
-							class: localName_class.length
-								? localName_class.join(' ') || `__${xName}__`
-								: '',
-						};
-					}
-				}
-				_this.abbr = abbr;
-			}
+		if ( '.keys' in attributes ) {
+			const _keys = attributes['.keys'];
+			if ( _keys===EMPTY ) { throw SyntaxError(`template 功能块的 .keys 属性必须具有值`); }
+			const keys = _keys.match(KEYS);
+			if ( !keys ) { throw SyntaxError(`template 功能块的 .keys 属性值未匹配到可用的内容`); }
+			_this.keys = keys;
 		}
 		
-		if ( '.keys' in attributes ) {
-			if ( attributes['.keys']===EMPTY ) { throw SyntaxError(`template 功能块元素的 .keys 属性必须具有值`); }
-			_this.keys = attributes['.keys'] .match(KEYS) || [];
+		if ( '.abbr' in attributes ) {
+			const literal = attributes['.abbr'];
+			if ( literal===EMPTY ) { throw SyntaxError(`template 功能块的“.abbr”属性必须具有值`); }
+			if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 功能块的“.abbr”属性语法错误：\n${literal}`); }
+			const abbr = _this.abbr = create(NULL)           ;
+			const pairs = literal.split(';');
+			for ( let index = pairs.length; index; ) {
+				const tokens = pairs[--index].match(TOKENS);
+				if ( tokens ) {
+					const xName         = tokens[0];
+					if ( xName in abbr ) { throw SyntaxError(`template 功能块的“.abbr”属性值中存在重复的条目“${xName}”`); }
+					const localName_class           = tokens[1].split('.');
+					abbr[xName] = {
+						tagName: localName_class.shift() ,
+						class: localName_class.length
+							? localName_class.join(' ') || `__${xName}__`
+							: '',
+					};
+				}
+			}
+		}
+		for ( const name in attributes ) {
+			if ( name.startsWith('.abbr:') ) {
+				const tagName = name.slice(6);
+				if ( !isLocalOrComponentName(tagName) ) { throw SyntaxError(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
+				const abbr = _this.abbr || create(NULL)           ;
+				const literal = attributes[name];
+				if ( literal===EMPTY ) {
+					if ( '' in abbr ) { throw SyntaxError(`template 功能块的无值“.abbr:*”属性只能有一个`); }
+					abbr[''] = { tagName, class: '____' };
+				}
+				else {
+					if ( !PARTIAL_WITH_TAG.test(literal) ) { throw SyntaxError(`template 功能块的“${name}”属性语法错误：\n${literal}`); }
+					const pairs = literal.split(';');
+					for ( let index = pairs.length; index; ) {
+						const tokens = pairs[--index].match(TOKENS);
+						if ( tokens ) {
+							const xName         = tokens[0];
+							if ( xName in abbr ) { throw SyntaxError(`template 功能块的“${name}”属性值中存在重复的条目“${xName}”`); }
+							abbr[xName] = { tagName, class: `__${xName}__` };
+						}
+					}
+				}
+			}
 		}
 		
 		if ( 'functional' in attributes ) {
@@ -5069,7 +5121,7 @@ function parseComponent (sfc     , vue        )       {
 		}
 		
 		if ( blockName==='template' ) { sfc.template = new Template(tag.attributes , inner); }
-		else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes , inner, sfc)); }
+		else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes , inner)); }
 		else if ( blockName==='script' ) { sfc.script = new Script(tag.attributes , inner); }
 		else { sfc.customBlocks.push(new CustomBlock(blockName, tag.attributes , inner)); }
 		
@@ -5156,11 +5208,16 @@ const WITH_THIS__RETURN__M_INDEX__ = /^width\(this\){return _m\((\d+)\)}$/;
 const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return \1=this,(\2\(.*\))}\);$/s;
 const _C_EXP = /^\(function\(([\w$]+)\){"use strict";return (\1\(.*\))}\);$/s;
 
+let MODE                         ;
+let FUNC         ;
+
 function NecessaryStringLiteral (body        )         {
 	if ( !body.startsWith(with_this__return__c_) || !body.endsWith(__) ) {
 		const _index = WITH_THIS__RETURN__M_INDEX__.exec(body);
-		if ( _index ) { return _index[1]; }
-		throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`);
+		if ( !_index ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
+		return FUNC
+			? `function () { return this._m(${_index[1]}); }`
+			: _index[1];
 	}
 	const code         = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
 	const AST = Parser.parse(code, parserOptions$1);
@@ -5196,7 +5253,9 @@ function NecessaryStringLiteral (body        )         {
 		
 		const _vm_c_exp = _VM_C_EXP.exec(minified.code );
 		if ( !_vm_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
-		return StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
+		return FUNC
+			? `function () { ${MODE} ${_vm_c_exp[1]} = this, ${_vm_c_exp[2]} = ${_vm_c_exp[1]}._self._c; return ${_vm_c_exp[3]}; }`
+			: StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
 	}
 	else {
 		const minified = minify(`(function(_c){"use strict";return ${code.slice(_function__c___use_strict__return_$)}`, minifyOptions);
@@ -5205,14 +5264,18 @@ function NecessaryStringLiteral (body        )         {
 		
 		const _c_exp = _C_EXP.exec(minified.code );
 		if ( !_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
-		return StringLiteral(`,${_c_exp[2]}`);
+		return FUNC
+			? `function () { ${MODE} ${_c_exp[1]} = this._self._c; return ${_c_exp[1]}; }`
+			: StringLiteral(`,${_c_exp[2]}`);
 	}
 }
 
-function Render (innerHTML        , ES5         )                                                {
+function Render (innerHTML        , mode                         , func         )                                                {
 	const { errors, render, staticRenderFns } = compile(innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
-	minifyOptions.ecma = parserOptions$1.ecmaVersion = ES5 ? 5 : 2014     ;
+	minifyOptions.ecma = parserOptions$1.ecmaVersion = mode==='var' ? 5 : 2014     ;
+	MODE = mode;
+	FUNC = func;
 	return {
 		render: NecessaryStringLiteral(render),
 		staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),
@@ -5228,7 +5291,38 @@ function VisibleStringLiteral (id        )         {
 	return id.startsWith('\0') ? ( NULo.test(id) ? `'\\x00` : `'\\0` )+literal.slice(2) : literal;
 }
 
-function * From (tab        , mode                         , styles         , template                 , from        , eol        )                           {
+const __KEY__ = newRegExp('i')`^__${KEYS}__$`;
+const checkScoped$1 = (literal        ) => __KEY__.test(literal);
+
+function * From (tab        , mode                         , styles         , template                 , from               , eol        )                           {
+	
+	if ( from===null ) {
+		yield `export ${mode} styles = [`;
+		const { length } = styles;
+		if ( length ) {
+			yield eol;
+			for ( let index = 0; index<length; ++index ) {
+				const style = styles[index];
+				for ( const line of style.sheet.beautify(tab) ) {
+					yield `${tab}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
+				}
+				yield `${tab}${StringLiteral(style.innerCSS)},${eol}`;
+			}
+		}
+		yield `];${eol}`;
+		if ( !template ) { return; }
+		const { innerHTML } = template;
+		const { render, staticRenderFns } = Render(innerHTML, mode, true);
+		yield eol;
+		yield `export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
+		yield `export ${mode} render = ${render};${eol}`;
+		yield `render._withStripped = true;${eol}`;
+		yield `export ${mode} staticRenderFns = [${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}];${eol}`;
+		for ( const line of template.content.beautify(tab) ) {
+			yield `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`;
+		}
+		return;
+	}
 	
 	yield `export * from ${VisibleStringLiteral(from)};${eol}`;
 	yield `import { Scope, Template, Render, StaticRenderFns } from ${VisibleStringLiteral(from)};${eol}${eol}`;
@@ -5238,26 +5332,41 @@ function * From (tab        , mode                         , styles         , te
 	yield dynamic
 		? `export ${mode} ${scope} = /*#__PURE__*/Scope()`
 		: `export ${mode} ${scope} = /*#__PURE__*/Scope('${_(template ).keys .join(',')}')`;
-	for ( const style of styles ) {
-		for ( const line of style.sheet.beautify(tab) ) {
-			yield `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
+	const { length } = styles;
+	if ( length ) {
+		let _checkScoped;
+		if ( template ) {
+			const { keys } = _(template);
+			if ( keys ) {
+				const keysSet = new Set(keys);
+				_checkScoped = function checkScoped (literal        ) { return __KEY__.test(literal) && keysSet.has(literal.slice(2, -2)); };
+			}
+			else { _checkScoped = checkScoped$1; }
 		}
-		const { media } = _(style);
-		yield media===undefined$1
-			? `${eol}.$(${StringLiteral(style.innerCSS)})`
-			: `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(media)})`;
+		else { _checkScoped = checkScoped$1; }
+		for ( let index = 0; index<length; ++index ) {
+			const style = styles[index];
+			style.sheet.checkScoped(_checkScoped);
+			for ( const line of style.sheet.beautify(tab) ) {
+				yield `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
+			}
+			const { media } = _(style);
+			yield media===undefined$1
+				? `${eol}.$(${StringLiteral(style.innerCSS)})`
+				: `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(media)})`;
+		}
 	}
 	yield `;${eol}`;
 	
 	if ( !template ) { return; }
 	const { innerHTML } = template;
-	const { render, staticRenderFns } = Render(innerHTML, mode==='var');
+	const { render, staticRenderFns } = Render(innerHTML, mode, false);
 	
 	yield eol;
 	yield `export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, ${scope});${eol}`;
 	yield `export ${mode} render = /*#__PURE__*/Render(${render}, ${scope});${eol}`;
 	yield staticRenderFns.length
-		? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)}${eol}], ${scope});${eol}`
+		? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}], ${scope});${eol}`
 		: `export ${mode} staticRenderFns = [];${eol}`;
 	for ( const line of template.content.beautify(tab) ) {
 		yield `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`;
@@ -5295,10 +5404,10 @@ const INLINE = Null({
 	sourcemap: 'inline'            ,
 });
 
-async function one (sfc     , { 'var': x_var, '?j-vue': x_from, 'j-vue': from, map = false, src, lang }   
+async function one (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = from===null ? '?j-vue=' : '?j-vue', map = false, src, lang }   
 	                               
 	                  
-	                 
+	                        
 	                         
 	                                    
 	                                                              
@@ -5403,11 +5512,11 @@ class SFC {
 	export (           mode                                         
 		                               
 		                  
-		                 
+		                        
 		                           
 		                                      
 		                                                                
-	 , from         )                                                        {
+	 , from                )                                                        {
 		if ( typeof mode==='object' ) { return one(this, mode); }
 		const { bom, tab, eol, script, styles, template } = this;
 		if ( mode==='default' ) {
@@ -5425,8 +5534,8 @@ class SFC {
 			else {
 				if ( template ) {
 					return bom
-						+`import { template } from ${from===undefined$1 ? `'?j-vue'` : StringLiteral(from)};${eol}`
-						+`export default { template: template };`;
+						+`import { render, staticRenderFns } from ${from===undefined$1 ? `'?j-vue'` : StringLiteral(from )};${eol}`
+						+`export default { render: render, staticRenderFns: staticRenderFns };`;
 				}
 				else {
 					throw Error(`.vue 如果要 export default，至少要有 script 块或 template 块中的一个`);
@@ -5435,7 +5544,7 @@ class SFC {
 		}
 		else {
 			let code         = bom;
-			for ( const chunk of From(tab, mode, styles, template, from===undefined$1 ? 'j-vue' : from, eol) ) { code += chunk; }
+			for ( const chunk of From(tab, mode, styles, template, from===null ? null : from===undefined$1 ? 'j-vue' : from, eol) ) { code += chunk; }
 			return code;
 		}
 	}

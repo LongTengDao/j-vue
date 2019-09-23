@@ -1,3 +1,10 @@
+declare module '*?j-vue=' {
+	export const styles :string[];
+	export const template :string;
+	export const render :Render<any>;
+	export const staticRenderFns :Render<any>[];
+}
+
 declare module '*?j-vue' {
 	export const dynamicScope :DynamicScope;
 	export const staticScope :StaticScope<any>;

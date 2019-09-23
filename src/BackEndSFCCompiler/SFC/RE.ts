@@ -12,7 +12,11 @@ const ASCII_ALPHA = /[a-zA-Z]/;
 
 export const TOKENS = /[^\s=;]+/g;
 export const AliasName = /[A-Z][\w\-]*/;////
+const _AliasName_ = newRegExp`^${AliasName}$`;
+export const isAliasName = (name :string) => _AliasName_.test(name);
 export const localOrComponentName = /[A-Za-z][\w\-]*/;////
+const _localOrComponentName_ = newRegExp`^${localOrComponentName}$`;
+export const isLocalOrComponentName = (name :string) => _localOrComponentName_.test(name);
 export const localName = /[a-z][a-z0-9\-]*/;////
 export const className = /[_a-zA-Z][\w\-]*/;////
 

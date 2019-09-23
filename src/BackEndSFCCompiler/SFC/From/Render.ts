@@ -82,11 +82,16 @@ const WITH_THIS__RETURN__M_INDEX__ = /^width\(this\){return _m\((\d+)\)}$/;
 const _VM_C_EXP = /^\(function\(([\w$]+),([\w$]+)\){"use strict";return \1=this,(\2\(.*\))}\);$/s;
 const _C_EXP = /^\(function\(([\w$]+)\){"use strict";return (\1\(.*\))}\);$/s;
 
+let MODE :'var' | 'let' | 'const';
+let FUNC :boolean;
+
 export function NecessaryStringLiteral (body :string) :string {
 	if ( !body.startsWith(with_this__return__c_) || !body.endsWith(__) ) {
 		const _index = WITH_THIS__RETURN__M_INDEX__.exec(body);
-		if ( _index ) { return _index[1]; }
-		throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`);
+		if ( !_index ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
+		return FUNC
+			? `function () { return this._m(${_index[1]}); }`
+			: _index[1];
 	}
 	const code :string = `${_function__c___use_strict__return_}${body.slice(with_this__return_$, _$)}})`;
 	const AST = Parser.parse(code, parserOptions);
@@ -122,7 +127,9 @@ export function NecessaryStringLiteral (body :string) :string {
 		
 		const _vm_c_exp = _VM_C_EXP.exec(minified.code!);
 		if ( !_vm_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
-		return StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
+		return FUNC
+			? `function () { ${MODE} ${_vm_c_exp[1]} = this, ${_vm_c_exp[2]} = ${_vm_c_exp[1]}._self._c; return ${_vm_c_exp[3]}; }`
+			: StringLiteral(`${_vm_c_exp[1]},${_vm_c_exp[3]}`);
 	}
 	else {
 		const minified = minify(`(function(_c){"use strict";return ${code.slice(_function__c___use_strict__return_$)}`, minifyOptions);
@@ -131,14 +138,18 @@ export function NecessaryStringLiteral (body :string) :string {
 		
 		const _c_exp = _C_EXP.exec(minified.code!);
 		if ( !_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
-		return StringLiteral(`,${_c_exp[2]}`);
+		return FUNC
+			? `function () { ${MODE} ${_c_exp[1]} = this._self._c; return ${_c_exp[1]}; }`
+			: StringLiteral(`,${_c_exp[2]}`);
 	}
 }
 
-export default function Render (innerHTML :string, ES5 :boolean) :{ render :string, staticRenderFns :string[] } {
+export default function Render (innerHTML :string, mode :'var' | 'let' | 'const', func :boolean) :{ render :string, staticRenderFns :string[] } {
 	const { errors, render, staticRenderFns } = compile(innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
-	minifyOptions.ecma = parserOptions.ecmaVersion = ES5 ? 5 : 2014 as 6;
+	minifyOptions.ecma = parserOptions.ecmaVersion = mode==='var' ? 5 : 2014 as 6;
+	MODE = mode;
+	FUNC = func;
 	return {
 		render: NecessaryStringLiteral(render),
 		staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),

@@ -69,11 +69,11 @@ export default class SFC {
 	export (this :SFC, mode :'default' | 'const' | 'var' | 'let' | {
 		'var' :'const' | 'var' | 'let',
 		'?j-vue'? :string,
-		'j-vue'? :string,
+		'j-vue'? :string | null,
 		'map'? :boolean | 'inline',
 		'src'? (src :string) :Promise<string>,
 		'lang'? (lang :string, inner :string) :string | Promise<string>,
-	}, from? :string) :string | Promise<string | { code :string, map :any }> {
+	}, from? :string | null) :string | Promise<string | { code :string, map :any }> {
 		if ( typeof mode==='object' ) { return one(this, mode); }
 		const { bom, tab, eol, script, styles, template } = this;
 		if ( mode==='default' ) {
@@ -91,8 +91,8 @@ export default class SFC {
 			else {
 				if ( template ) {
 					return bom
-						+`import { template } from ${from===undefined ? `'?j-vue'` : StringLiteral(from)};${eol}`
-						+`export default { template: template };`;
+						+`import { render, staticRenderFns } from ${from===undefined ? `'?j-vue'` : StringLiteral(from!)};${eol}`
+						+`export default { render: render, staticRenderFns: staticRenderFns };`;
 				}
 				else {
 					throw Error(`.vue 如果要 export default，至少要有 script 块或 template 块中的一个`);
@@ -101,7 +101,7 @@ export default class SFC {
 		}
 		else {
 			let code :string = bom;
-			for ( const chunk of From(tab, mode, styles, template, from===undefined ? 'j-vue' : from, eol) ) { code += chunk; }
+			for ( const chunk of From(tab, mode, styles, template, from===null ? null : from===undefined ? 'j-vue' : from, eol) ) { code += chunk; }
 			return code;
 		}
 	}

@@ -46,23 +46,31 @@ Back-End SFC Compiler
 		`sfc.export('let'  [, from = 'j-vue'])`
 		---------------------------------------	
 			
-			To generate the component's `dynamicScope` (or `staticScope`)、`template`、`render`、`staticRenderFns` self using information export string, according to the contents in `template` and `style` blocks or their `src' attribute. Module content is similar to this:
+			When the second parameter `from` is string or default, it will be used as the module id to introduce the jVue front-end runtime dependency library.
+			
+			Then here is going to generate the component's `dynamicScope` (or `staticScope`)、`template`、`render`、`staticRenderFns` self using information export string, according to the contents in `template` and `style` blocks or their `src' attribute.
+			The exports of `j-vue` will be exported too, to make them simply to use.
+			Module content is similar to this:
 			
 			```	.js
-				import * as jVue from 'j-vue';
-				export var dynamicScope = jVue.Scope();
-				export var template = jVue.Template('<div />', dynamicScope);
-				export var render = jVue.Render('_c("div")', dynamicScope);
-				export var staticRenderFns = jVue.StaticRenderFns([], dynamicScope);
+				import { Scope, Template, Render, StaticRenderFns } from 'j-vue';
+				export var dynamicScope = Scope();
+				export var template = Template('<div />', dynamicScope);
+				export var render = Render('_vm,_c("div")', dynamicScope);
+				export var staticRenderFns = StaticRenderFns([], dynamicScope);
 				export * from 'j-vue';
 			
-			When choose `const` or `let`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.
+			When use `const` or `let`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.
+			
+			当第二个参数 `from` 为 `null` 时，表示 `template` 和 `style` 块并不需要防冲突处理（一般用于会使用 Shadow DOM 的场景）。这时的导出内容是：
+			
+			```	.js
+				export var styles = [];
+				export var template = '<div />';
+				export var render = function () { var _vm = this, _c = _vm._self_c; return _c('div'); };
+				export var staticRenderFns = [];
 			
 			Note: If there is a `lang` attribute which value is other than `html` (or semantic similar) in the `template` block, or any `style` block has a `lang` attribute which value is other than `css` (or semantic similar), then the user must transpile (its `inner` property value) and set to its `innerHTML` / `innerCSS` property.
-			
-			The second parameter `from` is the module id used to introduce the jVue front-end runtime dependency library.
-			
-			The exports of `j-vue` will be exported too, to make them simply to use.
 	
 Front-End Runtime Dependency
 ----------------------------	

@@ -3,12 +3,7 @@ import SyntaxError from '.SyntaxError';
 import freeze from '.Object.freeze';
 import warnGlobal from '.throw.Error';
 
-import { newRegExp } from '@ltd/j-regexp';
-
-import KEYS from '../../../../FrontEndRuntimeDependency/Scope/KEYS';
-
-import _ from '../../private';
-import { AliasName } from '../../RE';
+import { isAliasName } from '../../RE';
 import * as is from './is';
 import * as TOKEN from './TOKEN';
 import QualifiedRule from './QualifiedRule';
@@ -18,38 +13,46 @@ import KeyframesRule from './KeyframesRule';
 const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
 const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
 const NOT_CHANGES = /\\.|[^\\\x80-\x9F]+/gs;
-const __KEY__ = newRegExp('i')`
-	^
-	__${KEYS}__
-	$
-`;
 
-function isScoped (literal :string) { return __KEY__.test(literal); }
-
-function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList, start :number, abbr :Replacer | undefined, isScoped :(literal :string) => boolean) {
+function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList, start :number, abbr :Replacer) {
 	for ( let index = start, { length } = rules; index<length; ++index ) {
 		const rule = rules[index];
-		if ( rule instanceof QualifiedRule ) {
-			const { typeSelectors, classSelectors } = rule;
-			if ( abbr ) {
+		switch ( rule.constructor ) {
+			case QualifiedRule:
+				const { typeSelectors } = rule as QualifiedRule;
 				for ( let index = 0, { length } = typeSelectors; index<length; ++index ) {
 					const typeSelector = typeSelectors[index];
 					const { cssText } = typeSelector;
-					if ( AliasName.test(cssText) ) { typeSelector.cssText = abbr(cssText); }
+					if ( isAliasName(cssText) ) { typeSelector.cssText = abbr(cssText); }
 				}
-			}
-			for ( let index = 0, { length } = classSelectors; index<length; ++index ) {
-				const { literal } = classSelectors[index];
-				isScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
-			}
+				break;
+			case AtRule:
+				const { block } = rule as AtRule;
+				if ( block ) { replaceComponentName(block, 0, abbr); }
+				break;
 		}
-		else if ( rule instanceof AtRule ) {
-			const { block } = rule;
-			if ( block ) { replaceComponentName(block, 0, abbr, isScoped); }
-		}
-		else if ( rule instanceof KeyframesRule ) {
-			const literal = rule.keyframesNameLiteral;
-			isScoped(literal.startsWith('"') || literal.startsWith('\'') ? literal.slice(1, -1) : literal) || warnGlobal(`@keyframes ${literal} 将对全局生效`);
+	}
+}
+
+function checkScoped (rules :Sheet | import('./AtRule').DeclarationList, start :number, _checkScoped :(literal :string) => boolean) {
+	for ( let index = start, { length } = rules; index<length; ++index ) {
+		const rule = rules[index];
+		switch ( rule.constructor ) {
+			case QualifiedRule:
+				const { classSelectors } = rule as QualifiedRule;
+				for ( let index = 0, { length } = classSelectors; index<length; ++index ) {
+					const { literal } = classSelectors[index];
+					_checkScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
+				}
+				break;
+			case AtRule:
+				const { block } = rule as AtRule;
+				if ( block ) { checkScoped(block, 0, _checkScoped); }
+				break;
+			case KeyframesRule:
+				const { keyframesNameLiteral } = rule as KeyframesRule;
+				_checkScoped(keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? keyframesNameLiteral.slice(1, -1) : keyframesNameLiteral) || warnGlobal(`@keyframes ${keyframesNameLiteral} 将对全局生效`);
+				break;
 		}
 	}
 }
@@ -61,7 +64,7 @@ export default class Sheet extends Array<AtRule | KeyframesRule | QualifiedRule>
 	private imports_length = 0;
 	private namespaces_length = 0;
 	
-	constructor (inner :string, { abbr, sfc: { template } } :import('../').Private) {
+	constructor (inner :string, { abbr } :import('../').Private) {
 		super();
 		if ( !inner ) { return; }
 		if ( inner[0]==='\uFEFF' ) { throw SyntaxError(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
@@ -70,15 +73,11 @@ export default class Sheet extends Array<AtRule | KeyframesRule | QualifiedRule>
 		if ( inner.replace(NOT_CHANGES, '') ) { throw SyntaxError(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
 		try { TOKEN.parse(this, inner); }
 		finally { TOKEN.clear(); }
-		const keys = template && _(template).keys;
-		replaceComponentName(
-			this,
-			this.imports_length+this.namespaces_length,
-			abbr,
-			keys
-				? function isScoped (literal :string) { return __KEY__.test(literal) && keys.includes(literal.slice(2, -2)); }
-				: isScoped
-		);
+		abbr && replaceComponentName(this, this.imports_length+this.namespaces_length, abbr);
+	}
+	
+	checkScoped (_checkScoped :(literal :string) => boolean) {
+		checkScoped(this, this.imports_length+this.namespaces_length, _checkScoped);
 	}
 	
 	appendToken (this :Sheet) :Sheet | AtRule | KeyframesRule | QualifiedRule | SquareBracketBlock | Declaration | void {

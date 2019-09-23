@@ -10,7 +10,7 @@ import { NON_SCALAR as SURROGATE_IN_INPUT_STREAM } from '@ltd/j-utf';
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
 import { forAliasRE, slotRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF } from '../../INTERNAL';
-import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR } from '../../RE';
+import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR, isAliasName } from '../../RE';
 import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from '../../Tag';
 import { EMPTY } from '../../Attributes';
 import Params from '../../Params';
@@ -66,7 +66,22 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 			index = tag.end;
 			return;
 		}
-		const xName = partial && XName in partial ? partial[XName].tagName : XName;
+		let xName :string;
+		let __class__;
+		if ( partial && isAliasName(XName) ) {
+			if ( XName in partial ) {
+				const _ = partial[XName];
+				xName = _.tagName;
+				__class__ = _.class;
+			}
+			else if ( '' in partial ) {
+				xName = partial[''].tagName;
+				__class__ = `__${XName}__`;
+			}
+			else { xName = XName; }
+		}
+		else { xName = XName; }
+		xName = partial && XName in partial ? partial[XName].tagName : XName;
 		if ( xName==='script' ) { throw ReferenceError(`Vue 不允许 template 中存在 script 标签`); }
 		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件，或在其它标签上设置“is="style"”）`); }
 		if ( xName==='plaintext' ) { throw Error(`plaintext 标签没有结束方式，不适用于 template 书写（真需要时，考虑在其它标签上设置“is="plaintext"”）`); }
@@ -129,7 +144,7 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 				if ( attributes['ref']===BAD_REF ) { throw ReferenceError(`使用“${BAD_REF}”作为 ref 无法按预期工作`); }
 			}
 		}
-		const element :Element = parentNode.appendChild(new Element(xName, attributes, partial && partial[XName]));
+		const element :Element = parentNode.appendChild(new Element(xName, attributes, __class__));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName) ) { continue; }
 		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {

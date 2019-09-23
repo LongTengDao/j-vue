@@ -1,7 +1,7 @@
 export = exports;
 declare namespace exports {
 	
-	export const version :'14.13.2';
+	export const version :'15.0.0';
 	
 	export class SFC {
 		
@@ -47,11 +47,11 @@ declare namespace exports {
 		}>;
 		
 		export (mode :'default', from? :string) :string;
-		export (mode :'const' | 'var' | 'let', from? :string) :string;
+		export (mode :'const' | 'var' | 'let', from? :string | null) :string;
 		export (mode :{
 			'var' :'const' | 'var' | 'let',
 			'?j-vue'? :string,
-			'j-vue'? :string,
+			'j-vue'? :string | null,
 			'map'? :false | 'inline',
 			'src'? (src :string) :Promise<string>,
 			'lang'? (lang :string, inner :string) :string | Promise<string>,
@@ -59,7 +59,7 @@ declare namespace exports {
 		export (mode :{
 			'var' :'const' | 'var' | 'let',
 			'?j-vue'? :string,
-			'j-vue'? :string,
+			'j-vue'? :string | null,
 			'map' :true,
 			'src'? (src :string) :Promise<string>,
 			'lang'? (lang :string, inner :string) :string | Promise<string>,
