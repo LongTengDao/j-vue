@@ -1,4 +1,5 @@
 declare module '*?j-vue=' {
+	export const style :string;
 	export const styles :string[];
 	export const template :string;
 	export const render :Render<any>;
@@ -21,7 +22,7 @@ declare module ':j-vue' {
 
 declare module 'j-vue' {
 	
-	export const version :'15.0.0';
+	export const version :'15.1.0';
 	
 	export function Identifier () :string;
 	

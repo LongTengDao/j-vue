@@ -1,4 +1,5 @@
 declare module '*?j-vue=' {
+	export const style :string;
 	export const styles :string[];
 	export const template :string;
 	export const render :Render<any>;
