@@ -129,7 +129,9 @@ declare module '.class.isDate' { export default isDate;
 declare module '.class.isMap' { export default isMap;
 	function isMap (value :any) :value is Map<any, any>;
 }
-declare module '.class.isPrimitive' { export default class.isPrimitive; }
+declare module '.class.isPrimitive' { export default isPrimitive;
+	function isPrimitive (value :any) :value is undefined | null | boolean | string | symbol | number | bigint;
+}
 declare module '.class.isRegExp' { export default isRegExp;
 	function isRegExp (value :any) :value is RegExp;
 }
