@@ -151,6 +151,9 @@ export default class QualifiedRule extends Array<ParenthesisBlock | SquareBracke
 				this.not = '';
 				return parenthesisBlock;
 			case '{':
+				const lastIndex = this.length-1;
+				const lastItem = this[lastIndex];
+				if ( lastItem===' ' || lastItem==='/**/' ) { this.length = lastIndex; }
 				return this.block;
 			case TOKEN.comment:
 				this.push('/**/');
@@ -173,20 +176,17 @@ export default class QualifiedRule extends Array<ParenthesisBlock | SquareBracke
 		for ( let index = block.length; index; ) {
 			blockText = block[--index].cssText+blockText;
 		}
-		return `${this.selectorText}{${blockText}}`;
+		return blockText && `${this.selectorText}{${blockText}}`;
 	}
 	
 	* beautify (this :QualifiedRule, tab? :string) :IterableIterator<string> {
 		const { block } = this;
-		const { length } = block;
-		if ( length ) {
-			const blockTexts = [];
-			for ( let index = 0; index<length; ++index ) {
-				blockTexts.push(block[index].cssText);
-			}
-			const blockText = blockTexts.join(' ');
-			const { selectorText } = this;
-			yield `${selectorText}${selectorText.endsWith(' ') ? '' : ' '}{${blockText.startsWith(' ') ? '' : ' '}${blockText}${blockText.endsWith(' ') ? '' : ' '}}`;
+		let blockText = '';
+		for ( let index = block.length; index; ) {
+			blockText = block[--index].cssText+' '+blockText;
+		}
+		if ( blockText ) {
+			yield `${this.selectorText} { ${blockText}}`;
 		}
 	}
 	

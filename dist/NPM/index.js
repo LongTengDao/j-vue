@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.2.0';
+const version = '15.3.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3822,6 +3822,9 @@ class QualifiedRule extends Array                                               
 				this.not = '';
 				return parenthesisBlock;
 			case '{':
+				const lastIndex = this.length-1;
+				const lastItem = this[lastIndex];
+				if ( lastItem===' ' || lastItem==='/**/' ) { this.length = lastIndex; }
 				return this.block;
 			case comment:
 				this.push('/**/');
@@ -3844,20 +3847,17 @@ class QualifiedRule extends Array                                               
 		for ( let index = block.length; index; ) {
 			blockText = block[--index].cssText+blockText;
 		}
-		return `${this.selectorText}{${blockText}}`;
+		return blockText && `${this.selectorText}{${blockText}}`;
 	}
 	
 	* beautify (                     tab         )                           {
 		const { block } = this;
-		const { length } = block;
-		if ( length ) {
-			const blockTexts = [];
-			for ( let index = 0; index<length; ++index ) {
-				blockTexts.push(block[index].cssText);
-			}
-			const blockText = blockTexts.join(' ');
-			const { selectorText } = this;
-			yield `${selectorText}${selectorText.endsWith(' ') ? '' : ' '}{${blockText.startsWith(' ') ? '' : ' '}${blockText}${blockText.endsWith(' ') ? '' : ' '}}`;
+		let blockText = '';
+		for ( let index = block.length; index; ) {
+			blockText = block[--index].cssText+' '+blockText;
+		}
+		if ( blockText ) {
+			yield `${this.selectorText} { ${blockText}}`;
 		}
 	}
 	
@@ -4078,7 +4078,7 @@ class AtRule extends Array                                                 {
 	appendToken (            )                                                                                  {
 		switch ( type ) {
 			case whitespace:
-				this.push(' ');
+				this.length && this.push(' ');
 				return this;
 			case function$:
 			case '(':
@@ -4095,6 +4095,11 @@ class AtRule extends Array                                                 {
 			case '{': {
 				const { name } = this;
 				if ( /*is.charset(name) || */_import(name) || namespace(name) ) { return; }
+				const lastIndex = this.length-1;
+				if ( lastIndex>=0 ) {
+					const lastItem = this[lastIndex];
+					if ( lastItem===' ' || lastItem==='/**/' ) { this.length = lastIndex; }
+				}
 				return this.block = new DeclarationList(this);
 			}
 			case ';': {
@@ -4108,7 +4113,7 @@ class AtRule extends Array                                                 {
 				if ( media(name) || page(name) || font_face(name) || /*is._keyframes(name) || */supports(name) || document(name) ) { return; }
 				return this.parent.appendToken()                           ;
 			case comment:
-				this.push('/**/');
+				this.length && this.push('/**/');
 				return this;
 		}
 	}
@@ -4125,10 +4130,10 @@ class AtRule extends Array                                                 {
 			for ( let index = block.length; index; ) {
 				blockText = block[--index].cssText+blockText;
 			}
-			return `@${this.name}${atText}{${blockText}}`;
+			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText}}`;
 		}
 		else {
-			return `@${this.name}${atText};`;
+			return `@${this.name}${atText ? ' ' : ''}${atText};`;
 		}
 	}
 	
@@ -4140,7 +4145,7 @@ class AtRule extends Array                                                 {
 		}
 		const { block } = this;
 		if ( block ) {
-			yield `@${this.name}${atText}{`;
+			yield `@${this.name}${atText ? ' ' : ''}${atText} {`;
 			for ( let index = 0, { length } = block; index<length; ++index ) {
 				for ( const line of block[index].beautify(tab) ) {
 					yield tab+line;
@@ -4149,7 +4154,7 @@ class AtRule extends Array                                                 {
 			yield `}`;
 		}
 		else {
-			yield `@${this.name}${atText};`;
+			yield `@${this.name}${atText ? ' ' : ''}${atText};`;
 		}
 	}
 	

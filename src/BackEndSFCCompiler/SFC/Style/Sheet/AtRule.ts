@@ -144,7 +144,7 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 	appendToken (this :AtRule) :Sheet | AtRule | DeclarationList | ParenthesisBlock | SquareBracketBlock | void {
 		switch ( TOKEN.type ) {
 			case TOKEN.whitespace:
-				this.push(' ');
+				this.length && this.push(' ');
 				return this;
 			case TOKEN.function$:
 			case '(':
@@ -161,6 +161,11 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 			case '{': {
 				const { name } = this;
 				if ( /*is.charset(name) || */is._import(name) || is.namespace(name) ) { return; }
+				const lastIndex = this.length-1;
+				if ( lastIndex>=0 ) {
+					const lastItem = this[lastIndex];
+					if ( lastItem===' ' || lastItem==='/**/' ) { this.length = lastIndex; }
+				}
 				return this.block = new DeclarationList(this);
 			}
 			case ';': {
@@ -174,7 +179,7 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 				if ( is.media(name) || is.page(name) || is.font_face(name) || /*is._keyframes(name) || */is.supports(name) || is.document(name) ) { return; }
 				return this.parent.appendToken() as Sheet | DeclarationList;
 			case TOKEN.comment:
-				this.push('/**/');
+				this.length && this.push('/**/');
 				return this;
 		}
 	}
@@ -191,10 +196,10 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 			for ( let index = block.length; index; ) {
 				blockText = block[--index].cssText+blockText;
 			}
-			return `@${this.name}${atText}{${blockText}}`;
+			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText}}`;
 		}
 		else {
-			return `@${this.name}${atText};`;
+			return `@${this.name}${atText ? ' ' : ''}${atText};`;
 		}
 	}
 	
@@ -206,7 +211,7 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 		}
 		const { block } = this;
 		if ( block ) {
-			yield `@${this.name}${atText}{`;
+			yield `@${this.name}${atText ? ' ' : ''}${atText} {`;
 			for ( let index = 0, { length } = block; index<length; ++index ) {
 				for ( const line of block[index].beautify(tab) ) {
 					yield tab+line;
@@ -215,7 +220,7 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 			yield `}`;
 		}
 		else {
-			yield `@${this.name}${atText};`;
+			yield `@${this.name}${atText ? ' ' : ''}${atText};`;
 		}
 	}
 	
