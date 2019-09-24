@@ -22,7 +22,7 @@ declare module ':j-vue' {
 
 declare module 'j-vue' {
 	
-	export const version :'15.4.2';
+	export const version :'15.4.3';
 	
 	export function Identifier () :string;
 	

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.4.2';
+const version = '15.4.3';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -301,14 +301,14 @@ const ASCII_WHITESPACE = /[\t\n\f\r ]/;
 const ASCII_ALPHA = /[a-zA-Z]/;
 
 const TOKENS = /[^\s=;]+/g;
-const AliasName = /[A-Z][\w\-]*/;////
+const AliasName = /[A-Z][\w-]*/;////
 const _AliasName_ = newRegExp`^${AliasName}$`;
 const isAliasName = (name        ) => _AliasName_.test(name);
-const localOrComponentName = /[A-Za-z][\w\-]*/;////
+const localOrComponentName = /[A-Za-z][\w-]*/;////
 const _localOrComponentName_ = newRegExp`^${localOrComponentName}$`;
 const isLocalOrComponentName = (name        ) => _localOrComponentName_.test(name);
-const localName$1 = /[a-z][a-z0-9\-]*/;////
-const className = /[_a-zA-Z][\w\-]*/;////
+const localName$1 = /[a-z][a-z0-9-]*/;////
+const className = /[_a-zA-Z][\w-]*/;////
 
 const ATTRIBUTE_NAME = /[^\0\t\n\f\r "'<>/=]+/;
 const UNQUOTED_ATTRIBUTE_VALUE = /[^\0\t\n\f\r "'=<>`]+/;//// /[^\t\n\f\r "'=<>`][^\t\n\f\r >]*|(?=>)/; // HTML5 以前的标准宽松一些，实际 HTML 解析则更宽松。但 jVue 目前的整体设计原则是抛出一切不规范的错误，另外顺带提示反引号这个十分特殊的 IE 漏洞的存在
@@ -3225,7 +3225,7 @@ const ident_token = newRegExp`
 		)
 	)
 	(?:
-		[\-\w${nonASCII}]
+		[-\w${nonASCII}]
 	|
 		${escape}
 	)*
@@ -3233,7 +3233,7 @@ const ident_token = newRegExp`
 const hash_token = newRegExp`
 	#
 	(?:
-		[\-\w${nonASCII}]
+		[-\w${nonASCII}]
 	|
 		${escape}
 	)*
@@ -3279,13 +3279,13 @@ const url_token = newRegExp`
 `;
 const number_token = newRegExp`
 	[-+]?
-	(?:\d+(?:\.\d+|\d+)|\.\d+)
+	(?:\d+(?:\.\d+|\d+)?|\.\d+)
 	(?:[eE][+-]?\d+)?
 `;
 const CDO_token = '<!--';
 const CDC_token = '-->';
 
-const TOKEN = newRegExp('gs')`
+const TOKENS$1 = newRegExp('gs')`
 	(?:
 		[${ws}]+
 	|
@@ -3447,7 +3447,7 @@ let type      ;
 
 function parse (sheet       , source        ) {
 	let layer        = sheet;
-	const literals           = source.match(TOKEN) || [];
+	const literals           = source.match(TOKENS$1) || [];
 	const { length } = literals;
 	let types = '';
 	for ( let index = 0; index<length; ++index ) { types += Type(literals[index]); }

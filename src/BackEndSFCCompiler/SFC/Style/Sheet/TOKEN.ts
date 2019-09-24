@@ -29,7 +29,7 @@ export const ident_token = newRegExp`
 		)
 	)
 	(?:
-		[\-\w${nonASCII}]
+		[-\w${nonASCII}]
 	|
 		${escape}
 	)*
@@ -37,7 +37,7 @@ export const ident_token = newRegExp`
 const hash_token = newRegExp`
 	#
 	(?:
-		[\-\w${nonASCII}]
+		[-\w${nonASCII}]
 	|
 		${escape}
 	)*
@@ -83,13 +83,13 @@ const url_token = newRegExp`
 `;
 const number_token = newRegExp`
 	[-+]?
-	(?:\d+(?:\.\d+|\d+)|\.\d+)
+	(?:\d+(?:\.\d+|\d+)?|\.\d+)
 	(?:[eE][+-]?\d+)?
 `;
 const CDO_token = '<!--';
 const CDC_token = '-->';
 
-const TOKEN = newRegExp('gs')`
+const TOKENS = newRegExp('gs')`
 	(?:
 		[${ws}]+
 	|
@@ -251,7 +251,7 @@ export let type :Type;
 
 export function parse (sheet :Sheet, source :string) {
 	let layer :Layer = sheet;
-	const literals :string[] = source.match(TOKEN) || [];
+	const literals :string[] = source.match(TOKENS) || [];
 	const { length } = literals;
 	let types = '';
 	for ( let index = 0; index<length; ++index ) { types += Type(literals[index]); }
