@@ -38,7 +38,9 @@ declare module '.String.fromCharCode' { export default String.fromCharCode; }
 declare module '.Symbol.species?' { export default Symbol.species; }
 declare module '.Symbol.toStringTag?' { export default Symbol.toStringTag; }
 
-declare module '.class.isPrimitive' { export default class.isPrimitive; }
+declare module '.class.isPrimitive' { export default isPrimitive;
+	function isPrimitive (value :any) :value is undefined | null | boolean | string | symbol | number | bigint;
+}
 
 declare module '.default' { export default Default;
 	function Default<Exports extends Readonly<{ [key :string] :any, default? :Module<Exports> }>> (exports :Exports) :Module<Exports>;
