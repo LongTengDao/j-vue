@@ -124,7 +124,7 @@ export default class Sheet extends Array<AtRule | KeyframesRule | QualifiedRule>
 		for ( let index = 0, { length } = this; index<length; ++index ) {
 			cssText += this[index].cssText;
 		}
-		return cssText;
+		return cssText.endsWith(';') ? cssText.slice(0, -1) : cssText;
 	}
 	
 	* beautify (this :Sheet, tab :string = '\t') :IterableIterator<string> {

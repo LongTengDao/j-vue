@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.3.0';
+const version = '15.4.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3847,7 +3847,7 @@ class QualifiedRule extends Array                                               
 		for ( let index = block.length; index; ) {
 			blockText = block[--index].cssText+blockText;
 		}
-		return blockText && `${this.selectorText}{${blockText}}`;
+		return blockText && `${this.selectorText}{${blockText.slice(0, -1)}}`;
 	}
 	
 	* beautify (                     tab         )                           {
@@ -4130,7 +4130,7 @@ class AtRule extends Array                                                 {
 			for ( let index = block.length; index; ) {
 				blockText = block[--index].cssText+blockText;
 			}
-			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText}}`;
+			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText.endsWith(';') ? blockText.slice(0, -1) : blockText}}`;
 		}
 		else {
 			return `@${this.name}${atText ? ' ' : ''}${atText};`;
@@ -4275,7 +4275,7 @@ class Sheet extends Array                                         {
 		for ( let index = 0, { length } = this; index<length; ++index ) {
 			cssText += this[index].cssText;
 		}
-		return cssText;
+		return cssText.endsWith(';') ? cssText.slice(0, -1) : cssText;
 	}
 	
 	* beautify (             tab         = '\t')                           {

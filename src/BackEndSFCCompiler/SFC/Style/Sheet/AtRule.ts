@@ -196,7 +196,7 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 			for ( let index = block.length; index; ) {
 				blockText = block[--index].cssText+blockText;
 			}
-			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText}}`;
+			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText.endsWith(';') ? blockText.slice(0, -1) : blockText}}`;
 		}
 		else {
 			return `@${this.name}${atText ? ' ' : ''}${atText};`;

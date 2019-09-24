@@ -176,7 +176,7 @@ export default class QualifiedRule extends Array<ParenthesisBlock | SquareBracke
 		for ( let index = block.length; index; ) {
 			blockText = block[--index].cssText+blockText;
 		}
-		return blockText && `${this.selectorText}{${blockText}}`;
+		return blockText && `${this.selectorText}{${blockText.slice(0, -1)}}`;
 	}
 	
 	* beautify (this :QualifiedRule, tab? :string) :IterableIterator<string> {
