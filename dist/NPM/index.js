@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.4.0';
+const version = '15.4.1';
 
 const isBuffer = Buffer.isBuffer;
 
