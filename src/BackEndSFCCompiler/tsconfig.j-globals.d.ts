@@ -188,10 +188,10 @@ declare module '.null.prototype' { export default NULL;
 declare module '.parseInt' { export default parseInt; }
 
 declare module '.private' { export default Private;
-	function Private<_ extends (this :void, instance :any) => object> (Private? :ReturnType<_> | { (this :void, $ :object) :ReturnType<_> } | { (this :void) :ReturnType<_> } | { new ($ :object) :ReturnType<_> } | { new () :ReturnType<_> }) :_;
-	function Private<Public extends object, Private extends object> (PRIVATE? :Private) :(this :void, instance :Public) => Private;
-	function Private<Public extends object, PrivateApplier extends { ($ :Public) :object } | { () :object }> (Private :PrivateApplier) :(this :void, instance :Public) => ReturnType<PrivateApplier>;
+	function Private<_ extends (this :void, instance :any) => object> (Private? :{ new ($ :object) :ReturnType<_> } | { new () :ReturnType<_> } | { (this :void, $ :object) :ReturnType<_> } | { (this :void) :ReturnType<_> } | ReturnType<_>) :_;
 	function Private<Public extends object, PrivateConstructor extends { new ($ :Public) :object } | { new () :object }> (Private :PrivateConstructor) :(this :void, instance :Public) => InstanceType<PrivateConstructor>;
+	function Private<Public extends object, PrivateApplier extends { ($ :Public) :object } | { () :object }> (Private :PrivateApplier) :(this :void, instance :Public) => ReturnType<PrivateApplier>;
+	function Private<Public extends object, Private extends object> (PRIVATE? :Private) :(this :void, instance :Public) => Private;
 }
 
 declare module '.return' { export default RETURN;
