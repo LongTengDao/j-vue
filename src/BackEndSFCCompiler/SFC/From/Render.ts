@@ -139,7 +139,7 @@ export function NecessaryStringLiteral (body :string) :string {
 		const _c_exp = _C_EXP.exec(minified.code!);
 		if ( !_c_exp ) { throw Error(`jVue 内部设计时错误地估计了 Terser 压缩生成的内容格式：\n`+minified.code); }
 		return FUNC
-			? `function () { ${MODE} ${_c_exp[1]} = this._self._c; return ${_c_exp[1]}; }`
+			? `function () { ${MODE} ${_c_exp[1]} = this._self._c; return ${_c_exp[2]}; }`
 			: StringLiteral(`,${_c_exp[2]}`);
 	}
 }
