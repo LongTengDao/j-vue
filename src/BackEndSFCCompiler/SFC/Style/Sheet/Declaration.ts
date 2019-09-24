@@ -38,8 +38,6 @@ export default class Declaration extends Array<ParenthesisBlock | string> {// pr
 				case ',':
 				case '*':
 				case '!':
-				case TOKEN.comment:
-				case TOKEN.whitespace:
 				case TOKEN.ident:
 				case TOKEN.hash:
 				case TOKEN.string:
@@ -48,6 +46,12 @@ export default class Declaration extends Array<ParenthesisBlock | string> {// pr
 				case TOKEN.percentage:
 				case TOKEN.url:
 					this.push(TOKEN.literal);
+					return this;
+				case TOKEN.whitespace:
+					this.length && this.push(' ');
+					return this;
+				case TOKEN.comment:
+					this.length && this.push('/**/');
 					return this;
 			}
 		}

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.1.0';
+const version = '15.2.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3634,8 +3634,6 @@ class Declaration extends Array                            {// property or descr
 				case ',':
 				case '*':
 				case '!':
-				case comment:
-				case whitespace:
 				case ident:
 				case hash:
 				case string:
@@ -3644,6 +3642,12 @@ class Declaration extends Array                            {// property or descr
 				case percentage:
 				case url$1:
 					this.push(literal$1);
+					return this;
+				case whitespace:
+					this.length && this.push(' ');
+					return this;
+				case comment:
+					this.length && this.push('/**/');
 					return this;
 			}
 		}
