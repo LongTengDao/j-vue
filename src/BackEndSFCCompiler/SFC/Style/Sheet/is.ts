@@ -44,5 +44,5 @@ export const {
 	}
 });
 
-const _KEYFRAMES = /^(?:-[a-zA-Z]+-)[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
+const _KEYFRAMES = /^(?:-[a-zA-Z][a-zA-Z\d]*-)?[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
 export const _keyframes = (keyword :string) => _KEYFRAMES.test(keyword);

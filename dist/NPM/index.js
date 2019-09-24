@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.4.3';
+const version = '15.4.4';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3198,7 +3198,7 @@ const {
 	}
 });
 
-const _KEYFRAMES = /^(?:-[a-zA-Z]+-)[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
+const _KEYFRAMES = /^(?:-[a-zA-Z][a-zA-Z\d]*-)?[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
 const _keyframes = (keyword        ) => _KEYFRAMES.test(keyword);
 
 const nonASCII = /\x80-\uFFFF/;
@@ -3454,7 +3454,7 @@ function parse (sheet       , source        ) {
 	for ( let index = 0; index<length; ++index ) {
 		type = ( types                                       )[index];
 		literal$1 = literals[index];
-		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了上下文不允许的内容 ${literal$1}：\n${literals.slice(0, index).join('')}`);
+		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了 ${layer.constructor.name} 上下文不允许的内容 ${literal$1}：\n${literals.slice(0, index).join('')}`);
 	}
 	if ( layer!==sheet ) {
 		const { parent } = layer;

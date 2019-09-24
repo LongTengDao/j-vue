@@ -258,7 +258,7 @@ export function parse (sheet :Sheet, source :string) {
 	for ( let index = 0; index<length; ++index ) {
 		type = ( types as string & { [index :number] :Type } )[index];
 		literal = literals[index];
-		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了上下文不允许的内容 ${literal}：\n${literals.slice(0, index).join('')}`);
+		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了 ${layer.constructor.name} 上下文不允许的内容 ${literal}：\n${literals.slice(0, index).join('')}`);
 	}
 	if ( layer!==sheet ) {
 		const { parent } = layer;
