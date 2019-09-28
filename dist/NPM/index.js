@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.4.4';
+const version = '15.4.5';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -5314,10 +5314,11 @@ function * From (tab        , mode                         , styles         , te
 				yield `//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
 			}
 			yield eol;
-			yield `export ${mode} styles = [ style`;
-			if ( length===1 ) { yield ' '; }
+			if ( length===1 ) {
+				yield `export ${mode} styles = [ style ];`;
+			}
 			else {
-				yield `,${eol}`;
+				yield `export ${mode} styles = [ style,${eol}`;
 				for ( let index = 1; index<length; ++index ) {
 					const style = styles[0];
 					yield `${tab}${StringLiteral(style.innerCSS)},${eol}`;
@@ -5325,11 +5326,15 @@ function * From (tab        , mode                         , styles         , te
 						yield `${tab}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
 					}
 				}
+				yield `];`;
 			}
-			yield `];${eol}`;
 		}
+		else {
+			yield `export ${mode} styles = [ ];`;
+		}
+		yield eol;
 		if ( template ) {
-			if ( length ) { yield eol; }
+			yield eol;
 			const { innerHTML } = template;
 			const { render, staticRenderFns } = Render(innerHTML, mode, true);
 			yield `export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
