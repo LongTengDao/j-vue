@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.4.5';
+const version = '15.4.6';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -4391,6 +4391,7 @@ const parserOptions = Null({
 
 const _NAMES           = [];
 const $NAMES           = [];
+let A          = false;
 
 function Params (parameters        , min        , max        , attribute        ) {
 	let program         ;
@@ -4413,25 +4414,31 @@ function Params (parameters        , min        , max        , attribute        
 	if ( !length ) { return; }
 	_NAMES.length = 0;
 	$NAMES.length = 0;
+	A = false;
 	for ( let index = 0; index<length; ++index ) { Pattern(params[index]); }
-	if ( !_NAMES.length && !$NAMES.length ) { return; }
-	const _         = _NAMES.join('”“');
-	const $         = $NAMES.join('”“');
-	_NAMES.length = 0;
-	$NAMES.length = 0;
-	throw ReferenceError(
-		`${attribute}存在`+
-		( _ && `以“_”开头后跟单个小写字母的危险变量“${_}”` )+
-		( _ && $ && `和` )+
-		( $ && `以“$”开头的危险变量“${$}”` )+
-		`，这可能使得 Vue 模板编译结果以错误的方式运行`
-	);
+	if ( _NAMES.length || $NAMES.length || A ) {
+		const s = [];
+		if ( _NAMES.length ) {
+			s.push(`以“_”开头后跟单个小写字母的危险变量“${_NAMES.join('”“')}”`);
+			_NAMES.length = 0;
+		}
+		if ( $NAMES.length ) {
+			s.push(`以“$”开头的危险变量“${$NAMES.join('”“')}”`);
+			$NAMES.length = 0;
+		}
+		if ( A ) {
+			s.push(` input[type=checkbox] 或 select 的 v-model 编译结果中自动引用的 Array`);
+		}
+		throw ReferenceError(`${attribute}存在${s.join('、')}，这可能使得 Vue 模板编译结果以错误的方式运行`);
+	}
 }
 function Pattern (node         )       {
 	switch ( node.type ) {
 		case 'Identifier':
-			if ( _v.test(node.name) ) { _NAMES.push(node.name); }
-			if ( $vvv.test(node.name) ) { $NAMES.push(node.name); }
+			const { name } = node;
+			if ( _v.test(name) ) { _NAMES.push(name); }
+			else if ( $vvv.test(name) ) { $NAMES.push(name); }
+			else if ( name==='Array' ) { A = true; }
 			break;
 		case 'ObjectPattern':// { Pattern }
 			for ( let { properties } = node, { length } = properties, index         = 0; index<length; ++index ) {
