@@ -146,7 +146,7 @@ export function NecessaryStringLiteral (body :string) :string {
 
 export default function Render (innerHTML :string, mode :'var' | 'let' | 'const', func :boolean) :{ render :string, staticRenderFns :string[] } {
 	const { errors, render, staticRenderFns } = compile(innerHTML);
-	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
+	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n       ${errors.join('\n       ')}`); }
 	minifyOptions.ecma = parserOptions.ecmaVersion = mode==='var' ? 5 : 2014 as 6;
 	MODE = mode;
 	FUNC = func;

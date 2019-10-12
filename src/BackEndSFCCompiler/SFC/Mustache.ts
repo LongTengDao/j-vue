@@ -6,7 +6,7 @@ import { StringLiteral } from '@ltd/j-es';
 import { BAD_INS } from './INTERNAL';
 import * as Entities from './Entities';
 
-const NT = /\n\t+/g;
+const NT = /\n\t+|\f\t*|\r\n?\t*/g;
 const N = /^\n|\n$/g;
 
 const OPEN_LIKE = /{(?:{+|$)/g;

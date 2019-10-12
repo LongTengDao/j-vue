@@ -139,6 +139,8 @@ declare module '.class.isSet' { export default isSet;
 	function isSet (value :any) :value is Set<any>;
 }
 
+declare module '.console.warn' { export default console.warn; }
+
 declare module '.default' { export default Default;
 	function Default<Exports extends Readonly<{ [key :string] :any, default? :Module<Exports> }>> (exports :Exports) :Module<Exports>;
 	function Default<Statics extends Readonly<{ [key :string] :any, default? :ModuleFunction<Statics, Main> }>, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;

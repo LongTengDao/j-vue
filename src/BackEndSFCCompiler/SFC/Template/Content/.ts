@@ -25,9 +25,9 @@ const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG = newRegExp`</STYLE${TAG_EMIT_CHAR}`;
 const TITLE_END_TAG = newRegExp`</title${TAG_EMIT_CHAR}`;
 const TEXTAREA = /^textarea$/i;
-const TNS = /^[\t\n ]+$/;
-const SOF_TNS_LT = /^[\t\n ]+</;
-const GT_TNS_EOF = />[\t\n ]+$/;
+const TNS = /^[\t\n\f\r ]+$/;
+const SOF_TNS_LT = /^[\t\n\f\r ]+</;
+const GT_TNS_EOF = />[\t\n\f\r ]+$/;
 const V_BIND = /^(?:v-bind)?:([^.]*)/;
 
 let html :string = '';

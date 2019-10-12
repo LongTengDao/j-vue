@@ -1,20 +1,12 @@
 ﻿'use strict';
 
-const version = '15.4.6';
+const version = '15.4.7';
 
 const isBuffer = Buffer.isBuffer;
 
 const freeze = Object.freeze;
 
 const undefined$1 = void 0;
-
-const warnGlobal = (
-	/*! j-globals: throw.Error (internal) */
-	function throwError (message) {
-		throw Error(message);
-	}
-	/*¡ j-globals: throw.Error (internal) */
-);
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -3157,6 +3149,8 @@ class Script extends Block {
 }
 freeze(Script.prototype);
 
+const warnGlobal = console.warn;
+
 const {
 	
 	charset,
@@ -4580,7 +4574,7 @@ class Text extends CharacterData {
 }
 freeze(Text.prototype);
 
-const NT$1 = /\n\t+/g;
+const NT$1 = /\n\t+|\f\t*|\r\n?\t*/g;
 const N = /^\n|\n$/g;
 
 const OPEN_LIKE = /{(?:{+|$)/g;
@@ -4667,9 +4661,9 @@ const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG$1 = newRegExp`</STYLE${TAG_EMIT_CHAR}`;
 const TITLE_END_TAG = newRegExp`</title${TAG_EMIT_CHAR}`;
 const TEXTAREA = /^textarea$/i;
-const TNS = /^[\t\n ]+$/;
-const SOF_TNS_LT = /^[\t\n ]+</;
-const GT_TNS_EOF = />[\t\n ]+$/;
+const TNS = /^[\t\n\f\r ]+$/;
+const SOF_TNS_LT = /^[\t\n\f\r ]+</;
+const GT_TNS_EOF = />[\t\n\f\r ]+$/;
 const V_BIND = /^(?:v-bind)?:([^.]*)/;
 
 let html         = '';
@@ -5288,7 +5282,7 @@ function NecessaryStringLiteral (body        )         {
 
 function Render (innerHTML        , mode                         , func         )                                                {
 	const { errors, render, staticRenderFns } = compile(innerHTML);
-	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n${errors.join('\n')}`); }
+	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n       ${errors.join('\n       ')}`); }
 	minifyOptions.ecma = parserOptions$1.ecmaVersion = mode==='var' ? 5 : 2014     ;
 	MODE = mode;
 	FUNC = func;
@@ -5416,12 +5410,14 @@ const acorn = Null({
 const rollupOptions = {
 	onwarn (warning     )       {
 		if ( typeof warning==='string' ) { throw Error(warning); }
-		if ( warning.code!=='UNUSED_EXTERNAL_IMPORT' ) { throw warning; }
+		const { code } = warning;
+		if ( code!=='UNUSED_EXTERNAL_IMPORT' && code!=='THIS_IS_UNDEFINED' ) { throw warning; }
 	},
 	acorn,
 	acornInjectPlugins: [ AcornStage3 ],
 	strictDeprecations: true        ,
 	treeshake: false         ,
+	context: 'this',
 };
 
 const TRUE = Null({

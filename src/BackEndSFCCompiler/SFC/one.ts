@@ -16,12 +16,14 @@ const acorn = Null({
 const rollupOptions = {
 	onwarn (warning :any) :void {
 		if ( typeof warning==='string' ) { throw Error(warning); }
-		if ( warning.code!=='UNUSED_EXTERNAL_IMPORT' ) { throw warning; }
+		const { code } = warning;
+		if ( code!=='UNUSED_EXTERNAL_IMPORT' && code!=='THIS_IS_UNDEFINED' ) { throw warning; }
 	},
 	acorn,
 	acornInjectPlugins: [ AcornStage3 ],
 	strictDeprecations: true as true,
 	treeshake: false as false,
+	context: 'this',
 };
 
 const TRUE = Null({

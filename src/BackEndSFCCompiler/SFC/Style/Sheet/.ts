@@ -1,7 +1,7 @@
 import Array from '.Array';
 import SyntaxError from '.SyntaxError';
 import freeze from '.Object.freeze';
-import warnGlobal from '.throw.Error';
+import warnGlobal from '.console.warn';
 
 import { isAliasName } from '../../RE';
 import * as is from './is';
