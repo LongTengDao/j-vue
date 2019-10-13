@@ -62,7 +62,7 @@ Back-End SFC Compiler
 			
 			When use `const` or `let`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.
 			
-			当第二个参数 `from` 为 `null` 时，表示 `template` 和 `style` 块并不需要防冲突处理（一般用于会使用 Shadow DOM 的场景）。这时的导出内容是：
+			When the second parameter `from` is `null`, `template` and `style` blocks won't be scoped (usually used in Shadow DOM). In this case, the export content is:
 			
 			```	.js
 				export var styles = [];
@@ -130,10 +130,7 @@ Front-End Runtime Dependency
 		#3#	"identifier" is a `string`; identifier generated each time, is global unique in `jVue`.
 			It's leaded by a lowercase letter, and followed with lowercase letters or digits (under the rule for `.key` mode bare key name accessing to object property in `JavaScript (ECMAScript 5+)`).
 			The aim is to be as short as possible, while being based on the premise that it can be used for legal `class` selector or any other purpose, with high cache index performance (avoid to become "dict mode" or require case conversion).
-			(Because of I can't imagine the application scenario that need to avoid JS syntax reserved words, so I didn't exclude them. If you have reason, tell me via issues, adding it is very easy.
-			However, in order to be able to be a keyframe name, etc., several CSS syntax reserved words `inherit`, `initial`, `unset`, `default`, `none`, `auto`, `span`, `contents` are avoided.
-			`notranslate` has side effects when used as `class`, so it will also be skipped.
-			In addition, because the predefined counter style name list that needs to be avoided is too long and different environments may have different implementations, it is suggested to add `-` or `_` as protective suffix after it.)
+			(In order to be able to be a keyframe name, etc., CSS syntax reserved words `inherit`, `initial`, `unset`, `default`, `none`, `auto`, `span`, `contents`, etc. are skipped. `notranslate` has side effects when used as `class`, so it will also be skipped.)
 			
 		`jVue.Scope([keys])`
 		--------------------	

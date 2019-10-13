@@ -1,3 +1,5 @@
+import CSS_KEYWORDS from 'lib:css-keywords';
+
 var increaseDictionary :{ [character in '0' | Character] :Character | 'z' } = {
 	0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: 'a',
 	a: 'b', b: 'c', c: 'd', d: 'e', e: 'f', f: 'g', g: 'h',
@@ -33,22 +35,10 @@ export default function Identifier () :string {
 		lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter];
 	}
 	
-	//return latestIdentifier.join('')+'_';
 	var identifier :string = latestIdentifier.join('');
-	if ( lastIndex>2 ) {
-		switch ( identifier ) {
-			case 'auto':
-			case 'none':
-			case 'span':
-			case 'unset':
-			case 'default':
-			case 'inherit':
-			case 'initial':
-			case 'contents':
-			case 'notranslate':
-				lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter as 'e' | 'l' | 'n' | 'o' | 's' | 't'];
-				identifier = latestIdentifier.join('');
-		}
+	if ( CSS_KEYWORDS.test(identifier) ) {
+		lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter as Character];
+		identifier = latestIdentifier.join('');
 	}
 	return identifier;
 	

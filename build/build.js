@@ -65,6 +65,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 		],
 		locate: {
 			'@ltd/j-groupify': ful('../../LongTengDao/j-groupify/dist/ESM/.j-groupify.js'),
+			'lib:css-keywords': ful('lib/css-keywords/dist.js'),
 		},
 	});
 	

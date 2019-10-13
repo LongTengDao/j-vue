@@ -4,7 +4,8 @@
 		"moduleResolution": "classic",
 		"baseUrl": "../..",
 		"paths": {
-			"@ltd/*": ["../../LongTengDao/*/src/export"]
+			"@ltd/*": [ "../../LongTengDao/*/src/export" ],
+			"lib:*": [ "lib/*/dist" ]
 		},
 		"strict": true,
 		"noImplicitReturns": true,
