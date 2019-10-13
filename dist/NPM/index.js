@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.5.0';
+const version = '15.5.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3273,7 +3273,7 @@ const url_token = newRegExp`
 `;
 const number_token = newRegExp`
 	[-+]?
-	(?:\d+(?:\.\d+|\d+)?|\.\d+)
+	(?:\d+(?:\.\d+)?|\.\d+)
 	(?:[eE][+-]?\d+)?
 `;
 const CDO_token = '<!--';

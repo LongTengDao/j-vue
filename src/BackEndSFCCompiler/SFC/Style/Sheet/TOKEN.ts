@@ -83,7 +83,7 @@ const url_token = newRegExp`
 `;
 const number_token = newRegExp`
 	[-+]?
-	(?:\d+(?:\.\d+|\d+)?|\.\d+)
+	(?:\d+(?:\.\d+)?|\.\d+)
 	(?:[eE][+-]?\d+)?
 `;
 const CDO_token = '<!--';
