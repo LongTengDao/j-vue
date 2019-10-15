@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.6.0';
+const version = '15.6.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -3261,7 +3261,7 @@ const ident_token = newRegExp('i')`
 	|
 		-?
 		(?:
-			[\w${nonASCII}]
+			[a-z_${nonASCII}]
 		|
 			${escape}
 		)
@@ -3358,7 +3358,7 @@ const TOKENS$1 = newRegExp('gis')`
 const URL_REST = newRegExp('i')`
 	^
 	[${ws}]*
-	(?:${escape}|[${ws}"'()\\])*
+	(?:${escape}|[^${ws}"'()\\])*
 	[${ws}]*
 	\)
 	$

@@ -23,7 +23,7 @@ export const ident_token = newRegExp('i')`
 	|
 		-?
 		(?:
-			[\w${nonASCII}]
+			[a-z_${nonASCII}]
 		|
 			${escape}
 		)
@@ -120,7 +120,7 @@ const TOKENS = newRegExp('gis')`
 const URL_REST = newRegExp('i')`
 	^
 	[${ws}]*
-	(?:${escape}|[${ws}"'()\\])*
+	(?:${escape}|[^${ws}"'()\\])*
 	[${ws}]*
 	\)
 	$
