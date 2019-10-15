@@ -4,7 +4,6 @@ declare module '.Array.isArray?=' { export default isArray;
 	function isArray (value :any) :value is readonly any[];
 }
 declare module '.Array.prototype' { export default Array.prototype; }
-declare module '.Array.prototype.slice' { export default Array.prototype.slice; }
 
 declare module '.Buffer.from?' { export default Buffer.from; }
 declare module '.Buffer.isBuffer' { export default Buffer.isBuffer; }

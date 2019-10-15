@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.5.1';
+const version = '15.6.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -280,6 +280,54 @@ function newRegExp (template_flags                               )              
 	};
 }
 
+var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
+var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
+var GROUP = create(NULL)         ;
+
+function groupify (branches          , uFlag          , noEscape          )         {
+	var group = create(NULL)         ;
+	var appendBranch = uFlag ? appendPointBranch : appendCodeBranch;
+	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index]); }
+	return sourcify(group, !noEscape);
+}
+function appendPointBranch (group       , branch        )       {
+	if ( branch ) {
+		var character         = SURROGATE_PAIR.test(branch) ? branch.slice(0, 2) : branch.charAt(0);
+		appendPointBranch(group[character] || ( group[character] = create(NULL)          ), branch.slice(character.length));
+	}
+	else { group[''] = GROUP; }
+}
+
+function appendCodeBranch (group       , branch        )       {
+	if ( branch ) {
+		var character         = branch.charAt(0);
+		appendCodeBranch(group[character] || ( group[character] = create(NULL)          ), branch.slice(1));
+	}
+	else { group[''] = GROUP; }
+}
+
+function sourcify (group       , needEscape         )         {
+	var branches           = [];
+	var singleCharactersBranch           = [];
+	var noEmptyBranch          = true;
+	for ( var character in group ) {
+		if ( character ) {
+			var sub_branches         = sourcify(group[character], needEscape);
+			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP.test(character) ) { character = '\\'+character; }
+			sub_branches ? branches.push(character+sub_branches) : singleCharactersBranch.push(character);
+		}
+		else { noEmptyBranch = false; }
+	}
+	singleCharactersBranch.length && branches.unshift(singleCharactersBranch.length===1 ? singleCharactersBranch[0] : '['+singleCharactersBranch.join('')+']');
+	return branches.length===0
+		? ''
+		: ( branches.length===1 && ( singleCharactersBranch.length || noEmptyBranch )
+			? branches[0]
+			: '(?:'+branches.join('|')+')'
+		)
+		+( noEmptyBranch ? '' : '?' );
+}
+
 /*¡ j-regexp */
 
 const NONCHARACTER = newRegExp('u')`[
@@ -368,7 +416,7 @@ const IS_TAG = newRegExp`
  * 模块名称：j-eol
  * 模块功能：换行符相关共享实用程序。从属于“简计划”。
    　　　　　EOL util. Belong to "Plan J".
- * 模块版本：1.3.0
+ * 模块版本：1.3.1
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-eol/issues
@@ -387,41 +435,41 @@ var clearRegExp = '$_' in RegExp
 		return value;
 	};
 
-var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
-var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
-var GROUP        = create(null);
+var NEED_TO_ESCAPE_IN_REGEXP$1 = /^[$()*+\-.?[\\\]^{|]/;
+var SURROGATE_PAIR$1 = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
+var GROUP$1 = create(NULL)         ;
 
-function groupify (branches          , uFlag          , noEscape          )         {
-	var group        = create(null);
-	var appendBranch = uFlag ? appendPointBranch : appendCodeBranch;
+function groupify$1 (branches          , uFlag          , noEscape          )         {
+	var group = create(NULL)         ;
+	var appendBranch = uFlag ? appendPointBranch$1 : appendCodeBranch$1;
 	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index]); }
-	return sourcify(group, !noEscape);
+	return sourcify$1(group, !noEscape);
 }
-function appendPointBranch (group       , branch        )       {
+function appendPointBranch$1 (group       , branch        )       {
 	if ( branch ) {
-		var char         = SURROGATE_PAIR.test(branch) ? branch.slice(0, 2) : branch.charAt(0);
-		appendPointBranch(group[char] || ( group[char] = create(null) ), branch.slice(char.length));
+		var character         = SURROGATE_PAIR$1.test(branch) ? branch.slice(0, 2) : branch.charAt(0);
+		appendPointBranch$1(group[character] || ( group[character] = create(NULL)          ), branch.slice(character.length));
 	}
-	else { group[''] = GROUP; }
+	else { group[''] = GROUP$1; }
 }
 
-function appendCodeBranch (group       , branch        )       {
+function appendCodeBranch$1 (group       , branch        )       {
 	if ( branch ) {
-		var char         = branch.charAt(0);
-		appendCodeBranch(group[char] || ( group[char] = create(null) ), branch.slice(1));
+		var character         = branch.charAt(0);
+		appendCodeBranch$1(group[character] || ( group[character] = create(NULL)          ), branch.slice(1));
 	}
-	else { group[''] = GROUP; }
+	else { group[''] = GROUP$1; }
 }
 
-function sourcify (group       , needEscape         )         {
+function sourcify$1 (group       , needEscape         )         {
 	var branches           = [];
 	var singleCharactersBranch           = [];
 	var noEmptyBranch          = true;
-	for ( var char in group ) {
-		if ( char ) {
-			var sub_branches         = sourcify(group[char], needEscape);
-			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP.test(char) ) { char = '\\'+char; }
-			sub_branches ? branches.push(char+sub_branches) : singleCharactersBranch.push(char);
+	for ( var character in group ) {
+		if ( character ) {
+			var sub_branches         = sourcify$1(group[character], needEscape);
+			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP$1.test(character) ) { character = '\\'+character; }
+			sub_branches ? branches.push(character+sub_branches) : singleCharactersBranch.push(character);
 		}
 		else { noEmptyBranch = false; }
 	}
@@ -449,11 +497,11 @@ function EOL                     (allow                , disallow_uniform       
 	var DISALLOW        ;
 	var FIRST         ;
 	if ( typeof disallow_uniform==='object' ) {
-		DISALLOW = IsArray(disallow_uniform) ? RegExp(groupify(disallow_uniform)) : removeGlobal(disallow_uniform);
+		DISALLOW = IsArray(disallow_uniform) ? RegExp(groupify$1(disallow_uniform)) : removeGlobal(disallow_uniform);
 		FIRST = !uniform_disallow;
 	}
 	else if ( typeof uniform_disallow==='object' ) {
-		DISALLOW = IsArray(uniform_disallow) ? RegExp(groupify(uniform_disallow)) : removeGlobal(uniform_disallow);
+		DISALLOW = IsArray(uniform_disallow) ? RegExp(groupify$1(uniform_disallow)) : removeGlobal(uniform_disallow);
 		FIRST = !disallow_uniform;
 	}
 	else {
@@ -461,8 +509,8 @@ function EOL                     (allow                , disallow_uniform       
 	}
 	var ALLOW = IsArray(allow)
 		? FIRST
-			? RegExp(groupify(allow))
-			: RegExp(groupify(allow), 'g')
+			? RegExp(groupify$1(allow))
+			: RegExp(groupify$1(allow), 'g')
 		: allow;
 	
 	return function EOL (string        )           {
@@ -3196,8 +3244,8 @@ const _KEYFRAMES = /^(?:-[a-zA-Z][a-zA-Z\d]*-)?[kK][eE][yY][fF][rR][aA][mM][eE][
 const _keyframes = (keyword        ) => _KEYFRAMES.test(keyword);
 
 const nonASCII = /\x80-\uFFFF/;
-const hex_digit = /[0-9A-Fa-f]/;
-const escape = newRegExp`
+const hex_digit = /[0-9A-F]/i;
+const escape = newRegExp('i')`
 	\\
 	(?:
 		${hex_digit}{1,6}
@@ -3207,13 +3255,13 @@ const escape = newRegExp`
 	)
 `;
 const ws = /\t\n\f\r /;
-const ident_token = newRegExp`
+const ident_token = newRegExp('i')`
 	(?:
 		--
 	|
 		-?
 		(?:
-			[A-Z_a-z${nonASCII}]
+			[\w${nonASCII}]
 		|
 			${escape}
 		)
@@ -3224,7 +3272,7 @@ const ident_token = newRegExp`
 		${escape}
 	)*
 `;
-const hash_token = newRegExp`
+const hash_token = newRegExp('i')`
 	#
 	(?:
 		[-\w${nonASCII}]
@@ -3241,8 +3289,8 @@ const string_token = newRegExp`
 	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
 	'?
 `;
-const url_token = newRegExp`
-	[uU][rR][lL]
+const url_token = newRegExp('i')`
+	url
 	(?:
 		\(
 		[${ws}]*
@@ -3254,7 +3302,7 @@ const url_token = newRegExp`
 		)*
 		\)?
 	|
-		-[pP][rR][eE][fF][iI][xX]
+		-prefix
 		\(
 		(?!
 			[${ws}]*
@@ -3262,24 +3310,24 @@ const url_token = newRegExp`
 		)
 	)
 |
-	[dD][oO][mM][aA][iI][nN]
+	domain
 	\(
 	(?!
 		[${ws}]*
-		[a-zA-Z\d\-.:]*
+		[a-z\d\-.:]*
 		[${ws}]*
 		\)
 	)
 `;
-const number_token = newRegExp`
+const number_token = newRegExp('i')`
 	[-+]?
 	(?:\d+(?:\.\d+)?|\.\d+)
-	(?:[eE][+-]?\d+)?
+	(?:e[+-]?\d+)?
 `;
 const CDO_token = '<!--';
 const CDC_token = '-->';
 
-const TOKENS$1 = newRegExp('gs')`
+const TOKENS$1 = newRegExp('gis')`
 	(?:
 		[${ws}]+
 	|
@@ -3307,7 +3355,7 @@ const TOKENS$1 = newRegExp('gs')`
 	.
 `;
 
-const URL_REST = newRegExp`
+const URL_REST = newRegExp('i')`
 	^
 	[${ws}]*
 	(?:${escape}|[${ws}"'()\\])*
@@ -3317,7 +3365,7 @@ const URL_REST = newRegExp`
 `;
 const NUMBER = /[\d.]/;
 const COMMENT$1 = /\/\*.*?\*\//g;
-const FUNCTION = newRegExp`
+const FUNCTION = newRegExp('i')`
 	^
 	${ident_token}\(
 	$
@@ -3675,7 +3723,7 @@ class Declaration extends Array                            {// property or descr
 }
 freeze(Declaration.prototype);
 
-const IDENT = newRegExp`^${ident_token}$`;
+const IDENT = newRegExp('i')`^${ident_token}$`;
 
 class Declarations extends Array              {
 	
@@ -4179,7 +4227,7 @@ function replaceComponentName (rules                                            
 	}
 }
 
-function checkScoped (rules                                            , start        , _checkScoped                              ) {
+function checkScoped (rules                                            , start        , __KEY__        ) {
 	for ( let index = start, { length } = rules; index<length; ++index ) {
 		const rule = rules[index];
 		switch ( rule.constructor ) {
@@ -4187,16 +4235,16 @@ function checkScoped (rules                                            , start  
 				const { classSelectors } = rule                 ;
 				for ( let index = 0, { length } = classSelectors; index<length; ++index ) {
 					const { literal } = classSelectors[index];
-					_checkScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
+					__KEY__.test(literal) || warnGlobal(`.${literal} 将对全局生效`);
 				}
 				break;
 			case AtRule:
 				const { block } = rule          ;
-				if ( block ) { checkScoped(block, 0, _checkScoped); }
+				if ( block ) { checkScoped(block, 0, __KEY__); }
 				break;
 			case KeyframesRule:
 				const { keyframesNameLiteral } = rule                 ;
-				_checkScoped(keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? keyframesNameLiteral.slice(1, -1) : keyframesNameLiteral) || warnGlobal(`@keyframes ${keyframesNameLiteral} 将对全局生效`);
+				__KEY__.test(keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? keyframesNameLiteral.slice(1, -1) : keyframesNameLiteral) || warnGlobal(`@keyframes ${keyframesNameLiteral} 将对全局生效`);
 				break;
 		}
 	}
@@ -4221,8 +4269,8 @@ class Sheet extends Array                                         {
 		abbr && replaceComponentName(this, this.imports_length+this.namespaces_length, abbr);
 	}
 	
-	checkScoped (_checkScoped                              ) {
-		checkScoped(this, this.imports_length+this.namespaces_length, _checkScoped);
+	checkScoped (__KEY__        ) {
+		checkScoped(this, this.imports_length+this.namespaces_length, __KEY__);
 	}
 	
 	appendToken (           )                                                                                           {
@@ -5301,8 +5349,7 @@ function VisibleStringLiteral (id        )         {
 	return id.startsWith('\0') ? ( NULo.test(id) ? `'\\x00` : `'\\0` )+literal.slice(2) : literal;
 }
 
-const __KEY__ = newRegExp('i')`^__${KEYS}__$`;
-const checkScoped$1 = (literal        ) => __KEY__.test(literal);
+const __KEY__ = newRegExp('i')`^[-_]?__${KEYS}__[-_]?$`;
 
 function * From (tab        , mode                         , styles         , template                 , from               , eol        )                           {
 	
@@ -5363,16 +5410,11 @@ function * From (tab        , mode                         , styles         , te
 	
 	const { length } = styles;
 	if ( length ) {
-		let _checkScoped;
-		if ( staticScopeKeys ) {
-			const keysSet = new Set(staticScopeKeys);
-			_checkScoped = function checkScoped (literal        ) { return __KEY__.test(literal) && keysSet.has(literal.slice(2, -2)); };
-		}
-		else { _checkScoped = checkScoped$1; }
+		const checkScoped = staticScopeKeys ? RegExp(`^[-_]?__${groupify(staticScopeKeys)}__[-_]?$`) : __KEY__;
 		for ( let index = 0; index<length; ++index ) {
 			const style = styles[index];
 			const { sheet } = style;
-			sheet.checkScoped(_checkScoped);
+			sheet.checkScoped(checkScoped);
 			for ( const line of sheet.beautify(tab) ) {
 				yield `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
 			}

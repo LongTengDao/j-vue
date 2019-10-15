@@ -34,7 +34,7 @@ function replaceComponentName (rules :Sheet | import('./AtRule').DeclarationList
 	}
 }
 
-function checkScoped (rules :Sheet | import('./AtRule').DeclarationList, start :number, _checkScoped :(literal :string) => boolean) {
+function checkScoped (rules :Sheet | import('./AtRule').DeclarationList, start :number, __KEY__ :RegExp) {
 	for ( let index = start, { length } = rules; index<length; ++index ) {
 		const rule = rules[index];
 		switch ( rule.constructor ) {
@@ -42,16 +42,16 @@ function checkScoped (rules :Sheet | import('./AtRule').DeclarationList, start :
 				const { classSelectors } = rule as QualifiedRule;
 				for ( let index = 0, { length } = classSelectors; index<length; ++index ) {
 					const { literal } = classSelectors[index];
-					_checkScoped(literal) || warnGlobal(`.${literal} 将对全局生效`);
+					__KEY__.test(literal) || warnGlobal(`.${literal} 将对全局生效`);
 				}
 				break;
 			case AtRule:
 				const { block } = rule as AtRule;
-				if ( block ) { checkScoped(block, 0, _checkScoped); }
+				if ( block ) { checkScoped(block, 0, __KEY__); }
 				break;
 			case KeyframesRule:
 				const { keyframesNameLiteral } = rule as KeyframesRule;
-				_checkScoped(keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? keyframesNameLiteral.slice(1, -1) : keyframesNameLiteral) || warnGlobal(`@keyframes ${keyframesNameLiteral} 将对全局生效`);
+				__KEY__.test(keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? keyframesNameLiteral.slice(1, -1) : keyframesNameLiteral) || warnGlobal(`@keyframes ${keyframesNameLiteral} 将对全局生效`);
 				break;
 		}
 	}
@@ -76,8 +76,8 @@ export default class Sheet extends Array<AtRule | KeyframesRule | QualifiedRule>
 		abbr && replaceComponentName(this, this.imports_length+this.namespaces_length, abbr);
 	}
 	
-	checkScoped (_checkScoped :(literal :string) => boolean) {
-		checkScoped(this, this.imports_length+this.namespaces_length, _checkScoped);
+	checkScoped (__KEY__ :RegExp) {
+		checkScoped(this, this.imports_length+this.namespaces_length, __KEY__);
 	}
 	
 	appendToken (this :Sheet) :Sheet | AtRule | KeyframesRule | QualifiedRule | SquareBracketBlock | Declaration | void {

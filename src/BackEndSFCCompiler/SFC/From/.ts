@@ -1,8 +1,8 @@
 import undefined from '.undefined';
-import Set from '.Set';
+import RegExp from '.RegExp';
 
 import { StringLiteral } from '@ltd/j-es';
-import { newRegExp } from '@ltd/j-regexp';
+import { newRegExp, groupify } from '@ltd/j-regexp';
 
 import KEYS from '../../../FrontEndRuntimeDependency/Scope/KEYS';
 
@@ -18,8 +18,7 @@ function VisibleStringLiteral (id :string) :string {
 	return id.startsWith('\0') ? ( NULo.test(id) ? `'\\x00` : `'\\0` )+literal.slice(2) : literal;
 }
 
-const __KEY__ = newRegExp('i')`^__${KEYS}__$`;
-const checkScoped = (literal :string) => __KEY__.test(literal);
+const __KEY__ = newRegExp('i')`^[-_]?__${KEYS}__[-_]?$`;
 
 export default function * From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string) :IterableIterator<string> {
 	
@@ -80,16 +79,11 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	
 	const { length } = styles;
 	if ( length ) {
-		let _checkScoped;
-		if ( staticScopeKeys ) {
-			const keysSet = new Set(staticScopeKeys);
-			_checkScoped = function checkScoped (literal :string) { return __KEY__.test(literal) && keysSet.has(literal.slice(2, -2)); };
-		}
-		else { _checkScoped = checkScoped; }
+		const checkScoped = staticScopeKeys ? RegExp(`^[-_]?__${groupify(staticScopeKeys)}__[-_]?$`) : __KEY__;
 		for ( let index = 0; index<length; ++index ) {
 			const style = styles[index];
 			const { sheet } = style;
-			sheet.checkScoped(_checkScoped);
+			sheet.checkScoped(checkScoped);
 			for ( const line of sheet.beautify(tab) ) {
 				yield `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
 			}

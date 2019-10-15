@@ -10,7 +10,7 @@ import SquareBracketBlock from './SquareBracketBlock';
 import ParenthesisBlock from './ParenthesisBlock';
 import Declaration from './Declaration';
 
-const IDENT = newRegExp`^${TOKEN.ident_token}$`;
+const IDENT = newRegExp('i')`^${TOKEN.ident_token}$`;
 
 export class Declarations extends Array<Declaration> {
 	

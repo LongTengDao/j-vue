@@ -6,8 +6,8 @@ import { newRegExp } from '@ltd/j-regexp';
 import * as is from './is';
 
 const nonASCII = /\x80-\uFFFF/;
-const hex_digit = /[0-9A-Fa-f]/;
-const escape = newRegExp`
+const hex_digit = /[0-9A-F]/i;
+const escape = newRegExp('i')`
 	\\
 	(?:
 		${hex_digit}{1,6}
@@ -17,13 +17,13 @@ const escape = newRegExp`
 	)
 `;
 const ws = /\t\n\f\r /;
-export const ident_token = newRegExp`
+export const ident_token = newRegExp('i')`
 	(?:
 		--
 	|
 		-?
 		(?:
-			[A-Z_a-z${nonASCII}]
+			[\w${nonASCII}]
 		|
 			${escape}
 		)
@@ -34,7 +34,7 @@ export const ident_token = newRegExp`
 		${escape}
 	)*
 `;
-const hash_token = newRegExp`
+const hash_token = newRegExp('i')`
 	#
 	(?:
 		[-\w${nonASCII}]
@@ -51,8 +51,8 @@ const string_token = newRegExp`
 	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
 	'?
 `;
-const url_token = newRegExp`
-	[uU][rR][lL]
+const url_token = newRegExp('i')`
+	url
 	(?:
 		\(
 		[${ws}]*
@@ -64,7 +64,7 @@ const url_token = newRegExp`
 		)*
 		\)?
 	|
-		-[pP][rR][eE][fF][iI][xX]
+		-prefix
 		\(
 		(?!
 			[${ws}]*
@@ -72,24 +72,24 @@ const url_token = newRegExp`
 		)
 	)
 |
-	[dD][oO][mM][aA][iI][nN]
+	domain
 	\(
 	(?!
 		[${ws}]*
-		[a-zA-Z\d\-.:]*
+		[a-z\d\-.:]*
 		[${ws}]*
 		\)
 	)
 `;
-const number_token = newRegExp`
+const number_token = newRegExp('i')`
 	[-+]?
 	(?:\d+(?:\.\d+)?|\.\d+)
-	(?:[eE][+-]?\d+)?
+	(?:e[+-]?\d+)?
 `;
 const CDO_token = '<!--';
 const CDC_token = '-->';
 
-const TOKENS = newRegExp('gs')`
+const TOKENS = newRegExp('gis')`
 	(?:
 		[${ws}]+
 	|
@@ -117,7 +117,7 @@ const TOKENS = newRegExp('gs')`
 	.
 `;
 
-const URL_REST = newRegExp`
+const URL_REST = newRegExp('i')`
 	^
 	[${ws}]*
 	(?:${escape}|[${ws}"'()\\])*
@@ -127,7 +127,7 @@ const URL_REST = newRegExp`
 `;
 const NUMBER = /[\d.]/;
 const COMMENT = /\/\*.*?\*\//g;
-const FUNCTION = newRegExp`
+const FUNCTION = newRegExp('i')`
 	^
 	${ident_token}\(
 	$
