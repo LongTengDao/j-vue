@@ -4,7 +4,7 @@ import Node from './Node';
 
 export default class Element extends Node {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
+	protected get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
 	constructor (localName :string, attributes :Attributes, __class__? :string) {
 		super();

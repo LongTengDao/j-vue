@@ -20,7 +20,8 @@ import Text from './Text';
 import Mustache from '../../Mustache';
 import Snippet from '../../Snippet';
 
-const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
+const void_elements = RegExp(VOID_ELEMENTS, '');
+const foreign_elements = RegExp(FOREIGN_ELEMENTS, '');
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG = newRegExp`</STYLE${TAG_EMIT_CHAR}`;
 const TITLE_END_TAG = newRegExp`</title${TAG_EMIT_CHAR}`;
@@ -146,7 +147,7 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 		}
 		const element :Element = parentNode.appendChild(new Element(xName, attributes, __class__));
 		index = tag.end;
-		if ( type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName) ) { continue; }
+		if ( type===ELEMENT_SELF_CLOSING || void_elements.test(xName) ) { continue; }
 		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
 			throw SyntaxError(`开放标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
 		}

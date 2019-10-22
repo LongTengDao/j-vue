@@ -11,6 +11,8 @@ abstract class CharacterData extends Node {
 		this.data = data;
 	}
 	
+	//get length () :number { return this.data.length; }
+	
 	readonly data :string;
 	
 }
@@ -19,11 +21,13 @@ freeze(CharacterData.prototype);
 
 export default class Text extends CharacterData {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
+	protected get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
 	
 	constructor (data :string = '') {
 		super(data);
 	}
+	
+	//get wholeText () :string { return this.data; }
 	
 	get outerHTML () :string {
 		return Entities.escapeInnerText(this.data);

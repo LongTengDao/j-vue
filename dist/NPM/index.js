@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.6.2';
+const version = '15.6.3';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -4514,26 +4514,23 @@ function Pattern (node         )       {
 	}
 }
 
-const _parentNode                = Symbol('#parentNode');
-
 const VOID                             = Null({ value: 0, writable: false, enumerable: false, configurable: false });
 
 class Node extends Array                 {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Node'; }
+	          get [Symbol.toStringTag] () { return 'SFC.Template.Content.Node'; }
 	
-	[_parentNode]       ;
-	get parentNode ()              { return this[_parentNode] || null; }
+	         parentNode              = null;
 	
-	void () { defineProperty(this, 'length', VOID); }
+	          void () { defineProperty(this, 'length', VOID); }
 	
-	get childNodes ()                           { return this; }
+	//get childNodes () :NodeList<Element | Text> { return this; }
 	get firstChild ()              { return this.length ? this[0] : null; }
 	get lastChild ()              { return this.length ? this[this.length-1] : null; }
 	
 	appendChild                              (                         node      )       {
-		if ( node[_parentNode] ) { node[_parentNode] .splice(node[_parentNode] .indexOf(node), 1); }
-		node[_parentNode] = this;
+		if ( node.parentNode ) { node.parentNode.splice(node.parentNode.indexOf(node), 1); }
+		( node        ).parentNode = this;
 		this.push(node);
 		return node;
 	}
@@ -4543,7 +4540,7 @@ freeze(Node.prototype);
 
 class Element extends Node {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
+	          get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
 	constructor (localName        , attributes            , __class__         ) {
 		super();
@@ -4597,6 +4594,8 @@ class CharacterData extends Node {
 		this.data = data;
 	}
 	
+	                                                    
+	
 	         data        ;
 	
 }
@@ -4605,11 +4604,13 @@ freeze(CharacterData.prototype);
 
 class Text extends CharacterData {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
+	          get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
 	
 	constructor (data         = '') {
 		super(data);
 	}
+	
+	//get wholeText () :string { return this.data; }
 	
 	get outerHTML ()         {
 		return escapeInnerText(this.data);
@@ -4704,7 +4705,8 @@ class Mustache extends Array         {
 	
 }
 
-const foreign_elements = RegExp(FOREIGN_ELEMENTS.source);
+const void_elements = RegExp(VOID_ELEMENTS, '');
+const foreign_elements = RegExp(FOREIGN_ELEMENTS, '');
 const TEXTAREA_END_TAG = newRegExp`</textarea${TAG_EMIT_CHAR}`;
 const STYLE_END_TAG$1 = newRegExp`</STYLE${TAG_EMIT_CHAR}`;
 const TITLE_END_TAG = newRegExp`</title${TAG_EMIT_CHAR}`;
@@ -4830,7 +4832,7 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 		}
 		const element          = parentNode.appendChild(new Element(xName, attributes, __class__));
 		index = tag.end;
-		if ( type===ELEMENT_SELF_CLOSING || VOID_ELEMENTS.test(xName) ) { continue; }
+		if ( type===ELEMENT_SELF_CLOSING || void_elements.test(xName) ) { continue; }
 		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
 			throw SyntaxError(`开放标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
 		}
