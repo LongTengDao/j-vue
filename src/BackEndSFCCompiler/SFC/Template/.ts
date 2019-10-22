@@ -86,7 +86,7 @@ export default class Template extends Block {
 			if ( name.startsWith('.abbr:') ) {
 				const tagName = name.slice(6);
 				if ( !isLocalOrComponentName(tagName) ) { throw SyntaxError(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
-				const abbr = _this.abbr || create(NULL) as Partial;
+				const abbr = _this.abbr || ( _this.abbr = create(NULL) as Partial );
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError(`template 功能块的无值“.abbr:*”属性只能有一个`); }

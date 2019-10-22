@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.6.3';
+const version = '15.6.4';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -4998,7 +4998,7 @@ class Template extends Block {
 			if ( name.startsWith('.abbr:') ) {
 				const tagName = name.slice(6);
 				if ( !isLocalOrComponentName(tagName) ) { throw SyntaxError(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
-				const abbr = _this.abbr || create(NULL)           ;
+				const abbr = _this.abbr || ( _this.abbr = create(NULL)            );
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError(`template 功能块的无值“.abbr:*”属性只能有一个`); }
