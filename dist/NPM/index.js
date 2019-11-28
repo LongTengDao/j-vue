@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.6.4';
+const version = '15.6.5';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -20,43 +20,56 @@ const IsArray = (
 	/*¡ j-globals: Array.isArray (polyfill) */
 );
 
-const create = Object.create;
-
-const assign = Object.assign;
+const create = Object.create || (
+	/*! j-globals: Object.create (polyfill) */
+	/*#__PURE__*/ function () {
+		var NULL;
+		if ( document.domain ) {
+			try { dom = new ActiveXObject('htmlfile'); }
+			catch (error) { }
+		}
+		if ( dom ) {
+			dom.write('<script><\/script>');
+			dom.close();
+			NULL = dom.parentWindow.Object.prototype;
+		}
+		else {
+			dom = document.createElement('iframe');
+			dom.setAttribute('style', 'display:none !important;_display:none;');//dom.style.display = 'none';
+			var parent = document.body || document.documentElement;
+			parent.appendChild(dom);
+			dom.src = 'javascript:';
+			NULL = dom.contentWindow.Object.prototype;
+			parent.removeChild(dom);
+		}
+		var dom = null;
+		delete NULL.constructor;
+		delete NULL.hasOwnProperty;
+		delete NULL.isPrototypeOf;
+		delete NULL.propertyIsEnumerable;
+		delete NULL.toLocaleString;
+		delete NULL.toString;
+		delete NULL.valueOf;
+		var Null = function () {};
+		Null.prototype = NULL;
+		var constructor = function () {};
+		function __PURE__ (o, properties) {
+			if ( properties!==undefined$1 ) { throw TypeError('CAN NOT defineProperties in ES 3 Object.create polyfill'); }
+			if ( o===null ) { return new Null; }
+			if ( typeof o!=='object' && typeof o!=='function' ) { throw TypeError('Object prototype may only be an Object or null: '+o); }
+			constructor.prototype = o;
+			var created = new constructor;
+			constructor.prototype = NULL;
+			return created;
+		}
+		return function create (o, properties) {
+			return /*#__PURE__*/ __PURE__(o, properties);
+		};
+	}()
+	/*¡ j-globals: Object.create (polyfill) */
+);
 
 const toStringTag = typeof Symbol!=='undefined' ? Symbol.toStringTag : undefined;
-
-const defineProperty = Object.defineProperty;
-
-const seal = Object.seal;
-
-const NULL = (
-	/*! j-globals: null.prototype (internal) */
-	Object.create
-		? /*#__PURE__*/ Object.preventExtensions(Object.create(null))
-		: null
-	/*¡ j-globals: null.prototype (internal) */
-);
-
-const Default = (
-	/*! j-globals: default (internal) */
-	function Default (exports, addOnOrigin) {
-		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
-			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create(NULL); }
-			if ( assign ) { assign(exports, addOnOrigin); }
-			else { for ( var key in addOnOrigin ) { if ( hasOwnProperty.call(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
-			exports['default'] = exports;
-			typeof exports==='function' && exports.prototype && seal(exports.prototype);
-			if ( toStringTag ) {
-				var descriptor = create(NULL);
-				descriptor.value = 'Module';
-				defineProperty(exports, toStringTag, descriptor);
-			}
-			return freeze(exports);
-		}(exports, addOnOrigin);
-	}
-	/*¡ j-globals: default (internal) */
-);
 
 /*!
  * 模块名称：ES
@@ -238,11 +251,19 @@ function buffer2object (buffer        , options          )                      
 
 /*¡ j-utf */
 
+const NULL = (
+	/*! j-globals: null.prototype (internal) */
+	Object.create
+		? /*#__PURE__*/ Object.preventExtensions(Object.create(null))
+		: null
+	/*¡ j-globals: null.prototype (internal) */
+);
+
 /*!
  * 模块名称：j-regexp
  * 模块功能：可读性更好的正则表达式创建方式。从属于“简计划”。
    　　　　　More readable way for creating RegExp. Belong to "Plan J".
- * 模块版本：6.2.1
+ * 模块版本：6.3.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-regexp/issues
@@ -284,7 +305,7 @@ var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
 var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
 var GROUP = create(NULL)         ;
 
-function groupify (branches          , uFlag          , noEscape          )         {
+function groupify (branches                   , uFlag          , noEscape          )         {
 	var group = create(NULL)         ;
 	var appendBranch = uFlag ? appendPointBranch : appendCodeBranch;
 	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index]); }
@@ -416,7 +437,7 @@ const IS_TAG = newRegExp`
  * 模块名称：j-eol
  * 模块功能：换行符相关共享实用程序。从属于“简计划”。
    　　　　　EOL util. Belong to "Plan J".
- * 模块版本：1.3.1
+ * 模块版本：1.4.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-eol/issues
@@ -439,7 +460,7 @@ var NEED_TO_ESCAPE_IN_REGEXP$1 = /^[$()*+\-.?[\\\]^{|]/;
 var SURROGATE_PAIR$1 = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
 var GROUP$1 = create(NULL)         ;
 
-function groupify$1 (branches          , uFlag          , noEscape          )         {
+function groupify$1 (branches                   , uFlag          , noEscape          )         {
 	var group = create(NULL)         ;
 	var appendBranch = uFlag ? appendPointBranch$1 : appendCodeBranch$1;
 	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index]); }
@@ -2853,6 +2874,12 @@ function unescape (string        , fallback          )         {
 
 const keys = Object.keys;
 
+const assign = Object.assign;
+
+const create$2 = Object.create;
+
+const defineProperty = Object.defineProperty;
+
 const Reflect_apply = Reflect.apply;
 
 const Reflect_construct = Reflect.construct;
@@ -2864,6 +2891,28 @@ const Reflect_deleteProperty = Reflect.deleteProperty;
 const Reflect_set = Reflect.set;
 
 const Reflect_ownKeys = Reflect.ownKeys;
+
+const seal = Object.seal;
+
+const Default = (
+	/*! j-globals: default (internal) */
+	function Default (exports, addOnOrigin) {
+		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
+			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create$2(NULL); }
+			if ( assign ) { assign(exports, addOnOrigin); }
+			else { for ( var key in addOnOrigin ) { if ( hasOwnProperty.call(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
+			exports['default'] = exports;
+			typeof exports==='function' && exports.prototype && seal(exports.prototype);
+			if ( toStringTag ) {
+				var descriptor = create$2(NULL);
+				descriptor.value = 'Module';
+				defineProperty(exports, toStringTag, descriptor);
+			}
+			return freeze(exports);
+		}(exports, addOnOrigin);
+	}
+	/*¡ j-globals: default (internal) */
+);
 
 /*!
  * 模块名称：j-orderify
@@ -2881,13 +2930,13 @@ const target2keeper                          = new WeakMap;
 const proxy2target                         = new WeakMap;
 const target2proxy                         = new WeakMap;
 
-const setDescriptor = /*#__PURE__*/ assign(create(NULL), {
+const setDescriptor = /*#__PURE__*/ assign(create$2(NULL), {
 	value: undefined$1,
 	writable: true,
 	enumerable: true,
 	configurable: true,
 });
-const handlers = /*#__PURE__*/ assign(create(NULL), {
+const handlers = /*#__PURE__*/ assign(create$2(NULL), {
 	apply (Function                           , thisArg     , args       ) {
 		return orderify(Reflect_apply(Function, thisArg, args));
 	},
@@ -2945,7 +2994,7 @@ const { orderify } = {
 };
 
 function PartialDescriptor                               (source   )    {
-	const target = create(NULL)     ;
+	const target = create$2(NULL)     ;
 	if ( source.hasOwnProperty('value') ) {
 		target.value = source.value;
 		if ( source.hasOwnProperty('writable') ) { target.writable = source.writable; }
@@ -2972,7 +3021,7 @@ const NULL$1 = /*#__PURE__*/ function (         ) {
 			: /*#__PURE__*/ throwApplying();
 	}
 	( NULL$1 ).prototype = null;
-	defineProperty(NULL$1, 'name', assign(create(NULL), { value: '' }));
+	defineProperty(NULL$1, 'name', assign(create$2(NULL), { value: '' }));
 	//delete NULL.length;
 	freeze(NULL$1);
 	return NULL$1;
@@ -3123,15 +3172,15 @@ freeze(Block.prototype);
 const Private = (
 	/*! j-globals: private (internal) */
 	/*#__PURE__*/ function (WeakMap) {
-		var GET = create(NULL);
+		var GET = create$2(NULL);
 		GET.value = WeakMap.prototype.get;
-		var SET = create(NULL);
+		var SET = create$2(NULL);
 		SET.value = WeakMap.prototype.set;
 		function set (weak, THIS, _THIS) {
 			weak.set(THIS, _THIS);
 			return _THIS;
 		}
-		function Null () { return create(NULL); }
+		function Null () { return create$2(NULL); }
 		return function Private (PRIVATE) {
 			var weak = /*#__PURE__*/defineProperty(/*#__PURE__*/defineProperty(/*#__PURE__*/new WeakMap, 'get', GET), 'set', SET);
 			var _This = PRIVATE===undefined$1
@@ -3140,7 +3189,7 @@ const Private = (
 					? 'prototype' in PRIVATE
 						? function (THIS) { return new PRIVATE(THIS); }
 						: function (THIS) { return PRIVATE(THIS); }
-					: function () { return create(PRIVATE); };
+					: function () { return create$2(PRIVATE); };
 			return function _ (THIS) {
 				return /*#__PURE__*/weak.get(THIS) || /*#__PURE__*/set(weak, THIS, /*#__PURE__*/_This(THIS));
 			};
@@ -3209,7 +3258,7 @@ const {
 	'font-face': font_face,
 	//keyframes,
 	supports,
-	document,
+	document: document$1,
 	
 	url,
 	'prefix(': prefix_,
@@ -3223,7 +3272,7 @@ const {
 	initial,
 	unset,
 	
-} = new Proxy(create(NULL)                                                    , {
+} = new Proxy(create$2(NULL)                                                    , {
 	get (is, keyword        ) {
 		const KEYWORD = keyword.toUpperCase();
 		const { length } = keyword;
@@ -4053,7 +4102,7 @@ class DeclarationList extends Array                                             
 			this.noQualified = true;
 		}
 		else if ( page(name) ) { this.noQualified = true; }
-		else if ( supports(name) || document(name) ) { this.noDeclaration = true; }
+		else if ( supports(name) || document$1(name) ) { this.noDeclaration = true; }
 	}
 	
 	appendToken (                     )                                                                                                                     {
@@ -4146,13 +4195,13 @@ class AtRule extends Array                                                 {
 			}
 			case ';': {
 				const { name } = this;
-				if ( media(name) || page(name) || font_face(name) || /*is._keyframes(name) || */supports(name) || document(name) ) { return; }
+				if ( media(name) || page(name) || font_face(name) || /*is._keyframes(name) || */supports(name) || document$1(name) ) { return; }
 				this.semicolon = true;
 				return this.parent;
 			}
 			case '}':
 				const { name } = this;
-				if ( media(name) || page(name) || font_face(name) || /*is._keyframes(name) || */supports(name) || document(name) ) { return; }
+				if ( media(name) || page(name) || font_face(name) || /*is._keyframes(name) || */supports(name) || document$1(name) ) { return; }
 				return this.parent.appendToken()                           ;
 			case comment:
 				this.length && this.push('/**/');
@@ -4360,7 +4409,7 @@ class Style extends Block          {
 			if ( literal===EMPTY ) { _this.abbr = defaultSelector; }
 			else {
 				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create(NULL)            ;
+				const abbr = create$2(NULL)            ;
 				for ( const pair of literal.split(';') ) {
 					const tokens = pair.match(TOKENS);
 					if ( tokens ) {
@@ -4977,7 +5026,7 @@ class Template extends Block {
 			const literal = attributes['.abbr'];
 			if ( literal===EMPTY ) { throw SyntaxError(`template 功能块的“.abbr”属性必须具有值`); }
 			if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 功能块的“.abbr”属性语法错误：\n${literal}`); }
-			const abbr = _this.abbr = create(NULL)           ;
+			const abbr = _this.abbr = create$2(NULL)           ;
 			const pairs = literal.split(';');
 			for ( let index = pairs.length; index; ) {
 				const tokens = pairs[--index].match(TOKENS);
@@ -4998,7 +5047,7 @@ class Template extends Block {
 			if ( name.startsWith('.abbr:') ) {
 				const tagName = name.slice(6);
 				if ( !isLocalOrComponentName(tagName) ) { throw SyntaxError(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
-				const abbr = _this.abbr || ( _this.abbr = create(NULL)            );
+				const abbr = _this.abbr || ( _this.abbr = create$2(NULL)            );
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError(`template 功能块的无值“.abbr:*”属性只能有一个`); }
@@ -5465,17 +5514,17 @@ const rollupOptions = {
 };
 
 const TRUE = Null({
-	format: 'esm'         ,
-	sourcemap: true        ,
-});
+	format: 'esm',
+	sourcemap: true,
+}         );
 const FALSE = Null({
-	format: 'esm'         ,
-	sourcemap: false         ,
-});
+	format: 'esm',
+	sourcemap: false,
+}         );
 const INLINE = Null({
-	format: 'esm'         ,
-	sourcemap: 'inline'            ,
-});
+	format: 'esm',
+	sourcemap: 'inline',
+}         );
 
 async function one (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = from===null ? '?j-vue=' : '?j-vue', map = false, src, lang }   
 	                               
@@ -5492,7 +5541,7 @@ async function one (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = 
 	const main         = sfc.export('default', x_from)          ;
 	let round         = 1;
 	acorn.ecmaVersion = x_var==='var' ? 5 : 2014     ;
-	const bundle = await rollup(assign(create(NULL), rollupOptions, {
+	const bundle = await rollup(assign(create$2(NULL), rollupOptions, {
 		input: '/'+'_'.repeat(main.length),
 		external: (path        )          => path!==x_from,
 		plugins: [
@@ -5534,6 +5583,8 @@ async function one (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = 
 
 const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true }         ;
 const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
+
+const ES_EOL = /\r\n?|[\n\u2028\u2029]/g;
 
 class SFC {
 	
@@ -5599,9 +5650,8 @@ class SFC {
 						+`export { default } from ${StringLiteral(script.src )};`;
 				}
 				else {
-					return eol!==LF
-						? bom+script.innerJS.split(LF).join(eol)
-						: bom+script.innerJS;
+					return bom+
+						script.innerJS.replace(ES_EOL, eol);
 				}
 			}
 			else {

@@ -19,6 +19,8 @@ import parseComponent from './parseComponent';
 import From from './From/';
 import one from './one';
 
+const ES_EOL = /\r\n?|[\n\u2028\u2029]/g;
+
 export default class SFC {
 	
 	get [Symbol.toStringTag] () { return 'SFC'; }
@@ -83,9 +85,8 @@ export default class SFC {
 						+`export { default } from ${StringLiteral(script.src!)};`;
 				}
 				else {
-					return eol!==LF
-						? bom+script.innerJS.split(LF).join(eol)
-						: bom+script.innerJS;
+					return bom+
+						script.innerJS.replace(ES_EOL, eol);
 				}
 			}
 			else {

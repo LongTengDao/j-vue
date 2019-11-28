@@ -44,18 +44,6 @@ declare namespace exports {
 	export function remove (style :HTMLStyleElement) :typeof remove;
 	
 	export { exports as default };
-	const exports :Readonly<{
-		version :typeof version
-		Identifier :typeof Identifier
-		Scope :typeof Scope
-		Template :typeof Template
-		Render :typeof Render
-		StaticRenderFns :typeof StaticRenderFns
-		STYLE :typeof STYLE
-		Style :typeof Style
-		remove :typeof remove
-		default :typeof exports
-	}>;
 	
 	export function Options<This> (options :Options<This>) :Options<This>;
 	export type Options<This extends { $options? :object }> = {

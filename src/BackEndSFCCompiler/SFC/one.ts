@@ -27,17 +27,17 @@ const rollupOptions = {
 };
 
 const TRUE = Null({
-	format: 'esm' as 'esm',
-	sourcemap: true as true,
-});
+	format: 'esm',
+	sourcemap: true,
+} as const);
 const FALSE = Null({
-	format: 'esm' as 'esm',
-	sourcemap: false as false,
-});
+	format: 'esm',
+	sourcemap: false,
+} as const);
 const INLINE = Null({
-	format: 'esm' as 'esm',
-	sourcemap: 'inline' as 'inline',
-});
+	format: 'esm',
+	sourcemap: 'inline',
+} as const);
 
 export default async function one (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = from===null ? '?j-vue=' : '?j-vue', map = false, src, lang } :{
 	'var' :'const' | 'var' | 'let',
