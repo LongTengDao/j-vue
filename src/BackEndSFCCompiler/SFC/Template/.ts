@@ -14,28 +14,28 @@ import _ from '../private';
 import Block from '../Block';
 import Content from './Content/';
 import Element from './Content/Element';
-import { TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE, isLocalOrComponentName } from '../RE';
+import { ASCII_WHITESPACE as s, TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE, isLocalOrComponentName } from '../RE';
 import { EMPTY } from '../Attributes';
 import { DELIMITERS_0, DELIMITERS_1 } from '../Mustache';
 
 const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
-const PARTIAL = newRegExp`^
-	\s*(?:
-		${AliasName}\s*
-		=\s*
+const PARTIAL = newRegExp('u')`^
+	${s}*(?:
+		${AliasName}${s}*
+		=${s}*
 			${localOrComponentName}
 			(?:(?:\.${className})*|\.?)
-		\s*;
-	\s*)*
+		${s}*;
+	${s}*)*
 $`;
-const PARTIAL_WITH_TAG = newRegExp`^
-	\s*(?:
-		${AliasName}\s*;
-	\s*)*
+const PARTIAL_WITH_TAG = newRegExp('u')`^
+	${s}*(?:
+		${AliasName}${s}*;
+	${s}*)*
 $`;
 
-const HTML = /^(?:HTML|\s*text\/html\s*)$/i;
+const HTML = newRegExp('i')`^(?:HTML|${s}*text/html${s}*)$`;
 
 export default class Template extends Block {
 	

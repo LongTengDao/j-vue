@@ -5,7 +5,7 @@ import { newRegExp } from '@ltd/j-regexp';
 
 import * as is from './is';
 
-const nonASCII = /\x80-\uFFFF/;
+export const nonASCII = /\x80-\uFFFF/;
 const hex_digit = /[0-9A-F]/i;
 const escape = newRegExp('i')`
 	\\
@@ -19,14 +19,18 @@ const escape = newRegExp('i')`
 const ws = /\t\n\f\r /;
 export const ident_token = newRegExp('i')`
 	(?:
-		--
-	|
-		-?
+		-
 		(?:
+			-
+		|
 			[a-z_${nonASCII}]
 		|
 			${escape}
 		)
+	|
+		[a-z_${nonASCII}]
+	|
+		${escape}
 	)
 	(?:
 		[-\w${nonASCII}]

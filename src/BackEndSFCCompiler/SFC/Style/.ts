@@ -8,25 +8,25 @@ import NULL from '.null.prototype';
 
 import { newRegExp } from '@ltd/j-regexp';
 
-import { TOKENS, AliasName, localName, className, TAG_EMIT_CHAR } from '../RE';
+import { ASCII_WHITESPACE as s, TOKENS, AliasName, localName, className, TAG_EMIT_CHAR } from '../RE';
 import Block from '../Block';
 import _ from '../private';
 import { EMPTY } from '../Attributes';
 import Sheet from './Sheet/';
 
-const SELECTOR = newRegExp`^
-	\s*(?:
-		${AliasName}\s*
-		(?:=\s*
+const SELECTOR = newRegExp('u')`^
+	${s}*(?:
+		${AliasName}${s}*
+		(?:=${s}*
 			(?:${localName}|(?=\.))
 			(?:\.${className})*
-		\s*)?;
-	\s*)*
+		${s}*)?;
+	${s}*)*
 $`;
 
 const STYLE_END_TAG = newRegExp('i')`</style${TAG_EMIT_CHAR}`;
 
-const CSS = /^\s*(?:text\/)?CSS\s*$/i;
+const CSS = newRegExp('i')`^${s}*(?:text\/)?CSS${s}*$`;
 
 const defaultSelector = (componentName :string) :string => `.__${componentName}__`;
 

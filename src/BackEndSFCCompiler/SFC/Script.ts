@@ -5,20 +5,20 @@ import undefined from '.undefined';
 
 import { newRegExp } from '@ltd/j-regexp';
 import { transpileModule } from '../dependencies';
-import { TAG_EMIT_CHAR } from './RE';
+import { ASCII_WHITESPACE as s, TAG_EMIT_CHAR } from './RE';
 const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
 
-const JS = newRegExp('i')`^\s*(?:
-	JS|JavaScript(?:\s*1\.\d)?|JSX
+const JS = newRegExp('i')`^${s}*(?:
+	JS|JavaScript(?:${s}*1\.\d)?|JSX
 	|
-	(?:ES|ECMAScript|ECMAS?)(?:\s*\d+)?
+	(?:ES|ECMAScript|ECMAS?)(?:${s}*\d+)?
 	|
 	ESM
 	|
-	(?:text|application)\/(?:ECMAScript|JavaScript(?:;\s*version\s*=\s*1\.\d)?)
-)\s*$`;
-const TS = /^\s*T(?:S|ypeScript)\s*$/i;
-const TSX = /^\s*TSX\s*$/i;
+	(?:text|application)\/(?:ECMAScript|JavaScript(?:;${s}*version${s}*=${s}*1\.\d)?)
+)${s}*$`;
+const TS = newRegExp('i')`^${s}*T(?:S|ypeScript)${s}*$`;
+const TSX = newRegExp('i')`^${s}*TSX${s}*$`;
 
 import Block from './Block';
 import _ from './private';

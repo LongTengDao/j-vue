@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.6.5';
+const version = '15.7.0';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -359,17 +359,36 @@ const NONCHARACTER = newRegExp('u')`[
 const CONTROL_CHARACTER = /[\x01-\x08\x0B\x0E-\x1F\x7F-\x9F]/;
 
 const ASCII_WHITESPACE = /[\t\n\f\r ]/;
-const ASCII_ALPHA = /[a-zA-Z]/;
+const ASCII_ALPHA = /[A-Za-z]/;
 
-const TOKENS = /[^\s=;]+/g;
-const AliasName = /[A-Z][\w-]*/;////
-const _AliasName_ = newRegExp`^${AliasName}$`;
+const TOKENS = /[^\t\n\f\r=; ]+/g;
+const PCENCharWithoutDot = /[-\w\xB7\xC0-\xD6\xD8-\xF6\xF8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]/u;
+const AliasName = newRegExp('u')`
+	[A-Z]${PCENCharWithoutDot}*
+`;
+const _AliasName_ = newRegExp('u')`^${AliasName}$`;
 const isAliasName = (name        ) => _AliasName_.test(name);
-const localOrComponentName = /[A-Za-z][\w-]*/;////
-const _localOrComponentName_ = newRegExp`^${localOrComponentName}$`;
+const localOrComponentName = newRegExp('u')`
+	[A-Za-z]${PCENCharWithoutDot}*
+`;
+const _localOrComponentName_ = newRegExp('u')`^${localOrComponentName}$`;
 const isLocalOrComponentName = (name        ) => _localOrComponentName_.test(name);
-const localName$1 = /[a-z][a-z0-9-]*/;////
-const className = /[_a-zA-Z][\w-]*/;////
+const localName$1 = newRegExp('u')`
+	[a-z]${PCENCharWithoutDot}*
+`;
+const className = newRegExp('u')`
+	(?:
+		-
+		(?:
+			-
+		|
+			[A-Z_a-z\x80-\u{10FFFF}]
+		)
+	|
+		[A-Z_a-z\x80-\u{10FFFF}]
+	)
+	[-\w\x80-\u{10FFFF}]*
+`;
 
 const ATTRIBUTE_NAME = /[^\0\t\n\f\r "'<>/=]+/;
 const UNQUOTED_ATTRIBUTE_VALUE = /[^\0\t\n\f\r "'=<>`]+/;//// /[^\t\n\f\r "'=<>`][^\t\n\f\r >]*|(?=>)/; // HTML5 以前的标准宽松一些，实际 HTML 解析则更宽松。但 jVue 目前的整体设计原则是抛出一切不规范的错误，另外顺带提示反引号这个十分特殊的 IE 漏洞的存在
@@ -3206,17 +3225,17 @@ const _ = Private
 
 const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
 
-const JS = newRegExp('i')`^\s*(?:
-	JS|JavaScript(?:\s*1\.\d)?|JSX
+const JS = newRegExp('i')`^${ASCII_WHITESPACE}*(?:
+	JS|JavaScript(?:${ASCII_WHITESPACE}*1\.\d)?|JSX
 	|
-	(?:ES|ECMAScript|ECMAS?)(?:\s*\d+)?
+	(?:ES|ECMAScript|ECMAS?)(?:${ASCII_WHITESPACE}*\d+)?
 	|
 	ESM
 	|
-	(?:text|application)\/(?:ECMAScript|JavaScript(?:;\s*version\s*=\s*1\.\d)?)
-)\s*$`;
-const TS = /^\s*T(?:S|ypeScript)\s*$/i;
-const TSX = /^\s*TSX\s*$/i;
+	(?:text|application)\/(?:ECMAScript|JavaScript(?:;${ASCII_WHITESPACE}*version${ASCII_WHITESPACE}*=${ASCII_WHITESPACE}*1\.\d)?)
+)${ASCII_WHITESPACE}*$`;
+const TS = newRegExp('i')`^${ASCII_WHITESPACE}*T(?:S|ypeScript)${ASCII_WHITESPACE}*$`;
+const TSX = newRegExp('i')`^${ASCII_WHITESPACE}*TSX${ASCII_WHITESPACE}*$`;
 
 class Script extends Block {
 	
@@ -3289,7 +3308,7 @@ const {
 	}
 });
 
-const _KEYFRAMES = /^(?:-[a-zA-Z][a-zA-Z\d]*-)?[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
+const _KEYFRAMES = /^(?:-[A-Za-z][\dA-Za-z]*-)?[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
 const _keyframes = (keyword        ) => _KEYFRAMES.test(keyword);
 
 const nonASCII = /\x80-\uFFFF/;
@@ -3306,14 +3325,18 @@ const escape = newRegExp('i')`
 const ws = /\t\n\f\r /;
 const ident_token = newRegExp('i')`
 	(?:
-		--
-	|
-		-?
+		-
 		(?:
+			-
+		|
 			[a-z_${nonASCII}]
 		|
 			${escape}
 		)
+	|
+		[a-z_${nonASCII}]
+	|
+		${escape}
 	)
 	(?:
 		[-\w${nonASCII}]
@@ -4378,19 +4401,19 @@ class Sheet extends Array                                         {
 }
 freeze(Sheet.prototype);
 
-const SELECTOR = newRegExp`^
-	\s*(?:
-		${AliasName}\s*
-		(?:=\s*
+const SELECTOR = newRegExp('u')`^
+	${ASCII_WHITESPACE}*(?:
+		${AliasName}${ASCII_WHITESPACE}*
+		(?:=${ASCII_WHITESPACE}*
 			(?:${localName$1}|(?=\.))
 			(?:\.${className})*
-		\s*)?;
-	\s*)*
+		${ASCII_WHITESPACE}*)?;
+	${ASCII_WHITESPACE}*)*
 $`;
 
 const STYLE_END_TAG = newRegExp('i')`</style${TAG_EMIT_CHAR}`;
 
-const CSS = /^\s*(?:text\/)?CSS\s*$/i;
+const CSS = newRegExp('i')`^${ASCII_WHITESPACE}*(?:text\/)?CSS${ASCII_WHITESPACE}*$`;
 
 const defaultSelector = (componentName        )         => `.__${componentName}__`;
 
@@ -4470,8 +4493,8 @@ const BAD_KEY = '__proto__';
 const BAD_REF = '__proto__';
 const _v = /^_[a-z]$/;
 const _x = /^_(?![a-z]$)/;
-const $vvv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*|event|set|forceUpdate)$/;
-const $vv = /^\$(?:\$[a-zA-Z]+|_[1-9]\d*)$/;
+const $vvv = /^\$(?:\$[A-Za-z]+|_[1-9]\d*|event|set|forceUpdate)$/;
+const $vv = /^\$(?:\$[A-Za-z]+|_[1-9]\d*)$/;
 const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
 
 const parserOptions = Null({
@@ -4981,22 +5004,22 @@ class Content extends Node {
 
 const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
-const PARTIAL = newRegExp`^
-	\s*(?:
-		${AliasName}\s*
-		=\s*
+const PARTIAL = newRegExp('u')`^
+	${ASCII_WHITESPACE}*(?:
+		${AliasName}${ASCII_WHITESPACE}*
+		=${ASCII_WHITESPACE}*
 			${localOrComponentName}
 			(?:(?:\.${className})*|\.?)
-		\s*;
-	\s*)*
+		${ASCII_WHITESPACE}*;
+	${ASCII_WHITESPACE}*)*
 $`;
-const PARTIAL_WITH_TAG = newRegExp`^
-	\s*(?:
-		${AliasName}\s*;
-	\s*)*
+const PARTIAL_WITH_TAG = newRegExp('u')`^
+	${ASCII_WHITESPACE}*(?:
+		${AliasName}${ASCII_WHITESPACE}*;
+	${ASCII_WHITESPACE}*)*
 $`;
 
-const HTML = /^(?:HTML|\s*text\/html\s*)$/i;
+const HTML = newRegExp('i')`^(?:HTML|${ASCII_WHITESPACE}*text/html${ASCII_WHITESPACE}*)$`;
 
 class Template extends Block {
 	
