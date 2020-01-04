@@ -73,13 +73,13 @@ export default class Declaration extends Array<ParenthesisBlock | string> {// pr
 		return `${this.name}:${cssText};`;
 	}
 	
-	* beautify () :IterableIterator<string> {
+	* beautify (tab? :string) :Generator<string, void, any> {
 		let cssText = '';
 		for ( let index = this.length; index; ) {
 			const child = this[--index];
 			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
 		}
-		return `${this.name}:${cssText.startsWith(' ') ? '' : ' '}${cssText};`;
+		yield `${this.name}:${cssText.startsWith(' ') ? '' : ' '}${cssText};`;
 	}
 	
 };

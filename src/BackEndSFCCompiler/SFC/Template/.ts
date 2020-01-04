@@ -152,9 +152,8 @@ export default class Template extends Block {
 	get innerHTML () :string {
 		const { content } = this;
 		if ( content.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
-		const rootNode = content.firstChild;
-		if ( !( rootNode instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
-		return rootNode.outerHTML;
+		if ( !( content.firstChild instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
+		return content.outerHTML;
 	}
 	set innerHTML (value :string) {
 		if ( typeof <unknown> value!=='string' ) { throw TypeError(`innerHTML 只能被赋值字符串`); }

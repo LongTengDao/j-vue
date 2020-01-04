@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '15.7.0';
+const version = '15.7.1';
 
 const isBuffer = Buffer.isBuffer;
 
@@ -582,14 +582,6 @@ const checkNewline = (
 	/*¡ j-globals: return (internal) */
 );
 
-const VOID_ELEMENTS = /^(?:area|b(?:r|ase)|co(?:l|mmand)|embed|hr|i(?:mg|nput)|keygen|link|meta|param|source|track|wbr)$/i;
-
-const RAW_TEXT_ELEMENTS = /^s(?:cript|tyle)$/i;
-
-const ESCAPABLE_RAW_TEXT_ELEMENTS = /^t(?:extarea|itle)$/i;
-
-const FOREIGN_ELEMENTS = /^(?:s(?:vg|witch|ymbol)|animate|c(?:ircle|lippath|ursor)|de(?:fs|sc)|ellipse|f(?:ilter|o(?:nt\-face|reignObject))|g(?:lyph)?|image|line|m(?:a(?:rker|sk)|issing\-glyph)|p(?:at(?:h|tern)|oly(?:gon|line))|rect|t(?:ext(?:path)?|span)|use|view)$/i;
-
 const NON_ASCII = /[^\x00-\x7F]/u;
 const NON_TAB = /[^\t\x20]/g;
 
@@ -642,13 +634,13 @@ function Snippet (whole        , errorPosition        )         {
 	
 }
 
-const throwSyntaxError = (
-	/*! j-globals: throw.SyntaxError (internal) */
-	function throwSyntaxError (message) {
-		throw SyntaxError(message);
-	}
-	/*¡ j-globals: throw.SyntaxError (internal) */
-);
+const VOID_ELEMENTS = /^(?:area|b(?:r|ase)|co(?:l|mmand)|embed|hr|i(?:mg|nput)|keygen|link|meta|param|source|track|wbr)$/i;
+
+const RAW_TEXT_ELEMENTS = /^s(?:cript|tyle)$/i;
+
+const ESCAPABLE_RAW_TEXT_ELEMENTS = /^t(?:extarea|itle)$/i;
+
+const FOREIGN_ELEMENTS = /^(?:s(?:vg|witch|ymbol)|animate|c(?:ircle|lippath|ursor)|de(?:fs|sc)|ellipse|f(?:ilter|o(?:nt\-face|reignObject))|g(?:lyph)?|image|line|m(?:a(?:rker|sk)|issing\-glyph)|p(?:at(?:h|tern)|oly(?:gon|line))|rect|t(?:ext(?:path)?|span)|use|view)$/i;
 
 const fromCodePoint = String.fromCodePoint;
 
@@ -3078,6 +3070,8 @@ const TEXT    = 3;
 const COMMENT    = 8;
 const EOF    = 0;
 
+const PLAINTEXT = /^plaintext$/i;
+
 function Tag (html        , position        , foreign         ) {
 	
 	let rest        ;
@@ -3099,12 +3093,15 @@ function Tag (html        , position        , foreign         ) {
 		rest = html.slice(position);
 		
 		if ( IS_TAG.test(rest) ) {
-			const { 0: { length }, 1: endSolidus, 2: xName, 3: attributesLiteral, 4: selfClosingSolidus } = TAG.exec(rest) || throwSyntaxError('标签格式有误');
+			const _ = TAG.exec(rest);
+			if ( !_ ) { throw SyntaxError('标签格式有误'); }
+			const { 0: { length }, 1: endSolidus, 2: xName, 3: attributesLiteral, 4: selfClosingSolidus } = _;
 			if ( endSolidus ) {
 				if ( attributesLiteral ) { throw SyntaxError(`结束标签中存在属性`); }
 				if ( selfClosingSolidus ) { throw SyntaxError(`结束标签中存在自关闭斜杠`); }
 				return { type: ELEMENT_END, xName, end: position+length };
 			}
+			
 			const attributes             = new Attributes;
 			if ( attributesLiteral ) {
 				for ( let name of attributesLiteral.match(ATTRIBUTE)  ) {
@@ -3118,7 +3115,14 @@ function Tag (html        , position        , foreign         ) {
 				}
 				if ( attributesLiteral.endsWith('/') ) { throw SyntaxError(`标签结尾处的“/”有歧义，无法达到标注标签为自闭合的目的，而是会作为最后一个无引号属性值的结束字符`); }
 			}
-			return { type: selfClosingSolidus ? ELEMENT_SELF_CLOSING : ELEMENT_START, xName, attributes, end: position+length };
+			if ( selfClosingSolidus ) {
+				return { type: ELEMENT_SELF_CLOSING, xName, attributes, end: position+length };
+			}
+			else {
+				if ( VOID_ELEMENTS.test(xName) ) { throw SyntaxError(`.vue 文件中如果出现 HTML void 元素（无论大小写），必须自闭合使用并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`); }
+				if ( PLAINTEXT.test(xName) ) { throw SyntaxError(`${xName} 标签没有结束方式，除非自闭合，否则${xName==='plaintext' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑在其它标签上设置“is="${xName}"”）`); }
+				return { type: ELEMENT_START, xName, attributes, end: position+length };
+			}
 		}
 		
 	}
@@ -3310,6 +3314,14 @@ const {
 
 const _KEYFRAMES = /^(?:-[A-Za-z][\dA-Za-z]*-)?[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
 const _keyframes = (keyword        ) => _KEYFRAMES.test(keyword);
+
+const throwSyntaxError = (
+	/*! j-globals: throw.SyntaxError (internal) */
+	function throwSyntaxError (message) {
+		throw SyntaxError(message);
+	}
+	/*¡ j-globals: throw.SyntaxError (internal) */
+);
 
 const nonASCII = /\x80-\uFFFF/;
 const hex_digit = /[0-9A-F]/i;
@@ -3783,13 +3795,13 @@ class Declaration extends Array                            {// property or descr
 		return `${this.name}:${cssText};`;
 	}
 	
-	* beautify ()                           {
+	* beautify (tab         )                               {
 		let cssText = '';
 		for ( let index = this.length; index; ) {
 			const child = this[--index];
 			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
 		}
-		return `${this.name}:${cssText.startsWith(' ') ? '' : ' '}${cssText};`;
+		yield `${this.name}:${cssText.startsWith(' ') ? '' : ' '}${cssText};`;
 	}
 	
 }
@@ -3964,7 +3976,7 @@ class QualifiedRule extends Array                                               
 		return blockText && `${this.selectorText}{${blockText.slice(0, -1)}}`;
 	}
 	
-	* beautify (                     tab         )                           {
+	* beautify (                     tab         )                               {
 		const { block } = this;
 		let blockText = '';
 		for ( let index = block.length; index; ) {
@@ -4044,7 +4056,7 @@ class KeyframesRule extends Array                {
 		return `@${this.keyword}${keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? '' : ' '}${keyframesNameLiteral}{${blockText}}`;
 	}
 	
-	* beautify (                     tab         = '\t')                           {
+	* beautify (                     tab         = '\t')                               {
 		yield `@${this.keyword} ${this.keyframesNameLiteral} {`;
 		for ( let index = 0, { length } = this; index<length; ++index ) {
 			for ( const line of this[index].beautify(tab) ) {
@@ -4251,7 +4263,7 @@ class AtRule extends Array                                                 {
 		}
 	}
 	
-	* beautify (              tab         = '\t')                           {
+	* beautify (              tab         = '\t')                               {
 		let atText = '';
 		for ( let index = this.length; index; ) {
 			const child = this[--index];
@@ -4392,7 +4404,7 @@ class Sheet extends Array                                         {
 		return cssText.endsWith(';') ? cssText.slice(0, -1) : cssText;
 	}
 	
-	* beautify (             tab         = '\t')                           {
+	* beautify (             tab         = '\t')                               {
 		for ( let index = 0, { length } = this; index<length; ++index ) {
 			yield * this[index].beautify(tab);
 		}
@@ -4588,11 +4600,11 @@ function Pattern (node         )       {
 
 const VOID                             = Null({ value: 0, writable: false, enumerable: false, configurable: false });
 
-class Node extends Array                 {
+class Node extends Array       {
 	
 	          get [Symbol.toStringTag] () { return 'SFC.Template.Content.Node'; }
 	
-	         parentNode              = null;
+	parentNode              = null;
 	
 	          void () { defineProperty(this, 'length', VOID); }
 	
@@ -4600,12 +4612,15 @@ class Node extends Array                 {
 	get firstChild ()              { return this.length ? this[0] : null; }
 	get lastChild ()              { return this.length ? this[this.length-1] : null; }
 	
-	appendChild                              (                         node      )       {
+	appendChild                 (            node   )    {
 		if ( node.parentNode ) { node.parentNode.splice(node.parentNode.indexOf(node), 1); }
-		( node        ).parentNode = this;
+		node.parentNode = this;
 		this.push(node);
 		return node;
 	}
+	
+	                                  
+	                                                                           
 	
 }
 freeze(Node.prototype);
@@ -4630,7 +4645,7 @@ class Element extends Node {
 	         localName        ;
 	         attributes            ;
 	
-	get outerHTML ()         {
+	get outerHTML () {
 		let innerHTML         = '';
 		for ( let index = this.length; index; ) {
 			innerHTML = this[--index].outerHTML+innerHTML;
@@ -4640,7 +4655,7 @@ class Element extends Node {
 			: `<${this.localName}${this.attributes} />`;
 	}
 	
-	* beautify (               tab         = '\t')                           {
+	* beautify (               tab         = '\t') {
 		if ( this.length ) {
 			yield `<${this.localName}${this.attributes}>`;
 			for ( let index = 0, { length } = this; index<length; ++index ) {
@@ -4684,11 +4699,11 @@ class Text extends CharacterData {
 	
 	//get wholeText () :string { return this.data; }
 	
-	get outerHTML ()         {
+	get outerHTML () {
 		return escapeInnerText(this.data);
 	}
 	
-	* beautify (          )                           {
+	* beautify (          ) {
 		yield * this.outerHTML.split('&#10;');
 	}
 	
@@ -4787,6 +4802,7 @@ const TNS = /^[\t\n\f\r ]+$/;
 const SOF_TNS_LT = /^[\t\n\f\r ]+</;
 const GT_TNS_EOF = />[\t\n\f\r ]+$/;
 const V_BIND = /^(?:v-bind)?:([^.]*)/;
+const XMP = /^xmp$/i;
 
 let html         = '';
 let index         = 0;
@@ -4801,7 +4817,7 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 		if ( type===EOF ) {
 			if ( parentNode_xName ) { throw SyntaxError(`template 块中存在未关闭的 ${parentNode_xName} 标签`); }
 			index = tag.end;
-			return;
+			break;
 		}
 		if ( type===TEXT ) {
 			const data         = new Mustache(tag.raw , V_PRE, delimiters_0, delimiters_1).toData();
@@ -4822,49 +4838,58 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 				);
 			}
 			index = tag.end;
-			return;
+			break;
 		}
-		let xName        ;
+		let xName         = XName;
 		let __class__;
-		if ( partial && isAliasName(XName) ) {
-			if ( XName in partial ) {
-				const _ = partial[XName];
-				xName = _.tagName;
-				__class__ = _.class;
+		if ( partial ) {
+			let alias;
+			let addOn;
+			if ( XName.includes('.') ) {
+				const _ = XName.split('.');
+				alias = _[0];
+				addOn = ' '+_.slice(1).join(' ');
 			}
-			else if ( '' in partial ) {
-				xName = partial[''].tagName;
-				__class__ = `__${XName}__`;
+			else {
+				alias = XName;
+				addOn = '';
 			}
-			else { xName = XName; }
+			if ( isAliasName(alias) ) {
+				if ( alias in partial ) {
+					const _ = partial[alias];
+					xName = _.tagName;
+					__class__ = _.class+addOn;
+				}
+				else if ( '' in partial ) {
+					xName = partial[''].tagName;
+					__class__ = `__${alias}__`+addOn;
+				}
+			}
 		}
-		else { xName = XName; }
-		xName = partial && XName in partial ? partial[XName].tagName : XName;
-		if ( xName==='script' ) { throw ReferenceError(`Vue 不允许 template 中存在 script 标签`); }
-		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件，或在其它标签上设置“is="style"”）`); }
-		if ( xName==='plaintext' ) { throw Error(`plaintext 标签没有结束方式，不适用于 template 书写（真需要时，考虑在其它标签上设置“is="plaintext"”）`); }
+		if ( xName==='script' ) { throw SyntaxError(`Vue 不允许 template 中存在 script 标签`); }
+		if ( xName==='style' ) { throw SyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件，或在其它标签上设置“is="style"”）`); }
 		const attributes             = tag.attributes ;
 		const v_pre          = V_PRE || 'v-pre' in attributes;
 		if ( !v_pre && ( ':is' in attributes || 'v-bind:is' in attributes ) ) ;
 		else if ( !v_pre && 'is' in attributes ) {
 			const { is } = attributes;
 			if ( ( is==='xmp' || is==='plaintext' ) && 'v-html' in attributes ) {
-				throw Error(`请避免在已废弃的 xmp、plaintext 元素上使用 v-html，它的实际行为是 v-text`);
+				throw SyntaxError(`请避免在已废弃的 xmp、plaintext 元素上使用 v-html，它的实际行为是 v-text`);
 			}
 			if ( !foreign_elements.test(is ) && FOREIGN_ELEMENTS.test(is ) ) {
-				throw ReferenceError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${is }”，不被 Vue 作为组件对待`);
+				throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${is }”，不被 Vue 作为组件对待`);
 			}
 		}
 		else if ( !v_pre && xName==='xmp' && 'v-html' in attributes ) {
-			throw Error(`请避免在已废弃的 xmp 标签上使用 v-html，它的实际行为是 v-text`);
+			throw SyntaxError(`请避免在已废弃的 xmp 标签上使用 v-html，它的实际行为是 v-text`);
 		}
 		else {
 			if ( !foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName) ) {
-				throw ReferenceError(`SVG 命名空间中的 foreign 标签的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
+				throw SyntaxError(`SVG 命名空间中的 foreign 标签的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
 			}
 		}
 		if ( !v_pre ) {
-			if ( 'inline-template' in attributes ) { throw Error(`j-vue 暂不支持包含 inline-template 的模板编译`); }
+			if ( 'inline-template' in attributes ) { throw Error(`jVue 暂不支持包含 inline-template 的模板编译`); }
 			if ( 'v-cloak' in attributes ) { throw SyntaxError(`单文件组件模板中不可能用到 v-cloak 指令`); }
 			if ( 'v-for' in attributes ) {
 				const value = attributes['v-for'] ;
@@ -4905,28 +4930,50 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 		const element          = parentNode.appendChild(new Element(xName, attributes, __class__));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING || void_elements.test(xName) ) { continue; }
-		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
-			throw SyntaxError(`开放标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
+		if (
+			( RAW_TEXT_ELEMENTS.test(XName) || XMP.test(XName) )
+			!==
+			( RAW_TEXT_ELEMENTS.test(xName) || XMP.test(xName) )
+		) {
+			throw SyntaxError(`由于存在内容解析歧义，开放式标签名和其简写不能一个是原始文本元素，而另一个不是`);
 		}
-		if ( xName==='xmp' ) {
-			throw Error(
-				`已废弃的 xmp 标签被开放使用时，需将内容完全按原状对待，`+
+		if (
+			( TEXTAREA.test(XName) || XName==='title' )
+			!==
+			( TEXTAREA.test(xName) || xName==='title' )
+		) {
+			throw SyntaxError(`由于存在内容解析歧义，开放式标签名和其简写不能一个是可转义原始文本元素，而另一个不是`);
+		}
+		if ( RAW_TEXT_ELEMENTS.test(xName) && xName!=='STYLE' || TEXTAREA.test(xName) && xName!=='textarea' ) {
+			throw SyntaxError(
+				`Vue 不会将 textarea、style 或 script 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
+				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
+				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
+				`并不知道该往什么方向进行（除 jVue 推荐的 STYLE 函数式组件用来模拟 style 元素外）`
+			);
+		}
+		if ( XMP.test(XName) || XMP.test(xName) ) {
+			throw SyntaxError(
+				`已废弃的 xmp 标签${( XMP.test(XName) ? XName : xName )==='xmp' ? '' : '（不论大小写）'}被开放式使用时，需将内容完全按原状对待，`+
 				`jVue 虽可以通过 v-text 模拟这一行为、避免被 Vue 按标签嵌套模式解析，`+
 				`但由于缺乏相关约定，不确定如何处理插值和空白，所以无法处理。`+
 				( v_pre ? `v-pre 时虽然不再存在插值，但却也无法使用 v-text。` : `` )
 			);
 		}
+		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
+			throw SyntaxError(`开放式标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
+		}
 		const foreign          = FOREIGN || xName==='svg' || xName==='math';
 		// iframe：Vue 运行所必须的 IE9+ 刚好允许其中嵌套标签
-		// pre
+		// <pre>\n
 		if ( xName==='textarea' || xName==='STYLE' || xName==='title' ) {
-			if ( 'v-text' in attributes || 'v-html' in attributes || v_pre ) {
+			if ( v_pre ) {
 				throw SyntaxError((
 					xName==='textarea' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（形如标签的文本会被剔除）` :
 						xName==='STYLE' ? `非自闭合 ${xName} 组件中的内容为了避免被 Vue 额外修正（形如标签的文本会被剔除）` :
 							xName==='title' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（会试着真的作为标签解析）` :
 								``
-				)+`，jVue 会将其编译为 v-text 属性，因此标签不能已经具备 v-text 或 v-html，且自身或外层节点不能有 v-pre 属性`);
+				)+`，jVue 会将其编译为 v-text 属性，因此标签自身或外层节点不能有 v-pre 属性`);
 			}
 			let endTagStart         = html.slice(index).search(
 				xName==='textarea' ? TEXTAREA_END_TAG :
@@ -4943,26 +4990,9 @@ function parseAppend (parentNode_xName        , parentNode                   , V
 				throw SyntaxError(`${xName} 的结束标记 ${html.slice(endTagStart, tag.end)} 不符合严谨性预期`);
 			}
 			index = tag.end;
+			continue;
 		}
-		else if ( TEXTAREA.test(xName) ) {
-			throw ReferenceError(
-				`Vue 不会将 textarea 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
-				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
-				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
-				`并不知道该往什么方向进行`
-			);
-		}
-		else if ( RAW_TEXT_ELEMENTS.test(xName) ) {
-			throw ReferenceError(
-				`Vue 不会将 style 或 script 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
-				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
-				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
-				`并不知道该往什么方向进行（除 jVue 推荐的 STYLE 组件用来模拟 style 外）`
-			);
-		}
-		else {
-			parseAppend(XName, element, v_pre, foreign);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
-		}
+		parseAppend(XName, element, v_pre, foreign);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
 	}
 }
 
@@ -4994,7 +5024,15 @@ class Content extends Node {
 		if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.pop(); }
 	}
 	
-	* beautify (               tab         = '\t')                           {
+	get outerHTML () {
+		let outerHTML = '';
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			outerHTML += this[index].outerHTML;
+		}
+		return outerHTML;
+	}
+	
+	* beautify (               tab         = '\t') {
 		for ( let index = 0, { length } = this; index<length; ++index ) {
 			yield * this[index].beautify(tab);
 		}
@@ -5136,9 +5174,8 @@ class Template extends Block {
 	get innerHTML ()         {
 		const { content } = this;
 		if ( content.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
-		const rootNode = content.firstChild;
-		if ( !( rootNode instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
-		return rootNode.outerHTML;
+		if ( !( content.firstChild instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
+		return content.outerHTML;
 	}
 	set innerHTML (value        ) {
 		if ( typeof           value!=='string' ) { throw TypeError(`innerHTML 只能被赋值字符串`); }
@@ -5178,90 +5215,89 @@ function parseComponent (sfc     , vue        )       {
 	
 	let index = 0;
 	
-	function throwSyntaxError(message        )        {
-		const error              = SyntaxError(message);
+	try {
+		for ( const { length } = vue; index!==length; ) {
+			
+			if ( vue[index]===eol_0 ) {
+				index += eol_length;
+				continue;
+			}
+			
+			const tag = Tag(vue, index, false);
+			switch ( tag.type ) {
+				case ELEMENT_START:
+				case ELEMENT_SELF_CLOSING:
+					index = tag.end;
+					break;
+				case COMMENT:
+					index = tag.end;
+					continue;
+				case TEXT:
+					throw SyntaxError(`.vue 文件中出现了未经标签包裹的“${tag.raw}”`);
+				case ELEMENT_END:
+					throw SyntaxError(`.vue 文件中凭空出现了“</${tag.xName}>”结束标签`);
+			}
+			
+			const blockName         = tag.xName ;
+			switch ( blockName ) {
+				case 'script':
+				case 'template':
+					if ( sfc[blockName] ) { throw SyntaxError(`一个 .vue 文件中只能有一个 ${blockName} 块`); }
+					break;
+				case 'style':
+					break;
+				default:
+					if ( SCRIPT_STYLE_TEMPLATE.test(blockName) ) { throw SyntaxError(`.vue 文件顶层的非全小写 script / style / template 标签存在歧义，请避免使用`); }
+					break;
+			}
+			
+			let inner                    ;
+			if ( tag.type===ELEMENT_START ) {
+				if ( index===length ) { throw SyntaxError(`开始标签后缺少结束标签“</${blockName}>”`); }
+				if ( vue.startsWith(eol_0, index) ) {
+					const innerStart = index+eol_length;
+					const endTagStart = vue.indexOf(`${eol}</${blockName}>`, index)+eol_length;
+					if ( endTagStart<eol_length ) { throw SyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`); }
+					index = endTagStart+3+blockName.length;
+					inner = endTagStart===innerStart || endTagStart-eol_length===innerStart ? '' : vue.slice(innerStart, endTagStart-eol_length);
+					if ( blockName!=='style' ) {
+						inner =
+							checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '')+
+							inner;
+					}
+				}
+				else {
+					const innerStart = index;
+					index = vue.indexOf(eol_0, index);
+					if ( index<0 ) { index = length; }
+					if ( !vue.endsWith(`</${blockName}>`, index) ) { throw SyntaxError(`开始标签后不紧跟换行则启用单行块模式，该行应以对应的结束标签结尾`); }
+					inner = vue.slice(innerStart, index-3-blockName.length);
+					if ( blockName!=='style' ) {
+						const previousLineEnd = vue.lastIndexOf(eol_0, innerStart);
+						const lastLineStart = previousLineEnd<0 ? 0 : previousLineEnd+eol_length;
+						inner =
+							checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '')+
+							checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB$1, ' ')+
+							inner;
+					}
+				}
+			}
+			
+			if ( blockName==='template' ) { sfc.template = new Template(tag.attributes , inner); }
+			else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes , inner)); }
+			else if ( blockName==='script' ) { sfc.script = new Script(tag.attributes , inner); }
+			else { sfc.customBlocks.push(new CustomBlock(blockName, tag.attributes , inner)); }
+			
+			if ( index!==length ) {
+				if ( vue.startsWith(eol_0, index) ) { index += eol_length; }
+				else if ( !vue.startsWith('<!', index) ) { throw SyntaxError(`顶级标签的结束标签后的同一行内不应有除注释以外的内容`); }
+			}
+			
+		}
+	}
+	catch (error) {
 		error.message = `${error.message}：\n${Snippet(vue, index)}`;
 		throw error;
-	}
-	
-	for ( const { length } = vue; index!==length; ) {
-		
-		if ( vue[index]===eol_0 ) {
-			index += eol_length;
-			continue;
-		}
-		
-		const tag = Tag(vue, index, false);
-		switch ( tag.type ) {
-			case ELEMENT_START:
-			case ELEMENT_SELF_CLOSING:
-				index = tag.end;
-				break;
-			case COMMENT:
-				index = tag.end;
-				continue;
-			case TEXT:
-				throw throwSyntaxError(`.vue 文件中出现了未经标签包裹的“${tag.raw}”`);
-			case ELEMENT_END:
-				throwSyntaxError(`.vue 文件中凭空出现了“</${tag.xName}>”结束标签`);
-		}
-		
-		const blockName         = tag.xName ;
-		switch ( blockName ) {
-			case 'script':
-			case 'template':
-				sfc[blockName] && throwSyntaxError(`一个 .vue 文件中只能有一个 ${blockName} 块`);
-				break;
-			case 'style':
-				break;
-			default:
-				SCRIPT_STYLE_TEMPLATE.test(blockName) && throwSyntaxError(`.vue 文件顶层的非全小写 script / style / template 标签存在歧义，请避免使用`);
-				break;
-		}
-		
-		let inner                    ;
-		if ( tag.type===ELEMENT_START ) {
-			VOID_ELEMENTS.test(blockName) && throwSyntaxError(`.vue 文件中的自定义块如果是 HTML void 元素（无论大小写），必须自闭合使用、并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`);
-			index===length && throwSyntaxError(`开始标签后缺少结束标签“</${blockName}>”`);
-			if ( vue.startsWith(eol_0, index) ) {
-				const innerStart = index+eol_length;
-				const endTagStart = vue.indexOf(`${eol}</${blockName}>`, index)+eol_length;
-				endTagStart<eol_length && throwSyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`);
-				index = endTagStart+3+blockName.length;
-				inner = endTagStart===innerStart || endTagStart-eol_length===innerStart ? '' : vue.slice(innerStart, endTagStart-eol_length);
-				if ( blockName!=='style' ) {
-					inner =
-						checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '')+
-						inner;
-				}
-			}
-			else {
-				const innerStart = index;
-				index = vue.indexOf(eol_0, index);
-				if ( index<0 ) { index = length; }
-				vue.endsWith(`</${blockName}>`, index) || throwSyntaxError(`开始标签后不紧跟换行则启用单行块模式，该行应以对应的结束标签结尾`);
-				inner = vue.slice(innerStart, index-3-blockName.length);
-				if ( blockName!=='style' ) {
-					const previousLineEnd = vue.lastIndexOf(eol_0, innerStart);
-					const lastLineStart = previousLineEnd<0 ? 0 : previousLineEnd+eol_length;
-					inner =
-						checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '')+
-						checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB$1, ' ')+
-						inner;
-				}
-			}
-		}
-		
-		if ( blockName==='template' ) { sfc.template = new Template(tag.attributes , inner); }
-		else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes , inner)); }
-		else if ( blockName==='script' ) { sfc.script = new Script(tag.attributes , inner); }
-		else { sfc.customBlocks.push(new CustomBlock(blockName, tag.attributes , inner)); }
-		
-		if ( index!==length ) {
-			if ( vue.startsWith(eol_0, index) ) { index += eol_length; }
-			else if ( !vue.startsWith('<!', index) ) { throwSyntaxError(`顶级标签的结束标签后的同一行内不应有除注释以外的内容`); }
-		}
-		
 	}
 	
 }
@@ -5425,7 +5461,7 @@ function VisibleStringLiteral (id        )         {
 
 const __KEY__ = newRegExp('i')`^[-_]?__${KEYS}__[-_]?$`;
 
-function * From (tab        , mode                         , styles         , template                 , from               , eol        )                           {
+function * From (tab        , mode                         , styles         , template                 , from               , eol        ) {
 	
 	if ( from===null ) {
 		const { length } = styles;

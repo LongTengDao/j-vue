@@ -29,11 +29,11 @@ export default class Text extends CharacterData {
 	
 	//get wholeText () :string { return this.data; }
 	
-	get outerHTML () :string {
+	get outerHTML () {
 		return Entities.escapeInnerText(this.data);
 	}
 	
-	* beautify (this :Text) :IterableIterator<string> {
+	* beautify (this :Text) {
 		yield * this.outerHTML.split('&#10;');
 	}
 	

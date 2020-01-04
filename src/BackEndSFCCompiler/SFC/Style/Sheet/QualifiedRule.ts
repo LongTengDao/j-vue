@@ -179,7 +179,7 @@ export default class QualifiedRule extends Array<ParenthesisBlock | SquareBracke
 		return blockText && `${this.selectorText}{${blockText.slice(0, -1)}}`;
 	}
 	
-	* beautify (this :QualifiedRule, tab? :string) :IterableIterator<string> {
+	* beautify (this :QualifiedRule, tab? :string) :Generator<string, void, any> {
 		const { block } = this;
 		let blockText = '';
 		for ( let index = block.length; index; ) {

@@ -20,7 +20,7 @@ function VisibleStringLiteral (id :string) :string {
 
 const __KEY__ = newRegExp('i')`^[-_]?__${KEYS}__[-_]?$`;
 
-export default function * From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string) :IterableIterator<string> {
+export default function * From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string) {
 	
 	if ( from===null ) {
 		const { length } = styles;

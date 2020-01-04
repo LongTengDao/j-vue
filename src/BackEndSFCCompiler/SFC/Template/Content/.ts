@@ -30,6 +30,7 @@ const TNS = /^[\t\n\f\r ]+$/;
 const SOF_TNS_LT = /^[\t\n\f\r ]+</;
 const GT_TNS_EOF = />[\t\n\f\r ]+$/;
 const V_BIND = /^(?:v-bind)?:([^.]*)/;
+const XMP = /^xmp$/i;
 
 let html :string = '';
 let index :number = 0;
@@ -44,7 +45,7 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 		if ( type===EOF ) {
 			if ( parentNode_xName ) { throw SyntaxError(`template 块中存在未关闭的 ${parentNode_xName} 标签`); }
 			index = tag.end;
-			return;
+			break;
 		}
 		if ( type===TEXT ) {
 			const data :string = new Mustache(tag.raw!, V_PRE, delimiters_0, delimiters_1).toData();
@@ -65,49 +66,58 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 				);
 			}
 			index = tag.end;
-			return;
+			break;
 		}
-		let xName :string;
+		let xName :string = XName;
 		let __class__;
-		if ( partial && isAliasName(XName) ) {
-			if ( XName in partial ) {
-				const _ = partial[XName];
-				xName = _.tagName;
-				__class__ = _.class;
+		if ( partial ) {
+			let alias;
+			let addOn;
+			if ( XName.includes('.') ) {
+				const _ = XName.split('.');
+				alias = _[0];
+				addOn = ' '+_.slice(1).join(' ');
 			}
-			else if ( '' in partial ) {
-				xName = partial[''].tagName;
-				__class__ = `__${XName}__`;
+			else {
+				alias = XName;
+				addOn = '';
 			}
-			else { xName = XName; }
+			if ( isAliasName(alias) ) {
+				if ( alias in partial ) {
+					const _ = partial[alias];
+					xName = _.tagName;
+					__class__ = _.class+addOn;
+				}
+				else if ( '' in partial ) {
+					xName = partial[''].tagName;
+					__class__ = `__${alias}__`+addOn;
+				}
+			}
 		}
-		else { xName = XName; }
-		xName = partial && XName in partial ? partial[XName].tagName : XName;
-		if ( xName==='script' ) { throw ReferenceError(`Vue 不允许 template 中存在 script 标签`); }
-		if ( xName==='style' ) { throw ReferenceError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件，或在其它标签上设置“is="style"”）`); }
-		if ( xName==='plaintext' ) { throw Error(`plaintext 标签没有结束方式，不适用于 template 书写（真需要时，考虑在其它标签上设置“is="plaintext"”）`); }
+		if ( xName==='script' ) { throw SyntaxError(`Vue 不允许 template 中存在 script 标签`); }
+		if ( xName==='style' ) { throw SyntaxError(`Vue 不允许 template 中存在 style 标签（真需要时，考虑使用 jVue 的 STYLE 函数式组件，或在其它标签上设置“is="style"”）`); }
 		const attributes :Attributes = tag.attributes!;
 		const v_pre :boolean = V_PRE || 'v-pre' in attributes;
 		if ( !v_pre && ( ':is' in attributes || 'v-bind:is' in attributes ) ) {}
 		else if ( !v_pre && 'is' in attributes ) {
 			const { is } = attributes;
 			if ( ( is==='xmp' || is==='plaintext' ) && 'v-html' in attributes ) {
-				throw Error(`请避免在已废弃的 xmp、plaintext 元素上使用 v-html，它的实际行为是 v-text`);
+				throw SyntaxError(`请避免在已废弃的 xmp、plaintext 元素上使用 v-html，它的实际行为是 v-text`);
 			}
 			if ( !foreign_elements.test(is!) && FOREIGN_ELEMENTS.test(is!) ) {
-				throw ReferenceError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${is!}”，不被 Vue 作为组件对待`);
+				throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${is!}”，不被 Vue 作为组件对待`);
 			}
 		}
 		else if ( !v_pre && xName==='xmp' && 'v-html' in attributes ) {
-			throw Error(`请避免在已废弃的 xmp 标签上使用 v-html，它的实际行为是 v-text`);
+			throw SyntaxError(`请避免在已废弃的 xmp 标签上使用 v-html，它的实际行为是 v-text`);
 		}
 		else {
 			if ( !foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName) ) {
-				throw ReferenceError(`SVG 命名空间中的 foreign 标签的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
+				throw SyntaxError(`SVG 命名空间中的 foreign 标签的大小写变种“${xName}”，同样不被 Vue 作为组件对待`);
 			}
 		}
 		if ( !v_pre ) {
-			if ( 'inline-template' in attributes ) { throw Error(`j-vue 暂不支持包含 inline-template 的模板编译`); }
+			if ( 'inline-template' in attributes ) { throw Error(`jVue 暂不支持包含 inline-template 的模板编译`); }
 			if ( 'v-cloak' in attributes ) { throw SyntaxError(`单文件组件模板中不可能用到 v-cloak 指令`); }
 			if ( 'v-for' in attributes ) {
 				const value = attributes['v-for']!;
@@ -148,28 +158,50 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 		const element :Element = parentNode.appendChild(new Element(xName, attributes, __class__));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING || void_elements.test(xName) ) { continue; }
-		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
-			throw SyntaxError(`开放标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
+		if (
+			( RAW_TEXT_ELEMENTS.test(XName) || XMP.test(XName) )
+			!==
+			( RAW_TEXT_ELEMENTS.test(xName) || XMP.test(xName) )
+		) {
+			throw SyntaxError(`由于存在内容解析歧义，开放式标签名和其简写不能一个是原始文本元素，而另一个不是`);
 		}
-		if ( xName==='xmp' ) {
-			throw Error(
-				`已废弃的 xmp 标签被开放使用时，需将内容完全按原状对待，`+
+		if (
+			( TEXTAREA.test(XName) || XName==='title' )
+			!==
+			( TEXTAREA.test(xName) || xName==='title' )
+		) {
+			throw SyntaxError(`由于存在内容解析歧义，开放式标签名和其简写不能一个是可转义原始文本元素，而另一个不是`);
+		}
+		if ( RAW_TEXT_ELEMENTS.test(xName) && xName!=='STYLE' || TEXTAREA.test(xName) && xName!=='textarea' ) {
+			throw SyntaxError(
+				`Vue 不会将 textarea、style 或 script 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
+				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
+				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
+				`并不知道该往什么方向进行（除 jVue 推荐的 STYLE 函数式组件用来模拟 style 元素外）`
+			);
+		}
+		if ( XMP.test(XName) || XMP.test(xName) ) {
+			throw SyntaxError(
+				`已废弃的 xmp 标签${( XMP.test(XName) ? XName : xName )==='xmp' ? '' : '（不论大小写）'}被开放式使用时，需将内容完全按原状对待，`+
 				`jVue 虽可以通过 v-text 模拟这一行为、避免被 Vue 按标签嵌套模式解析，`+
 				`但由于缺乏相关约定，不确定如何处理插值和空白，所以无法处理。`+
 				( v_pre ? `v-pre 时虽然不再存在插值，但却也无法使用 v-text。` : `` )
 			);
 		}
+		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
+			throw SyntaxError(`开放式标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
+		}
 		const foreign :boolean = FOREIGN || xName==='svg' || xName==='math';
 		// iframe：Vue 运行所必须的 IE9+ 刚好允许其中嵌套标签
-		// pre
+		// <pre>\n
 		if ( xName==='textarea' || xName==='STYLE' || xName==='title' ) {
-			if ( 'v-text' in attributes || 'v-html' in attributes || v_pre ) {
+			if ( v_pre ) {
 				throw SyntaxError((
 					xName==='textarea' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（形如标签的文本会被剔除）` :
 						xName==='STYLE' ? `非自闭合 ${xName} 组件中的内容为了避免被 Vue 额外修正（形如标签的文本会被剔除）` :
 							xName==='title' ? `由于 Vue 不能正确对待 ${xName} 标签中的类标签文本（会试着真的作为标签解析）` :
 								``
-				)+`，jVue 会将其编译为 v-text 属性，因此标签不能已经具备 v-text 或 v-html，且自身或外层节点不能有 v-pre 属性`);
+				)+`，jVue 会将其编译为 v-text 属性，因此标签自身或外层节点不能有 v-pre 属性`);
 			}
 			let endTagStart :number = html.slice(index).search(
 				xName==='textarea' ? TEXTAREA_END_TAG :
@@ -186,26 +218,9 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 				throw SyntaxError(`${xName} 的结束标记 ${html.slice(endTagStart, tag.end)} 不符合严谨性预期`);
 			}
 			index = tag.end;
+			continue;
 		}
-		else if ( TEXTAREA.test(xName) ) {
-			throw ReferenceError(
-				`Vue 不会将 textarea 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
-				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
-				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
-				`并不知道该往什么方向进行`
-			);
-		}
-		else if ( RAW_TEXT_ELEMENTS.test(xName) ) {
-			throw ReferenceError(
-				`Vue 不会将 style 或 script 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
-				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
-				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
-				`并不知道该往什么方向进行（除 jVue 推荐的 STYLE 组件用来模拟 style 外）`
-			);
-		}
-		else {
-			parseAppend(XName, element, v_pre, foreign);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
-		}
+		parseAppend(XName, element, v_pre, foreign);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
 	}
 }
 
@@ -237,7 +252,15 @@ export default class Content extends Node {
 		if ( this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) ) { this.pop(); }
 	}
 	
-	* beautify (this :Content, tab :string = '\t') :IterableIterator<string> {
+	get outerHTML () {
+		let outerHTML = '';
+		for ( let index = 0, { length } = this; index<length; ++index ) {
+			outerHTML += this[index].outerHTML;
+		}
+		return outerHTML;
+	}
+	
+	* beautify (this :Content, tab :string = '\t') {
 		for ( let index = 0, { length } = this; index<length; ++index ) {
 			yield * this[index].beautify(tab);
 		}

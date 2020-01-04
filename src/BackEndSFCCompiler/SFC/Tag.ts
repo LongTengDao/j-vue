@@ -1,5 +1,6 @@
 import SyntaxError from '.SyntaxError';
-import throwSyntaxError from '.throw.SyntaxError';
+
+import { VOID_ELEMENTS } from 'lib:elements';
 
 import * as Entities from './Entities';
 import Attributes from './Attributes';
@@ -12,6 +13,8 @@ export const ELEMENT_SELF_CLOSING :1.3 = 1.3;
 export const TEXT :3 = 3;
 export const COMMENT :8 = 8;
 export const EOF :0 = 0;
+
+const PLAINTEXT = /^plaintext$/i;
 
 export function Tag (html :string, position :number, foreign :boolean) {
 	
@@ -34,12 +37,15 @@ export function Tag (html :string, position :number, foreign :boolean) {
 		rest = html.slice(position);
 		
 		if ( IS_TAG.test(rest) ) {
-			const { 0: { length }, 1: endSolidus, 2: xName, 3: attributesLiteral, 4: selfClosingSolidus } = TAG.exec(rest) || throwSyntaxError('标签格式有误');
+			const _ = TAG.exec(rest);
+			if ( !_ ) { throw SyntaxError('标签格式有误'); }
+			const { 0: { length }, 1: endSolidus, 2: xName, 3: attributesLiteral, 4: selfClosingSolidus } = _;
 			if ( endSolidus ) {
 				if ( attributesLiteral ) { throw SyntaxError(`结束标签中存在属性`); }
 				if ( selfClosingSolidus ) { throw SyntaxError(`结束标签中存在自关闭斜杠`); }
 				return { type: ELEMENT_END, xName, end: position+length };
 			}
+			
 			const attributes :Attributes = new Attributes;
 			if ( attributesLiteral ) {
 				for ( let name of attributesLiteral.match(ATTRIBUTE)! ) {
@@ -53,7 +59,14 @@ export function Tag (html :string, position :number, foreign :boolean) {
 				}
 				if ( attributesLiteral.endsWith('/') ) { throw SyntaxError(`标签结尾处的“/”有歧义，无法达到标注标签为自闭合的目的，而是会作为最后一个无引号属性值的结束字符`); }
 			}
-			return { type: selfClosingSolidus ? ELEMENT_SELF_CLOSING : ELEMENT_START, xName, attributes, end: position+length };
+			if ( selfClosingSolidus ) {
+				return { type: ELEMENT_SELF_CLOSING, xName, attributes, end: position+length };
+			}
+			else {
+				if ( VOID_ELEMENTS.test(xName) ) { throw SyntaxError(`.vue 文件中如果出现 HTML void 元素（无论大小写），必须自闭合使用并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`); }
+				if ( PLAINTEXT.test(xName) ) { throw SyntaxError(`${xName} 标签没有结束方式，除非自闭合，否则${xName==='plaintext' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑在其它标签上设置“is="${xName}"”）`); }
+				return { type: ELEMENT_START, xName, attributes, end: position+length };
+			}
 		}
 		
 	}

@@ -22,7 +22,7 @@ export default class Element extends Node {
 	readonly localName :string;
 	readonly attributes :Attributes;
 	
-	get outerHTML () :string {
+	get outerHTML () {
 		let innerHTML :string = '';
 		for ( let index = this.length; index; ) {
 			innerHTML = this[--index].outerHTML+innerHTML;
@@ -32,7 +32,7 @@ export default class Element extends Node {
 			: `<${this.localName}${this.attributes} />`;
 	}
 	
-	* beautify (this :Element, tab :string = '\t') :IterableIterator<string> {
+	* beautify (this :Element, tab :string = '\t') {
 		if ( this.length ) {
 			yield `<${this.localName}${this.attributes}>`;
 			for ( let index = 0, { length } = this; index<length; ++index ) {

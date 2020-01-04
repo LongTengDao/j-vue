@@ -203,7 +203,7 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 		}
 	}
 	
-	* beautify (this :AtRule, tab :string = '\t') :IterableIterator<string> {
+	* beautify (this :AtRule, tab :string = '\t') :Generator<string, void, any> {
 		let atText = '';
 		for ( let index = this.length; index; ) {
 			const child = this[--index];

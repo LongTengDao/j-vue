@@ -71,7 +71,7 @@ export default class KeyframesRule extends Array<QualifiedRule> {
 		return `@${this.keyword}${keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? '' : ' '}${keyframesNameLiteral}{${blockText}}`;
 	}
 	
-	* beautify (this :KeyframesRule, tab :string = '\t') :IterableIterator<string> {
+	* beautify (this :KeyframesRule, tab :string = '\t') :Generator<string, void, any> {
 		yield `@${this.keyword} ${this.keyframesNameLiteral} {`;
 		for ( let index = 0, { length } = this; index<length; ++index ) {
 			for ( const line of this[index].beautify(tab) ) {
