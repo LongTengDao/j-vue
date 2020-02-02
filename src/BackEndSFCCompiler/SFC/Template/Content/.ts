@@ -11,7 +11,7 @@ import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements
 
 import { forAliasRE, slotRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF } from '../../INTERNAL';
 import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR, isAliasName } from '../../RE';
-import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF } from '../../Tag';
+import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF, LISTING, XMP } from '../../Tag';
 import { EMPTY } from '../../Attributes';
 import Params from '../../Params';
 import Node from './Node';
@@ -30,7 +30,6 @@ const TNS = /^[\t\n\f\r ]+$/;
 const SOF_TNS_LT = /^[\t\n\f\r ]+</;
 const GT_TNS_EOF = />[\t\n\f\r ]+$/;
 const V_BIND = /^(?:v-bind)?:([^.]*)/;
-const XMP = /^xmp$/i;
 
 let html :string = '';
 let index :number = 0;
@@ -101,15 +100,15 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 		if ( !v_pre && ( ':is' in attributes || 'v-bind:is' in attributes ) ) {}
 		else if ( !v_pre && 'is' in attributes ) {
 			const { is } = attributes;
-			if ( ( is==='xmp' || is==='plaintext' ) && 'v-html' in attributes ) {
-				throw SyntaxError(`请避免在已废弃的 xmp、plaintext 元素上使用 v-html，它的实际行为是 v-text`);
+			if ( ( is==='xmp' || is==='plaintext' || is==='listing' ) && 'v-html' in attributes ) {
+				throw SyntaxError(`请避免在已废弃的 xmp、plaintext 或 listing 元素上使用 v-html，它的实际行为（可能）是 v-text`);
 			}
 			if ( !foreign_elements.test(is!) && FOREIGN_ELEMENTS.test(is!) ) {
 				throw SyntaxError(`通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大小写变种“${is!}”，不被 Vue 作为组件对待`);
 			}
 		}
-		else if ( !v_pre && xName==='xmp' && 'v-html' in attributes ) {
-			throw SyntaxError(`请避免在已废弃的 xmp 标签上使用 v-html，它的实际行为是 v-text`);
+		else if ( !v_pre && ( xName==='xmp' || xName==='plaintext' || xName==='listing' ) && 'v-html' in attributes ) {
+			throw SyntaxError(`请避免在已废弃的 xmp、plaintext 或 listing 标签上使用 v-html，它的实际行为（可能）是 v-text`);
 		}
 		else {
 			if ( !foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName) ) {
@@ -158,28 +157,7 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 		const element :Element = parentNode.appendChild(new Element(xName, attributes, __class__));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING || void_elements.test(xName) ) { continue; }
-		if (
-			( RAW_TEXT_ELEMENTS.test(XName) || XMP.test(XName) )
-			!==
-			( RAW_TEXT_ELEMENTS.test(xName) || XMP.test(xName) )
-		) {
-			throw SyntaxError(`由于存在内容解析歧义，开放式标签名和其简写不能一个是原始文本元素，而另一个不是`);
-		}
-		if (
-			( TEXTAREA.test(XName) || XName==='title' )
-			!==
-			( TEXTAREA.test(xName) || xName==='title' )
-		) {
-			throw SyntaxError(`由于存在内容解析歧义，开放式标签名和其简写不能一个是可转义原始文本元素，而另一个不是`);
-		}
-		if ( RAW_TEXT_ELEMENTS.test(xName) && xName!=='STYLE' || TEXTAREA.test(xName) && xName!=='textarea' ) {
-			throw SyntaxError(
-				`Vue 不会将 textarea、style 或 script 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
-				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
-				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
-				`并不知道该往什么方向进行（除 jVue 推荐的 STYLE 函数式组件用来模拟 style 元素外）`
-			);
-		}
+		if ( LISTING.test(XName) ) { throw SyntaxError(`已过时的 ${XName} 标签内容处理方式不定，除非自闭合，否则${XName==='listing' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑在其它标签上设置“is="${xName}"”）`); }
 		if ( XMP.test(XName) || XMP.test(xName) ) {
 			throw SyntaxError(
 				`已废弃的 xmp 标签${( XMP.test(XName) ? XName : xName )==='xmp' ? '' : '（不论大小写）'}被开放式使用时，需将内容完全按原状对待，`+
@@ -188,9 +166,17 @@ function parseAppend (parentNode_xName :string, parentNode :Content | Element, V
 				( v_pre ? `v-pre 时虽然不再存在插值，但却也无法使用 v-text。` : `` )
 			);
 		}
-		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) {
-			throw SyntaxError(`开放式标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`);
+		if ( RAW_TEXT_ELEMENTS.test(XName)!==RAW_TEXT_ELEMENTS.test(xName) ) { throw SyntaxError(`由于存在内容解析歧义，开放式标签名和其简写不能一个是原始文本元素，而另一个不是`); }// xmp plaintext listing
+		if ( ( TEXTAREA.test(XName) || XName==='title' )!==( TEXTAREA.test(xName) || xName==='title' ) ) { throw SyntaxError(`由于存在内容解析歧义，开放式标签名和其简写不能一个是可转义原始文本元素，而另一个不是`); }
+		if ( RAW_TEXT_ELEMENTS.test(xName) && xName!=='STYLE' || TEXTAREA.test(xName) && xName!=='textarea' ) {
+			throw SyntaxError(
+				`Vue 不会将 textarea、style 或 script 的任何大小写变种中的内容理解为正常标签嵌套，而是会剔除其内容中的标签、解除 HTML 实体转义后，作为文本内容理解，`+
+				`jVue 虽可对其进行转写（比如“<component is="${xName}">”或“<${xName} v-text="..." />”），`+
+				`但由于缺乏约定（就连 Vue 本身的这种行为，也是一种边缘情况，既谈不上合理，也不能保证一直如此对待，甚至没有在文档中言明），`+
+				`并不知道该往什么方向进行（除 jVue 推荐的 STYLE 函数式组件用来模拟 style 元素外）`
+			);
 		}
+		if ( !v_pre && ( 'v-text' in attributes || 'v-html' in attributes ) ) { throw SyntaxError(`开放式标签，除非自身或外层节点有 v-pre 属性，否则不能再设置 v-text 或 v-html 属性`); }
 		const foreign :boolean = FOREIGN || xName==='svg' || xName==='math';
 		// iframe：Vue 运行所必须的 IE9+ 刚好允许其中嵌套标签
 		// <pre>\n

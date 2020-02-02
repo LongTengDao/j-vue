@@ -14,7 +14,9 @@ export const TEXT :3 = 3;
 export const COMMENT :8 = 8;
 export const EOF :0 = 0;
 
-const PLAINTEXT = /^plaintext$/i;
+export const PLAINTEXT = /^plaintext$/i;
+export const LISTING = /^listing/i;
+export const XMP = /^xmp$/i;
 
 export function Tag (html :string, position :number, foreign :boolean) {
 	
@@ -63,8 +65,9 @@ export function Tag (html :string, position :number, foreign :boolean) {
 				return { type: ELEMENT_SELF_CLOSING, xName, attributes, end: position+length };
 			}
 			else {
-				if ( VOID_ELEMENTS.test(xName) ) { throw SyntaxError(`.vue 文件中如果出现 HTML void 元素（无论大小写），必须自闭合使用并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`); }
-				if ( PLAINTEXT.test(xName) ) { throw SyntaxError(`${xName} 标签没有结束方式，除非自闭合，否则${xName==='plaintext' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑在其它标签上设置“is="${xName}"”）`); }
+				if ( VOID_ELEMENTS.test(xName) ) { throw SyntaxError(`.vue 文件中如果出现 HTML void 元素（无论大小写；即便已经过时、废弃或是非标准），必须自闭合使用并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`); }
+				if ( PLAINTEXT.test(xName) ) { throw SyntaxError(`已过时的 ${xName} 标签没有结束方式，除非自闭合，否则${xName==='plaintext' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑在其它标签上设置“is="${xName}"”）`); }
+				if ( LISTING.test(xName) ) { throw SyntaxError(`已过时的 ${xName} 标签内容处理方式不定，除非自闭合，否则${xName==='listing' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑在其它标签上设置“is="${xName}"”）`); }
 				return { type: ELEMENT_START, xName, attributes, end: position+length };
 			}
 		}
