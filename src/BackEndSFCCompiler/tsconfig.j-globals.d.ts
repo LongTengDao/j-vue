@@ -13,6 +13,8 @@ declare module '.Date.prototype.valueOf' { export default Date.prototype.valueOf
 declare module '.Error' { export default Error; }
 declare module '.Error?=' { export default Error; }
 
+declare module '.Function.prototype.apply' { export default Function.prototype.apply; }
+
 declare module '.Infinity' { export default Infinity; }
 
 declare module '.Map' { export default constructor;
@@ -75,6 +77,9 @@ declare module '.RangeError' { export default RangeError; }
 declare module '.ReferenceError' { export default ReferenceError; }
 
 declare module '.Reflect.apply' { export default apply;
+	function apply<This extends any, Args extends { length :number, [index :number] :any }, Target extends (this :This, ...args :Args & any[]) => any> (target :Target, thisArg :This, args :Readonly<Args>) :Target extends (this :This, ...args :Args & any[]) => infer R ? R : never;
+}
+declare module '.Reflect.apply?=' { export default apply;
 	function apply<This extends any, Args extends { length :number, [index :number] :any }, Target extends (this :This, ...args :Args & any[]) => any> (target :Target, thisArg :This, args :Readonly<Args>) :Target extends (this :This, ...args :Args & any[]) => infer R ? R : never;
 }
 declare module '.Reflect.construct' { export default construct;

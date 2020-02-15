@@ -1,4 +1,4 @@
-import { groupify } from '@ltd/j-groupify';
+import { groupify } from '@ltd/j-regexp';
 
 import RegExp from '.RegExp';
 import create from '.Object.create';

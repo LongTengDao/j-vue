@@ -10,6 +10,7 @@ declare module '.Array.prototype' { export default Array.prototype; }
 declare module '.Array.prototype.slice' { export default Array.prototype.slice; }
 
 declare module '.Function' { export default Function; }
+declare module '.Function.prototype.apply' { export default Function.prototype.apply; }
 
 declare module '.Infinity' { export default Infinity; }
 
@@ -30,6 +31,10 @@ declare module '.Object.prototype' { export default Object.prototype; }
 declare module '.Object.prototype.hasOwnProperty' { export default Object.prototype.hasOwnProperty; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
 declare module '.Object.seal' { export default Object.seal; }
+
+declare module '.Reflect.apply?=' { export default apply;
+	function apply<This extends any, Args extends { length :number, [index :number] :any }, Target extends (this :This, ...args :Args & any[]) => any> (target :Target, thisArg :This, args :Readonly<Args>) :Target extends (this :This, ...args :Args & any[]) => infer R ? R : never;
+}
 
 declare module '.RegExp' { export default RegExp; }
 

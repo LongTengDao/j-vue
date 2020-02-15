@@ -2,14 +2,14 @@ import undefined from '.undefined';
 import keys from '.Object.keys';
 import freeze from '.Object.freeze';
 
-import { NULL } from '@ltd/j-orderify';
+import { Null } from '@ltd/j-orderify';
 
 import * as Entities from './Entities';
 
 export type EMPTY = undefined;
 export const EMPTY :EMPTY = undefined;
 
-export default class Attributes extends NULL<string> {
+export default class Attributes extends Null<string> {
 	
 	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	

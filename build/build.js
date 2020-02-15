@@ -58,7 +58,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 			'The unified front-end dependency for built .vue files. Belong to "Plan J".'
 		],
 		locate: {
-			'@ltd/j-groupify': ful('../../LongTengDao/j-groupify/dist/ESM/.j-groupify.js'),
+			'@ltd/j-regexp': ful('../../LongTengDao/j-regexp/dist/ESM/.j-regexp.js'),
 			'lib:css-keywords': ful('lib/css-keywords/dist.js'),
 		},
 	});

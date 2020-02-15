@@ -251,6 +251,16 @@ function buffer2object (buffer        , options          )                      
 
 /*¡ j-utf */
 
+const Function_prototype_apply = Function.prototype.apply;
+
+const apply = typeof Reflect==='object' ? Reflect.apply : (
+	/*! j-globals: Reflect.apply (polyfill) */
+	function apply (target, thisArg, args) {
+		return Function_prototype_apply.call(target, thisArg, args);
+	}
+	/*¡ j-globals: Reflect.apply (polyfill) */
+);
+
 const NULL = (
 	/*! j-globals: null.prototype (internal) */
 	Object.create
@@ -263,43 +273,12 @@ const NULL = (
  * 模块名称：j-regexp
  * 模块功能：可读性更好的正则表达式创建方式。从属于“简计划”。
    　　　　　More readable way for creating RegExp. Belong to "Plan J".
- * 模块版本：6.3.0
+ * 模块版本：7.0.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-regexp/issues
  * 项目主页：https://GitHub.com/LongTengDao/j-regexp/
  */
-
-var NT = /[\n\t]/g;
-var SEARCH_ESCAPE = /\\./g;
-function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
-var flags        ;
-var u         ;
-
-function RE (template                      ) {
-	var raw = template.raw;
-	var source = raw[0];
-	for ( var length = arguments.length, index = 1; index<length; ++index ) {
-		var values = arguments[index];
-		source += ( values instanceof RegExp ? values.source : values )+raw[index];
-	}
-	if ( u ) { source = source.replace(SEARCH_ESCAPE, graveAccentReplacer); }
-	return RegExp(source.replace(NT, ''), flags);
-}
-
-function newRegExp (template_flags                               )                                                          {
-	if ( typeof template_flags==='object' ) {
-		flags = '';
-		u = false;
-		return /*#__PURE__*/ RE.apply(null, arguments       );
-	}
-	var U = /*#__PURE__*/ template_flags.indexOf('u')>=0;
-	return function newRegExp (template                      )         {
-		flags = template_flags;
-		u = U;
-		return /*#__PURE__*/ RE.apply(null, arguments       );
-	};
-}
 
 var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
 var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
@@ -347,6 +326,37 @@ function sourcify (group       , needEscape         )         {
 			: '(?:'+branches.join('|')+')'
 		)
 		+( noEmptyBranch ? '' : '?' );
+}
+
+var NT = /[\n\t]/g;
+var SEARCH_ESCAPE = /\\./g;
+function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
+var flags        ;
+var u         ;
+
+function RE (template                      ) {
+	var raw = template.raw;
+	var source = raw[0];
+	for ( var length = arguments.length, index = 1; index<length; ++index ) {
+		var value = arguments[index];
+		source += ( IsArray(value) ? groupify(value, u) : value instanceof RegExp ? value.source : value )+raw[index];
+	}
+	if ( u ) { source = source.replace(SEARCH_ESCAPE, graveAccentReplacer); }
+	return RegExp(source.replace(NT, ''), flags);
+}
+
+function newRegExp (template_flags                               )                                                          {
+	if ( typeof template_flags==='object' ) {
+		flags = '';
+		u = false;
+		return /*#__PURE__*/ apply(RE, null, arguments       );
+	}
+	var U = /*#__PURE__*/ template_flags.indexOf('u')>=0;
+	return function newRegExp (template                      )         {
+		flags = template_flags;
+		u = U;
+		return /*#__PURE__*/ apply(RE, null, arguments       );
+	};
 }
 
 /*¡ j-regexp */
@@ -2929,7 +2939,7 @@ const Default = (
  * 模块名称：j-orderify
  * 模块功能：返回一个能保证给定对象的属性按此后添加顺序排列的 proxy，即使键名是 symbol，或整数 string。从属于“简计划”。
    　　　　　Return a proxy for given object, which can guarantee own keys are in setting order, even if the key name is symbol or int string. Belong to "Plan J".
- * 模块版本：6.0.0
+ * 模块版本：7.0.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-orderify/issues
@@ -2993,15 +3003,13 @@ function newProxy                   (target   , keeper        )    {
 	return proxy;
 }
 
-const { orderify } = {
-	orderify                   (object   )    {
-		if ( proxy2target.has(object) ) { return object; }
-		let proxy = target2proxy.get(object)                 ;
-		if ( proxy ) { return proxy; }
-		proxy = newProxy(object, new Keeper(Reflect_ownKeys(object)));
-		target2proxy.set(object, proxy);
-		return proxy;
-	}
+const orderify =                    (object   )    => {
+	if ( proxy2target.has(object) ) { return object; }
+	let proxy = target2proxy.get(object)                 ;
+	if ( proxy ) { return proxy; }
+	proxy = newProxy(object, new Keeper(Reflect_ownKeys(object)));
+	target2proxy.set(object, proxy);
+	return proxy;
 };
 
 function PartialDescriptor                               (source   )    {
@@ -3021,28 +3029,29 @@ function PartialDescriptor                               (source   )    {
 	return target;
 }
 
-const NULL$1 = /*#__PURE__*/ function (         ) {
-	function throwConstructing ()        { throw TypeError(`Super constructor NULL cannot be invoked with 'new'`); }
-	function throwApplying ()        { throw TypeError(`Super constructor NULL cannot be invoked without 'new'`); }
-	function NULL$1 (            ) {
+const Null$1 = /*#__PURE__*/ function (         ) {
+	function throwConstructing ()        { throw TypeError(`Super constructor Null cannot be invoked with 'new'`); }
+	function throwApplying ()        { throw TypeError(`Super constructor Null cannot be invoked without 'new'`); }
+	function Null (            ) {
 		return new.target
-			? new.target===NULL$1
+			? new.target===Null
 				? /*#__PURE__*/ throwConstructing()
 				: /*#__PURE__*/ newProxy(this, new Keeper)
 			: /*#__PURE__*/ throwApplying();
 	}
-	( NULL$1 ).prototype = null;
-	defineProperty(NULL$1, 'name', assign(create$2(NULL), { value: '' }));
-	//delete NULL.length;
-	freeze(NULL$1);
-	return NULL$1;
+	//@ts-ignore
+	Null.prototype = null;
+	defineProperty(Null, 'name', assign(create$2(NULL), { value: '' }));
+	//delete Null.length;
+	freeze(Null);
+	return Null;
 }()                                           ;
 
 /*¡ j-orderify */
 
 const EMPTY        = undefined$1;
 
-class Attributes extends NULL$1         {
+class Attributes extends Null$1         {
 	
 	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	
