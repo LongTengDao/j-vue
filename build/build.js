@@ -1,17 +1,14 @@
 'use strict';
 
-const ___________________________ = _ => console.info(`\n[${_}]:`) || {};
-
 require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful, map, put }) => {
 	
 	const name = 'j-vue';
 	const Copy = 'LGPL-3.0';
 	const semver = await get('src/version');
 	
-	___________________________`Back-End SFC Compiler: /dist/NPM/*`.___________________________;
-	
 	await build({
 		src: 'src/BackEndSFCCompiler',
+		dist: 'dist/BackEndSFCCompiler',
 		NPM: {
 			description: '.vue single-file component back-end compiler. Belong to "Plan J".／.vue 单文件组件后端编译工具。从属于“简计划”。',
 			dependencies: {
@@ -45,12 +42,9 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 		},
 	});
 	
-	const EDITIONS_README_OF_NPM = await get('dist/README.md');
-	
-	___________________________`Front-End Runtime Dependency: /dist/UMD/*, /dist/ESM/*`.___________________________;
-	
 	await build({
 		src: 'src/FrontEndRuntimeDependency',
+		dist: 'dist/FrontEndRuntimeDependency',
 		UMD: { main_global: 'jVue' },
 		ESM: true,
 		ES: 5,
@@ -68,57 +62,35 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 			'lib:css-keywords': ful('lib/css-keywords/dist.js'),
 		},
 	});
-	
-	const EDITIONS_README_OF_UMD_AND_ESM = await get('dist/README.md');
-	
-	___________________________`Common: /dist/TSD/*, /dist/README.md, /LICENSE*, /docs/*`.___________________________;
-	
-	await map('src/FrontEndRuntimeDependency/module.d.ts', replaceWithVersion(semver), 'dist/TSD/j-vue.d.ts');
-	
-	await put('dist/README.md', mergeEditionsReadme(EDITIONS_README_OF_NPM, EDITIONS_README_OF_UMD_AND_ESM));
+	await map('src/FrontEndRuntimeDependency/module.d.ts', ReplaceWithVersion(semver), 'dist/FrontEndRuntimeDependency/TSD/j-vue.d.ts');
+	await put('dist/FrontEndRuntimeDependency/README.md', mergeEditionsReadme(await get('dist/FrontEndRuntimeDependency/README.md')));
 	
 	await build({ LICENSE_: Copy, DOC: true });
 	
 });
 
-function replaceWithVersion (version) {
+function ReplaceWithVersion (version) {
 	const EXPORT_D_TS = /(?<=(?:^|[\s;}])(?:export|declare)?\s+(?:const|let|var)\s+version\s*:\s*)string(?=\s*(?:[,;\n\r\u2028\u2029]|$))/;
-	return tsd => tsd.replace(EXPORT_D_TS, `'${version}'`);
+	return function replaceWithVersion (tsd) {
+		return tsd.replace(EXPORT_D_TS, `'${version}'`)
+	};
 }
 
-function mergeEditionsReadme (one, another) {
+function mergeEditionsReadme (another) {
 	
-	const [ en_heading, en_table, en_link, cn_heading, cn_table, cn_link ] = one.split('\r\n\r\n');
-	const [ , en_table_, en_links, , cn_table_, cn_links ] = another.split('\r\n\r\n');
+	const [ en_heading, en_table, en_links, cn_heading, cn_table, cn_links ] = another.split('\r\n\r\n');
 	
 	return [
 		
 		en_heading,
-		
-		Heading('Back-End SFC Compiler'),
-		en_table,
-		en_link,
-		
-		Heading('Front-End Runtime Dependency'),
-		Rows(en_table_, '`TSD/j-vue.d.ts`', '[TypeScript][TS-en] module declaration file.'),
+		Rows(en_table, '`TSD/j-vue.d.ts`', '[TypeScript][TS-en] module declaration file.'),
 		en_links,
 		
 		cn_heading,
-		
-		Heading('单文件组件后端编译器'),
-		cn_table,
-		cn_link.replace(/\r\n$/, ''),
-		
-		Heading('前端运行时依赖'),
-		Rows(cn_table_, '`TSD/j-vue.d.ts`', '[TypeScript][TS-zhs] 的模块声明文件。'),
+		Rows(cn_table, '`TSD/j-vue.d.ts`', '[TypeScript][TS-zhs] 的模块声明文件。'),
 		cn_links,
-	
+		
 	].join('\r\n\r\n');
-	
-	function Heading (content) {
-		const NON_ASCII = /[^\x00-\x7F]/ug;
-		return content+'\r\n'+'-'.repeat(content.replace(NON_ASCII, '--').length);
-	}
 	
 	function Rows (rows, th, td) {
 		let index = rows.lastIndexOf('\r\n| `ESM/');

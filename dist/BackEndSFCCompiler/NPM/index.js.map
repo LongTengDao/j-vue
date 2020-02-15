@@ -4,7 +4,7 @@
 	"file":
 		"index.js",
 	"sourceRoot":
-		"../../src/BackEndSFCCompiler/",
+		"../../../src/BackEndSFCCompiler/",
 	"sources":
 		["../version?text","../../../j-es/lib/unicode/dist.js","../../../j-es/src/Literal.ts","../../../j-utf/src/NON_SCALAR.ts","../../../j-utf/src/buffer2object.ts","../../../j-regexp/src/newRegExp.ts","../../../j-groupify/src/groupify.ts","SFC/RE.ts","../../../j-regexp/src/clearRegExp.ts","../../../j-eol/src/export.ts","SFC/Snippet.ts","../../lib/elements/dist.js","../../lib/entities/dist.js","SFC/Entities.ts","../../../j-orderify/src/export.ts","SFC/Attributes.ts","SFC/Tag.ts","dependencies.ts","SFC/Block.ts","SFC/private.ts","SFC/Script.ts","SFC/Style/Sheet/is.ts","SFC/Style/Sheet/TOKEN.ts","SFC/Style/Sheet/Selector.ts","SFC/Style/Sheet/SquareBracketBlock.ts","SFC/Style/Sheet/ParenthesisBlock.ts","SFC/Style/Sheet/Declaration.ts","SFC/Style/Sheet/QualifiedRule.ts","SFC/Style/Sheet/KeyframesRule.ts","SFC/Style/Sheet/AtRule.ts","SFC/Style/Sheet/.ts","SFC/Style/.ts","../FrontEndRuntimeDependency/Scope/KEYS.ts","SFC/INTERNAL.ts","SFC/Params.ts","SFC/Template/Content/Node.ts","SFC/Template/Content/Element.ts","SFC/Template/Content/Text.ts","SFC/Mustache.ts","SFC/Template/Content/.ts","SFC/Template/.ts","SFC/CustomBlock.ts","SFC/parseComponent.ts","SFC/From/Render.ts","SFC/From/.ts","SFC/one.ts","SFC/.ts","default.ts"],
 	"sourcesContent":
