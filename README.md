@@ -163,10 +163,10 @@ new Vue({
     template: Template(`
         <div class="__static__">
             <STYLE> .{{ instancePrivateDynamicScope('dynamic') }} { color:red; } </STYLE>
-            <p :class="{ [instancePrivateDynamicScope('dynamic')]: red }">text</p>
-            <p :class="instancePrivateDynamicScope({ dynamic: red   })">text (object)</p>
-            <p :class="instancePrivateDynamicScope([red && 'dynamic'])">text (array)</p>
-            <p :class="instancePrivateDynamicScope( red && 'dynamic' )">text (arguments)</p>
+            <p :class="{ [instancePrivateDynamicScope( 'dynamic')]: red   }">text</p>
+            <p :class="   instancePrivateDynamicScope({ dynamic   : red  })">text (object)</p>
+            <p :class="   instancePrivateDynamicScope([ red && 'dynamic' ])">text (array)</p>
+            <p :class="   instancePrivateDynamicScope(  red && 'dynamic'  )">text (arguments)</p>
             <button @click="change">change</button>
         </div>
     `, componentSharedStaticScope),
