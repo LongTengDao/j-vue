@@ -29,7 +29,7 @@ abstract class SuperComponent<Sub extends Component<Sub>> extends Mixins<Sub> {
 
 abstract class SubComponent extends SuperComponent<SubComponent> {
     
-    /* method */
+    /* methods */
     
     m () { ++this.d; }
     
@@ -41,7 +41,12 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     get c () { return this.d; }
     set c (value) { this.d = value; }
     
-    /* watch (On prototype for type, starts with `_watch:`) */
+    /* hooks (Non-static for type, starts with `_` wouldn't waste any name and conflict with methods!) */
+    
+    // No conflict to methods and so on, wouldn't waste any name!
+    _created () { this.c; }
+    
+    /* watch (Non-static for type, starts with `_watch:`) */
     
     // watch exp (key) & handler (value)
     '_watch:d' (d :this['d'], old_d :this['d']) { }
@@ -54,32 +59,28 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     set '_watch:placeholder' (d) { }
     
     // watch fn (getter) & handler (setter) (another)
-    get '_watch:placeholder2 (can be any unique words in fact);immediate' () { return this.d; }
-    set '_watch:placeholder2 (can be any unique words in fact);immediate' (d) { }
+    get '_watch:placeholder2 (can be any unique words in fact);immediate' () { return this.#r.value; }
+    set '_watch:placeholder2 (can be any unique words in fact);immediate' (r) { }
     
-    /* hook (On prototype for type, starts with `_`) */
-    
-    // No conflict to methods and so on, wouldn't waste any name!
-    _created () { this.c; }
-    
-    /* inject (On prototype for type, also starts with `_`) */
-    
-    get _inject () { return [ 'i' ] as const; }
-    
-    declare i :0;
-    
-    /* prop */
+    /* props (Non-static for type, also starts with `_`) */
     
     get _props () { return [ 'p' ] as const; }
     
     declare p :0;
+    
+    /* inject (Like props) */
+    
+    get _inject () { return [ 'i' ] as const; }
+    
+    declare i :0;
     
     /* data */
     
     d :number = 0;
     
     // Private field is ok! though not reative directly
-    #p :0 = 0;
+    #p :number = 0;
+    #r :{ value :number } = Vue3.ref(0);
     
     // Really run! With real this!
     constructor (Vue3? :any) {
@@ -89,6 +90,7 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
         this.m;
         this.d;
         this.#p;
+        this.#r.value;
         //this.c;// No computed, because this run during options.data() (compiled by jVue)
         
         // It's possible to set instance level render like options.setup() return in Vue 3:
