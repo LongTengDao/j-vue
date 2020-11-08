@@ -90,19 +90,31 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
         this.d;
         this.#p;
         //this.c;// No computed, because this run during options.data() (compiled by jVue)
-        //return () => Vue3!.h('p', [ this.d ]);// it's possible to return render like options.setup() do in Vue 3
+        
+        // It's possible to set instance level render like options.setup() return in Vue 3:
+        Component.render = () => Vue3!.h('p', [ this.d ]);
     }
     
-    _render () { return arguments.length>1 ? Vue3.h('p', [ this.d ]) : this.$createElement!('p', [ this.d ]); }
+    _render () {
+        return arguments.length>1
+            ? Vue3.h('p', [ this.d ])
+            : this.$createElement!('p', [ this.d ]);
+    }
     
     /* Other options, like multiple ways to write render */
     
-    static render = function render (this :MyComponent) { return arguments.length>1 ? Vue3.h('p', [ this.d ]) : this.$createElement!('p', [ this.d ]); };
+    static render = function render (this :MyComponent) {
+        return arguments.length>1
+            ? Vue3.h('p', [ this.d ])
+            : this.$createElement!('p', [ this.d ]);
+    };
     static staticRenderFns? = [];
     
     static Render = class {
         constructor (Vue3 :any) {
-            return function render (this :MyComponent) { return Vue3.h('p', [ this.d ]); };
+            return function render (this :MyComponent) {
+                return Vue3.h('p', [ this.d ]);
+            };
         }
     } as any;
     
