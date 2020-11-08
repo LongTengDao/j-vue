@@ -72,13 +72,13 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     
     get _props () { return [ 'p' ] as const; }
     
-    declare p :0;
+    declare readonly p :0;
     
     /* inject (Like props) */
     
     get _inject () { return [ 'i' ] as const; }
     
-    declare i :0;
+    declare readonly i :0;
     
     /* data */
     
@@ -87,8 +87,8 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     
     // Hard private field can be used, too! Though not reative directly (Which can also be intended)
     #p :number = 0;
-    #r :{ value :number } = Vue3.ref(0);
-    #c :{ readonly value :number } = Vue3.computed(() => this.#r.value);
+    readonly #r :{ value :number } = Vue3.ref(0);
+    readonly #c :{ readonly value :number } = Vue3.computed(() => this.#r.value);
     
     protected constructor (Vue3? :any) {// Really run once like options.data()! With real this!
         
