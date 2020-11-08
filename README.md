@@ -130,8 +130,8 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     
 };
 
-const vm3 :MyComponent =     Vue3.createApp(MyComponent._(Vue3)). mount('body    ');
-const vm2 :MyComponent = new Vue2          (MyComponent._(    )).$mount('body > *');
+const vm3 :SubComponent =     Vue3.createApp(SubComponent._(Vue3)). mount('body    ');
+const vm2 :SubComponent = new Vue2          (SubComponent._(    )).$mount('body > *');
 
 import * as Vue3 from 'vue@3';
 import      Vue2 from 'vue@2.6.12';
