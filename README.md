@@ -81,20 +81,25 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     // Private field is ok! though not reative directly
     #p :number = 0;
     #r :{ value :number } = Vue3.ref(0);
+    #c :{ readonly value :number } = Vue3.computed(() => this.#r.value);
     
-    // Really run! With real this!
-    constructor (Vue3? :any) {
+    constructor (Vue3? :any) {// Really run once like options.data()! With real this!
+        
         super();
+        
         this.p;
         this.i;
         this.m;
         this.d;
+        //this.c;// No computed, because constructor run inside options.data() (Compiled by jVue)
+        
         this.#p;
         this.#r.value;
-        //this.c;// No computed, because this run during options.data() (compiled by jVue)
+        this.#c.value;
         
-        // It's possible to set instance level render like options.setup() return in Vue 3:
-        Component.render = () => Vue3!.h('p', [ this.d ]);
+        // It's possible to set instance level render like options.setup() returns in Vue 3:
+        super._render = () => Vue3!.h('p', [ this.d ]);
+        
     }
     
     _render () {
