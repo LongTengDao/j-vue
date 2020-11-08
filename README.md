@@ -2,8 +2,14 @@
 jVue
 ====
 
-Class-based TS
---------------
+1\. Class-based TS
+------------------
+
+Vue 工程的类型检查需求，一直是一个大问题。  
+For Vue projects, the requirement of type checking has been a big problem so far.  
+
+现在我们可以像这样使用 TypeScript 和 class 类解决这一问题，且无需任何构建期不透明的额外编译魔法，只需继承来自 `j-vue` 的 `Component`：  
+Now we can use TypeScript and class like this to resolve this problem, without any extra opaque compilation magic at build time, you just need to extend `Component` of `j-vue`:  
 
 ```ts
 import { Component, mixin } from 'j-vue';
@@ -144,8 +150,8 @@ import * as Vue3 from 'vue@3';
 import      Vue2 from 'vue@2.6.12';
 ```
 
-Scoped CSS
-----------
+2\. Scoped CSS
+--------------
 
 前端组件的 CSS 局部作用域需求，一直是一个大问题。  
 For front-end components, the requirement of scoped CSS has been a big problem so far.  
