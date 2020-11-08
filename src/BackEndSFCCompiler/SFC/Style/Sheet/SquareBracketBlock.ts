@@ -12,19 +12,17 @@ export default class SquareBracketBlock extends Array<string> {
 	constructor (parent :QualifiedRule | ParenthesisBlock) {
 		super();
 		this.parent = parent;
+		return this;
 	}
 	
-	appendToken (this :SquareBracketBlock) :SquareBracketBlock | ParenthesisBlock | QualifiedRule | void {
+	appendToken (this :SquareBracketBlock) :SquareBracketBlock | ParenthesisBlock | QualifiedRule | null {
 		switch ( TOKEN.type ) {
 			case ']':
-				const { length } = this;
-				if ( length ) {
-					const last = this[length-1];
-					if ( last===' ' || last==='/**/' ) { this.length = length-1; }
-				}
+				const lastItem = this[this.length-1];
+				( lastItem===' ' || lastItem==='/**/' ) && --this.length;
 				return this.parent;
 			case TOKEN.whitespace:
-				this.length && this.push(' ');
+				this.length && ( this[this.length] = ' ' );
 				return this;
 			case TOKEN.ident:
 			case '~':
@@ -34,12 +32,13 @@ export default class SquareBracketBlock extends Array<string> {
 			case '*':
 			case '=':
 			case TOKEN.string:
-				this.push(TOKEN.literal);
+				this[this.length] = TOKEN.literal;
 				return this;
 			case TOKEN.comment:
-				this.length && this.push('/**/');
+				this.length && ( this[this.length] = '/**/' );
 				return this;
 		}
+		return null;
 	}
 	
 	get cssText () :string { return `[${this.join('')}]`; }
@@ -48,5 +47,5 @@ export default class SquareBracketBlock extends Array<string> {
 
 freeze(SquareBracketBlock.prototype);
 
-type QualifiedRule = import('./QualifiedRule').default;
-type ParenthesisBlock = import('./ParenthesisBlock').default;
+import type QualifiedRule from './QualifiedRule';
+import type ParenthesisBlock from './ParenthesisBlock';

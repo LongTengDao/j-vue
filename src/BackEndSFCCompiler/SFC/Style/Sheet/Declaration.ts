@@ -10,24 +10,25 @@ export default class Declaration extends Array<ParenthesisBlock | string> {// pr
 	
 	readonly parent :DeclarationList | Declarations;
 	readonly name :string;
-	colon :boolean = false;
-	semicolon :boolean = false;
+	private colon :boolean = false;
+	///private semicolon :boolean = false;
 	
 	constructor (parent :DeclarationList | Declarations, name :string) {
 		super();
 		this.parent = parent;
 		this.name = name;
+		return this;
 	}
 	
-	appendToken (this :Declaration) :Sheet | DeclarationList | QualifiedRule | Declarations | Declaration | ParenthesisBlock | void {
+	appendToken (this :Declaration) :Sheet | DeclarationList | QualifiedRule | Declarations | Declaration | ParenthesisBlock | null {
 		if ( this.colon ) {
 			switch ( TOKEN.type ) {
 				case ';':
-					this.semicolon = true;
+					///this.semicolon = true;
 					return this.parent;
 				case TOKEN.function$:
 					const parenthesisBlock = new ParenthesisBlock(this, TOKEN.literal.slice(0, -1));
-					this.push(parenthesisBlock);
+					this[this.length] = parenthesisBlock;
 					return parenthesisBlock;
 				case '}':
 					return this.parent.appendToken() as Sheet | DeclarationList;
@@ -45,13 +46,13 @@ export default class Declaration extends Array<ParenthesisBlock | string> {// pr
 				case TOKEN.dimension:
 				case TOKEN.percentage:
 				case TOKEN.url:
-					this.push(TOKEN.literal);
+					this[this.length] = TOKEN.literal;
 					return this;
 				case TOKEN.whitespace:
-					this.length && this.push(' ');
+					this.length && ( this[this.length] = ' ' );
 					return this;
 				case TOKEN.comment:
-					this.length && this.push('/**/');
+					this.length && ( this[this.length] = '/**/' );
 					return this;
 			}
 		}
@@ -62,31 +63,34 @@ export default class Declaration extends Array<ParenthesisBlock | string> {// pr
 			}
 			if ( TOKEN.type===TOKEN.whitespace || TOKEN.type===TOKEN.comment ) { return this; }
 		}
+		return null;
 	}
 	
 	get cssText () :string {
 		let cssText = '';
-		for ( let index = this.length; index; ) {
+		let index = this.length;
+		while ( index ) {
 			const child = this[--index];
 			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
 		}
 		return `${this.name}:${cssText};`;
 	}
 	
-	* beautify (tab? :string) :Generator<string, void, any> {
+	beautify (this :Declaration, tab? :string) :Generator<string, void, undefined>;
+	* beautify (this :Declaration) :Generator<string, void, undefined> {
 		let cssText = '';
-		for ( let index = this.length; index; ) {
+		let index = this.length;
+		while ( index ) {
 			const child = this[--index];
 			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
 		}
-		yield `${this.name}:${cssText.startsWith(' ') ? '' : ' '}${cssText};`;
+		yield `${this.name}:${cssText[0]===' ' ? '' : ' '}${cssText};`;
 	}
 	
 };
 
 freeze(Declaration.prototype);
 
-type Sheet = import('./').default;
-type DeclarationList = import('./AtRule').DeclarationList;
-type QualifiedRule = import('./QualifiedRule').Declarations;
-type Declarations = import('./QualifiedRule').Declarations;
+import type Sheet from './';
+import type { DeclarationList } from './AtRule';
+import type { default as QualifiedRule, Declarations } from './QualifiedRule';

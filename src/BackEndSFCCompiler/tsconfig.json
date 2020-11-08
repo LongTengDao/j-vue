@@ -1,14 +1,15 @@
 {
 	"compilerOptions": {
+		"useDefineForClassFields": true,
 		"target": "ESNext",
 		"baseUrl": "../..",
 		"paths": {
 			"@ltd/*": [ "../../LongTengDao/*/src/export.d", "../../LongTengDao/*/src/default.d" ],
 			"lib:*": [ "lib/*/dist" ],
-			"acorn": [ "./node_modules/acorn/dist/acorn", "../node_modules/acorn/dist/acorn", "../../node_modules/acorn/dist/acorn", "../../../node_modules/acorn/dist/acorn" ],
-			"rollup": [ "./node_modules/rollup/dist/rollup", "../node_modules/rollup/dist/rollup", "../../node_modules/rollup/dist/rollup", "../../../node_modules/rollup/dist/rollup" ],
-			"terser": [ "./node_modules/terser/tools/terser", "../node_modules/terser/tools/terser", "../../node_modules/terser/tools/terser", "../../../node_modules/terser/tools/terser" ],
-			"vue-template-compiler": [ "./node_modules/vue-template-compiler/types/index" ]
+			"vue-template-compiler": [ "./node_modules/vue-template-compiler/types/index" ],
+			"@vue/compiler-dom": [ "./node_modules/@vue/compiler-dom/dist/compiler-dom" ],
+			"@vue/compiler-core": [ "./node_modules/@vue/compiler-dom/node_modules/@vue/compiler-core/dist/compiler-core" ],
+			"acorn-walk": [ "/node_modules/acorn-walk/dist/walk.d.ts" ]
 		},
 		"strict": true,
 		"noImplicitReturns": true,

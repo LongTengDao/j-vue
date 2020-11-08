@@ -7,16 +7,39 @@ declare module '.Array.isArray?=' { export default isArray;
 	function isArray (value :any) :value is readonly any[];
 }
 declare module '.Array.prototype' { export default Array.prototype; }
-declare module '.Array.prototype.slice' { export default Array.prototype.slice; }
+
+declare module '.Error' { export default Error; }
 
 declare module '.Function' { export default Function; }
 declare module '.Function.prototype.apply' { export default Function.prototype.apply; }
 
 declare module '.Infinity' { export default Infinity; }
 
+declare module '.Map?' { export default constructor;
+	class constructor<K, V> extends Map<K, V> { constructor (entries? :Iterable<{ readonly 0 :K, readonly 1 :V }>) }
+}
+
 declare module '.Math.floor' { export default Math.floor; }
 
-declare module '.Object.assign' { export default Object.assign; }
+declare module '.Object' { export default O;
+	type O = Object;
+	const O :{ [Method in keyof typeof Object] :typeof Object[Method] } & {
+		<T> (value :T) :Objectify<T>;
+		() :object;
+		new<T> (value :T) :Objectify<T>;
+		new () :object;
+	};
+	type Objectify<T> =
+		T extends object ? T :
+		T extends undefined | null ? object :
+		T extends boolean ? object & Boolean :
+		T extends number ? object & Number :
+		T extends string ? object & String :
+		T extends symbol ? object & Symbol :
+		T extends bigint ? object & BigInt :
+		never;
+}
+declare module '.Object.assign?' { export default Object.assign; }
 declare module '.Object.create' { export default create;
 	function create<P extends object | null, D extends TypedPropertyDescriptorMap<object> | void> (proto :P,    descriptorMap? :D) :object & ( D extends TypedPropertyDescriptorMap<infer O> ? O : object ) & ( P extends object ? { [K in keyof P] :P[K] } : object );
 	type TypedPropertyDescriptorMap<O> = { [K in keyof O] :TypedPropertyDescriptor<O[K]> };
@@ -24,16 +47,45 @@ declare module '.Object.create' { export default create;
 declare module '.Object.create?=' { export default create;
 	function create<P extends object | null> (proto :P) :P extends object ? object & { [K in keyof P] :P[K] } : object;
 }
+declare module '.Object.defineProperties' { export default Object.defineProperties; }
 declare module '.Object.defineProperty' { export default Object.defineProperty; }
+declare module '.Object.defineProperty?' { export default Object.defineProperty; }
 declare module '.Object.freeze' { export default Object.freeze; }
-declare module '.Object.preventExtensions' { export default Object.preventExtensions; }
+declare module '.Object.freeze?' { export default Object.freeze; }
+declare module '.Object.getOwnPropertyDescriptor' { export default getOwnPropertyDescriptor;
+	function getOwnPropertyDescriptor<O extends {}, P extends string | symbol> (o :O, p :P) :P extends keyof O ? { value :O[P], writable :boolean, enumerable :boolean, configurable :boolean } | { get? () :O[P], set? (v :O[P]) :void, enumerable :boolean, configurable :boolean } : undefined;
+}
+declare module '.Object.getOwnPropertyDescriptors' { export default Object.getOwnPropertyDescriptors; }
+declare module '.Object.getOwnPropertyNames' { export default getOwnPropertyNames;
+	function getOwnPropertyNames<T extends {}> (nonNullable :T) :Extract<keyof T, string>[];
+}
+declare module '.Object.getOwnPropertySymbols?' { export default getOwnPropertySymbols;
+	function getOwnPropertySymbols<T extends {}> (nonNullable :T) :Extract<keyof T, symbol>[];
+}
+declare module '.Object.getPrototypeOf' { export default getPrototypeOf;
+	function getPrototypeOf<T extends {}> (nonNullable :T) :T & { [K in keyof T]? :T[K] };
+}
+declare module '.Object.keys' { export default keys;
+	function keys<T extends {}> (nonNullable :T) :Extract<keyof T, string>[];
+}
 declare module '.Object.prototype' { export default Object.prototype; }
 declare module '.Object.prototype.hasOwnProperty' { export default Object.prototype.hasOwnProperty; }
+declare module '.Object.prototype.propertyIsEnumerable' { export default Object.prototype.propertyIsEnumerable; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
-declare module '.Object.seal' { export default Object.seal; }
+declare module '.Object.setPrototypeOf' { export default Object.setPrototypeOf; }
 
+declare module '.Reflect.apply?' { export default apply;
+	function apply<This, Args extends readonly any[], Target extends (this :This, ...args :Args) => any> (target :Target, thisArg :This, args :Args) :Target extends (this :This, ...args :Args) => infer R ? R : never;
+}
 declare module '.Reflect.apply?=' { export default apply;
-	function apply<This extends any, Args extends { length :number, [index :number] :any }, Target extends (this :This, ...args :Args & any[]) => any> (target :Target, thisArg :This, args :Readonly<Args>) :Target extends (this :This, ...args :Args & any[]) => infer R ? R : never;
+	function apply<This, Args extends readonly any[], Target extends (this :This, ...args :Args) => any> (target :Target, thisArg :This, args :Args) :Target extends (this :This, ...args :Args) => infer R ? R : never;
+}
+declare module '.Reflect.get?' { export default Reflect.get; }
+declare module '.Reflect.getPrototypeOf?=Object.getPrototypeOf' { export default getPrototypeOf;
+	function getPrototypeOf<Target extends object> (target :Target) :Target & { [Key in keyof Target]? :Target[Key] };
+}
+declare module '.Reflect.ownKeys?' { export default ownKeys;
+	function ownKeys<T extends object> (object :T) :Extract<keyof T, string | symbol>[];
 }
 
 declare module '.RegExp' { export default RegExp; }
@@ -42,24 +94,31 @@ declare module '.String.fromCharCode' { export default String.fromCharCode; }
 
 declare module '.Symbol.species?' { export default Symbol.species; }
 declare module '.Symbol.toStringTag?' { export default Symbol.toStringTag; }
+declare module '.Symbol?' { export default Symbol; }
+
+declare module '.TypeError' { export default TypeError; }
+
+declare module '.WeakMap?' { export default constructor;
+	class constructor<K extends object, V> extends WeakMap<K, V> { constructor (entries? :Iterable<{ readonly 0 :K, readonly 1 :V }>) }
+}
 
 declare module '.class.isPrimitive' { export default isPrimitive;
-	function isPrimitive (value :any) :value is undefined | null | boolean | string | symbol | number | bigint;
+	function isPrimitive<T> (value :T) :T extends object ? false : true;
 }
 
 declare module '.default' { export default Default;
-	function Default<Exports extends Readonly<{ [key :string] :any, default? :Module<Exports> }>> (exports :Exports) :Module<Exports>;
-	function Default<Statics extends Readonly<{ [key :string] :any, default? :ModuleFunction<Statics, Main> }>, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
-	type Module<Exports> = Readonly<Exports & { default :Module<Exports> }>;
-	type ModuleFunction<Statics, Main> = Readonly<Statics & { default :ModuleFunction<Statics, Main> }> & Main;
+	function Default<Exports extends { readonly [name :string] :any, readonly default? :Module<Exports> }> (exports :Exports) :Module<Exports>;
+	function Default<Statics extends { readonly [name :string] :any, readonly default? :ModuleFunction<Statics, Main> }, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
+	type Module<Exports> = Readonly<Exports> & { readonly default :Module<Exports> };
+	type ModuleFunction<Statics, Main> = Readonly<Statics & Main> & { readonly default :ModuleFunction<Statics, Main> };
 	type Callable = (...args :any) => any;
 	type Newable = { new (...args :any) :any };
 }
 declare module '.default?=' { export default Default;
-	function Default<Exports extends Readonly<{ [key :string] :any, default? :Module<Exports> }>> (exports :Exports) :Module<Exports>;
-	function Default<Statics extends Readonly<{ [key :string] :any, default? :ModuleFunction<Statics, Main> }>, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
-	type Module<Exports> = Readonly<Exports & { default :Module<Exports> }>;
-	type ModuleFunction<Statics, Main> = Readonly<Statics & { default :ModuleFunction<Statics, Main> }> & Main;
+	function Default<Exports extends { readonly [name :string] :any, readonly default? :Module<Exports> }> (exports :Exports) :Module<Exports>;
+	function Default<Statics extends { readonly [name :string] :any, readonly default? :ModuleFunction<Statics, Main> }, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
+	type Module<Exports> = Readonly<Exports> & { readonly default :Module<Exports> };
+	type ModuleFunction<Statics, Main> = Readonly<Statics & Main> & { readonly default :ModuleFunction<Statics, Main> };
 	type Callable = (...args :any) => any;
 	type Newable = { new (...args :any) :any };
 }
@@ -69,12 +128,12 @@ declare module '.document.head' { export default document.head; }
 
 declare module '.native' { export default _; const _ :never; }
 
-declare module '.null.PropertyDescriptor' { export default PropertyDescriptor;
-	function PropertyDescriptor<V extends any, W extends boolean, E extends boolean, C extends boolean> (value :V, writable :W, enumerable :E, configurable :C) :{ value :V, writable :W, enumerable :E, configurable :C };
-	function PropertyDescriptor<G extends ( () => any ) | undefined, S extends ( (value :any) => void ) | undefined, E extends boolean, C extends boolean> (get :G, set :S, enumerable :E, configurable :C) :{ get :G, set :S, enumerable :E, configurable :C };
-}
 declare module '.null.prototype' { export default NULL;
 	const NULL :object | null;
+}
+
+declare module '.throw' { export default THROW;
+	function THROW (error :any) :never;
 }
 
 declare module '.undefined' { export default undefined; }

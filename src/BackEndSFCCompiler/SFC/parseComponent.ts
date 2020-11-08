@@ -3,7 +3,7 @@ import checkNewline from '.return';// 如果只限制 script 块正文前面的�
 
 import Snippet from './Snippet';
 import { Tag, ELEMENT_START, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT } from './Tag';
-import Script from './Script';
+import Script, { ScriptSetup } from './Script/';
 import Style from './Style/';
 import Template from './Template/';
 import CustomBlock from './CustomBlock';
@@ -12,7 +12,8 @@ const SCRIPT_STYLE_TEMPLATE = /^(?:script|style|template)$/i;
 const NON_EOL = /[^\n\r\u2028\u2029]+/g;
 const NON_TAB = /[^\t ]/g;
 
-export default function parseComponent (sfc :SFC, vue :string) :void {
+export { parseComponent as default };
+const parseComponent = (sfc :SFC, vue :string) :void => {
 	
 	const eol = sfc.eol || '\n';
 	const eol_0 = eol[0];
@@ -28,7 +29,7 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 				continue;
 			}
 			
-			const tag = Tag(vue, index, false);
+			const tag = Tag(vue, index);
 			switch ( tag.type ) {
 				case ELEMENT_START:
 				case ELEMENT_SELF_CLOSING:
@@ -46,8 +47,10 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 			const blockName :string = tag.xName!;
 			switch ( blockName ) {
 				case 'script':
+					if ( 'setup' in tag.attributes! ? sfc.scriptSetup : sfc.script ) { throw SyntaxError(`一个 .vue 文件中只能有一个 script${'setup' in tag.attributes! ? ' setup' : ''} 块`); }
+					break;
 				case 'template':
-					if ( sfc[blockName] ) { throw SyntaxError(`一个 .vue 文件中只能有一个 ${blockName} 块`); }
+					if ( sfc.template ) { throw SyntaxError(`一个 .vue 文件中只能有一个 template 块`); }
 					break;
 				case 'style':
 					break;
@@ -59,7 +62,7 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 			let inner :string | undefined;
 			if ( tag.type===ELEMENT_START ) {
 				if ( index===length ) { throw SyntaxError(`开始标签后缺少结束标签“</${blockName}>”`); }
-				if ( vue.startsWith(eol_0, index) ) {
+				if ( vue[index]===eol_0 ) {
 					const innerStart = index+eol_length;
 					const endTagStart = vue.indexOf(`${eol}</${blockName}>`, index)+eol_length;
 					if ( endTagStart<eol_length ) { throw SyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`); }
@@ -89,12 +92,22 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 			}
 			
 			if ( blockName==='template' ) { sfc.template = new Template(tag.attributes!, inner); }
-			else if ( blockName==='style' ) { sfc.styles.push(new Style(tag.attributes!, inner)); }
-			else if ( blockName==='script' ) { sfc.script = new Script(tag.attributes!, inner); }
-			else { sfc.customBlocks.push(new CustomBlock(blockName, tag.attributes!, inner)); }
+			else if ( blockName==='style' ) { sfc.styles[sfc.styles.length] = new Style(tag.attributes!, inner); }
+			else if ( blockName==='script' ) {
+				if ( 'setup' in tag.attributes! ) {
+					if ( 'src' in tag.attributes! ) { throw SyntaxError(`src 属性不能使用在 script setup 块上`); }
+					if ( sfc.script && 'src' in sfc.script.attributes ) { throw SyntaxError(`src 属性不能使用在同时具有 script setup 块的 .vue 文件内的 script 块上`); }
+					sfc.scriptSetup = new ScriptSetup(tag.attributes!, inner);
+				}
+				else {
+					if ( 'src' in tag.attributes! && sfc.scriptSetup ) { throw SyntaxError(`src 属性不能使用在同时具有 script setup 块的 .vue 文件内的 script 块上`); }
+					sfc.script = new Script(tag.attributes!, inner);
+				}
+			}
+			else { sfc.customBlocks[sfc.customBlocks.length] = new CustomBlock(blockName, tag.attributes!, inner); }
 			
 			if ( index!==length ) {
-				if ( vue.startsWith(eol_0, index) ) { index += eol_length; }
+				if ( vue[index]===eol_0 ) { index += eol_length; }
 				else if ( !vue.startsWith('<!', index) ) { throw SyntaxError(`顶级标签的结束标签后的同一行内不应有除注释以外的内容`); }
 			}
 			
@@ -107,4 +120,4 @@ export default function parseComponent (sfc :SFC, vue :string) :void {
 	
 };
 
-type SFC = import('./').default;
+import type SFC from './';

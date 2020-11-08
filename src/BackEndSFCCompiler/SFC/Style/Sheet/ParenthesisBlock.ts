@@ -1,40 +1,43 @@
-import Array from '.Array';
+import Splice from '.void.splice';
 import freeze from '.Object.freeze';
 
 import * as TOKEN from './TOKEN';
 import SquareBracketBlock from './SquareBracketBlock';
 
-export default class ParenthesisBlock extends Array<ParenthesisBlock | SquareBracketBlock | TypeSelector | ClassSelector | string> {
+export default class ParenthesisBlock extends Splice<ParenthesisBlock | SquareBracketBlock | TypeSelector | ClassSelector | string> {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.ParenthesisBlock'; }
 	
-	readonly parent :AtRule | QualifiedRule | Declaration | ParenthesisBlock;
-	readonly name :string;
+	readonly parent :ImportRule | AtRule | QualifiedRule | Declaration | ParenthesisBlock;
+	private readonly name :string;
 	
-	constructor (parent :AtRule | QualifiedRule | Declaration | ParenthesisBlock, name :string) {
+	constructor (parent :ImportRule | AtRule | QualifiedRule | Declaration | ParenthesisBlock, name :string) {
 		super();
 		this.parent = parent;
 		this.name = name;
+		return this;
 	}
 	
-	appendToken (this :ParenthesisBlock) :AtRule | QualifiedRule | Declaration | ParenthesisBlock | SquareBracketBlock | void {
+	appendToken (this :ParenthesisBlock) :ImportRule | AtRule | QualifiedRule | Declaration | ParenthesisBlock | SquareBracketBlock | null {
 		switch ( TOKEN.type ) {
 			case TOKEN.whitespace:
-				this.push(' ');
+				this.length && ( this[this.length] = ' ' );
 				return this;
 			case TOKEN.function$:
 			case '(':
 				const parenthesisBlock = new ParenthesisBlock(this, TOKEN.literal.slice(0, -1));
-				this.push(parenthesisBlock);
+				this[this.length] = parenthesisBlock;
 				return parenthesisBlock;
 			case '[':
 				const squareBracketBlock = new SquareBracketBlock(this);
-				this.push(squareBracketBlock);
+				this[this.length] = squareBracketBlock;
 				return squareBracketBlock;
 			case ')':
+				const lastItem = this[this.length-1];
+				( lastItem===' ' || lastItem==='/**/' ) && --this.length;
 				return this.parent;
 			case TOKEN.comment:
-				this.push('/**/');
+				this.length && ( this[this.length] = '/**/' );
 				return this;
 			case ']':
 			case '{':
@@ -48,16 +51,39 @@ export default class ParenthesisBlock extends Array<ParenthesisBlock | SquareBra
 			case '&':
 			case '%':
 			case TOKEN.at_keyword:
-				return;
+				return null;
+			/*
+			case TOKEN.ident:
+			case TOKEN.hash:
+			case TOKEN.string:
+			case TOKEN.number:
+			case TOKEN.dimension:
+			case TOKEN.percentage:
+			case TOKEN.url:
+			case '!':
+			case '$':
+			case '*':
+			case '+':
+			case ',':
+			case '-':
+			case '.':
+			case '/':
+			case ':':
+			case '>':
+			case '?':
+			case '|':
+			case '~':
+			*/
 		}
-		this.push(TOKEN.literal);
+		this[this.length] = TOKEN.literal;
 		return this;
 	}
 	
 	get cssText () :string {
 		let cssText = '';
-		for ( let index = this.length; index; ) {
-			const child = this[--index];
+		let index = this.length;
+		while ( index ) {
+			const child = this[--index]!;
 			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
 		}
 		return `${this.name}(${cssText})`;
@@ -67,8 +93,9 @@ export default class ParenthesisBlock extends Array<ParenthesisBlock | SquareBra
 
 freeze(ParenthesisBlock.prototype);
 
-type AtRule = import('./AtRule').default;
-type QualifiedRule = import('./QualifiedRule').default;
-type Declaration = import('./Declaration').default;
-type TypeSelector = import('./Selector').TypeSelector;
-type ClassSelector = import('./Selector').ClassSelector;
+import type ImportRule from './ImportRule';
+import type AtRule from './AtRule';
+import type QualifiedRule from './QualifiedRule';
+import type Declaration from './Declaration';
+import type { TypeSelector } from './Selector';
+import type { ClassSelector } from './Selector';

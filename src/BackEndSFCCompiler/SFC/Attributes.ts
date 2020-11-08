@@ -1,6 +1,5 @@
-import undefined from '.undefined';
 import keys from '.Object.keys';
-import freeze from '.Object.freeze';
+import undefined from '.undefined';
 
 import { Null } from '@ltd/j-orderify';
 
@@ -10,6 +9,8 @@ export type EMPTY = undefined;
 export const EMPTY :EMPTY = undefined;
 
 export default class Attributes extends Null<string> {
+	
+	constructor () { return super() as unknown as this; }
 	
 	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	
@@ -25,8 +26,6 @@ export default class Attributes extends Null<string> {
 		return literal;
 	}
 	
+	static 'default' = Null(Attributes);
+	
 };
-
-delete Attributes.prototype.constructor;
-
-freeze(Attributes.prototype);

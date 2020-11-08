@@ -4,10 +4,13 @@ export class TypeSelector {
 	
 	readonly parent :QualifiedRule | ParenthesisBlock;
 	cssText :string;
+	readonly ns_ :boolean;
 	
-	constructor (parent :QualifiedRule | ParenthesisBlock, literal :string) {
+	constructor (parent :QualifiedRule | ParenthesisBlock, literal :string, ns_ :boolean) {
 		this.parent = parent;
 		this.cssText = literal;
+		this.ns_ = ns_;
+		return this;
 	}
 	
 }
@@ -22,6 +25,7 @@ export class ClassSelector {
 	constructor (parent :QualifiedRule | ParenthesisBlock, literal :string) {
 		this.parent = parent;
 		this.literal = literal;
+		return this;
 	}
 	
 	get cssText () { return `.${this.literal}`; }
@@ -30,5 +34,5 @@ export class ClassSelector {
 
 freeze(ClassSelector.prototype);
 
-type QualifiedRule = import('./QualifiedRule').default;
-type ParenthesisBlock = import('./ParenthesisBlock').default;
+import type QualifiedRule from './QualifiedRule';
+import type ParenthesisBlock from './ParenthesisBlock';

@@ -13,68 +13,71 @@ export default class KeyframesRule extends Array<QualifiedRule> {
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.KeyframesRule'; }
 	
 	readonly parent :Sheet | DeclarationList;
-	private readonly keyword :string;
+	readonly #keyword :string;
 	keyframesNameLiteral :string = '';
-	private blocked :boolean = false;
+	#blocked :boolean = false;
 	get block () { return true as const; }
 	
 	constructor (parent :Sheet | DeclarationList, keyword :string) {
 		super();
 		this.parent = parent;
-		this.keyword = keyword;
+		this.#keyword = keyword;
+		return this;
 	}
 	
-	appendToken (this :KeyframesRule) :Sheet | DeclarationList | KeyframesRule | QualifiedRule | void {
+	appendToken (this :KeyframesRule) :Sheet | DeclarationList | KeyframesRule | QualifiedRule | null {
 		switch ( TOKEN.type ) {
 			case TOKEN.whitespace:
 			case TOKEN.comment:
 				return this;
 			case TOKEN.ident:
-				if ( this.blocked ) {
-					if ( !is.from(TOKEN.literal) && !is.to(TOKEN.literal) ) { return; }
+				if ( this.#blocked ) {
+					if ( !is.from(TOKEN.literal) && !is.to(TOKEN.literal) ) { break; }
 					const qualifiedRule = new QualifiedRule(this);
-					this.push(qualifiedRule);
+					this[this.length] = qualifiedRule;
 					return qualifiedRule.appendToken(true) as QualifiedRule;
 				}
 				else {
 					const { keyframesNameLiteral } = this;
-					if ( keyframesNameLiteral ) { return; }
-					if ( is.none(TOKEN.literal) || notCustomIdent(TOKEN.literal) ) { return; }
+					if ( keyframesNameLiteral ) { break; }
+					if ( is.none(TOKEN.literal) || notCustomIdent(TOKEN.literal) ) { break; }
 					this.keyframesNameLiteral = TOKEN.literal;
 					return this;
 				}
 			case TOKEN.string:
-				if ( this.keyframesNameLiteral ) { return; }
+				if ( this.keyframesNameLiteral ) { break; }
 				this.keyframesNameLiteral = TOKEN.literal;
 				return this;
 			case '{':
-				if ( !this.keyframesNameLiteral || this.blocked ) { return; }
-				this.blocked = true;
+				if ( !this.keyframesNameLiteral || this.#blocked ) { break; }
+				this.#blocked = true;
 				return this;
 			case '}':
-				if ( !this.blocked ) { return; }
+				if ( !this.#blocked ) { break; }
 				return this.parent;
 			case TOKEN.percentage:
-				if ( !this.blocked ) { return; }
+				if ( !this.#blocked ) { break; }
 				const qualifiedRule = new QualifiedRule(this);
-				this.push(qualifiedRule);
+				this[this.length] = qualifiedRule;
 				return qualifiedRule.appendToken() as QualifiedRule;
 		}
+		return null;
 	}
 	
 	get cssText () :string {
 		const { keyframesNameLiteral } = this;
 		let blockText = '';
-		for ( let index = this.length; index; ) {
-			blockText = this[--index].cssText+blockText;
-		}
-		return `@${this.keyword}${keyframesNameLiteral.startsWith('"') || keyframesNameLiteral.startsWith('\'') ? '' : ' '}${keyframesNameLiteral}{${blockText}}`;
+		let index = this.length;
+		while ( index ) { blockText = this[--index].cssText+blockText; }
+		return `@${this.#keyword}${keyframesNameLiteral[0]==='"' || keyframesNameLiteral[0]==='\'' ? '' : ' '}${keyframesNameLiteral}{${blockText}}`;
 	}
 	
-	* beautify (this :KeyframesRule, tab :string = '\t') :Generator<string, void, any> {
-		yield `@${this.keyword} ${this.keyframesNameLiteral} {`;
-		for ( let index = 0, { length } = this; index<length; ++index ) {
-			for ( const line of this[index].beautify(tab) ) {
+	* beautify (this :KeyframesRule, tab :string = '\t') :Generator<string, void, undefined> {
+		yield `@${this.#keyword} ${this.keyframesNameLiteral} {`;
+		const { length } = this;
+		let index = 0;
+		while ( index!==length ) {
+			for ( const line of this[index++].beautify(tab) ) {
 				yield tab+line;
 			}
 		}
@@ -85,5 +88,5 @@ export default class KeyframesRule extends Array<QualifiedRule> {
 
 freeze(KeyframesRule.prototype);
 
-type Sheet = import('./').default;
-type DeclarationList = import('./AtRule').DeclarationList;
+import type Sheet from './';
+import type { DeclarationList } from './AtRule';

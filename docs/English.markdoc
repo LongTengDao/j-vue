@@ -48,26 +48,28 @@ Back-End SFC Compiler
 			
 			When the second parameter `from` is string or default, it will be used as the module id to introduce the jVue front-end runtime dependency library.
 			
-			Then here is going to generate the component's `dynamicScope` (or `staticScope`)、`template`、`render`、`staticRenderFns` self using information export string, according to the contents in `template` and `style` blocks or their `src' attribute.
-			The exports of `j-vue` will be exported too, to make them simply to use.
+			Then here is going to generate the component's `scopeFunction` (or `scopeObject`), `template`, `Render`, `render`, `staticRenderFns` self using information export string, according to the contents in `template` and `style` blocks or their `src' attribute.
+			`Identifier`, `Scope`, `Style`, `remove`, `Component`, `mixin` of `j-vue` will be exported too, to make them simply to use.
 			Module content is similar to this:
 			
 			```	.js
-				import { Scope, Template, Render, StaticRenderFns } from 'j-vue';
-				export var dynamicScope = Scope();
-				export var template = Template('<div />', dynamicScope);
-				export var render = Render('_vm,_c("div")', dynamicScope);
-				export var staticRenderFns = StaticRenderFns([], dynamicScope);
-				export * from 'j-vue';
+				import * as jVue from 'j-vue';
+				export var scopeFunction   = /*#__PURE__*/ jVue.Scope();
+				export var template        = /*#__PURE__*/ jVue.Template('<br />', scopeFunction);
+				export var Render          = /*#__PURE__*/ jVue.Render('({ h }){ return function render () { return h("br") }; }', scopeFunction);
+				export var render          = /*#__PURE__*/ jVue.Render('return this.$createElement("br");', scopeFunction);
+				export var staticRenderFns = /*#__PURE__*/ jVue.StaticRenderFns([], scopeFunction);
+				export { Identifier, Scope, Style, remove, Component, mixin } from 'j-vue';
 			
-			When use `const` or `let`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.
+			When use `'const'` or `'let'`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.
 			
 			When the second parameter `from` is `null`, `template` and `style` blocks won't be scoped (usually used in Shadow DOM). In this case, the export content is:
 			
 			```	.js
-				export var styles = [];
-				export var template = '<div />';
-				export var render = function () { var _vm = this, _c = _vm._self_c; return _c('div'); };
+				export var styles          = [];
+				export var template        = '<br />';
+				export var Render          = class Render { constructor ({ h }) { return function render () { return h('br'); }; } };
+				export var render          = function render () { return this.$createElement('br'); };
 				export var staticRenderFns = [];
 			
 			Note: If there is a `lang` attribute which value is other than `html` (or semantic similar) in the `template` block, or any `style` block has a `lang` attribute which value is other than `css` (or semantic similar), then the user must transpile (its `inner` property value) and set to its `innerHTML` / `innerCSS` property.
@@ -144,7 +146,7 @@ Front-End Runtime Dependency
 			This function allows you to use another `scope` as `this`. In this case, the new `scope` returned will "extend" `this`.
 			`this` can also be an `Array` of `scope`. In this case, the new `scope` returned will "extend" an `scope` which mixed all these `scope` in.
 			
-		<RE>	`/__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig`
+		<RE>	`/__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/gi`
 			
 		`jVue.Style(css[, scope])`
 		--------------------------	
@@ -153,7 +155,7 @@ Front-End Runtime Dependency
 			
 			The parameter `css` is a `string`, as the content of the `<style>` created.
 			
-			If the second parameter `scope` exists, all parts matching <RE> in parameter `css` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
+			If the second parameter `scope` exists, all parts matching <RE> in parameter `css` will be tried to be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
 			
 		`jVue.remove(style)`
 		--------------------	
@@ -165,66 +167,20 @@ Front-End Runtime Dependency
 		`jVue.Template(html, scope)`
 		----------------------------	
 			
-			The parameter `html` is a `string`, all parts matched <RE> in `html` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`, then return.
+			The parameter `html` is a `string`, all parts matched <RE> in `html` will be tried to be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`, then return.
 			
 		`jVue.Render(code[, scope])`
 		----------------------------	
 			
-			The parameter `code` is a `string`, and the value returned is <Fn>.
+			The parameter `code` is a `string`, and the value returned is <renderOrRender>.
 			
-			If the second parameter `scope` exists, all parts matched <RE> in `code` will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
+			If the second parameter `scope` exists, all parts matched <RE> in `code` will be tried to be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
 			
-		<Fn>	`Function( code.replace( /^([^,]*),([^(]*)\(([^]*)\)$/, (_vm, _c, args) => ` "use strict"; var ${_vm && _vm+' = this, '}${_c} = this._self._c; return ${_c}(${args}); ` ) )`
+		<renderOrRender>	`Function( code[0]==='(' ? 'return class { constructor ' + code + ' };' : 'return function () { ' + code + ' };' )()`
 			
 		`jVue.StaticRenderFns(codes[, scope])`
 		--------------------------------------	
 			
-			The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using <Fn> to generate each one).
+			The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using <renderOrRender> to generate each one).
 			
-			If the second parameter `scope` exists, then all parts matched <RE> in each `string`, will be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
-			
-		`jVue.STYLE`
-		------------	
-			
-			Because `Vue` disables the inclusion of `<style>` elements in component templates, this is inconvenient in the case that we have already handled the component-scoped `CSS` on our own.
-			`jVue` provides a simple component:
-			
-			```	.js
-				({
-					functional: true,
-					render: function render (createElement, context) {
-						return createElement('style', context.data, context.children);
-					}
-				})
-			
-			You can put it into the `components` of your component, or register it global, then do like this:
-			
-			```	.html
-				<STYLE v-text="`
-					.scoped-preview-area-selector { background-color:${ theme_color }; }
-				`" />
-				<STYLE v-text="computedPropertyCSS" />
-			
-			Or do this (note that the content between tags will be treated as `HTML` fragment by `Vue`, so this is more suitable for simple cases without `<` and such things, or properly handle `HTML` entries escaping):
-			
-			```	.html
-				<STYLE>
-					.scoped-preview-area-selector { background-color:{{ theme_color }}; }
-				</STYLE>
-			
-			Note: The reactivity of `Vue` is asynchronous naturally, so if you need high reactivity, then you must do like this (note that the reference of functional component is `<style>` element directly, not a `Vue` instance, so don't fetch that through `.$el`):
-			
-			```	.js
-				({
-					template: `
-						<div @scroll="onScroll">
-							<STYLE ref="sheet" />
-						</div>`,
-					methods: {
-						onScroll () {
-							this.$refs.sheet.textContent = `
-								.scoped-selector { top:${ this.$el.scrollTop }; }
-							`;
-						}
-					}
-				})
+			If the second parameter `scope` exists, then all parts matched <RE> in each `string`, will be tried to be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.

@@ -1,48 +1,37 @@
+import Error from '.Error';
+import RegExp from '.RegExp';
 import Proxy from '.Proxy';
-import create from '.Object.create';
-import NULL from '.null.prototype';
 
-export { DEFAULT as default };
+if ( /k/i.test('\u212A') || /s/i.test('\u017F') ) { throw Error(`ks`); }
+
+export { DEFAULT as default, IMPORT as import };
 export const {
 	
 	charset,
-	import: _import,
+	IMPORT,
 	namespace,
 	media,
 	page,
 	'font-face': font_face,
-	//keyframes,
+	'*keyframes': keyframes,
 	supports,
 	document,
 	
-	url,
-	'prefix(': prefix_,
+	'url-prefix(': url_prefix_,
 	'domain(': domain_,
 	
 	from,
 	to,
 	none,
-	default: DEFAULT,
+	DEFAULT,
 	inherit,
 	initial,
 	unset,
 	
-} = new Proxy(create(NULL) as { [keyword :string] :(text :string) => boolean }, {
+} = new Proxy({} as { [keyword :string] :(text :string) => boolean }, {
 	get (is, keyword :string) {
-		const KEYWORD = keyword.toUpperCase();
-		const { length } = keyword;
-		return is[keyword] = function (text :string) :boolean {
-			if ( text.length!==length ) { return false; }
-			let index = 0;
-			do {
-				const char = text[index];
-				if ( char!==keyword[index] && char!==KEYWORD[index] ) { return false; }
-			}
-			while ( ++index<length )
-			return true;
-		};
+		keyword = keyword.toLowerCase();
+		const KEYWORD = RegExp('^' + keyword.replace('(', '\\(').replace('*', '(?:-[a-z][\\da-z]*-)?') + '$', 'i');
+		return { [keyword]: (text :string) :boolean => KEYWORD.test(text) }[keyword];
 	}
 });
-
-const _KEYFRAMES = /^(?:-[A-Za-z][\dA-Za-z]*-)?[kK][eE][yY][fF][rR][aA][mM][eE][sS]$/;
-export const _keyframes = (keyword :string) => _KEYFRAMES.test(keyword);

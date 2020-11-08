@@ -1,9 +1,9 @@
-import undefined from '.undefined';
 import Error from '.Error';
 import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
 import create from '.Object.create';
 import freeze from '.Object.freeze';
+import undefined from '.undefined';
 import NULL from '.null.prototype';
 
 import { newRegExp } from '@ltd/j-regexp';
@@ -12,30 +12,67 @@ import KEYS from '../../../FrontEndRuntimeDependency/Scope/KEYS';
 
 import _ from '../private';
 import Block from '../Block';
-import Content from './Content/';
+import Content, { compatible_render as _compatible_render } from './Content/';
 import Element from './Content/Element';
-import { ASCII_WHITESPACE as s, TOKENS, AliasName, localOrComponentName, className, TAG_EMIT_CHAR, TAG_LIKE, isLocalOrComponentName } from '../RE';
+import { ASCII_WHITESPACE as s, TOKENS, AliasName, localOrComponentNameWithoutDot, className, TAG_EMIT_CHAR, TAG_LIKE, isLocalOrComponentNameDotable, NameAs__Key__ } from '../RE';
 import { EMPTY } from '../Attributes';
 import { DELIMITERS_0, DELIMITERS_1 } from '../Mustache';
 
 const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
-const PARTIAL = newRegExp('u')`^
+/* AliasName: */const PARTIAL = newRegExp('u')`^
 	${s}*(?:
 		${AliasName}${s}*
 		=${s}*
-			${localOrComponentName}
+			${localOrComponentNameWithoutDot}
 			(?:(?:\.${className})*|\.?)
 		${s}*;
 	${s}*)*
 $`;
-const PARTIAL_WITH_TAG = newRegExp('u')`^
+/* AliasName: */const PARTIAL_WITH_TAG = newRegExp('u')`^
 	${s}*(?:
 		${AliasName}${s}*;
 	${s}*)*
 $`;
 
 const HTML = newRegExp('i')`^(?:HTML|${s}*text/html${s}*)$`;
+
+export let compatible_render :boolean = true;
+
+const isVue2Compatible = (content :Content) => {
+	let index = 0;
+	for ( const { length } = content; index!==length; ) {
+		const child = content[index++];
+		if ( !( child instanceof Element ) ) {
+			return false;//throw Error(`从 Vue 2 开始，组件的 template 的根节点必须是元素节点`);
+		}
+		if ( child.localName==='template' || child.localName==='slot' ) {
+			return false;//throw Error(`从 Vue 2 开始，组件的 template 的根节点必须是元素节点，且不能为 template 或 slot 元素`);
+		}
+	}
+	if ( content.length!==1 ) {
+		if ( !content.length ) {
+			return false;//throw Error(`从 Vue 2 开始，组件的 template 中不得为空`);
+		}
+		if ( 2 ) {///
+			if ( !( 'v-if' in ( content[0] as Element ).attributes ) ) {
+				return false;//throw Error(`Vue 2 只允许组件的 template 存在一个根节点`);
+			}
+			const lastIndex = content.length - 1;
+			let index = 1;
+			while ( index!==lastIndex ) {
+				if ( !( 'v-else-if' in ( content[index++] as Element ).attributes ) ) {
+					return false;//throw Error(`Vue 2 只允许组件的 template 存在一个根节点`);
+				}
+			}
+			const { attributes } = content[lastIndex] as Element;
+			if ( !( 'v-else-if' in attributes ) && !( 'v-else' in attributes ) ) {
+				return false;//throw Error(`Vue 2 只允许组件的 template 存在一个根节点`);
+			}
+		}
+	}
+	return true;
+};
 
 export default class Template extends Block {
 	
@@ -44,14 +81,20 @@ export default class Template extends Block {
 	constructor (attributes :Attributes, inner :string | undefined) {
 		
 		if ( inner!==undefined && attributes.lang && !HTML.test(attributes.lang) ) {
-			if ( TAG_LIKE.test(inner) ) { throw SyntaxError(`.vue 文件的 template 块（非 html 状态下）中，存在可能使得正常结束判定结果模糊的标签语法标记`); }
+			if ( TAG_LIKE.test(inner) ) { throw SyntaxError(`.vue 文件的 template 块（非 html 状态下）中，存在标签语法标记，这可能模糊正常结束判定的结果`); }
 			super('template', attributes, true, inner, TEMPLATE_END_TAG);
 		}
 		else {
 			super('template', attributes, true, inner, null);
 		}
 		
-		const _this :Private = _(this);
+		if ( 'functional' in attributes ) {
+			throw Error(`jVue 暂未支持编译 functional template，因为无法设想这种实际场景，从而也无法进行相应的功能设计，且该功能在 Vue 3 中已经被废弃`);
+			//if ( attributes.functional!==EMPTY ) { throw SyntaxError(`template 功能块元素的 functional 属性必须是空属性`); }
+			//_this.functional = true;
+		}
+		
+		const _this :Private = _.new(this);
 		
 		if ( '.keys' in attributes ) {
 			const _keys = attributes['.keys'];
@@ -67,16 +110,17 @@ export default class Template extends Block {
 			if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 功能块的“.abbr”属性语法错误：\n${literal}`); }
 			const abbr = _this.abbr = create(NULL) as Partial;
 			const pairs = literal.split(';');
-			for ( let index = pairs.length; index; ) {
+			let index = pairs.length;
+			while ( index ) {
 				const tokens = pairs[--index].match(TOKENS);
 				if ( tokens ) {
 					const xName :string = tokens[0];
 					if ( xName in abbr ) { throw SyntaxError(`template 功能块的“.abbr”属性值中存在重复的条目“${xName}”`); }
-					const localName_class :string[] = tokens[1].split('.');
+					const localName_class = tokens[1].split('.');
 					abbr[xName] = {
 						tagName: localName_class.shift()!,
 						class: localName_class.length
-							? localName_class.join(' ') || `__${xName}__`
+							? localName_class.join(' ') || NameAs__Key__(xName)
 							: '',
 					};
 				}
@@ -85,32 +129,27 @@ export default class Template extends Block {
 		for ( const name in attributes ) {
 			if ( name.startsWith('.abbr:') ) {
 				const tagName = name.slice(6);
-				if ( !isLocalOrComponentName(tagName) ) { throw SyntaxError(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
-				const abbr = _this.abbr || ( _this.abbr = create(NULL) as Partial );
+				if ( tagName!=='_' && !isLocalOrComponentNameDotable(tagName) ) { throw SyntaxError(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
+				const abbr = _this.abbr ?? ( _this.abbr = create(NULL) as Partial );
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError(`template 功能块的无值“.abbr:*”属性只能有一个`); }
-					abbr[''] = { tagName, class: '____' };
+					abbr[''] = { tagName };
 				}
 				else {
 					if ( !PARTIAL_WITH_TAG.test(literal) ) { throw SyntaxError(`template 功能块的“${name}”属性语法错误：\n${literal}`); }
 					const pairs = literal.split(';');
-					for ( let index = pairs.length; index; ) {
+					let index = pairs.length;
+					while ( index ) {
 						const tokens = pairs[--index].match(TOKENS);
 						if ( tokens ) {
 							const xName :string = tokens[0];
 							if ( xName in abbr ) { throw SyntaxError(`template 功能块的“${name}”属性值中存在重复的条目“${xName}”`); }
-							abbr[xName] = { tagName, class: `__${xName}__` };
+							abbr[xName] = { tagName, class: NameAs__Key__(xName) };
 						}
 					}
 				}
 			}
-		}
-		
-		if ( 'functional' in attributes ) {
-			throw Error(`jVue 暂未支持编译 functional template，因为无法设想这种实际场景，从而也无法进行相应的功能设计`);
-			//if ( attributes.functional!==EMPTY ) { throw SyntaxError(`template 功能块元素的 functional 属性必须是空属性`); }
-			//_this.functional = true;
 		}
 		
 		let notYet = true;
@@ -130,6 +169,8 @@ export default class Template extends Block {
 			_this.delimiters_0 = DELIMITERS_0;
 			_this.delimiters_1 = DELIMITERS_1;
 		}
+		
+		return this;
 		
 	}
 	
@@ -151,12 +192,11 @@ export default class Template extends Block {
 	
 	get innerHTML () :string {
 		const { content } = this;
-		if ( content.length!==1 ) { throw Error(`Vue 从 2.0 开始，只允许组件的 template 存在一个根节点`); }
-		if ( !( content.firstChild instanceof Element ) ) { throw Error(`Vue 从 2.0 开始，组件的 template 的根节点必须是元素节点`); }
+		compatible_render = _compatible_render && isVue2Compatible(content);
 		return content.outerHTML;
 	}
 	set innerHTML (value :string) {
-		if ( typeof <unknown> value!=='string' ) { throw TypeError(`innerHTML 只能被赋值字符串`); }
+		if ( typeof ( value as unknown )!=='string' ) { throw TypeError(`innerHTML 只能被赋值字符串`); }
 		_(this).innerHTML = value;
 	}
 	
@@ -165,14 +205,16 @@ export default class Template extends Block {
 freeze(Template.prototype);
 
 export type Private = object & {
+	shadow? :string
 	abbr? :Partial
 	keys? :string[]
-	functional? :boolean
+	//functional? :boolean
 	cache? :string
 	content? :Content
 	innerHTML? :string
 	delimiters_0 :string
 	delimiters_1 :string
 };
-export type Partial = { [xName :string] :{ tagName :string, class :string } };
-type Attributes = import('../Attributes').default;
+export type Partial = { [xName :string] :{ readonly tagName :string, readonly class :string } } & { '' :{ readonly tagName :string } };
+
+import type Attributes from '../Attributes';

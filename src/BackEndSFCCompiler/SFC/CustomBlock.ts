@@ -1,7 +1,7 @@
 import SyntaxError from '.SyntaxError';
+import RegExp from '.RegExp';
 import freeze from '.Object.freeze';
 import undefined from '.undefined';
-import RegExp from '.RegExp';
 
 import { ESCAPABLE_RAW_TEXT_ELEMENTS } from 'lib:elements';
 
@@ -14,12 +14,12 @@ export default class CustomBlock extends Block {
 	
 	constructor (blockName :string, attributes :Attributes, inner :string | undefined) {
 		if ( inner===undefined ) {
-			super(blockName, attributes, false, inner, null);
+			return super(blockName, attributes, false, inner, null) as unknown as this;
 		}
 		else {
 			if ( ESCAPABLE_RAW_TEXT_ELEMENTS.test(blockName) ) { throw SyntaxError(`.vue 文件中的自定义块尚没有明确的语义约定，请避免使用 textarea / title 标签及其大小写变种`); }
-			if ( TAG_LIKE.test(inner) ) { throw SyntaxError(`.vue 文件的 ${blockName} 自定义块中，存在可能使得正常结束判定结果模糊的标签语法标记`); }
-			super(blockName, attributes, false, inner, new RegExp(`^</${blockName}${TAG_EMIT_CHAR}`, 'i'));
+			if ( TAG_LIKE.test(inner) ) { throw SyntaxError(`.vue 文件的 ${blockName} 自定义块中，存在标签语法标记，这可能模糊正常结束判定的结果`); }
+			return super(blockName, attributes, false, inner, new RegExp(`^</${blockName}${TAG_EMIT_CHAR}`, 'i')) as unknown as this;
 		}
 	}
 	
@@ -27,4 +27,4 @@ export default class CustomBlock extends Block {
 
 freeze(CustomBlock.prototype);
 
-type Attributes = import('./Attributes').default;
+import type Attributes from './Attributes';

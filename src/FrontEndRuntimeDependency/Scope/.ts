@@ -20,7 +20,7 @@ function mix (protos :Scope[]) :StaticScope {
 
 type Scope = StaticScope | DynamicScope;
 
-function Scope (this :Scope[] | Scope | any, keys? :string) :Scope {
+function Scope (this :void | Scope[] | Scope, keys? :string) :Scope {
 	if ( keys===undefined ) {
 		if ( isArray(this) ) { return DynamicScope(mix(this as Scope[])); }
 		else if ( this instanceof StaticScope ) { return DynamicScope(create(this)); }

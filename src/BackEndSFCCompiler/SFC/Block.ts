@@ -27,6 +27,7 @@ export default abstract class Block<BlockName extends string = string> {
 			}
 			if ( END_TAG && END_TAG.test(inner) ) { throw SyntaxError(`“${blockName}”块内包含疑似结束标签的内容（注意 .vue 文件需要确保单行/多行解析模式与传统 HTML 流式解析的结果一致）`); }
 		}
+		return this;
 	}
 	
 	readonly blockName :BlockName;
@@ -39,4 +40,4 @@ export default abstract class Block<BlockName extends string = string> {
 
 freeze(Block.prototype);
 
-type Attributes = import('./Attributes').default;
+import type Attributes from './Attributes';

@@ -9,6 +9,7 @@ abstract class CharacterData extends Node {
 		super();
 		this.void();
 		this.data = data;
+		return this;
 	}
 	
 	//get length () :number { return this.data.length; }
@@ -21,11 +22,9 @@ freeze(CharacterData.prototype);
 
 export default class Text extends CharacterData {
 	
-	protected get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
 	
-	constructor (data :string = '') {
-		super(data);
-	}
+	constructor (data :string = '') { return super(data) as unknown as this; }
 	
 	//get wholeText () :string { return this.data; }
 	
@@ -33,10 +32,28 @@ export default class Text extends CharacterData {
 		return Entities.escapeInnerText(this.data);
 	}
 	
-	* beautify (this :Text) {
+	* beautify (this :Text) :Generator<string, void, undefined> {
 		yield * this.outerHTML.split('&#10;');
 	}
 	
 };
 
 freeze(Text.prototype);
+
+export class RawText extends Text {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.RawText'; }
+	
+	constructor (data :string) { return super(data) as unknown as this; }
+	
+	get outerHTML () {
+		return this.data;
+	}
+	
+	* beautify (this :Text) :Generator<string, void, undefined> {
+		yield * this.outerHTML.split('\n');
+	}
+	
+}
+
+freeze(RawText.prototype);

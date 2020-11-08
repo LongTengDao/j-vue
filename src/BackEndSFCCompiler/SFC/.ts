@@ -16,7 +16,7 @@ import { EOL, LF, FF, CRLF, CR, LS, PS } from '@ltd/j-eol';
 const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 
 import parseComponent from './parseComponent';
-import From from './From/';
+import From from './From';
 import one from './one';
 
 const ES_EOL = /\r\n?|[\n\u2028\u2029]/g;
@@ -61,9 +61,12 @@ export default class SFC {
 		
 		parseComponent(this, vue);
 		
+		return this;
+		
 	}
 	
 	script :Script | null = null;
+	scriptSetup :ScriptSetup | null = null;
 	readonly styles :Style[] = [];
 	template :Template | null = null;
 	readonly customBlocks :CustomBlock[] = [];
@@ -111,7 +114,7 @@ export default class SFC {
 
 freeze(SFC.prototype);
 
-import Script from './Script';
-import Style from './Style/';
-import Template from './Template/';
-import CustomBlock from './CustomBlock';
+import type { default as Script, ScriptSetup } from './Script/';
+import type Style from './Style/';
+import type Template from './Template/';
+import type CustomBlock from './CustomBlock';

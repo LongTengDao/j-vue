@@ -2,7 +2,7 @@
 `jVue`
 ======
 
-单文件组件后端编译器
+后端单文件组件编译器
 --------------------	
 	
 	用途
@@ -48,26 +48,28 @@
 			
 			当第二个参数 `from` 缺省或为字符串时，代表引入 jVue 前端运行时依赖库的模块名。
 			
-			这时，会根据 `template` 块和 `style` 块中的内容，或其 `src` 属性，生成组件自身的 `dynamicScope`（或 `staticScope`）、`template`、`render`、`staticRenderFns` 信息导出模块字符串。
-			`j-vue` 中的内容也会一并导出，以便于使用。
+			这时，会根据 `template` 块和 `style` 块中的内容，或其 `src` 属性，生成组件自身的 `scopeFunction`（或 `scopeObject`）、`template`、`Render`、`render`、`staticRenderFns` 信息导出模块字符串。
+			`j-vue` 中的 `Identifier`、`Scope`、`Style`、`remove`、`Component`、`mixin` 内容也会一并导出，以便于使用。
 			模块内容类似这样：
 			
 			```	.js
-				import { Scope, Template, Render, StaticRenderFns } from 'j-vue';
-				export var dynamicScope = Scope();
-				export var template = Template('<div />', dynamicScope);
-				export var render = Render('_vm,_c("div")', dynamicScope);
-				export var staticRenderFns = StaticRenderFns([], dynamicScope);
-				export * from 'j-vue';
+				import * as jVue from 'j-vue';
+				export var scopeFunction   = /*#__PURE__*/ jVue.Scope();
+				export var template        = /*#__PURE__*/ jVue.Template('<br />', scopeFunction);
+				export var Render          = /*#__PURE__*/ jVue.Render('({ h }){ return function render () { return h("br") }; }', scopeFunction);
+				export var render          = /*#__PURE__*/ jVue.Render('return this.$createElement("br");', scopeFunction);
+				export var staticRenderFns = /*#__PURE__*/ jVue.StaticRenderFns([], scopeFunction);
+				export { Identifier, Scope, Style, remove, Component, mixin } from 'j-vue';
 			
 			当使用 `'const'` 或 `'let'` 时，`Render` 和 `StaticRenderFns` 的参数（编译后的模板）也会作为 ES 6 代码进行压缩。
 			
 			当第二个参数 `from` 为 `null` 时，表示 `template` 和 `style` 块并不需要防冲突处理（一般用于会使用 Shadow DOM 的场景）。这时的导出内容是：
 			
 			```	.js
-				export var styles = [];
-				export var template = '<div />';
-				export var render = function () { var _vm = this, _c = _vm._self_c; return _c('div'); };
+				export var styles          = [];
+				export var template        = '<br />';
+				export var Render          = class Render { constructor ({ h }) { return function render () { return h('br'); }; } };
+				export var render          = function render () { return this.$createElement('br'); };
 				export var staticRenderFns = [];
 			
 			注意：如果 `template` 块存在非 `html`（或语义近似值）的 `lang` 属性，或任何 `style` 块存在非 `css`（或语义近似值）的 `lang` 属性，那么用户必须自行（根据其 `inner` 属性中的内容）转码，并赋值给其 `innerHTML` / `innerCSS` 属性。
@@ -144,7 +146,7 @@
 			该函数允许使用另一个 `scope` 作为 `this`。这种情况下，所返回的新 `scope` 将“继承”自 `this`。
 			`this` 也可以是由 `scope` 组成的 `Array`。这种情况下，所返回的新 `scope` 将“继承”自这些 `scope` 混合之后的 `scope`。
 			
-		<正则>	`/__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig`
+		<正则>	`/__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/gi`
 			
 		`jVue.Style(css[, scope])`
 		--------------------------	
@@ -153,7 +155,7 @@
 			
 			参数 `css` 是一个 `string`，作为创建的 `<style>` 的内容。
 			
-			如果存在第二个参数 `scope`，那么参数 `css` 中所有匹配 <正则> 的部分，都会被替换成 `scope` 中的该 `key`（匹配部分 `.slice(2, -2)` 后的值）映射的值。
+			如果存在第二个参数 `scope`，那么参数 `css` 中所有匹配 <正则> 的部分，都会尝试被替换成 `scope` 中的该 `key`（匹配部分 `.slice(2, -2)` 后的值）映射的值。
 			
 		`jVue.remove(style)`
 		--------------------	
@@ -165,66 +167,20 @@
 		`jVue.Template(html, scope)`
 		----------------------------	
 			
-			参数 `html` 是一个 `string`，`html` 中所有匹配 <正则> 的部分，都会被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值，然后返回。
+			参数 `html` 是一个 `string`，`html` 中所有匹配 <正则> 的部分，都会尝试被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值，然后返回。
 			
 		`jVue.Render(code[, scope])`
 		----------------------------	
 			
-			参数 `code` 是一个 `string`，返回 <函数>。
+			参数 `code` 是一个 `string`，返回 <渲染函数或渲染函数类>。
 			
-			如果存在第二个参数 `scope`，那么 `code` 中所有匹配 <正则> 的部分，都会被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。
+			如果存在第二个参数 `scope`，那么 `code` 中所有匹配 <正则> 的部分，都会尝试被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。
 			
-		<函数>	`Function( code.replace( /^([^,]*),([^(]*)\(([^]*)\)$/, (_vm, _c, args) => ` "use strict"; var ${_vm && _vm+' = this, '}${_c} = this._self._c; return ${_c}(${args}); ` ) )`
+		<渲染函数或渲染函数类>	`Function( code[0]==='(' ? 'return class { constructor ' + code + ' };' : 'return function () { ' + code + ' };' )()`
 			
 		`jVue.StaticRenderFns(codes[, scope])`
 		--------------------------------------	
 			
-			参数 `codes` 是一个 `string` `Array`，返回 `function` `Array`（逐一用 <函数> 生成）。
+			参数 `codes` 是一个 `string` `Array`，返回 `function` `Array`（逐一用 <渲染函数或渲染函数类> 生成）。
 			
-			如果存在第二个参数 `scope`，那么生成时用的每个 `string` 中所有匹配 <正则> 的部分，都会被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。
-			
-		`jVue.STYLE`
-		------------	
-			
-			由于 `Vue` 禁止组件模板中包含 `<style>` 元素，这在我们已经自行搞定了组件作用域的 `CSS` 的情况下，反而带来了不便。
-			`jVue` 提供了一个简单的组件：
-			
-			```	.js
-				({
-					functional: true,
-					render: function render (createElement, context) {
-						return createElement('style', context.data, context.children);
-					}
-				})
-			
-			你可以在你的组件的 `components` 中放入它，或全局注册它，然后这样使用：
-			
-			```	.html
-				<STYLE v-text="`
-					.scoped-preview-area-selector { background-color:${ theme_color }; }
-				`" />
-				<STYLE v-text="computedPropertyCSS" />
-			
-			或这样使用（注意标签之间的内容会被 `Vue` 理解为 `HTML` 片段，比较适合没有 `<` 等的简单情况，或妥善处理 `HTML` 实体转义）：
-			
-			```	.html
-				<STYLE>
-					.scoped-preview-area-selector { background-color:{{ theme_color }}; }
-				</STYLE>
-			
-			注意：`Vue` 的响应式天然是异步的，如果你需要高响应性，那么你必须类似这样做（注意纯函数组件引用直接就是 `<style>` 元素，而不是 `Vue` 示例，不要通过 `.$el` 来获取）：
-			
-			```	.js
-				({
-					template: `
-						<div @scroll="onScroll">
-							<STYLE ref="sheet" />
-						</div>`,
-					methods: {
-						onScroll () {
-							this.$refs.sheet.textContent = `
-								.scoped-selector { top:${ this.$el.scrollTop }; }
-							`;
-						}
-					}
-				})
+			如果存在第二个参数 `scope`，那么生成时用的每个 `string` 中所有匹配 <正则> 的部分，都会尝试被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。

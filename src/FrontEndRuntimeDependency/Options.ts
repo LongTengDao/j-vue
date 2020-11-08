@@ -1,1 +1,0 @@
-export default function Options (options :object) { return options; };

@@ -1,34 +1,18 @@
-import PropertyDescriptor from '.null.PropertyDescriptor';
-import defineProperty from '.Object.defineProperty';
+import Symbol from '.Symbol?';
 import document from '.document';
 import head from '.document.head';
 import undefined from '.undefined';
 
-var _ :'_' = typeof Symbol==='function'
-	? Symbol('_') as any
-	: '_';
+var _ :'_' = Symbol ? /*#__PURE__*/Symbol('_') as any : '_';
 
 function $<T extends Scope> (this :T, css? :string, media? :string) :T {
 	var style :HTMLStyleElement = document.createElement('style');
 	if ( css ) { style.textContent = this[_](css); }
-	if ( media!==undefined ) {
-		style.media = media as string;
-	}
+	if ( media!==undefined ) { style.media = media; }
 	head.appendChild(style);
 	return this;
 }
 
-var prepare_ :(scope :Scope) => void = typeof _==='symbol'
-	
-	? function $ () {}
-	
-	: function () {
-		var _descriptor = PropertyDescriptor(function _ () {}, true, false, false);
-		return function $ (scope :Scope) {
-			defineProperty(scope, _, _descriptor);
-		};
-	}();
+export { _, $ };
 
-export { _, $, prepare_ };
-
-type Scope = import('./').default;
+import type Scope from './';

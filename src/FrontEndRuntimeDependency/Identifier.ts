@@ -1,6 +1,6 @@
 import CSS_KEYWORDS from 'lib:css-keywords';
 
-var increaseDictionary :{ [character in '0' | Character] :Character | 'z' } = {
+var increaseDictionary :{ readonly [character in '0' | Character] :Character | 'z' } = {
 	0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: 'a',
 	a: 'b', b: 'c', c: 'd', d: 'e', e: 'f', f: 'g', g: 'h',
 	h: 'i', i: 'j', j: 'k', k: 'l', l: 'm', m: 'n', n: 'o',
@@ -10,6 +10,13 @@ var increaseDictionary :{ [character in '0' | Character] :Character | 'z' } = {
 var latestIdentifier :( '0' | Character | 'z' )[] = [ '9' ];
 var lastCharacter :'0' | Character | 'z' = '9';
 var lastIndex :number = 0;
+
+var css_keyword :string | null = /*#__PURE__*/function () {
+	latestIdentifier.join = latestIdentifier.join;
+	latestIdentifier.unshift = latestIdentifier.unshift;
+	CSS_KEYWORDS.shift = CSS_KEYWORDS.shift;
+	return CSS_KEYWORDS.shift()!;
+}();
 
 export default function Identifier () :string {
 	
@@ -36,9 +43,10 @@ export default function Identifier () :string {
 	}
 	
 	var identifier :string = latestIdentifier.join('');
-	if ( CSS_KEYWORDS.test(identifier) ) {
+	if ( identifier===css_keyword ) {
 		lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter as Character];
 		identifier = latestIdentifier.join('');
+		css_keyword = CSS_KEYWORDS.shift() || null;
 	}
 	return identifier;
 	

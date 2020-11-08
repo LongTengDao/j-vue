@@ -2,10 +2,9 @@ import version from '../version?text';
 import Identifier from './Identifier';
 import Scope from './Scope/';
 import Template from './Template';
-import { Render, StaticRenderFns } from './Render, StaticRenderFns';
-import STYLE  from './STYLE';
-import { Style, remove } from './Style, remove';
-import Options from './Options';
+import Render, { StaticRenderFns } from './Render, StaticRenderFns';
+import Style, { remove } from './Style, remove';
+import Component, { mixin } from './Component, mixin/';
 
 export {
 	version,
@@ -13,9 +12,8 @@ export {
 	Scope,
 	Template,
 	Render, StaticRenderFns,
-	STYLE,
 	Style, remove,
-	Options,
+	Component, mixin,
 };
 
 import Default from '.default';
@@ -24,10 +22,7 @@ export default Default({
 	Identifier: Identifier,
 	Scope: Scope,
 	Template: Template,
-	Render: Render,
-	StaticRenderFns: StaticRenderFns,
-	STYLE: STYLE,
-	Style: Style,
-	remove: remove,
-	Options: Options
+	Render: Render, StaticRenderFns: StaticRenderFns,
+	Style: Style, remove: remove,
+	Component: Component, mixin: mixin,
 });

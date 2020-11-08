@@ -3,48 +3,34 @@ import Function from '.Function';
 import { _ } from './Scope/_';
 import Scope from './Scope/';
 
-var VAR_ :'const ' | 'var ' = /*#__PURE__*/ function () {
-	try { Function('const v=0'); }
-	catch (error) { return 'var '; }
-	return 'const ';
-}();
+var NOT_ES5 = /^(cons|le)t /;
 
-function Body (body :string) :string {
-	var index :number = body.indexOf(',');
-	if ( index<0 ) { return 'return this._m('+body+')'; }
-	var _vm_this = index ? body.slice(0, index)+'=this,' : '';
-	var _c = body.slice(++index, body.indexOf('(', index));
-	var _call = body.slice(index);
-	return VAR_+_vm_this+_c+'=this._self._c;return '+_call;
-}
-
-type Render = <CreateElement extends (this :void, ...args :any[]) => any> (createElement :CreateElement) => ReturnType<CreateElement>;
-
-function WithStripped (render :Render) {
-	( render as { _withStripped? :true } )._withStripped = true;
+function WithStripped (render :Render & { _withStripped? :true }) {
+	render._withStripped = true;
 	return render;
 }
 
-export function Render (code :string | number, scope? :Scope) :Render {
-	return /*#__PURE__*/ WithStripped(
-		/*#__PURE__*/ Function(
-			'"use strict";'+Body(scope ? scope[_](''+code) : ''+code)
-		) as Render
-	);
-}
+export default function Render (code :string, scope? :Scope) :{ new (Vue3 :object) :Render } | Render {
+	return code[0]==='('
+		? /*#__PURE__*/Function('"use strict";return class Render extends null{constructor'+(scope ? scope[_](code) : code)+'};')() as { new (Vue3 :object) :Render }
+		: /*#__PURE__*/WithStripped(
+			/*#__PURE__*/Function(NOT_ES5.test(code)
+				? '"use strict";return{render(){'+(scope ? scope[_](code) : code)+'}}.render;'
+				: '"use strict";return function render(){'+(scope ? scope[_](code) : code)+'};'
+			)() as Render
+		);
+};
 
-export function StaticRenderFns (codes :ReadonlyArray<string | number>, scope? :Scope) :Render[] {
+export function StaticRenderFns (codes :readonly string[], scope? :Scope) :Render[] {
 	var index :number = codes.length;
 	var body :string = ']';
 	if ( scope ) {
-		for ( var scope_ = scope[_]; index; ) {
-			body = 'function(){'+Body(scope_(''+codes[--index]))+'},'+body;
-		}
+		for ( var scope_ = scope[_]; index; ) { body = 'function(){'+scope_(codes[--index])+'},'+body; }
 	}
 	else {
-		while ( index ) {
-			body = 'function(){'+Body(''+codes[--index])+'},'+body;
-		}
+		while ( index ) { body = 'function(){'+codes[--index]+'},'+body; }
 	}
 	return Function('"use strict";return['+body)();
 }
+
+type Render = <CreateElement extends (this :void, ...args :any) => any> (createElement :CreateElement) => ReturnType<CreateElement>;

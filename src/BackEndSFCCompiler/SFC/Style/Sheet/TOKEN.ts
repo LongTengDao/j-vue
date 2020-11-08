@@ -17,7 +17,7 @@ const escape = newRegExp('i')`
 	)
 `;
 const ws = /\t\n\f\r /;
-export const ident_token = newRegExp('i')`
+export const ident_token_start = newRegExp('i')`
 	(?:
 		-
 		(?:
@@ -32,6 +32,9 @@ export const ident_token = newRegExp('i')`
 	|
 		${escape}
 	)
+`;
+export const ident_token = newRegExp('i')`
+	${ident_token_start}
 	(?:
 		[-\w${nonASCII}]
 	|
@@ -68,22 +71,10 @@ const url_token = newRegExp('i')`
 		)*
 		\)?
 	|
-		-prefix
-		\(
-		(?!
-			[${ws}]*
-			\)
-		)
+		-prefix\([${ws}]*\)
 	)
 |
-	domain
-	\(
-	(?!
-		[${ws}]*
-		[a-z\d\-.:]*
-		[${ws}]*
-		\)
-	)
+	domain\([${ws}]*	[a-z\d\-.:]*	[${ws}]*\)
 `;
 const number_token = newRegExp('i')`
 	[-+]?
@@ -121,16 +112,24 @@ const TOKENS = newRegExp('gis')`
 	.
 `;
 
-const URL_REST = newRegExp('i')`
+const BAD_URL = newRegExp('i')`
 	^
+	url\(
+	(?!
 	[${ws}]*
 	(?:${escape}|[^${ws}"'()\\])*
 	[${ws}]*
 	\)
 	$
+	)
 `;
 const NUMBER = /[\d.]/;
-const COMMENT = /\/\*.*?\*\//g;
+const COMMENT = /\/\*.*?\*\//gs;
+const IDENT = newRegExp('i')`
+	^
+	${ident_token}
+	$
+`;
 const FUNCTION = newRegExp('i')`
 	^
 	${ident_token}\(
@@ -149,26 +148,24 @@ export const dimension = 'd';
 export const percentage = 'p';
 export const url = 'u';
 
-function IdentLike (literal :string) {
-	if ( !literal.endsWith('(') || literal.endsWith('\\(') && !FUNCTION.test(literal) ) { return ident; }
-	if ( is.url(literal.slice(0, 3)) ) {
-		const char = literal[3];
-		if ( char==='(' ) { return URL_REST.test(literal.slice(4)) ? url : throwSyntaxError(`bad-url-token`); }
-		else if ( char==='-' && is.prefix_(literal.slice(4)) ) { throw SyntaxError(`function-token "url-prefix" 不在标准中，而它此刻的内容又存在歧义`); }
-	}
-	else if ( is.domain_(literal) ) { throw SyntaxError(`function-token "domain" 不在标准中，而它此刻的内容又存在歧义`); }
-	return function$;
-}
+const IdentLike = (literal :string) =>
+	IDENT.test(literal) ? ident :
+		FUNCTION.test(literal) ?
+			is.url_prefix_(literal) ? throwSyntaxError(`function-token "url-prefix" 不在标准中，而它此刻的内容又存在歧义`) :
+				is.domain_(literal) ? throwSyntaxError(`function-token "domain" 不在标准中，而它此刻的内容又存在歧义`) :
+					function$ :
+			BAD_URL.test(literal) ? throwSyntaxError(`bad-url-token`) :
+				url;
 
-function Numeric (literal :string) {
+const Numeric = (literal :string) => {
 	const rest = literal.replace(number_token, '');
 	return rest ? rest==='%' ? percentage : dimension : number;
-}
+};
 
 export type Type = 'c' | 'w' | 'i' | 'a' | 'f' | 'h' | 's' | 'n' | 'd' | 'p' | 'u'// | '\\'
 	| '!' | '$' | '%' | '&' | '(' | ')' | '*' | '+' | ',' | '-' | '.' | '/' | ':'// | '#'
 	| ';' | '<' | '=' | '>' | '?' | '@' | '[' | ']' | '^' | '`' | '{' | '|' | '}' | '~';
-function Type (literal :string) :Type {
+const Type = (literal :string) :Type => {
 	switch ( literal[0] ) {
 		case '\t':
 		case '\n':
@@ -179,7 +176,7 @@ function Type (literal :string) :Type {
 		case '!':
 			return literal as '!';
 		case '"':
-			return literal.endsWith('"') && literal!=='"' ? literal.includes('\t') ? throwSyntaxError(`CSS 2 不允许字符串中存在 TAB`) : string : throwSyntaxError(`bad-string-token`);
+			return literal[literal.length - 1]==='"' && literal.length!==1 ? literal.includes('\t') ? throwSyntaxError(`CSS 2 不允许字符串中存在 TAB`) : string : throwSyntaxError(`bad-string-token`);
 		case '#':
 			return hash;
 		case '$':
@@ -187,7 +184,7 @@ function Type (literal :string) :Type {
 		case '&':
 			return literal as '$' | '%' | '&';
 		case '\'':
-			return literal.endsWith('\'') && literal!=='\'' ? literal.includes('\t') ? throwSyntaxError(`CSS 2 不允许字符串中存在 TAB`) : string : throwSyntaxError(`bad-string-token`);
+			return literal[literal.length - 1]==='\'' && literal.length!==1 ? literal.includes('\t') ? throwSyntaxError(`CSS 2 不允许字符串中存在 TAB`) : string : throwSyntaxError(`bad-string-token`);
 		case '(':
 		case ')':
 		case '*':
@@ -207,7 +204,7 @@ function Type (literal :string) :Type {
 			if ( literal==='/' ) { return literal; }
 			literal = literal.replace(COMMENT, '');
 			return literal
-				? literal.startsWith('/')
+				? literal[0]==='/'
 					? throwSyntaxError(`bad-comment-token`)
 					: whitespace
 				: comment;
@@ -248,29 +245,34 @@ function Type (literal :string) :Type {
 			return literal as ']' | '^' | '`' | '{' | '|' | '}' | '~';
 	}
 	return IdentLike(literal);
-}
+};
 
 export let literal :string = '';
 export let type :Type;
 
-export function parse (sheet :Sheet, source :string) {
+export const parse = (sheet :Sheet, source :string) :void => {
 	let layer :Layer = sheet;
-	const literals :string[] = source.match(TOKENS) || [];
+	const literals :string[] = source.match(TOKENS) ?? [];
 	const { length } = literals;
 	let types = '';
-	for ( let index = 0; index<length; ++index ) { types += Type(literals[index]); }
-	for ( let index = 0; index<length; ++index ) {
+	let index = 0;
+	while ( index!==length ) { types += Type(literals[index++]); }
+	for ( index = 0; index!==length; ++index ) {
 		type = ( types as string & { [index :number] :Type } )[index];
 		literal = literals[index];
-		layer = layer.appendToken() || throwSyntaxError(`CSS 中出现了 ${layer.constructor.name} 上下文不允许的内容 ${literal}：\n${literals.slice(0, index).join('')}`);
+		layer = layer.appendToken() ?? throwSyntaxError(`CSS 中出现了 ${layer.constructor.name} 上下文不允许的内容“${literal}”：\n${literals.slice(0, index).join('')}`);
 	}
-	if ( layer!==sheet ) {
-		const { parent } = layer;
-		parent===sheet && !parent.block || throwSyntaxError(`CSS 终止处尚有未完成的结构`);
-	}
-}
+	layer===sheet || layer.parent===sheet && !layer.block || throwSyntaxError(`CSS 终止处尚有未完成的结构`);
+};
 
-export function clear () { literal = ''; }
+export const typeSelectors :{ [index :number] :TypeSelector, length :number } = [];
 
-type Layer = { parent? :Layer, block? :any, appendToken () : Layer | void };
-type Sheet = import('./').default;
+export const clear = () :void => {
+	literal = '';
+	typeSelectors.length = 0;
+};
+
+type Layer = { parent? :Layer, block? :any, appendToken () :Layer | null };
+
+import type Sheet from './';
+import type { TypeSelector } from './Selector';

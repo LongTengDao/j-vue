@@ -4,10 +4,30 @@ import freeze from '.Object.freeze';
 import undefined from '.undefined';
 
 import { newRegExp } from '@ltd/j-regexp';
-import { transpileModule } from '../dependencies';
-import { ASCII_WHITESPACE as s, TAG_EMIT_CHAR } from './RE';
+import { transpileModule } from '../../dependencies';
+import { ASCII_WHITESPACE as s, TAG_EMIT_CHAR } from '../RE';
 const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
 
+/* TODO:
+<https://mimesniff.spec.whatwg.org/#javascript-mime-type>
+A JavaScript MIME type is any MIME type whose essence is one of the following:
+application/ecmascript
+application/javascript
+application/x-ecmascript
+application/x-javascript
+text/ecmascript
+text/javascript
+text/javascript1.0
+text/javascript1.1
+text/javascript1.2
+text/javascript1.3
+text/javascript1.4
+text/javascript1.5
+text/jscript
+text/livescript
+text/x-ecmascript
+text/x-javascript
+*/
 const JS = newRegExp('i')`^${s}*(?:
 	JS|JavaScript(?:${s}*1\.\d)?|JSX
 	|
@@ -20,14 +40,18 @@ const JS = newRegExp('i')`^${s}*(?:
 const TS = newRegExp('i')`^${s}*T(?:S|ypeScript)${s}*$`;
 const TSX = newRegExp('i')`^${s}*TSX${s}*$`;
 
-import Block from './Block';
-import _ from './private';
+import Block from '../Block';
+import _ from '../private';
 
 export default class Script extends Block {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Script'; }
 	
-	constructor (attributes :Attributes, inner :string | undefined) { super('script', attributes, true, inner, SCRIPT_END_TAG); }
+	constructor (attributes :Attributes, inner :string | undefined) {
+		super('script', attributes, true, inner, SCRIPT_END_TAG);
+		_.new(this);
+		return this;
+	}
 	
 	get innerJS () :string {
 		let inner :string | undefined = _(this).innerJS;
@@ -44,7 +68,7 @@ export default class Script extends Block {
 		return inner;
 	}
 	set innerJS (value :string) {
-		if ( typeof <unknown> value!=='string' ) { throw TypeError(`innerJS 只能被赋值字符串`); }
+		if ( typeof ( value as unknown )!=='string' ) { throw TypeError(`innerJS 只能被赋值字符串`); }
 		_(this).innerJS = value;
 	}
 	
@@ -52,7 +76,23 @@ export default class Script extends Block {
 
 freeze(Script.prototype);
 
+export class ScriptSetup extends Script {
+	
+	get [Symbol.toStringTag] () { return 'SFC.ScriptSetup'; }
+	
+	constructor (attributes :Attributes, inner :string | undefined) {
+		throw Error(`jVue 暂未支持编译 script setup`);///
+		return super(attributes, inner) as unknown as this;
+	}
+	
+	///innerJS
+	
+}
+
+freeze(ScriptSetup.prototype);
+
 export type Private = object & {
 	innerJS? :string
 };
-type Attributes = import('./Attributes').default;
+
+import type Attributes from '../Attributes';

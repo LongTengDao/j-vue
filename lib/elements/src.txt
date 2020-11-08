@@ -1,9 +1,89 @@
 
-VOID_ELEMENTS = area, base, br, col, command, embed, hr, img, input, keygen, link, meta, param, source, track, wbr,
-                basefont, bgsound, command, frame, image, isindex, keygen, nextid
+[VOID_ELEMENTS]
 
-RAW_TEXT_ELEMENTS = script, style
+area, base, br, col, command, embed, hr, img, input, keygen, link, meta, param, source, track, wbr, basefont, bgsound, command, frame, image, isindex, keygen, nextid
 
-ESCAPABLE_RAW_TEXT_ELEMENTS = textarea, title
+[RAW_TEXT_ELEMENTS]
 
-FOREIGN_ELEMENTS = svg, animate, circle, clippath, cursor, defs, desc, ellipse, filter, font-face, foreignObject, g, glyph, image, line, marker, mask, missing-glyph, path, pattern, polygon, polyline, rect, switch, symbol, text, textpath, tspan, use, view
+script, style
+
+[ESCAPABLE_RAW_TEXT_ELEMENTS]
+
+textarea, title
+
+[FOREIGN_ELEMENTS]
+
+	animate
++	animateMotion
++	animateTransform
+	circle
+	clipPath
++	color-profile
+-	cursor
+	defs
+	desc
++	discard
+	ellipse
++	feBlend
++	feColorMatrix
++	feComponentTransfer
++	feComposite
++	feConvolveMatrix
++	feDiffuseLighting
++	feDisplacementMap
++	feDistanceLight
++	feDropShadow
++	feFlood
++	feFuncA
++	feFuncB
++	feFuncG
++	feFuncR
++	feGaussianBlur
++	feImage
++	feMerge
++	feMergeNode
++	feMorphology
++	feOffset
++	fePointLight
++	feSpecularLighting
++	feSpotLight
++	feTile
++	feTurbulence
+	filter
+-	font-face
+	foreignObject
+	g
+-	glyph
++	hatch
++	hatchpath
+	image
+	line
++	linearGradient
+	marker
+	mask
++	mesh
++	meshgradient
++	meshpatch
++	meshrow
++	metadata
+-	missing-glyph
++	mpath
+	path
+	pattern
+	polygon
+	polyline
++	radialGradient
+	rect
++	set
++	solidcolor
++	stop
+	svg
+	switch
+	symbol
+	text
+	textPath
++	title
+	tspan
++	unknown
+	use
+	view

@@ -4,46 +4,86 @@ import Node from './Node';
 
 export default class Element extends Node {
 	
-	protected get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
-	constructor (localName :string, attributes :Attributes, __class__? :string) {
+	constructor (localName :string, attributes :Attributes, __class__ :string | undefined, shadowRoot :{ readonly along :string, readonly aside :boolean } | null) {
 		super();
 		if ( __class__ ) {
-			attributes.class = 'class' in attributes
-				? attributes.class
-					? __class__+' '+attributes.class
-					: __class__
+			attributes.class = attributes.class
+				? __class__+' '+attributes.class
 				: __class__;
 		}
 		this.localName = localName;
 		this.attributes = attributes;
+		this.#shadowRoot = shadowRoot;
+		return this;
 	}
 	
 	readonly localName :string;
 	readonly attributes :Attributes;
+	readonly #shadowRoot :{ readonly along :string, aside :boolean } | null;
 	
 	get outerHTML () {
 		let innerHTML :string = '';
-		for ( let index = this.length; index; ) {
-			innerHTML = this[--index].outerHTML+innerHTML;
-		}
-		return innerHTML
-			? `<${this.localName}${this.attributes}>${innerHTML}</${this.localName}>`
-			: `<${this.localName}${this.attributes} />`;
-	}
-	
-	* beautify (this :Element, tab :string = '\t') {
-		if ( this.length ) {
-			yield `<${this.localName}${this.attributes}>`;
-			for ( let index = 0, { length } = this; index<length; ++index ) {
-				for ( const line of this[index].beautify(tab) ) {
-					yield `${tab}${line}`;
-				}
-			}
-			yield `</${this.localName}>`;
+		let index = this.length;
+		while ( index ) { innerHTML = this[--index]!.outerHTML+innerHTML; }
+		if ( this.#shadowRoot ) {
+			innerHTML = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">${innerHTML}</teleport>`;
+			return this.#shadowRoot.aside
+				? `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />${innerHTML}`
+				: `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">${innerHTML}</${this.localName}>`;
 		}
 		else {
-			yield `<${this.localName}${this.attributes} />`;
+			return innerHTML
+				? `<${this.localName}${this.attributes}>${innerHTML}</${this.localName}>`
+				: `<${this.localName}${this.attributes} />`;
+		}
+	}
+	
+	* beautify (this :Element, tab :string = '\t') :Generator<string, void, undefined> {
+		if ( this.#shadowRoot ) {
+			const teleport = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">`;
+			if ( this.#shadowRoot.aside ) {
+				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />`;
+				yield teleport;
+				const { length } = this;
+				let index = 0;
+				while ( index!==length ) {
+					for ( const line of this[index++]!.beautify(tab) ) {
+						yield `${tab}${line}`;
+					}
+				}
+				yield `</teleport>`;
+			}
+			else {
+				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">`;
+				yield tab + teleport;
+				const { length } = this;
+				let index = 0;
+				while ( index!==length ) {
+					for ( const line of this[index++]!.beautify(tab) ) {
+						yield `${tab}${tab}${line}`;
+					}
+				}
+				yield `${tab}</teleport>`;
+				yield `</${this.localName}>`;
+			}
+		}
+		else {
+			if ( this.length ) {
+				yield `<${this.localName}${this.attributes}>`;
+				const { length } = this;
+				let index = 0;
+				while ( index!==length ) {
+					for ( const line of this[index++]!.beautify(tab) ) {
+						yield `${tab}${line}`;
+					}
+				}
+				yield `</${this.localName}>`;
+			}
+			else {
+				yield `<${this.localName}${this.attributes} />`;
+			}
 		}
 	}
 	
@@ -51,4 +91,4 @@ export default class Element extends Node {
 
 freeze(Element.prototype);
 
-type Attributes = import('../../Attributes').default;
+import type Attributes from '../../Attributes';

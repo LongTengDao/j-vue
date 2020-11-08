@@ -5,56 +5,56 @@ import create from '.Object.create';
 import NULL from '.null.prototype';
 import Null from '.null';
 
-import { rollup, AcornStage3 } from '../dependencies';
+import { rollup, acornInjectPlugins } from '../dependencies';
 
-const acorn = Null({
-	ecmaVersion: 5 as 5 | 6,
-	allowReserved: true as true,
-	sourceType: 'module' as 'module',
-	allowAwaitOutsideFunction: true as true,
-});
 const rollupOptions = {
 	onwarn (warning :any) :void {
 		if ( typeof warning==='string' ) { throw Error(warning); }
 		const { code } = warning;
-		if ( code!=='UNUSED_EXTERNAL_IMPORT' && code!=='THIS_IS_UNDEFINED' ) { throw warning; }
+		if ( code!=='UNUSED_EXTERNAL_IMPORT'/* && code!=='THIS_IS_UNDEFINED'*/ ) { throw warning; }
 	},
-	acorn,
-	acornInjectPlugins: [ AcornStage3 ],
-	strictDeprecations: true as true,
-	treeshake: false as false,
+	acornInjectPlugins,
+	strictDeprecations: true,
+	treeshake: false,
 	context: 'this',
-};
+} as const;
 
 const TRUE = Null({
-	format: 'esm',
+	format: 'es',
 	sourcemap: true,
 } as const);
 const FALSE = Null({
-	format: 'esm',
+	format: 'es',
 	sourcemap: false,
 } as const);
 const INLINE = Null({
-	format: 'esm',
+	format: 'es',
 	sourcemap: 'inline',
 } as const);
 
-export default async function one (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = from===null ? '?j-vue=' : '?j-vue', map = false, src, lang } :{
+export { one as default };
+const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = from===null ? '?j-vue=' : '?j-vue', map = false, src, lang } :{
 	'var' :'const' | 'var' | 'let',
 	'?j-vue'? :string,
 	'j-vue'? :string | null,
 	map? :boolean | 'inline',
 	src? (src :string) :Promise<string>,
 	lang? (lang :string, inner :string) :string | Promise<string>,
-}) :Promise<string | { code :string, map :any }> {
+}) :Promise<string | { code :string, map :any }> => {
 	if ( lang ) {
 		const { script } = sfc;
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner!); }
 	}
 	const main :string = sfc.export('default', x_from) as string;
 	let round :number = 1;
-	acorn.ecmaVersion = x_var==='var' ? 5 : 2014 as 6;
 	const bundle = await rollup(assign(create(NULL), rollupOptions, {
+		acorn: Null({
+			ecmaVersion: x_var==='var' ? 5 : 2014,
+			allowReserved: true,
+			sourceType: 'module',
+			allowAwaitOutsideFunction: x_var!=='var',
+			//preserveParens: true,
+		} as const),
 		input: '/'+'_'.repeat(main.length),
 		external: (path :string) :boolean => path!==x_from,
 		plugins: [
@@ -73,13 +73,19 @@ export default async function one (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-
 					const { template, styles } = sfc;
 					if ( src ) {
 						if ( template && template.src ) { template.inner = await src(template.src); }
-						for ( const style of styles ) {
+						const { length } = styles;
+						let index = 0;
+						while ( index!==length ) {
+							const style = styles[index++];
 							if ( style.src ) { style.inner = await src(style.src); }
 						}
 					}
 					if ( lang ) {
 						if ( template && template.lang ) { template.innerHTML = await lang(template.lang, template.inner!); }
-						for ( const style of styles ) {
+						const { length } = styles;
+						let index = 0;
+						while ( index!==length ) {
+							const style = styles[index++];
 							if ( style.lang ) { style.innerCSS = await lang(style.lang, style.inner!); }
 						}
 					}
@@ -94,4 +100,4 @@ export default async function one (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-
 	return map===true ? { code: only.code, map: only.map } : only.code;
 };
 
-type SFC = import('./').default;
+import type SFC from './';

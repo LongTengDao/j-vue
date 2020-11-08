@@ -14,34 +14,36 @@ class Multi extends Array {
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.Multi'; }
 	
 	readonly parent :DeclarationList;
-	declaration :Declaration;
-	styleRule :QualifiedRule;
-	d :any;
-	sr :any;
+	private readonly declaration :Declaration;
+	private readonly styleRule :QualifiedRule;
+	#d :any;
+	#sr :any;
 	
 	constructor (parent :DeclarationList) {
 		super();
 		this.parent = parent;
-		this.d = this.declaration = new Declaration(parent, TOKEN.literal);
-		this.sr = ( this.styleRule = new QualifiedRule(parent) ).appendToken();// may not style rule
+		this.#d = this.declaration = new Declaration(parent, TOKEN.literal);
+		this.#sr = ( this.styleRule = new QualifiedRule(parent) ).appendToken();// may not style rule
+		return this;
 	}
 	
 	appendToken (this :Multi) {
-		const d = this.d.appendToken();
-		const sr = this.sr.appendToken();
+		const d = this.#d.appendToken();
+		const sr = this.#sr.appendToken();
 		if ( d && sr ) {
-			this.d = d;
-			this.sr = sr;
+			this.#d = d;
+			this.#sr = sr;
 			return this;
 		}
 		if ( d ) {
-			this.parent.push(this.declaration);
+			this.parent[this.parent.length] = this.declaration;
 			return d;
 		}
 		if ( sr ) {
-			this.parent.push(this.styleRule);
+			this.parent[this.parent.length] = this.styleRule;
 			return sr;
 		}
+		return null;
 	}
 	
 }
@@ -53,55 +55,56 @@ export class DeclarationList extends Array<AtRule | KeyframesRule | QualifiedRul
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.DeclarationList'; }
 	
 	readonly parent :AtRule;
-	private readonly noAt :boolean = false;
-	private readonly noQualified :boolean = false;
-	private readonly noDeclaration :boolean = false;
+	readonly #noAt :boolean = false;
+	readonly #noQualified :boolean = false;
+	readonly #noDeclaration :boolean = false;
 	
 	constructor (parent :AtRule) {
 		super();
 		this.parent = parent;
 		const parent_parent = parent.parent;
 		if ( parent_parent instanceof DeclarationList && is.page(parent_parent.parent.name) ) {
-			this.noAt = true;
-			this.noQualified = true;
+			this.#noAt = true;
+			this.#noQualified = true;
 			return;
 		}
 		const { name } = parent;
-		if ( is.media(name) ) { this.noDeclaration = true; }
-		//else if ( is._keyframes(name) ) {
-		//	this.noAt = true;
-		//	this.noDeclaration = true;
+		if ( is.media(name) ) { this.#noDeclaration = true; }
+		//else if ( is.keyframes(name) ) {
+		//	this.#noAt = true;
+		//	this.#noDeclaration = true;
 		//}
 		else if ( is.font_face(name) ) {
-			this.noAt = true;
-			this.noQualified = true;
+			this.#noAt = true;
+			this.#noQualified = true;
 		}
-		else if ( is.page(name) ) { this.noQualified = true; }
-		else if ( is.supports(name) || is.document(name) ) { this.noDeclaration = true; }
+		else if ( is.page(name) ) { this.#noQualified = true; }
+		else if ( is.supports(name) || is.document(name) ) { this.#noDeclaration = true; }
+		return this;
 	}
 	
-	appendToken (this :DeclarationList) :Sheet | DeclarationList | AtRule | KeyframesRule | QualifiedRule | SquareBracketBlock | Declaration | Multi | void {
+	appendToken (this :DeclarationList) :Sheet | DeclarationList | AtRule | KeyframesRule | QualifiedRule | SquareBracketBlock | Declaration | Multi | null {
 		switch ( TOKEN.type ) {
 			case TOKEN.whitespace:
 			case TOKEN.comment:
 				return this;
 			case TOKEN.at_keyword:
-				if ( this.noAt ) { return; }
+				if ( this.#noAt ) { break; }
 				const name = TOKEN.literal.slice(1);
-				if ( is.charset(name) || is._import(name) || is.namespace(name) ) { return; }
-				const atRule = is._keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name);
-				this.push(atRule);
+				if ( is.charset(name) || is.import(name) || is.namespace(name) ) { break; }
+				const atRule = is.keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name);
+				this[this.length] = atRule;
 				return atRule;
 			case TOKEN.ident:
-				if ( this.noDeclaration ) {
-					if ( this.noQualified ) { return; }
+				if ( this.#noDeclaration ) {
+					if ( this.#noQualified ) { break; }
 					const styleRule = new QualifiedRule(this);// may not style rule
-					this.push(styleRule);
+					this[this.length] = styleRule;
 					return styleRule.appendToken() as QualifiedRule;
 				}
-				if ( this.noQualified ) {
+				if ( this.#noQualified ) {
 					const declaration = new Declaration(this, TOKEN.literal);
-					this.push(declaration);
+					this[this.length] = declaration;
 					return declaration;
 				}
 				return new Multi(this);
@@ -109,17 +112,18 @@ export class DeclarationList extends Array<AtRule | KeyframesRule | QualifiedRul
 			case '.':
 			case ':':
 			case '[':
-			case '|':
+			///case '|':
 			case '$':
 			case TOKEN.hash:
-			//case TOKEN.percentage:// not style rule
-				if ( this.noQualified ) { return; }
+			///case TOKEN.percentage:// not style rule
+				if ( this.#noQualified ) { break; }
 				const styleRule = new QualifiedRule(this);
-				this.push(styleRule);
+				this[this.length] = styleRule;
 				return styleRule.appendToken() as QualifiedRule | SquareBracketBlock;
 			case '}':
 				return this.parent.parent;
 		}
+		return null;
 	}
 	
 }
@@ -132,35 +136,36 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 	
 	readonly parent :Sheet | DeclarationList;
 	readonly name :string;
-	block? :DeclarationList;
-	semicolon :boolean = false;
+	block :DeclarationList | null = null;
+	///private semicolon :boolean = false;
 	
 	constructor (parent :Sheet | DeclarationList, name :string) {
 		super();
 		this.parent = parent;
 		this.name = name;
+		return this;
 	}
 	
-	appendToken (this :AtRule) :Sheet | AtRule | DeclarationList | ParenthesisBlock | SquareBracketBlock | void {
+	appendToken (this :AtRule) :Sheet | AtRule | DeclarationList | ParenthesisBlock | SquareBracketBlock | null {
 		switch ( TOKEN.type ) {
 			case TOKEN.whitespace:
-				this.length && this.push(' ');
+				this.length && ( this[this.length] = ' ' );
 				return this;
 			case TOKEN.function$:
-			case '(':
+			case '(': {
 				const parenthesisBlock = new ParenthesisBlock(this, TOKEN.literal.slice(0, -1));
-				this.push(parenthesisBlock);
+				this[this.length] = parenthesisBlock;
 				return parenthesisBlock;
+			}
 			case TOKEN.ident:
 			case TOKEN.string:
 			case TOKEN.url:
 			case ':':
 			case ',':
-				this.push(TOKEN.literal);
+				this[this.length] = TOKEN.literal;
 				return this;
 			case '{': {
-				const { name } = this;
-				if ( /*is.charset(name) || */is._import(name) || is.namespace(name) ) { return; }
+				if ( /*is.charset(this.name) || is.import(this.name) || */is.namespace(this.name) ) { break; }
 				const lastIndex = this.length-1;
 				if ( lastIndex>=0 ) {
 					const lastItem = this[lastIndex];
@@ -170,50 +175,55 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 			}
 			case ';': {
 				const { name } = this;
-				if ( is.media(name) || is.page(name) || is.font_face(name) || /*is._keyframes(name) || */is.supports(name) || is.document(name) ) { return; }
-				this.semicolon = true;
+				if ( is.media(name) || is.page(name) || is.font_face(name) || /*is.keyframes(name) || */is.supports(name) || is.document(name) ) { break; }
+				///this.semicolon = true;
 				return this.parent;
 			}
-			case '}':
+			case '}': {
 				const { name } = this;
-				if ( is.media(name) || is.page(name) || is.font_face(name) || /*is._keyframes(name) || */is.supports(name) || is.document(name) ) { return; }
+				if ( is.media(name) || is.page(name) || is.font_face(name) || /*is.keyframes(name) || */is.supports(name) || is.document(name) ) { break; }
 				return this.parent.appendToken() as Sheet | DeclarationList;
+			}
 			case TOKEN.comment:
-				this.length && this.push('/**/');
+				this.length && ( this[this.length] = '/**/' );
 				return this;
 		}
+		return null;
 	}
 	
 	get cssText () :string {
 		let atText = '';
-		for ( let index = this.length; index; ) {
+		let index = this.length;
+		while ( index ) {
 			const child = this[--index];
 			atText = ( typeof child==='string' ? child : child.cssText )+atText;
 		}
 		const { block } = this;
 		if ( block ) {
 			let blockText = '';
-			for ( let index = block.length; index; ) {
-				blockText = block[--index].cssText+blockText;
-			}
-			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText.endsWith(';') ? blockText.slice(0, -1) : blockText}}`;
+			let index = block.length;
+			while ( index ) { blockText = block[--index].cssText+blockText; }
+			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText && blockText[blockText.length - 1]===';' ? blockText.slice(0, -1) : blockText}}`;
 		}
 		else {
 			return `@${this.name}${atText ? ' ' : ''}${atText};`;
 		}
 	}
 	
-	* beautify (this :AtRule, tab :string = '\t') :Generator<string, void, any> {
+	* beautify (this :AtRule, tab :string = '\t') :Generator<string, void, undefined> {
 		let atText = '';
-		for ( let index = this.length; index; ) {
+		let index = this.length;
+		while ( index ) {
 			const child = this[--index];
 			atText = ( typeof child==='string' ? child : child.cssText )+atText;
 		}
 		const { block } = this;
 		if ( block ) {
 			yield `@${this.name}${atText ? ' ' : ''}${atText} {`;
-			for ( let index = 0, { length } = block; index<length; ++index ) {
-				for ( const line of block[index].beautify(tab) ) {
+			let index = 0;
+			const { length } = block;
+			while ( index!==length ) {
+				for ( const line of block[index++].beautify(tab) ) {
 					yield tab+line;
 				}
 			}
@@ -228,4 +238,4 @@ export default class AtRule extends Array<ParenthesisBlock | SquareBracketBlock 
 
 freeze(AtRule.prototype);
 
-type Sheet = import('./').default;
+import type Sheet from './';
