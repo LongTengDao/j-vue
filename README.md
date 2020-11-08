@@ -2,8 +2,8 @@
 jVue
 ====
 
-Typed Script
-------------
+Class-based TS
+--------------
 
 ```ts
 import { Component, mixin } from 'j-vue';
@@ -144,8 +144,8 @@ import * as Vue3 from 'vue@3';
 import      Vue2 from 'vue@2.6.12';
 ```
 
-Scoped Style
-------------
+Scoped CSS
+----------
 
 前端组件的 CSS 局部作用域需求，一直是一个大问题。  
 For front-end components, the requirement of scoped CSS has been a big problem so far.  
