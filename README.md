@@ -23,7 +23,7 @@ type  Mixin1 = {
 };
 const Mixin1 = {
     methods: {
-        m1 () :void {}
+        m1 (this :Mixin1) :void {}
     }
 };
 
