@@ -54,8 +54,8 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     set '_watch:placeholder' (d) { }
     
     // watch fn (getter) & handler (setter) (another)
-    get '_watch:placeholder2--can be any unique word in fact;deep;immediate;flush=pre' () { return this.d; }
-    set '_watch:placeholder2--can be any unique word in fact;deep;immediate;flush=pre' (d) { }
+    get '_watch:placeholder2--can be any unique word in fact;deep;immediate' () { return this.d; }
+    set '_watch:placeholder2--can be any unique word in fact;deep;immediate' (d) { }
     
     /* hook (On prototype for type, starts with `_`) */
     
