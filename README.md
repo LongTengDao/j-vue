@@ -197,10 +197,10 @@ new Vue({
 ```
 
 这最终将执行为：  
-This will eventually be implemented as:  
+This will eventually be executed as:  
 
 ```js
-document.documentElement.firstChild.appendChild(document.createElement('style')).textContent = `
+document.head.appendChild(document.createElement('style')).textContent = `
     .a {
         border: 1px solid black;
         animation: b;
@@ -284,13 +284,13 @@ const sfc = new SFC(source);
 sfc.export('default');
 // import { ... } from '?j-vue';
 // export default { ... };
-sfc.export('var');
+sfc.export('const');
 // import * as jVue from 'j-vue';
-// export var scopeFunction   = jVue.Scope( ... );
-// export var template        = jVue.Template( ... );
-// export var Render          = jVue.Render( ... );
-// export var render          = jVue.Render( ... );
-// export var staticRenderFns = StaticRenderFns( ... );
+// export const scopeFunction   = jVue.Scope().$( ... );
+// export const template        = jVue.Template( ... );
+// export const Render          = jVue.Render( ... );
+// export const render          = jVue.Render( ... );
+// export const staticRenderFns = StaticRenderFns( ... );
 // export { Identifier, Scope, Style, remove, Component, mixin } from 'j-vue';
 ```
 
