@@ -164,7 +164,9 @@ Style(`
 new Vue({
     template: Template(`
         <div class="__static__">
-            <STYLE> .{{ instancePrivateDynamicScope('dynamic') }} { color:red; } </STYLE>
+            <STYLE>
+                .{{ instancePrivateDynamicScope( 'dynamic') }} { color: red; }
+            </STYLE>
             <p :class="{ [instancePrivateDynamicScope( 'dynamic')]: red   }">text</p>
             <p :class="   instancePrivateDynamicScope({ dynamic   : red  })">text (object)</p>
             <p :class="   instancePrivateDynamicScope([ red && 'dynamic' ])">text (array)</p>
@@ -172,10 +174,10 @@ new Vue({
             <button @click="change">change</button>
         </div>
     `, componentSharedStaticScope),
-    data: () => ({
+    data: () => ( {
         red: false,
         instancePrivateDynamicScope: Scope(),
-    }),
+    } ),
     methods: {
         change () { this.red = !this.red; },
     },
@@ -204,9 +206,9 @@ new Vue({
             <button @click="change">change</button>
         </div>
     `,
-    data: () => ({
+    data: () => ( {
         red: false,
-    }),
+    } ),
     methods: {
         change () { this.red = !this.red; },
         /*instancePrivateDynamicScope:
@@ -231,7 +233,9 @@ So, we can write our `.vue` single-file component like this from now on: (only n
 </style>
 <template>
     <div class="__static__">
-        <STYLE> .{{ instancePrivateDynamicScope('dynamic') }} { color:red; } </STYLE>
+        <STYLE>
+            .{{ instancePrivateDynamicScope('dynamic') }} { color: red; }
+        </STYLE>
         <p :class="{ [instancePrivateDynamicScope( 'dynamic')]: red   }">text</p>
         <p :class="   instancePrivateDynamicScope({ dynamic   : red  })">text (object)</p>
         <p :class="   instancePrivateDynamicScope([ red && 'dynamic' ])">text (array)</p>
@@ -243,10 +247,10 @@ So, we can write our `.vue` single-file component like this from now on: (only n
     import { template, Scope } from '?j-vue';
     new Vue({
         template,
-        data: () => ({
+        data: () => ( {
             red: false,
             instancePrivateDynamicScope: Scope(),
-        }),
+        } ),
         methods: {
             change () { this.red = !this.red; },
         },
