@@ -209,7 +209,8 @@ new Vue({
         change () { this.red = !this.red; },
         /*instancePrivateDynamicScope:
           j-vue 内置的 36 进制（0-9a-z）发号器，并会跳过所有数字打头的值（这意味着第一个号会是“a”）。
-          A base-36 (0-9a-z) ID generator build-in j-vue, and skip all value starts with digit (that means "a" will be the first ID).
+          A base-36 (0-9a-z) ID generator build-in j-vue,
+          and skip all value starts with digit (that means "a" will be the first ID).
         */
     },
 });
