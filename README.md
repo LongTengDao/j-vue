@@ -44,7 +44,7 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     /* watch (On prototype for type, starts with `_watch:`) */
     
     // watch exp (key) & handler (value)
-    '_watch:d' (d :this['d'], old_d? :this['d']) { }
+    '_watch:d' (d :this['d'], old_d :this['d']) { }
     
     // watch exp (key) & handler (value) (with options)
     '_watch:d;deep;immediate;flush=pre' (d :this['d'], old_d? :this['d']) { }
@@ -54,8 +54,8 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     set '_watch:placeholder' (d) { }
     
     // watch fn (getter) & handler (setter) (another)
-    get '_watch:placeholder2--can be any unique word in fact;deep;immediate' () { return this.d; }
-    set '_watch:placeholder2--can be any unique word in fact;deep;immediate' (d) { }
+    get '_watch:placeholder2 (can be any unique words in fact);immediate' () { return this.d; }
+    set '_watch:placeholder2 (can be any unique words in fact);immediate' (d) { }
     
     /* hook (On prototype for type, starts with `_`) */
     
