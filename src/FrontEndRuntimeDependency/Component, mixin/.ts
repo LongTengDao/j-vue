@@ -18,30 +18,12 @@ import create from '.Object.create';
 import keys from '.Object.keys';
 import freeze from '.Object.freeze';
 import hasOwnProperty from '.Object.prototype.hasOwnProperty';
+import isPrototypeOf from '.Object.prototype.isPrototypeOf';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
 
 import { that, proData, devData } from './Data';
 import { ShadowAssigner, ShadowChecker } from './Shadow';
-
-var DEV = [
-	'compile_name',
-	'compile_props',
-	'compile_emits',
-	'compile_is',
-	'compile_layout',
-	'compile_reserved',
-	'compile_redefined',
-	'compile_type',
-	'compile_symbol',
-	'compile_shadow',
-	'render',
-	'runtime_shadow',
-	'runtime_redefined',
-	'runtime_symbol',
-	'runtime_reserved',
-	'runtime_enumerable',
-] as const;
 
 export { Component as default };
 var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
@@ -66,7 +48,7 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 		_: {
 			enumerable: false,
 			value: function toOptions (this :ClassAPI, Vue3? :_Vue3, __dev__? :{ readonly [Key in keyof __Dev__]? :string }) {
-				if ( !( this instanceof ClassAPI ) ) { throw Error('!( this instanceof Component )._()'); }
+				if ( !isComponentConstructor(this) ) { throw Error('!( this extends Component )._()'); }
 				var DID_OPTIONS = OPTIONS.objects.into(__dev__ || OPTIONS as any).into(Vue3 || OPTIONS as any);
 				var TMP_OPTIONS = new OPTIONS.objectsTmp;
 				var options = ToOptions(
@@ -111,7 +93,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		var index = 0;
 		while ( mixins.length!==static_mixins.length ) {
 			var mixin = static_mixins[index++];
-			if ( mixin instanceof ClassAPI ) {
+			if ( isComponentConstructor(mixin) ) {
 				var mixinOptions = ToOptions(mixin, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
 				if ( isMixins(mixin) ) {
 					var mixinMixins = mixinOptions.mixins!;
@@ -294,10 +276,10 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		var components = options.components = assign(create(NULL), options.components);
 		for ( var name in components ) {
 			if ( __dev__ ) {
-				if ( !STARTS_WITH_UPPER_CASE.test(name) ) { throw Error(__dev__.compile_name); }
+				if ( /^(?![A-Z])/.test(name) ) { throw Error(__dev__.compile_name); }
 			}
 			var value = components[name];
-			if ( value instanceof ClassAPI ) { components[name] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
+			if ( isComponentConstructor(value) ) { components[name] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
 		}
 	}
 	
@@ -322,8 +304,7 @@ return{objects:new EasyMap,objectsTmp:StrongMap,supers:new EasyMap,names:new Eas
 };
 interface EasyMap<K extends object, V> extends WeakMap<K, V> { into (key :K) :V; }
 
-var ClassAPI = function () {} as unknown as { new () :ClassAPI; prototype :ClassAPI; };
-ClassAPI.prototype = Component;
+function isComponentConstructor (value :object) :value is ClassAPI { return apply(isPrototypeOf, Component, [ value ] as const); }
 
 var ARGS = [] as const;
 
@@ -398,16 +379,18 @@ function check (options :_ObjectAPI, names :Names, __dev__ :__Dev__) {
 	//@ts-ignore
 	if ( ( name = options.name ) ) {
 		if (
-			!STARTS_WITH_UPPER_CASE.test(name)
+			/^(?![A-Z])/.test(name)
 			||
 			options.components && name in options.components
 		) { throw Error(__dev__.compile_name); }
 	}
 	
 	if ( options.props ) {
-		if ( isArray(options.props) ) { options.props.forEach(function (name) { if ( /-|^(?:key$|[oO][nN]|ref$)/.test(name) ) { throw Error(__dev__.compile_props); } }); }
-		else { for ( name in options.props ) { if ( /-|^(?:key$|[oO][nN]|ref$)/.test(name) ) { throw Error(__dev__.compile_props); } } }
+		if ( isArray(options.props) ) { options.props.forEach(function (name) { if ( /-|^(?:constructor$|key$|[oO][nN]|ref$)/.test(name) ) { throw Error(name==='constructor' ? __dev__.compile_constructor : __dev__.compile_props); } }); }
+		else { for ( name in options.props ) { if ( /-|^(?:constructor$|key$|[oO][nN]|ref$)/.test(name) ) { throw Error(name==='constructor' ? __dev__.compile_constructor : __dev__.compile_props); } } }
 	}
+	
+	if ( options.computed && 'constructor' in options.computed ) { throw Error(__dev__.compile_constructor); }
 	
 	options.emits &&
 	( isArray(options.emits) ? options.emits : keys(options.emits) ).forEach(function (event) {
@@ -422,7 +405,25 @@ function check (options :_ObjectAPI, names :Names, __dev__ :__Dev__) {
 	
 }
 
-var STARTS_WITH_UPPER_CASE = /^[A-Z]/;
+var DEV = [
+	'compile_name',
+	'compile_constructor',
+	'compile_props',
+	'compile_emits',
+	'compile_is',
+	'compile_layout',
+	'compile_reserved',
+	'compile_redefined',
+	'compile_type',
+	'compile_symbol',
+	'compile_shadow',
+	'render',
+	'runtime_shadow',
+	'runtime_redefined',
+	'runtime_symbol',
+	'runtime_reserved',
+	'runtime_enumerable',
+] as const;
 
 export type __Dev__ = typeof DEV extends readonly ( infer T )[] ? { readonly [Key in Extract<T, string>] :string } : never;
 

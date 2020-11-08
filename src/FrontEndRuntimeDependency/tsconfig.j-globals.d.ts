@@ -70,6 +70,7 @@ declare module '.Object.keys' { export default keys;
 }
 declare module '.Object.prototype' { export default Object.prototype; }
 declare module '.Object.prototype.hasOwnProperty' { export default Object.prototype.hasOwnProperty; }
+declare module '.Object.prototype.isPrototypeOf' { export default Object.prototype.isPrototypeOf; }
 declare module '.Object.prototype.propertyIsEnumerable' { export default Object.prototype.propertyIsEnumerable; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
 declare module '.Object.setPrototypeOf' { export default Object.setPrototypeOf; }

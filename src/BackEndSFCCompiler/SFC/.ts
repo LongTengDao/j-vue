@@ -93,14 +93,7 @@ export default class SFC {
 				}
 			}
 			else {
-				if ( template ) {
-					return bom
-						+`import { render, staticRenderFns } from ${from===undefined ? `'?j-vue'` : StringLiteral(from!)};${eol}`
-						+`export default { render: render, staticRenderFns: staticRenderFns };`;
-				}
-				else {
-					throw Error(`.vue 如果要 export default，至少要有 script 块或 template 块中的一个`);
-				}
+				throw Error(`由于 Vue 2 和 3 所需的 render 函数不同，.vue 的 script 块现在不能省略`);
 			}
 		}
 		else {

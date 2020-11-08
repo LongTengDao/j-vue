@@ -107,6 +107,7 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{
 		readonly [Error in
 			| 'compile_name'
+			| 'compile_constructor'
 			| 'compile_props'
 			| 'compile_emits'
 			| 'compile_is'
@@ -351,7 +352,7 @@ type Directive<This extends Vue> =
 			previousVNode? :VNode & { /**@deprecated*/ readonly context? :This },
 		) :void | Promise<void>
 	} | {
-		[Hook in 'beforeMount' | 'mounted'  | 'beforeUpdate' | 'updated'                        | 'beforeUnmount' | 'unmounted']? :{
+		[Hook in 'created' | 'beforeMount' | 'mounted'  | 'beforeUpdate' | 'updated'                        | 'beforeUnmount' | 'unmounted']? :{
 			(
 				this :void,
 				el :Element,
@@ -373,7 +374,7 @@ type Directive<This extends Vue> =
 		}
 	} & {
 		/**@deprecated*/
-		[Hook in 'bind'/*   */ | 'inserted'                  | 'update'/**/ | 'componentUpdated'                  | 'unbind'   ]? :{
+		[Hook in             'bind'/*   */ | 'inserted'                  | 'update'/**/ | 'componentUpdated'                  | 'unbind'   ]? :{
 			(
 				this :void,
 				el :Element,
