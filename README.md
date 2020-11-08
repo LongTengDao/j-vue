@@ -122,7 +122,7 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
             ? Vue3.h('p', [ this.d ])
             : this.$createElement!('p', [ this.d ]);
     };
-    static staticRenderFns? = [];
+    static staticRenderFns = [];
     
     static Render = class {
         constructor (Vue3 :any) {
