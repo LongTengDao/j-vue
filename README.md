@@ -18,12 +18,12 @@ abstract class Mixin0 extends Component<Mixin0> {
     m0 () :void {}
 }
 
-type  Mixin1 = {
+interface Mixin1 {
     m1 () :void
-};
+}
 const Mixin1 = {
     methods: {
-        m1 (this :Mixin1) :void {}
+        m1 () :void {}
     }
 };
 
