@@ -286,6 +286,9 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			}
 			else {
 				if ( compatible_template ) {
+					if ( 2 ) {
+						if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
+					}
 					if (
 						xName==='BaseTransition' || xName==='Suspense' || xName==='Teleport' || xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup'
 					) { compatible_template = false; }

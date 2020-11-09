@@ -406,7 +406,6 @@ function check (options :_ObjectAPI & { readonly name? :string }, __dev__ :__Dev
 	}
 	
 	for ( name in options.computed ) {
-		if ( name in PROTO_BUG ) { throw Error(__dev__.compile_proto); }
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
 		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
 	}

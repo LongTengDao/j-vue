@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.0.1';
+const version = '17.0.2';
 
 const Error$1 = Error;
 
@@ -5609,6 +5609,9 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			}
 			else {
 				if ( compatible_template ) {
+					{
+						if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
+					}
 					if (
 						xName==='BaseTransition' || xName==='Suspense' || xName==='Teleport' || xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup'
 					) { compatible_template = false; }
