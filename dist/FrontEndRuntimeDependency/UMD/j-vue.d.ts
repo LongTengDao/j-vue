@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'17.0.0';
+	export const version :'17.0.1';
 	
 	export function Identifier () :string;
 	
@@ -41,7 +41,7 @@ declare namespace exports {
 	export function remove (style :HTMLStyleElement) :typeof remove;
 	
 	export abstract class Component<Sub extends SubComponent<Sub>> extends SubComponent<Sub> { protected constructor () }
-	export function mixin<Mixins extends object> (...mixins :( ClassAPI | ObjectAPI )[]) :
+	export function mixin<Mixins extends object = object> (...mixins :( ClassAPI | ObjectAPI )[]) :
 		{ [Name in keyof typeof Component] :typeof Component[Name] } &
 		{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &
 		{ new<Sub extends Component<Sub>> () :
@@ -111,7 +111,7 @@ declare namespace exports {
 		static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{
 			readonly [Error in
 				| 'compile_name'
-				| 'compile_constructor'
+				| 'compile_proto'
 				| 'compile_props'
 				| 'compile_emits'
 				| 'compile_is'
@@ -121,7 +121,6 @@ declare namespace exports {
 				| 'compile_type'
 				| 'compile_symbol'
 				| 'compile_shadow'
-				| 'render'
 				| 'runtime_shadow'
 				| 'runtime_redefined'
 				| 'runtime_symbol'

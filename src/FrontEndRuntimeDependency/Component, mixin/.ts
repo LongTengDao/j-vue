@@ -1,5 +1,6 @@
 import Error from '.Error';
 import Symbol from '.Symbol?';
+import Set from '.Set?';
 import Map from '.Map?';
 import WeakMap from '.WeakMap?';
 import TypeError from '.TypeError';
@@ -17,6 +18,7 @@ import assign from '.Object.assign?';
 import create from '.Object.create';
 import keys from '.Object.keys';
 import freeze from '.Object.freeze';
+import PROTO_BUG from '.Object.prototype';
 import hasOwnProperty from '.Object.prototype.hasOwnProperty';
 import isPrototypeOf from '.Object.prototype.isPrototypeOf';
 import undefined from '.undefined';
@@ -61,7 +63,7 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 					DID_OPTIONS,
 					TMP_OPTIONS
 				);
-				TMP_OPTIONS.forEach(function (optionsValue, constructorKey) { DID_OPTIONS.set(constructorKey, optionsValue); });
+				TMP_OPTIONS.forEach!(function (optionsValue, constructorKey) { DID_OPTIONS.set(constructorKey, optionsValue); });
 				return options;
 			},
 		},
@@ -81,7 +83,7 @@ export function mixin (this :void) {
 		: Component;
 }
 
-function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev__ | null, DID_OPTIONS :WeakMap<ClassAPI, _ObjectAPI>, TMP_OPTIONS :Map<ClassAPI, _ObjectAPI>) :_ObjectAPI {
+function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev__ | null, DID_OPTIONS :Options, TMP_OPTIONS :Options) :_ObjectAPI {
 	
 	var options :_ObjectAPI | undefined = DID_OPTIONS.get(constructor) || TMP_OPTIONS.get(constructor);
 	if ( options ) { return options; }
@@ -104,7 +106,9 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			}
 			else { mixins[mixins.length] = mixin as _ObjectAPI; }
 		}
-		collectNames(options);
+		__dev__ && check(options, __dev__, DID_OPTIONS, TMP_OPTIONS);
+		collectNames(options, constructor);
+		TMP_OPTIONS.set(constructor, options);
 		return options;
 	}
 	
@@ -122,11 +126,9 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			: options.extends = SuperOptions;
 	}
 	
-	var prototype = constructor.prototype;
-	
-	options.data = __dev__
-		? function (self :_Vue) { return devData(constructor, self as Context, symbolMethods, Vue3, names, shadowAssigner, shadowChecker, __dev__); }
-		: function (self :_Vue) { return proData(constructor, self as Context, symbolMethods, Vue3, names, shadowAssigner); };
+	__dev__ && getOwnPropertySymbols(constructor).forEach(function (symbol) {
+		if ( symbol!==_mixins && !( symbol in SYMBOLS ) ) { throw Error(__dev__.compile_symbol); }
+	});
 	
 	var set :typeof proSet = __dev__ ? devSet.bind(__dev__) : proSet;
 	var assertFunction :typeof proAssertFunction = __dev__ ? devAssertFunction.bind(__dev__) : proAssertFunction;
@@ -163,6 +165,8 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			set(options, staticName, constructor[staticName]);
 		}
 	}
+	
+	var prototype = constructor.prototype;
 	
 	var protoNames = getOwnPropertyNames(prototype);
 	index = protoNames.length;
@@ -219,14 +223,29 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 				if ( __dev__ ) {
 					if ( protoName[0]==='$' ) { throw Error(__dev__.compile_reserved); }
 				}
-				descriptor.hasOwnProperty('value')
-					? protoName==='constructor' && descriptor.value===constructor || set(options.methods || ( options.methods = create(NULL) as NonNullable<_ObjectAPI['methods']> ), protoName, assertFunction(descriptor.value))
-					: set(options.computed || ( options.computed = create(NULL) as NonNullable<_ObjectAPI['computed']> ), protoName, descriptor.set ? {
-						get: descriptor.get,
-						set: descriptor.set
-					} : descriptor.get);
+				if ( descriptor.hasOwnProperty('value') ) {
+					if ( protoName!=='constructor' || descriptor.value!==constructor ) {
+						( options.methods || ( options.methods = create(NULL) as NonNullable<_ObjectAPI['methods']> ) )[protoName] = assertFunction(descriptor.value);
+					}
+				}
+				else {
+					( options.computed || ( options.computed = create(NULL) as NonNullable<_ObjectAPI['computed']> ) )[protoName] = descriptor.set ? { get: descriptor.get, set: descriptor.set } : descriptor.get as any;
+				}
 			}
 		}
+	}
+	
+	__dev__ && check(options, __dev__, DID_OPTIONS, TMP_OPTIONS);
+	
+	var names = collectNames(options, constructor);
+	
+	if ( Render && Vue3 ) {
+		var shadow = Render.shadow;
+		if ( shadow ) {
+			if ( __dev__ ) { var shadowChecker :ShadowChecker | undefined = ShadowChecker(shadow, names, __dev__); }
+			shadowAssigner = ShadowAssigner(shadow);
+		}
+		options.render = assertFunction(new Render(Vue3));
 	}
 	
 	var protoSymbols = getOwnPropertySymbols(prototype) as typeof SYMBOL[];
@@ -247,28 +266,9 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			: function watchBeforeCreated (this :_Vue) { $watch(this, watchers); };
 	}
 	
-	if ( Render ) {
-		if ( Vue3 ) {
-			var shadow :string | undefined = Render.shadow;
-			options.render = assertFunction(new Render(Vue3));
-			if ( shadow ) { shadowAssigner = ShadowAssigner(shadow); }
-		}
-		else {
-			if ( !options.render && !options.template ) {
-				options.render = __dev__ ? function () { throw Error(__dev__.render); } : render;
-			}
-		}
-	}
-	
-	var names = collectNames(options);
-	
-	if ( __dev__ ) {
-		getOwnPropertySymbols(constructor).forEach(function (symbol) {
-			if ( symbol!==_mixins && !( symbol in SYMBOLS ) ) { throw Error(__dev__.compile_symbol); }
-		});
-		check(options, names, __dev__);
-		if ( shadow ) { var shadowChecker :ShadowChecker | undefined = ShadowChecker(shadow, names, __dev__); }
-	}
+	options.data = __dev__
+		? function (self :_Vue) { return devData(constructor, self as Context, symbolMethods, Vue3, names, shadowAssigner, shadowChecker, __dev__); }
+		: function (self :_Vue) { return proData(constructor, self as Context, symbolMethods, Vue3, names, shadowAssigner); };
 	
 	TMP_OPTIONS.set(constructor, options);
 	
@@ -297,12 +297,20 @@ return{objects:new EasyMap,objectsTmp:StrongMap,supers:new EasyMap,names:new Eas
 	}
 	catch (error) {}
 }() as {
-	objects :EasyMap<__Dev__, EasyMap<_Vue3, WeakMap<ClassAPI, _ObjectAPI>>>,
-	objectsTmp :{ new () :Map<ClassAPI, _ObjectAPI> },
+	objects :EasyMap<__Dev__, EasyMap<_Vue3, Options>>,
+	objectsTmp :{ new () :Options },
 	supers :WeakMap<ClassAPI, ClassAPI>,
-	names :WeakMap<_ObjectAPI, Names>,
+	names :WeakMap<ClassAPI | _ObjectAPI, Names>,
 };
 interface EasyMap<K extends object, V> extends WeakMap<K, V> { into (key :K) :V; }
+interface Options {
+	get (key :ClassAPI) :_ObjectAPI | undefined;
+	has (key :_ObjectAPI) :boolean;
+	set (key :ClassAPI, value :_ObjectAPI) :this;
+	set (key :_ObjectAPI, value :null) :this;
+	forEach? (cb :(value :_ObjectAPI, key :ClassAPI) => void) :void;
+	forEach? (cb :(value :null, key :_ObjectAPI) => void) :void;
+}
 
 function isComponentConstructor (value :object) :value is ClassAPI { return apply(isPrototypeOf, Component, [ value ] as const); }
 
@@ -310,6 +318,51 @@ var ARGS = [] as const;
 
 var _MIXINS = [ _mixins ] as const;
 function isMixins (constructor :ClassAPI) { return apply(hasOwnProperty, constructor, _MIXINS); }
+
+var SYMBOLS = /*#__PURE__*/getOwnPropertyNames(Symbol).reduce(function (SYMBOLS, name) {
+	if ( typeof Symbol[name]==='symbol' ) { SYMBOLS[Symbol[name] as typeof SYMBOL] = null; }
+	return SYMBOLS;
+}, create(NULL) as { [SYMBOL] :unknown });
+
+var WATCH_OPTIONS = /;[a-z;=]*$/;
+function $watch (that :_Vue, watchers :readonly Watcher[]) {
+	var index = watchers.length;
+	do {
+		var watcher :any = watchers[--index];
+		that.$watch(watcher.$, watcher.handler, watcher);
+	}
+	while ( index );
+}
+
+export type Names = { [name :string] :unknown };
+function collectNames (options :_ObjectAPI, constructor :ClassAPI | null) :Names {
+	var names :Names | undefined = OPTIONS.names.get(options);
+	if ( !names ) {
+		if ( constructor ) { names = OPTIONS.names.get(constructor); }
+		if ( !names ) {
+			names = create(NULL) as Names;
+			var extend = options.extends;
+			extend && assign(names, collectNames(extend, null));
+			var mixins = options.mixins;
+			if ( mixins ) {
+				var index = mixins.length;
+				while ( index ) { assign(names, collectNames(mixins[--index], null)); }
+			}
+			var props = options.props;
+			var name :string;
+			if ( isArray(props) ) { for ( index = props.length; index; ) { name = props[--index]; names[name] = null; } }
+			else { for ( name in props ) { names[name] = null; } }
+			props = options.inject;
+			if ( isArray(props) ) { for ( index = props.length; index; ) { name = props[--index]; names[name] = null; } }
+			else { for ( name in props ) { names[name] = null; } }
+			for ( name in options.methods ) { names[name] = null; }
+			for ( name in options.computed ) { names[name] = null; }
+		}
+		if ( constructor ) { OPTIONS.names.set(constructor, names); }
+		OPTIONS.names.set(options, names);
+	}
+	return names;
+}
 
 function proSet<T> (object :{ [name :string] :T }, name :string, value :T) { object[name] = value; }
 function devSet<T> (this :__Dev__, object :{ [name :string] :T }, name :string, value :T) {
@@ -323,74 +376,49 @@ function devAssertFunction<T> (this :__Dev__, fn :T) {
 	return fn as T extends CallableFunction ? T : never;
 }
 
-var WATCH_OPTIONS = /;[a-z;=]*$/;
-function $watch (that :_Vue, watchers :readonly Watcher[]) {
-	var index = watchers.length;
-	do {
-		var watcher :any = watchers[--index];
-		that.$watch(watcher.$, watcher.handler, watcher);
-	}
-	while ( index );
+function forKeys (option :{} | undefined, callback :(name :string) => void) {
+	if ( isArray(option) ) { option.forEach(callback); }
+	else { for ( var key in option ) { callback(key); } }
 }
-
-function render () :never { throw Error('render'); }
-
-export type Names = { [name :string] :unknown };
-function collectNames (options :_ObjectAPI) :Names {
-	var names :Names | undefined = OPTIONS.names.get(options);
-	if ( !names ) {
-		names = create(NULL) as Names;
-		var props = options.props;
-		var name :string;
-		if ( isArray(props) ) { for ( index = props.length; index; ) { name = props[--index]; names[name] = null; } }
-		else { for ( name in props ) { names[name] = null; } }
-		props = options.inject;
-		if ( isArray(props) ) { for ( index = props.length; index; ) { name = props[--index]; names[name] = null; } }
-		else { for ( name in props ) { names[name] = null; } }
-		for ( name in options.methods ) { names[name] = null; }
-		for ( name in options.computed ) { names[name] = null; }
-		var extend = options.extends;
-		if ( extend ) {
-			mixin = collectNames(extend);
-			assign(names, mixin);
-		}
-		var mixins = options.mixins;
-		if ( mixins ) {
-			var index = mixins.length;
-			while ( index ) {
-				var mixin = collectNames(mixins[--index]);
-				assign(names.exceptData, mixin.exceptData);
-			}
-		}
-		OPTIONS.names.set(options, names);
+function check (options :_ObjectAPI & { readonly name? :string }, __dev__ :__Dev__, DID_OPTIONS :Options, TMP_OPTIONS :Options) {
+	
+	( options.extends ? [ options.extends ] : [] ).concat(options.mixins || []).forEach(function (mixin) {
+		DID_OPTIONS.has(mixin) || TMP_OPTIONS.has(mixin) || check(mixin, __dev__, DID_OPTIONS, TMP_OPTIONS);
+	});
+	
+	var names = new Set<string>();
+	
+	forKeys(options.props, function (name) {
+		if ( /-|^(?:key$|[oO][nN]|ref$)/.test(name) ) { throw Error(__dev__.compile_props); }
+		if ( name in PROTO_BUG ) { throw Error(__dev__.compile_proto); }
+		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
+		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
+	});
+	
+	forKeys(options.inject, function (name) {
+		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
+		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
+	});
+	
+	for ( name in options.methods ) {
+		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
+		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
 	}
-	return names;
-}
-
-var SYMBOLS = /*#__PURE__*/getOwnPropertyNames(Symbol).reduce(function (SYMBOLS, name) {
-	if ( typeof Symbol[name]==='symbol' ) { SYMBOLS[Symbol[name] as typeof SYMBOL] = null; }
-	return SYMBOLS;
-}, create(NULL) as { [SYMBOL] :unknown });
-
-function check (options :_ObjectAPI, names :Names, __dev__ :__Dev__) {
 	
-	var name :string;
+	for ( name in options.computed ) {
+		if ( name in PROTO_BUG ) { throw Error(__dev__.compile_proto); }
+		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
+		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
+	}
 	
-	//@ts-ignore
-	if ( ( name = options.name ) ) {
+	var name = options.name;
+	if ( name ) {
 		if (
 			/^(?![A-Z])/.test(name)
 			||
 			options.components && name in options.components
 		) { throw Error(__dev__.compile_name); }
 	}
-	
-	if ( options.props ) {
-		if ( isArray(options.props) ) { options.props.forEach(function (name) { if ( /-|^(?:constructor$|key$|[oO][nN]|ref$)/.test(name) ) { throw Error(name==='constructor' ? __dev__.compile_constructor : __dev__.compile_props); } }); }
-		else { for ( name in options.props ) { if ( /-|^(?:constructor$|key$|[oO][nN]|ref$)/.test(name) ) { throw Error(name==='constructor' ? __dev__.compile_constructor : __dev__.compile_props); } } }
-	}
-	
-	if ( options.computed && 'constructor' in options.computed ) { throw Error(__dev__.compile_constructor); }
 	
 	options.emits &&
 	( isArray(options.emits) ? options.emits : keys(options.emits) ).forEach(function (event) {
@@ -403,11 +431,13 @@ function check (options :_ObjectAPI, names :Names, __dev__ :__Dev__) {
 		options.props && ( isArray(options.props) ? options.props.includes('is') : 'is' in options.props )// 3
 	) { throw Error(__dev__.compile_is); }
 	
+	TMP_OPTIONS.set(options, null);
+	
 }
 
 var DEV = [
 	'compile_name',
-	'compile_constructor',
+	'compile_proto',
 	'compile_props',
 	'compile_emits',
 	'compile_is',
@@ -417,7 +447,6 @@ var DEV = [
 	'compile_type',
 	'compile_symbol',
 	'compile_shadow',
-	'render',
 	'runtime_shadow',
 	'runtime_redefined',
 	'runtime_symbol',

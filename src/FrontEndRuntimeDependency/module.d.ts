@@ -69,7 +69,7 @@ declare module 'j-vue' {
 	export function remove (style :HTMLStyleElement) :typeof remove;
 	
 	export abstract class Component<Sub extends SubComponent<Sub>> extends SubComponent<Sub> { protected constructor () }
-	export function mixin<Mixins extends object> (...mixins :( ClassAPI | ObjectAPI )[]) :
+	export function mixin<Mixins extends object = object> (...mixins :( ClassAPI | ObjectAPI )[]) :
 		{ [Name in keyof typeof Component] :typeof Component[Name] } &
 		{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &
 		{ new<Sub extends Component<Sub>> () :
@@ -139,7 +139,7 @@ declare module 'j-vue' {
 		static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{
 			readonly [Error in
 				| 'compile_name'
-				| 'compile_constructor'
+				| 'compile_proto'
 				| 'compile_props'
 				| 'compile_emits'
 				| 'compile_is'
@@ -149,7 +149,6 @@ declare module 'j-vue' {
 				| 'compile_type'
 				| 'compile_symbol'
 				| 'compile_shadow'
-				| 'render'
 				| 'runtime_shadow'
 				| 'runtime_redefined'
 				| 'runtime_symbol'

@@ -91,6 +91,10 @@ declare module '.Reflect.ownKeys?' { export default ownKeys;
 
 declare module '.RegExp' { export default RegExp; }
 
+declare module '.Set?' { export default constructor;
+	class constructor<V> extends Set<V> { constructor (values? :Iterable<V>) }
+}
+
 declare module '.String.fromCharCode' { export default String.fromCharCode; }
 
 declare module '.Symbol.species?' { export default Symbol.species; }
