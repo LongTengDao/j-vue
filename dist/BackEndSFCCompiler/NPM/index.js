@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.0.2';
+const version = '17.0.3';
 
 const Error$1 = Error;
 
@@ -3341,19 +3341,20 @@ const { 3: compile3, 2: compile2 }
 		[ /push\(`const /g, 'push\(`let ', NaN ],
 	);
 	
-	const Var2 = (content        ) =>
-		content
-		.replace(`el.tag === 'style' ||`, '')
-		.replace(/(var simplePathRE = \/)(.*?\*)/s, (match        , pre        , aim        ) => pre + aim.replace(/(?<=\$)/g, NON_ASCII$1) + '$|' + aim)
-		.replace(RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name                     ) => gen[2][name].var)
-		.replace(/undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, (origin        ) => ( { undefined: 'void null', $$v: '$event' }[origin                       ] ));
-	const Const2 = (content        ) =>
-		content
-		.replace(RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name                     ) => gen[2][name].const)
-		.replace(/function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match        , p1        )         => `(${p1})=>{`);
-	const Let2 = (content        ) =>
-		content
-		.replace(/const /g, 'let ');
+	const Var2 = Replacer(
+		[ `var map = {};`, `var map = Object.create(null);` ],
+		[ `el.tag === 'style' ||` ],
+		[ /(var simplePathRE = \/)(.*?\*)/s, (match        , pre        , aim        ) => pre + aim.replace(/(?<=\$)/g, NON_ASCII$1) + '$|' + aim ],
+		[ RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].var, 2 ],
+		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, (origin        ) => ( { undefined: 'void null', $$v: '$event' }[origin                       ] ), 4 ],
+	);
+	const Const2 = Replacer(
+		[ RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].const, 2 ],
+		[ /function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match        , p1        )         => `(${p1})=>{`, 7 ],
+	);
+	const Let2 = Replacer(
+		[ /const /g, 'let ', NaN ],
+	);
 	
 	const _prod         = process$1.env.NODE_ENV==='production' ? '.prod' : '';
 	

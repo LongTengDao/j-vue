@@ -69,19 +69,20 @@ export const { 3: compile3, 2: compile2 } :{
 		[ /push\(`const /g, 'push\(`let ', NaN ],
 	);
 	
-	const Var2 = (content :string) =>
-		content
-		.replace(`el.tag === 'style' ||`, '')
-		.replace(/(var simplePathRE = \/)(.*?\*)/s, (match :string, pre :string, aim :string) => pre + aim.replace(/(?<=\$)/g, NON_ASCII) + '$|' + aim)
-		.replace(RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :keyof typeof gen[2]) => gen[2][name].var)
-		.replace(/undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, (origin :string) => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ));
-	const Const2 = (content :string) =>
-		content
-		.replace(RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :keyof typeof gen[2]) => gen[2][name].const)
-		.replace(/function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match :string, p1 :string) :string => `(${p1})=>{`);
-	const Let2 = (content :string) =>
-		content
-		.replace(/const /g, 'let ');
+	const Var2 = Replacer(
+		[ `var map = {};`, `var map = Object.create(null);` ],
+		[ `el.tag === 'style' ||` ],
+		[ /(var simplePathRE = \/)(.*?\*)/s, (match :string, pre :string, aim :string) => pre + aim.replace(/(?<=\$)/g, NON_ASCII) + '$|' + aim ],
+		[ RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].var, 2 ],
+		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, (origin :string) => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],
+	);
+	const Const2 = Replacer(
+		[ RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].const, 2 ],
+		[ /function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match :string, p1 :string) :string => `(${p1})=>{`, 7 ],
+	);
+	const Let2 = Replacer(
+		[ /const /g, 'let ', NaN ],
+	);
 	
 	const _prod :string = process.env.NODE_ENV==='production' ? '.prod' : '';
 	
