@@ -15,17 +15,18 @@ Now we can use TypeScript and class like this to resolve this problem, without a
 import { Component, mixin } from 'j-vue';
 
 abstract class Mixin0 extends Component<Mixin0> {
-    m0 () :void {}
+    #d = 0;
+    m0 () { return ++this.#d; }
 }
 
-interface Mixin1 {
-    m1 () :void
-}
 const Mixin1 = {
     methods: {
         m1 () :void {}
     }
 };
+interface Mixin1 extends Component<Mixin1> {
+    m1 () :void
+}
 
 const Mixins = mixin<Mixin0 & Mixin1>(Mixin0, Mixin1);
 
@@ -72,13 +73,13 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     
     get _props () { return [ 'p' ] as const; }
     
-    declare readonly p :0;
+    declare readonly p? :string;
     
     /* inject (Like props) */
     
     get _inject () { return [ 'i' ] as const; }
     
-    declare readonly i :0;
+    declare readonly i :boolean;
     
     /* data */
     

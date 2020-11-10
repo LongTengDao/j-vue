@@ -1,6 +1,5 @@
 import Error from '.Error';
 import create from '.Object.create';
-import hasOwnProperty from '.Object.prototype.hasOwnProperty';
 import NULL from '.null.prototype';
 
 var INIT = /*#__PURE__*/function () {
@@ -47,17 +46,32 @@ export function ShadowAssigner (this :void, along :string) :ShadowAssigner {
 }
 
 export type ShadowChecker = { (this :void, data :Data) :void };
-export function ShadowChecker (this :void, along :string, names :Names, __dev__ :__Dev__) :ShadowChecker {
+export function ShadowChecker (this :void, along :string, restNames :Names, dataNames :Names | null, __dev__ :__Dev__) :ShadowChecker {
+	if ( along[0]==='_' || along[0]==='$' ) { throw Error(__dev__.compile_shadow); }
 	var index = along.indexOf('.');
-	var toName = index<0 ? along.slice(0, index) : along;
-	if ( toName in names ) { throw Error(__dev__.compile_shadow); }
-	return index<0
-		? function (this :void, data :Data) {
-			if ( hasOwnProperty.call(data, toName + '$get') || hasOwnProperty.call(data, toName + '$set') ) { throw Error(__dev__.runtime_shadow); }
+	if ( index<0 ) {
+		var toName$get = along.slice(0, index) + '$get';
+		var toName$set = along.slice(0, index) + '$set';
+		if ( toName$get in restNames || toName$set in restNames ) { throw Error(__dev__.compile_shadow); }
+		if ( dataNames ) {
+			if ( toName$get in dataNames || toName$set in dataNames ) { throw Error(__dev__.compile_shadow); }
+			return function () {};
 		}
-		: function (this :void, data :Data) {
-			if ( hasOwnProperty.call(data, toName) ) { throw Error(__dev__.runtime_shadow); }
+		return function (this :void, data :Data) {
+			if ( toName$get in data || toName$set in data ) { throw Error(__dev__.runtime_shadow); }
 		};
+	}
+	else {
+		if ( along==='constructor' ) { throw Error(__dev__.proto); }
+		if ( along in restNames ) { throw Error(__dev__.compile_shadow); }
+		if ( dataNames ) {
+			if ( along in dataNames ) { throw Error(__dev__.compile_shadow); }
+			return function () {};
+		}
+		return function (this :void, data :Data) {
+			if ( along in data ) { throw Error(__dev__.runtime_shadow); }
+		};
+	}
 }
 
 type All = { [name :string] :{ (this :void, el :HTMLElement | null) :void } | ShadowRoot | null };

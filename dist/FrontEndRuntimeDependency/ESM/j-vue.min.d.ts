@@ -1,4 +1,4 @@
-export const version :'17.0.3';
+export const version :'17.0.4';
 
 export function Identifier () :string;
 
@@ -106,8 +106,8 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	
 	static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{
 		readonly [Error in
+			| 'proto'
 			| 'compile_name'
-			| 'compile_proto'
 			| 'compile_props'
 			| 'compile_emits'
 			| 'compile_is'
@@ -122,6 +122,7 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 			| 'runtime_symbol'
 			| 'runtime_reserved'
 			| 'runtime_enumerable'
+			| 'runtime_data'
 		]? :string
 	}) => ObjectAPI;
 	protected constructor (Vue3? :Vue3);

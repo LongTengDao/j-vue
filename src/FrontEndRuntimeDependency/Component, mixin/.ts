@@ -24,7 +24,7 @@ import isPrototypeOf from '.Object.prototype.isPrototypeOf';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
 
-import { that, proData, devData } from './Data';
+import { that, proSymbols, proConstructor, proNames, proData, devData } from './Data';
 import { ShadowAssigner, ShadowChecker } from './Shadow';
 
 export { Component as default };
@@ -121,8 +121,8 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		var SuperOptions = ToOptions(Super, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
 		isMixins(Super)
 			? options.mixins!.length===1
-				? options.extends = SuperOptions.mixins![0]
-				: options.mixins = SuperOptions.mixins
+			? options.extends = SuperOptions.mixins![0]
+			: options.mixins = SuperOptions.mixins
 			: options.extends = SuperOptions;
 	}
 	
@@ -136,6 +136,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	var staticNames = getOwnPropertyNames(constructor);
 	index = staticNames.length;
 	var shadowAssigner :ShadowAssigner | null = null;
+	var skipConstructor = false;
 	while ( index ) {
 		var staticName = staticNames[--index];
 		if ( staticName==='Render' ) { var Render :_Render3Constructor | undefined = constructor[staticName] as _Render3Constructor; }
@@ -149,12 +150,18 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 				set(options, staticName, apply(descriptor.get!, constructor, ARGS));
 			}
 		}
+		else if ( staticName==='data' ) {
+			if ( __dev__ ) {
+				if ( constructor[staticName]!==undefined ) { throw Error(isArray(constructor[staticName]) ? __dev__.compile_layout : __dev__.compile_type); }
+			}
+			skipConstructor = true;
+		}
 		else if ( staticName!=='prototype' ) {
 			if ( __dev__ ) {
 				if ( staticName[0]==='_' ) { throw Error(__dev__.compile_reserved); }
 				if (
 					//@ts-ignore
-					staticName==='setup' || staticName==='watch' || staticName==='methods' || staticName==='computed' || staticName==='extends' || staticName==='data' || staticName==='mixins' ||
+					staticName==='setup' || staticName==='watch' || staticName==='methods' || staticName==='computed' || staticName==='extends' || staticName==='mixins' ||
 					//@ts-ignore
 					staticName==='beforeCreated' || staticName==='created' || staticName==='beforeMount' || staticName==='mounted' || staticName==='beforeUpdate' || staticName==='updated' || staticName==='activated' || staticName==='deactivated' || staticName==='beforeUnmount' || staticName==='unmounted' || staticName==='beforeDestroy' || staticName==='destroyed' ||
 					//@ts-ignore
@@ -171,14 +178,47 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	var protoNames = getOwnPropertyNames(prototype);
 	index = protoNames.length;
 	var watchers :Watcher[] = [];
+	var skipData = false;
+	var dataNames :Names | null = null;
 	while ( index ) {
 		var protoName = protoNames[--index];
-		if ( protoName[0]==='_' && !protoName.startsWith('_watch:') ) {
+		if ( protoName==='_data' ) {
+			var _data = get(prototype, protoName, undefined);
+			if ( _data ) {
+				if ( __dev__ ) {
+					if ( !isArray(_data) ) { throw Error(__dev__.compile_type); }
+					_data.forEach(function (each) {
+						if ( typeof each!=='string' ) { throw Error(__dev__.compile_type); }
+					});
+					if ( skipConstructor ) { throw Error(__dev__.compile_redefined); }
+				}
+				OPTIONS.data.set(options, _data);
+				var length = _data.length;
+				if ( length ) {
+					dataNames = create(NULL) as Names;
+					var i = 0;
+					do { dataNames[_data[i]] = null; }
+					while ( ++i!==length );
+					dataNames = assign(create(NULL), dataNames);
+				}
+				else {
+					skipData = true;
+				}
+			}
+			else {
+				if ( __dev__ ) {
+					if ( _data!==undefined ) { throw Error(__dev__.compile_type); }
+					if ( skipConstructor ) { throw Error(__dev__.compile_redefined); }
+				}
+				skipConstructor = true;
+			}
+		}
+		else if ( protoName[0]==='_' && !protoName.startsWith('_watch:') ) {
 			if ( __dev__ ) {
 				var protoName1 = protoName.slice(1);
 				if ( protoName1[0]==='_' ) { throw Error(__dev__.compile_reserved); }
 				if (
-					protoName1==='setup' || protoName1==='watch' || protoName1==='methods' || protoName1==='computed' || protoName1==='extends' || protoName1==='data' || protoName1==='mixins' ||
+					protoName1==='setup' || protoName1==='watch' || protoName1==='methods' || protoName1==='computed' || protoName1==='extends' || protoName1==='mixins' ||
 					protoName1==='emits' || protoName1==='components' || protoName1==='directives' || protoName1==='staticRenderFns' || protoName1==='template' || protoName1==='inheritAttrs' ||
 					protoName1==='name' ||
 					protoName1==='Render' ||
@@ -229,7 +269,10 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 					}
 				}
 				else {
-					( options.computed || ( options.computed = create(NULL) as NonNullable<_ObjectAPI['computed']> ) )[protoName] = descriptor.set ? { get: descriptor.get, set: descriptor.set } : descriptor.get as any;
+					( options.computed || ( options.computed = create(NULL) as NonNullable<_ObjectAPI['computed']> ) )[protoName] = descriptor.set ? {
+						get: descriptor.get,
+						set: descriptor.set
+					} : descriptor.get as any;
 				}
 			}
 		}
@@ -237,12 +280,15 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	
 	__dev__ && check(options, __dev__, DID_OPTIONS, TMP_OPTIONS);
 	
-	var names = collectNames(options, constructor);
+	var restNames = collectNames(options, constructor);
 	
 	if ( Render && Vue3 ) {
 		var shadow = Render.shadow;
 		if ( shadow ) {
-			if ( __dev__ ) { var shadowChecker :ShadowChecker | undefined = ShadowChecker(shadow, names, __dev__); }
+			if ( __dev__ ) {
+				if ( skipConstructor && skipData ) { throw Error(__dev__.compile_shadow); }
+				var shadowChecker :ShadowChecker | undefined = ShadowChecker(shadow, restNames, dataNames, __dev__);
+			}
 			shadowAssigner = ShadowAssigner(shadow);
 		}
 		options.render = assertFunction(new Render(Vue3));
@@ -256,19 +302,75 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		symbolMethods![protoSymbol] = assign(create(NULL), getOwnPropertyDescriptor(prototype, protoSymbol));
 	}
 	
-	if ( watchers.length ) {
-		var created = options.created;
-		options.created = created
-			? function watchBeforeCreated (this :_Vue) {
-				$watch(this, watchers);
-				return created!.call(this);
-			}
-			: function watchBeforeCreated (this :_Vue) { $watch(this, watchers); };
-	}
+	if ( __dev__ ) { options.data = function (self :_Vue) { return devData(self as Context, symbolMethods, constructor, Vue3, skipData, dataNames, restNames, shadowAssigner, shadowChecker, skipConstructor, __dev__); }; }
+	else if ( skipConstructor || skipData ) {}
+	else if ( dataNames ) { options.data = function (self :_Vue) { return proNames(self as Context, symbolMethods, constructor, Vue3, dataNames!, shadowAssigner); }; }
+	else { options.data = function (self :_Vue) { return proData(self as Context, symbolMethods, constructor, Vue3, restNames, shadowAssigner); }; }
 	
-	options.data = __dev__
-		? function (self :_Vue) { return devData(constructor, self as Context, symbolMethods, Vue3, names, shadowAssigner, shadowChecker, __dev__); }
-		: function (self :_Vue) { return proData(constructor, self as Context, symbolMethods, Vue3, names, shadowAssigner); };
+	if ( watchers.length || !__dev__ && ( skipConstructor && symbolMethods || skipData ) ) {
+		var created = options.created;
+		switch ( ( __dev__ ? ( skipConstructor ? 's' : 'n' ) : '_' ) + ( watchers.length ? 'w' : '_' ) + ( created ? 'c' : '_' ) ) {
+			case 'swc':
+				options.created = function beforeCreated (this :_Vue) {
+					proSymbols(this as Context, symbolMethods!);
+					$watch(this, watchers);
+					return created!.call(this);
+				};
+				break;
+			case 'sw_':
+				options.created = function beforeCreated (this :_Vue) {
+					proSymbols(this as Context, symbolMethods!);
+					$watch(this, watchers);
+				};
+				break;
+			case 's_c':
+				options.created = function beforeCreated (this :_Vue) {
+					proSymbols(this as Context, symbolMethods!);
+					return created!.call(this);
+				};
+				break;
+			case 's__':
+				options.created = function beforeCreated (this :_Vue) {
+					proSymbols(this as Context, symbolMethods!);
+				};
+				break;
+			case 'nwc':
+				options.created = function beforeCreated (this :_Vue) {
+					proConstructor(this as Context, symbolMethods, constructor, Vue3);
+					$watch(this, watchers);
+					return created!.call(this);
+				};
+				break;
+			case 'nw_':
+				options.created = function beforeCreated (this :_Vue) {
+					proConstructor(this as Context, symbolMethods, constructor, Vue3);
+					$watch(this, watchers);
+				};
+				break;
+			case 'n_c':
+				options.created = function beforeCreated (this :_Vue) {
+					proConstructor(this as Context, symbolMethods, constructor, Vue3);
+					return created!.call(this);
+				};
+				break;
+			case 'n__':
+				options.created = function beforeCreated (this :_Vue) {
+					proConstructor(this as Context, symbolMethods, constructor, Vue3);
+				};
+				break;
+			case '_wc':
+				options.created = function beforeCreated (this :_Vue) {
+					$watch(this, watchers);
+					return created!.call(this);
+				};
+				break;
+			case '_w_':
+				options.created = function beforeCreated (this :_Vue) {
+					$watch(this, watchers);
+				};
+				break;
+		}
+	}
 	
 	TMP_OPTIONS.set(constructor, options);
 	
@@ -292,7 +394,7 @@ var OPTIONS = WeakMap && /*#__PURE__*/function () {
 		return Function('WeakMap,Map', '"use strict";\
 class EasyMap extends WeakMap{into(key){let sub=this.get(key);sub??this.set(key,sub=new EasyMap);return sub}}EasyMap.prototype.get=WeakMap.prototype.get;EasyMap.prototype.set=WeakMap.prototype.set;\
 class StrongMap extends Map{}StrongMap.prototype.get=Map.prototype.get;StrongMap.prototype.set=Map.prototype.set;StrongMap.prototype.forEach=Map.prototype.forEach;\
-return{objects:new EasyMap,objectsTmp:StrongMap,supers:new EasyMap,names:new EasyMap}\
+return{objects:new EasyMap,objectsTmp:StrongMap,supers:new EasyMap,rests:new EasyMap,data:new EasyMap}\
 ')(WeakMap, Map);
 	}
 	catch (error) {}
@@ -300,9 +402,10 @@ return{objects:new EasyMap,objectsTmp:StrongMap,supers:new EasyMap,names:new Eas
 	objects :EasyMap<__Dev__, EasyMap<_Vue3, Options>>,
 	objectsTmp :{ new () :Options },
 	supers :WeakMap<ClassAPI, ClassAPI>,
-	names :WeakMap<ClassAPI | _ObjectAPI, Names>,
+	rests :WeakMap<ClassAPI | _ObjectAPI, Names>,
+	data :WeakMap<_ObjectAPI, readonly string[]>,
 };
-interface EasyMap<K extends object, V> extends WeakMap<K, V> { into (key :K) :V; }
+interface EasyMap<K extends object, V> extends WeakMap<K, V> {into (key :K) :V;}
 interface Options {
 	get (key :ClassAPI) :_ObjectAPI | undefined;
 	has (key :_ObjectAPI) :boolean;
@@ -336,32 +439,43 @@ function $watch (that :_Vue, watchers :readonly Watcher[]) {
 
 export type Names = { [name :string] :unknown };
 function collectNames (options :_ObjectAPI, constructor :ClassAPI | null) :Names {
-	var names :Names | undefined = OPTIONS.names.get(options);
-	if ( !names ) {
-		if ( constructor ) { names = OPTIONS.names.get(constructor); }
-		if ( !names ) {
-			names = create(NULL) as Names;
+	var restNames :Names | undefined = OPTIONS.rests.get(options);
+	if ( !restNames ) {
+		if ( constructor ) { restNames = OPTIONS.rests.get(constructor); }
+		if ( !restNames ) {
+			restNames = create(NULL) as Names;
 			var extend = options.extends;
-			extend && assign(names, collectNames(extend, null));
+			extend && assign(restNames, collectNames(extend, null));
 			var mixins = options.mixins;
 			if ( mixins ) {
 				var index = mixins.length;
-				while ( index ) { assign(names, collectNames(mixins[--index], null)); }
+				while ( index ) { assign(restNames, collectNames(mixins[--index], null)); }
 			}
 			var props = options.props;
 			var name :string;
-			if ( isArray(props) ) { for ( index = props.length; index; ) { name = props[--index]; names[name] = null; } }
-			else { for ( name in props ) { names[name] = null; } }
+			if ( isArray(props) ) {
+				for ( index = props.length; index; ) {
+					name = props[--index];
+					restNames[name] = null;
+				}
+			}
+			else { for ( name in props ) { restNames[name] = null; } }
 			props = options.inject;
-			if ( isArray(props) ) { for ( index = props.length; index; ) { name = props[--index]; names[name] = null; } }
-			else { for ( name in props ) { names[name] = null; } }
-			for ( name in options.methods ) { names[name] = null; }
-			for ( name in options.computed ) { names[name] = null; }
+			if ( isArray(props) ) {
+				for ( index = props.length; index; ) {
+					name = props[--index];
+					restNames[name] = null;
+				}
+			}
+			else { for ( name in props ) { restNames[name] = null; } }
+			for ( name in options.methods ) { restNames[name] = null; }
+			for ( name in options.computed ) { restNames[name] = null; }
+			restNames = assign(create(NULL), restNames);
 		}
-		if ( constructor ) { OPTIONS.names.set(constructor, names); }
-		OPTIONS.names.set(options, names);
+		if ( constructor ) { OPTIONS.rests.set(constructor, restNames); }
+		OPTIONS.rests.set(options, restNames);
 	}
-	return names;
+	return restNames;
 }
 
 function proSet<T> (object :{ [name :string] :T }, name :string, value :T) { object[name] = value; }
@@ -380,44 +494,48 @@ function forKeys (option :{} | undefined, callback :(name :string) => void) {
 	if ( isArray(option) ) { option.forEach(callback); }
 	else { for ( var key in option ) { callback(key); } }
 }
-function check (options :_ObjectAPI & { readonly name? :string }, __dev__ :__Dev__, DID_OPTIONS :Options, TMP_OPTIONS :Options) {
+function check (options :_ObjectAPI & { readonly name? :string, readonly displayName? :string }, __dev__ :__Dev__, DID_OPTIONS :Options, TMP_OPTIONS :Options) {
 	
 	( options.extends ? [ options.extends ] : [] ).concat(options.mixins || []).forEach(function (mixin) {
 		DID_OPTIONS.has(mixin) || TMP_OPTIONS.has(mixin) || check(mixin, __dev__, DID_OPTIONS, TMP_OPTIONS);
 	});
 	
-	var names = new Set<string>();
+	var restNames = new Set<string>();
 	
 	forKeys(options.props, function (name) {
 		if ( /-|^(?:key$|[oO][nN]|ref$)/.test(name) ) { throw Error(__dev__.compile_props); }
-		if ( name in PROTO_BUG ) { throw Error(__dev__.compile_proto); }
+		if ( name in PROTO_BUG ) { throw Error(__dev__.proto); }
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
 	});
 	
 	forKeys(options.inject, function (name) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
 	});
 	
-	for ( name in options.methods ) {
+	for ( var name in options.methods ) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
 	}
 	
 	for ( name in options.computed ) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( names.size===names.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
 	}
 	
-	var name = options.name;
-	if ( name ) {
-		if (
-			/^(?![A-Z])/.test(name)
-			||
-			options.components && name in options.components
+	( OPTIONS.data.get(options) || [] ).forEach(function (name) {
+		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
+	});
+	
+	if ( restNames.has('constructor') ) { throw Error(__dev__.proto); }
+	
+	[ options.name, options.displayName ].forEach(function (name :unknown) {
+		if ( typeof name==='string'
+			? /^(?![A-Z])/.test(name) || options.components && name in options.components
+			: name!==undefined
 		) { throw Error(__dev__.compile_name); }
-	}
+	});
 	
 	options.emits &&
 	( isArray(options.emits) ? options.emits : keys(options.emits) ).forEach(function (event) {
@@ -435,8 +553,8 @@ function check (options :_ObjectAPI & { readonly name? :string }, __dev__ :__Dev
 }
 
 var DEV = [
+	'proto',
 	'compile_name',
-	'compile_proto',
 	'compile_props',
 	'compile_emits',
 	'compile_is',
@@ -451,6 +569,7 @@ var DEV = [
 	'runtime_symbol',
 	'runtime_reserved',
 	'runtime_enumerable',
+	'runtime_data',
 ] as const;
 
 export type __Dev__ = typeof DEV extends readonly ( infer T )[] ? { readonly [Key in Extract<T, string>] :string } : never;

@@ -96,6 +96,7 @@ declare module 'j-vue' {
 	type ClassAPI = typeof AnyComponent;
 	abstract class AnyComponent<Sub extends SubComponent<Sub>> extends SubComponent<Sub> {
 		protected constructor ();
+		get _data () :any;
 		get _inject () :any;
 		get _props () :any;
 		get _directives () :any;
@@ -120,10 +121,12 @@ declare module 'j-vue' {
 		protected _render? () :VNode | ( VNode | string )[];
 		protected _provide? () :{ [key :string] :unknown };
 		
+		get _data () :void | readonly OwnNames<Sub>[];
 		get _inject () :void | Inject<Sub>;
 		get _props () :void | Props<Sub>;
 		get _directives () :void | Directives<Sub>;
 		
+		static readonly data :void;
 		static readonly directives :void | Directives<Vue>;
 		static readonly provide :void | { [key :string] :unknown };
 		
@@ -138,8 +141,8 @@ declare module 'j-vue' {
 		
 		static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{
 			readonly [Error in
+				| 'proto'
 				| 'compile_name'
-				| 'compile_proto'
 				| 'compile_props'
 				| 'compile_emits'
 				| 'compile_is'
@@ -154,6 +157,7 @@ declare module 'j-vue' {
 				| 'runtime_symbol'
 				| 'runtime_reserved'
 				| 'runtime_enumerable'
+				| 'runtime_data'
 			]? :string
 		}) => ObjectAPI;
 		protected constructor (Vue3? :Vue3);
@@ -168,7 +172,6 @@ declare module 'j-vue' {
 		
 		private _mixins :void;
 		private _extends :void;
-		private _data :void;
 		private _watch :void;
 		private _methods :void;
 		private _computed :void;
@@ -207,7 +210,6 @@ declare module 'j-vue' {
 		
 		private static readonly mixins :void;
 		private static readonly extends :void;
-		private static readonly data :void;
 		private static readonly watch :void;
 		private static readonly methods :void;
 		private static readonly computed :void;
