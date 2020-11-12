@@ -2,6 +2,7 @@ import Error from '.Error';
 import Symbol from '.Symbol?';
 import Set from '.Set?';
 import Map from '.Map?';
+import WeakSet from '.WeakSet?';
 import WeakMap from '.WeakMap?';
 import TypeError from '.TypeError';
 import Function from '.Function';
@@ -83,7 +84,7 @@ export function mixin (this :void) {
 		: Component;
 }
 
-function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev__ | null, DID_OPTIONS :Options, TMP_OPTIONS :Options) :_ObjectAPI {
+function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev__ | null, DID_OPTIONS :WeakMap<ClassAPI, _ObjectAPI>, TMP_OPTIONS :Map<ClassAPI, _ObjectAPI>) :_ObjectAPI {
 	
 	var options :_ObjectAPI | undefined = DID_OPTIONS.get(constructor) || TMP_OPTIONS.get(constructor);
 	if ( options ) { return options; }
@@ -106,7 +107,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			}
 			else { mixins[mixins.length] = mixin as _ObjectAPI; }
 		}
-		__dev__ && check(options, __dev__, DID_OPTIONS, TMP_OPTIONS);
+		__dev__ && check(options, __dev__, constructor);
 		collectNames(options, constructor);
 		TMP_OPTIONS.set(constructor, options);
 		return options;
@@ -278,7 +279,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		}
 	}
 	
-	__dev__ && check(options, __dev__, DID_OPTIONS, TMP_OPTIONS);
+	__dev__ && check(options, __dev__, constructor);
 	
 	var restNames = collectNames(options, constructor);
 	
@@ -395,25 +396,17 @@ var OPTIONS = WeakMap && /*#__PURE__*/function () {
 class EasyMap extends WeakMap{into(key){let sub=this.get(key);sub??this.set(key,sub=new EasyMap);return sub}}EasyMap.prototype.get=WeakMap.prototype.get;EasyMap.prototype.set=WeakMap.prototype.set;\
 class StrongMap extends Map{}StrongMap.prototype.get=Map.prototype.get;StrongMap.prototype.set=Map.prototype.set;StrongMap.prototype.forEach=Map.prototype.forEach;\
 return{objects:new EasyMap,objectsTmp:StrongMap,supers:new EasyMap,rests:new EasyMap,data:new EasyMap}\
-')(WeakMap, Map);
+')(WeakSet, WeakMap, Map);
 	}
 	catch (error) {}
 }() as {
-	objects :EasyMap<__Dev__, EasyMap<_Vue3, Options>>,
-	objectsTmp :{ new () :Options },
+	objects :EasyMap<__Dev__, EasyMap<_Vue3, WeakMap<ClassAPI, _ObjectAPI>>>,
+	objectsTmp :{ new () :Map<ClassAPI, _ObjectAPI> },
 	supers :WeakMap<ClassAPI, ClassAPI>,
 	rests :WeakMap<ClassAPI | _ObjectAPI, Names>,
 	data :WeakMap<_ObjectAPI, readonly string[]>,
 };
 interface EasyMap<K extends object, V> extends WeakMap<K, V> {into (key :K) :V;}
-interface Options {
-	get (key :ClassAPI) :_ObjectAPI | undefined;
-	has (key :_ObjectAPI) :boolean;
-	set (key :ClassAPI, value :_ObjectAPI) :this;
-	set (key :_ObjectAPI, value :null) :this;
-	forEach? (cb :(value :_ObjectAPI, key :ClassAPI) => void) :void;
-	forEach? (cb :(value :null, key :_ObjectAPI) => void) :void;
-}
 
 function isComponentConstructor (value :object) :value is ClassAPI { return apply(isPrototypeOf, Component, [ value ] as const); }
 
@@ -490,15 +483,16 @@ function devAssertFunction<T> (this :__Dev__, fn :T) {
 	return fn as T extends CallableFunction ? T : never;
 }
 
+var CHECKED = WeakSet && /*#__PURE__*/new WeakSet<ClassAPI | _ObjectAPI>();
 function forKeys (option :{} | undefined, callback :(name :string) => void) {
 	if ( isArray(option) ) { option.forEach(callback); }
 	else { for ( var key in option ) { callback(key); } }
 }
-function check (options :_ObjectAPI & { readonly name? :string, readonly displayName? :string }, __dev__ :__Dev__, DID_OPTIONS :Options, TMP_OPTIONS :Options) {
+function check (options :_ObjectAPI & { readonly name? :string, readonly displayName? :string }, __dev__ :__Dev__, constructor :ClassAPI | null) {
 	
-	( options.extends ? [ options.extends ] : [] ).concat(options.mixins || []).forEach(function (mixin) {
-		DID_OPTIONS.has(mixin) || TMP_OPTIONS.has(mixin) || check(mixin, __dev__, DID_OPTIONS, TMP_OPTIONS);
-	});
+	if ( CHECKED.has(constructor || options) ) { return; }
+	
+	( options.extends ? [ options.extends ] : [] ).concat(options.mixins || []).forEach(function (mixin) { check(mixin, __dev__, null); });
 	
 	var restNames = new Set<string>();
 	
@@ -548,7 +542,8 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 		options.props && ( isArray(options.props) ? options.props.includes('is') : 'is' in options.props )// 3
 	) { throw Error(__dev__.compile_is); }
 	
-	TMP_OPTIONS.set(options, null);
+	constructor && CHECKED.add(constructor);
+	CHECKED.add(options);
 	
 }
 

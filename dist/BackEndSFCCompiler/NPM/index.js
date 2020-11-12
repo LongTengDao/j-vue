@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.0.4';
+const version = '17.1.0';
 
 const Error$1 = Error;
 
