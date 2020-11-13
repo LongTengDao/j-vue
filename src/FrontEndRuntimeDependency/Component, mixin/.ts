@@ -1,8 +1,6 @@
 import Error from '.Error';
 import Symbol from '.Symbol?';
-import Set from '.Set?';
 import Map from '.Map?';
-import WeakSet from '.WeakSet?';
 import WeakMap from '.WeakMap?';
 import TypeError from '.TypeError';
 import Function from '.Function';
@@ -121,7 +119,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	if ( Super!==Component ) {
 		var SuperOptions = ToOptions(Super, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
 		isMixins(Super)
-			? options.mixins!.length===1
+			? SuperOptions.mixins!.length===1
 			? options.extends = SuperOptions.mixins![0]
 			: options.mixins = SuperOptions.mixins
 			: options.extends = SuperOptions;
@@ -375,15 +373,23 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	
 	TMP_OPTIONS.set(constructor, options);
 	
-	if ( options.components ) {
+	//@ts-ignore
+	if ( options.components || options.name || options.displayName ) {
 		var components = options.components = assign(create(NULL), options.components);
-		for ( var name in components ) {
+		var cases = create(NULL) as Names;
+		//@ts-ignore
+		options.name && fixPascal(options.name, cases);
+		//@ts-ignore
+		options.displayName && fixPascal(options.displayName, cases);
+		for ( var pascal in components ) {
 			if ( __dev__ ) {
-				if ( /^(?![A-Z])/.test(name) ) { throw Error(__dev__.compile_name); }
+				if ( /^(?![A-Z])/.test(pascal) ) { throw Error(__dev__.compile_name); }
 			}
-			var value = components[name];
-			if ( isComponentConstructor(value) ) { components[name] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
+			var value = components[pascal];
+			if ( isComponentConstructor(value) ) { components[pascal] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
+			fixPascal(pascal, cases);
 		}
+		assign(components, cases);
 	}
 	
 	return options;
@@ -396,7 +402,7 @@ var OPTIONS = WeakMap && /*#__PURE__*/function () {
 class EasyMap extends WeakMap{into(key){let sub=this.get(key);sub??this.set(key,sub=new EasyMap);return sub}}EasyMap.prototype.get=WeakMap.prototype.get;EasyMap.prototype.set=WeakMap.prototype.set;\
 class StrongMap extends Map{}StrongMap.prototype.get=Map.prototype.get;StrongMap.prototype.set=Map.prototype.set;StrongMap.prototype.forEach=Map.prototype.forEach;\
 return{objects:new EasyMap,objectsTmp:StrongMap,supers:new EasyMap,rests:new EasyMap,data:new EasyMap}\
-')(WeakSet, WeakMap, Map);
+')(WeakMap, Map);
 	}
 	catch (error) {}
 }() as {
@@ -483,50 +489,70 @@ function devAssertFunction<T> (this :__Dev__, fn :T) {
 	return fn as T extends CallableFunction ? T : never;
 }
 
-var CHECKED = WeakSet && /*#__PURE__*/new WeakSet<ClassAPI | _ObjectAPI>();
+var CHECKED = WeakMap && /*#__PURE__*/new WeakMap<ClassAPI | _ObjectAPI, Names>();
 function forKeys (option :{} | undefined, callback :(name :string) => void) {
 	if ( isArray(option) ) { option.forEach(callback); }
 	else { for ( var key in option ) { callback(key); } }
 }
 function check (options :_ObjectAPI & { readonly name? :string, readonly displayName? :string }, __dev__ :__Dev__, constructor :ClassAPI | null) {
 	
-	if ( CHECKED.has(constructor || options) ) { return; }
+	var ownNames = CHECKED.get(constructor || options);
+	if ( ownNames ) { return ownNames; }
+	var allNames = create(NULL) as Names;
 	
-	( options.extends ? [ options.extends ] : [] ).concat(options.mixins || []).forEach(function (mixin) { check(mixin, __dev__, null); });
+	( options.extends ? [ options.extends ] : [] ).concat(options.mixins || []).forEach(function (mixin) {
+		var mixinNames = check(mixin, __dev__, null);
+		for ( var name in mixinNames ) {
+			if ( name in allNames ) { throw Error(__dev__.compile_overwrite); }
+		}
+		assign(allNames, mixinNames);
+	});
 	
-	var restNames = new Set<string>();
+	ownNames = create(NULL) as Names;
 	
 	forKeys(options.props, function (name) {
 		if ( /-|^(?:key$|[oO][nN]|ref$)/.test(name) ) { throw Error(__dev__.compile_props); }
 		if ( name in PROTO_BUG ) { throw Error(__dev__.proto); }
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
+		ownNames![name] = null;
 	});
 	
 	forKeys(options.inject, function (name) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
+		ownNames![name] = null;
 	});
 	
-	for ( var name in options.methods ) {
+	var name :string;
+	
+	for ( name in options.methods ) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( name in ownNames ) { throw Error(__dev__.compile_redefined); }
+		ownNames[name] = null;
 	}
 	
 	for ( name in options.computed ) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( name in ownNames ) { throw Error(__dev__.compile_redefined); }
+		ownNames[name] = null;
 	}
 	
 	( OPTIONS.data.get(options) || [] ).forEach(function (name) {
-		if ( restNames.size===restNames.add(name).size ) { throw Error(__dev__.compile_redefined); }
+		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
+		ownNames![name] = null;
 	});
 	
-	if ( restNames.has('constructor') ) { throw Error(__dev__.proto); }
+	if ( 'constructor' in ownNames ) { throw Error(__dev__.proto); }
+	
+	for ( name in ownNames ) {
+		if ( name in allNames ) { throw Error(__dev__.compile_overwrite); }
+	}
+	assign(allNames, ownNames);
 	
 	[ options.name, options.displayName ].forEach(function (name :unknown) {
 		if ( typeof name==='string'
-			? /^(?![A-Z])/.test(name) || options.components && name in options.components
+			? /^(?![A-Z])/.test(name) || options.components && options.components[name] && options.components[name]!==options
 			: name!==undefined
 		) { throw Error(__dev__.compile_name); }
 	});
@@ -542,9 +568,32 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 		options.props && ( isArray(options.props) ? options.props.includes('is') : 'is' in options.props )// 3
 	) { throw Error(__dev__.compile_is); }
 	
-	constructor && CHECKED.add(constructor);
-	CHECKED.add(options);
+	constructor && CHECKED.set(constructor, allNames);
+	CHECKED.set(options, allNames);
+	return allNames;
 	
+}
+
+var UPPER = /[A-Z]/g;
+function fixPascal (pascal :string, cases :Names) {
+	if ( pascal[pascal.length - 1]!=='_' ) {
+		var first = pascal[0].toLowerCase();
+		var rest = pascal.slice(1);
+		cases[first + rest] = null;
+		hyphenate(first, rest, cases);
+	}
+}
+function hyphenate (before :string, after :string, cases :Names) {
+	var index = after.search(UPPER);
+	if ( index<0 ) { cases[before + after] = null; }
+	else {
+		if ( index ) { before += after.slice(0, index); }
+		var char = after[index];
+		after = after.slice(index + 1);
+		hyphenate(before + '-' + char.toLowerCase(), after, cases);
+		hyphenate(before + '-' + char, after, cases);
+		before[before.length - 1]==='-' || hyphenate(before + char, after, cases);
+	}
 }
 
 var DEV = [
@@ -556,6 +605,7 @@ var DEV = [
 	'compile_layout',
 	'compile_reserved',
 	'compile_redefined',
+	'compile_overwrite',
 	'compile_type',
 	'compile_symbol',
 	'compile_shadow',

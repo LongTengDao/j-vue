@@ -91,10 +91,6 @@ declare module '.Reflect.ownKeys?' { export default ownKeys;
 
 declare module '.RegExp' { export default RegExp; }
 
-declare module '.Set?' { export default constructor;
-	class constructor<V> extends Set<V> { constructor (values? :Iterable<V>) }
-}
-
 declare module '.String.fromCharCode' { export default String.fromCharCode; }
 
 declare module '.Symbol.species?' { export default Symbol.species; }
@@ -105,10 +101,6 @@ declare module '.TypeError' { export default TypeError; }
 
 declare module '.WeakMap?' { export default constructor;
 	class constructor<K extends object, V> extends WeakMap<K, V> { constructor (entries? :Iterable<{ readonly 0 :K, readonly 1 :V }>) }
-}
-
-declare module '.WeakSet?' { export default constructor;
-	class constructor<V extends object> extends WeakSet<V> { constructor (values? :Iterable<V>) }
 }
 
 declare module '.class.isPrimitive' { export default isPrimitive;

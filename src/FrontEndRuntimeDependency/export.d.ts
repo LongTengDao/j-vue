@@ -114,6 +114,7 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 			| 'compile_layout'
 			| 'compile_reserved'
 			| 'compile_redefined'
+			| 'compile_overwrite'
 			| 'compile_type'
 			| 'compile_symbol'
 			| 'compile_shadow'

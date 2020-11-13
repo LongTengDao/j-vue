@@ -149,6 +149,7 @@ declare module 'j-vue' {
 				| 'compile_layout'
 				| 'compile_reserved'
 				| 'compile_redefined'
+				| 'compile_overwrite'
 				| 'compile_type'
 				| 'compile_symbol'
 				| 'compile_shadow'

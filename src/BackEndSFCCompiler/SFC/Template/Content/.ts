@@ -61,6 +61,7 @@ const SVG_MathML = newRegExp('i')`^${groupify(`
 	font-face-name
 	missing-glyph
 `.match(/\S+/g)!)}$`;
+const SVG = 'color-profile';
 const NON_HTML = /[^\dA-Za-z]/;
 const STARTS_WITH_UPPERCASE = /^(?![A-Za-z])/;
 
@@ -184,21 +185,17 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 				if ( NON_PCENChar.test(xName.slice(0, index)) ) { throw Error(`“${xName}”的命名空间中含有不符合限定的字符，并不是一个合格的标签名`); }
 				afterColon = xName.slice(index + 1);
 				if ( STARTS_WITH_UPPERCASE.test(afterColon) ) { throw Error(`“${xName}”的后半部分没有以字母开头，并不是一个合格的原生标签或自定义元素名`); }
-				if ( afterColon.includes('-') ) {
-					if ( NON_PCENChar.test(afterColon) ) { throw Error(`“${xName}”的后半部分中含有不符合限定的字符，并不是一个合格的自定义元素名（如果这是一个组件，请避免使用小写字母开头）`); }
+			}
+			if ( afterColon.includes('-') ) {
+				if ( NON_PCENChar.test(afterColon) ) { throw Error(`“${xName}”${index>0 ? '的后半部分' : ''}中含有不符合限定的字符，并不是一个合格的自定义元素名（如果这是一个组件，请避免使用小写字母开头）`); }
+				if ( compatible_template ) {
+					if ( xName===SVG ) {
+						compatible_template = false;
+					}
 				}
-				else {
-					if ( NON_HTML.test(afterColon) ) { throw Error(`HTML 原生标签中不会包含“${xName}”的后半部分这种含有特殊字符的元素名（如果这是一个组件，请避免使用小写字母开头）`); }
-				}
-				
 			}
 			else {
-				if ( xName.includes('-') ) {
-					if ( NON_PCENChar.test(xName) ) { throw Error(`“${xName}”中含有不符合限定的字符，并不是一个合格的自定义元素名（如果这是一个组件，请避免使用小写字母开头）`); }
-				}
-				else {
-					if ( NON_HTML.test(xName) ) { throw Error(`HTML 原生标签中不会包含“${xName}”这种含有特殊字符的元素名（如果这是一个组件，请避免使用小写字母开头）`); }
-				}
+				if ( NON_HTML.test(afterColon) ) { throw Error(`HTML 原生标签中不会包含“${xName}”${index>0 ? '的后半部分' : ''}这种含有特殊字符的元素名（如果这是一个组件，请避免使用小写字母开头）`); }
 			}
 		}
 		if ( xName==='script' ) { throw SyntaxError(`Vue 不允许 template 中存在 script 标签`); }

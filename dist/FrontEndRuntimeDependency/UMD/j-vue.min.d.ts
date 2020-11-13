@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'17.1.0';
+	export const version :'17.1.1';
 	
 	export function Identifier () :string;
 	
@@ -118,6 +118,7 @@ declare namespace exports {
 				| 'compile_layout'
 				| 'compile_reserved'
 				| 'compile_redefined'
+				| 'compile_overwrite'
 				| 'compile_type'
 				| 'compile_symbol'
 				| 'compile_shadow'
