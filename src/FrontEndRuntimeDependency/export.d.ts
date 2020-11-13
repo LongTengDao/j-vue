@@ -23,6 +23,7 @@ export function StaticRenderFns (codes :readonly string[], scope? :Scope<string 
 export type Render3Constructor = {
 	new (Vue3 :Vue3) :Render3;
 	readonly shadow? :string;
+	readonly sheet? :{ readonly [Ref in string] :(this :Vue, self :Vue) => string };
 };
 export type Render3 = (this :Vue) => VNode | ( VNode | string )[];
 export type Render2 = (this :Vue, h :$createElement) => VNode;
@@ -41,8 +42,8 @@ export function mixin<Mixins extends object = object> (...mixins :( ClassAPI | O
 	{ [Name in keyof typeof Component] :typeof Component[Name] } &
 	{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &
 	{ new<Sub extends Component<Sub>> () :
-			Component<Sub> &
-			{ [Name in OwnNames<Mixins>] :Mixins[Name] }
+		Component<Sub> &
+		{ [Name in OwnNames<Mixins>] :Mixins[Name] }
 	};
 declare const _mixins :unique symbol;
 
@@ -228,10 +229,10 @@ declare abstract class Vue$ {
 	
 	$emit (this :this, event :string, ...args :unknown[]) :this;
 	
-	$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue  :Value) => void, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue? :Value) => void, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
 	
 	$nextTick (this :this, callback :(this :this) => void | Promise<void>) :void;
 	$nextTick () :Promise<void>;
@@ -449,9 +450,9 @@ interface ObjectAPI {
 	data? (this :Vue, self :Vue) :{ [name :string] :unknown },
 	watch? :{
 		[exp :string] :
-			{ <Value> (this :Vue, value :Value, oldValue? :Value) :void } |
+			{ <Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void> } |
 			{
-				handler<Value> (this :Vue, value :Value, oldValue? :Value) :void,
+				handler<Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void>,
 				deep? :boolean,
 				immediate? :boolean,
 				flush? :'pre' | 'post' | 'sync',

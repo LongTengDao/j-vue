@@ -136,6 +136,13 @@ const _function____use_strict__return_ = {
 let MODE :'var' | 'let' | 'const';
 let BODY :boolean;
 
+const Sheets = (sheet :Map<string, string>) => {
+	let literal = '{';
+	for ( const { 0: ref, 1: exp } of sheet ) {
+		literal += `${ref}:({${findGlobals(parse(exp, parserOptions)).names().join(',')}})=>${exp},`;
+	}
+	return literal.slice(0, -1) + '}';
+};
 const NecessaryStringLiteral = (body :string, name :'\'render\'' | number) :string => {
 	if ( !body.startsWith(with_this__return_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
 	const func :string = `${_function____use_strict__return_[MODE]}${body.slice(with_this__return_.length, -1)};});`;
@@ -171,7 +178,7 @@ const NecessaryStringLiteral = (body :string, name :'\'render\'' | number) :stri
 
 const onError = (error :SyntaxError) :never => { throw Error(`.vue template 官方编译未通过：\n       ${error.message}`); };
 const isCustomElement = test.bind(/^(?![A-Z]|base-transition$|component$|keep-alive$|s(?:lot|uspense)$|te(?:mplate|leport)$)/);
-export const Render3 = (innerHTML :string, mode :'let' | 'const', body :boolean, shadow? :string) :string => {
+export const Render3 = (innerHTML :string, mode :'let' | 'const', body :boolean, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }) :string => {
 	const { code } = compile3[mode](innerHTML, {
 		onError,
 		isCustomElement,
@@ -191,8 +198,8 @@ export const Render3 = (innerHTML :string, mode :'let' | 'const', body :boolean,
 	const left = Render.slice(0, index);
 	const right = Render.slice(index + 2);
 	return body
-		? StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}`) + (shadow ? `static shadow=${StringLiteral(shadow)}` : ''))
-		: `class { constructor ${left} ${right[0]==='{' ? right : `{ return ${right}; }`} ${shadow ? `static shadow = ${StringLiteral(shadow)}; ` : ''}}`;
+		? StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}`) + (sheet ? `static sheet=${Sheets(sheet)}` : '' ) + ( sheet && shadow ? ';' : '' ) + (shadow ? `static shadow=${StringLiteral(shadow)}` : ''))
+		: `class { constructor ${left} ${right[0]==='{' ? right : `{ return ${right}; }`} ${sheet ? `static sheet = ${Sheets(sheet)}; ` : ''}${shadow ? `static shadow = ${StringLiteral(shadow)}; ` : ''}}`;
 };
 
 export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', body :boolean) :{ readonly render :string, readonly staticRenderFns :readonly string[] } => {

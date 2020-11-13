@@ -16,6 +16,7 @@ import apply from '.Reflect.apply?';
 import assign from '.Object.assign?';
 import create from '.Object.create';
 import keys from '.Object.keys';
+import ownKeys from '.Reflect.ownKeys?';
 import freeze from '.Object.freeze';
 import PROTO_BUG from '.Object.prototype';
 import hasOwnProperty from '.Object.prototype.hasOwnProperty';
@@ -111,9 +112,9 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		return options;
 	}
 	
-	var Super = OPTIONS.supers.get(constructor);
+	var Super = OPTIONS.super.get(constructor);
 	if ( !Super ) {
-		OPTIONS.supers.set(constructor, Super = getPrototypeOf(constructor));
+		OPTIONS.super.set(constructor, Super = getPrototypeOf(constructor));
 		Super===Component || isMixins(Super) || setPrototypeOf(constructor, Component);
 	}
 	if ( Super!==Component ) {
@@ -186,12 +187,12 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			if ( _data ) {
 				if ( __dev__ ) {
 					if ( !isArray(_data) ) { throw Error(__dev__.compile_type); }
-					_data.forEach(function (each) {
-						if ( typeof each!=='string' ) { throw Error(__dev__.compile_type); }
+					_data.forEach(function (name) {
+						if ( typeof name!=='string' ) { throw Error(__dev__.compile_type); }
+						if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
 					});
 					if ( skipConstructor ) { throw Error(__dev__.compile_redefined); }
 				}
-				OPTIONS.data.set(options, _data);
 				var length = _data.length;
 				if ( length ) {
 					dataNames = create(NULL) as Names;
@@ -199,6 +200,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 					do { dataNames[_data[i]] = null; }
 					while ( ++i!==length );
 					dataNames = assign(create(NULL), dataNames);
+					__dev__ && OPTIONS.data.set(options, dataNames);
 				}
 				else {
 					skipData = true;
@@ -281,16 +283,38 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	
 	var restNames = collectNames(options, constructor);
 	
-	if ( Render && Vue3 ) {
+	if ( Render && ( Vue3 || !Render.length ) ) {
 		var shadow = Render.shadow;
 		if ( shadow ) {
 			if ( __dev__ ) {
 				if ( skipConstructor && skipData ) { throw Error(__dev__.compile_shadow); }
-				var shadowChecker :ShadowChecker | undefined = ShadowChecker(shadow, restNames, dataNames, __dev__);
+				var shadowNames = create(NULL) as Names;
+				var shadowChecker :ShadowChecker | undefined = ShadowChecker(shadow, restNames, dataNames, shadowNames, __dev__);
+				OPTIONS.shadow.set(options, shadowNames);
 			}
 			shadowAssigner = ShadowAssigner(shadow);
 		}
-		options.render = assertFunction(new Render(Vue3));
+		var sheet = Render.sheet;
+		if ( sheet ) {
+			var watchers2 :Watcher[] = [];
+			ownKeys(sheet).forEach(function (this :Watcher[], key, index) {
+				var watcher = this[index] = create(NULL) as Watcher;
+				watcher.$ = assertFunction(sheet![key]);
+				watcher.handler = function (this :_Vue, css :string) { ( this.$refs[key] as HTMLStyleElement ).textContent = css; };
+				watcher.immediate = true;
+				watcher.flush = 'sync';
+			}, watchers2);
+			var beforeMount = options.beforeMount;
+			options.beforeMount = beforeMount
+				? function beforeBeforeMount () {
+					$watch(this, watchers2);
+					return beforeMount!.call(this);
+				}
+				: function beforeBeforeMount () {
+					$watch(this, watchers2);
+				};
+		}
+		options.render = assertFunction(new Render(Vue3!));
 	}
 	
 	var protoSymbols = getOwnPropertySymbols(prototype) as typeof SYMBOL[];
@@ -401,16 +425,17 @@ var OPTIONS = WeakMap && /*#__PURE__*/function () {
 		return Function('WeakMap,Map', '"use strict";\
 class EasyMap extends WeakMap{into(key){let sub=this.get(key);sub??this.set(key,sub=new EasyMap);return sub}}EasyMap.prototype.get=WeakMap.prototype.get;EasyMap.prototype.set=WeakMap.prototype.set;\
 class StrongMap extends Map{}StrongMap.prototype.get=Map.prototype.get;StrongMap.prototype.set=Map.prototype.set;StrongMap.prototype.forEach=Map.prototype.forEach;\
-return{objects:new EasyMap,objectsTmp:StrongMap,supers:new EasyMap,rests:new EasyMap,data:new EasyMap}\
+return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyMap,data:new EasyMap,shadow:new EasyMap}\
 ')(WeakMap, Map);
 	}
 	catch (error) {}
 }() as {
 	objects :EasyMap<__Dev__, EasyMap<_Vue3, WeakMap<ClassAPI, _ObjectAPI>>>,
 	objectsTmp :{ new () :Map<ClassAPI, _ObjectAPI> },
-	supers :WeakMap<ClassAPI, ClassAPI>,
-	rests :WeakMap<ClassAPI | _ObjectAPI, Names>,
-	data :WeakMap<_ObjectAPI, readonly string[]>,
+	super :WeakMap<ClassAPI, ClassAPI>,
+	rest :WeakMap<ClassAPI | _ObjectAPI, Names>,
+	data :WeakMap<_ObjectAPI, Names>,
+	shadow :WeakMap<_ObjectAPI, Names>,
 };
 interface EasyMap<K extends object, V> extends WeakMap<K, V> {into (key :K) :V;}
 
@@ -438,9 +463,9 @@ function $watch (that :_Vue, watchers :readonly Watcher[]) {
 
 export type Names = { [name :string] :unknown };
 function collectNames (options :_ObjectAPI, constructor :ClassAPI | null) :Names {
-	var restNames :Names | undefined = OPTIONS.rests.get(options);
+	var restNames :Names | undefined = OPTIONS.rest.get(options);
 	if ( !restNames ) {
-		if ( constructor ) { restNames = OPTIONS.rests.get(constructor); }
+		if ( constructor ) { restNames = OPTIONS.rest.get(constructor); }
 		if ( !restNames ) {
 			restNames = create(NULL) as Names;
 			var extend = options.extends;
@@ -471,8 +496,8 @@ function collectNames (options :_ObjectAPI, constructor :ClassAPI | null) :Names
 			for ( name in options.computed ) { restNames[name] = null; }
 			restNames = assign(create(NULL), restNames);
 		}
-		if ( constructor ) { OPTIONS.rests.set(constructor, restNames); }
-		OPTIONS.rests.set(options, restNames);
+		if ( constructor ) { OPTIONS.rest.set(constructor, restNames); }
+		OPTIONS.rest.set(options, restNames);
 	}
 	return restNames;
 }
@@ -538,10 +563,15 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 		ownNames[name] = null;
 	}
 	
-	( OPTIONS.data.get(options) || [] ).forEach(function (name) {
+	for ( name in OPTIONS.data.get(options) ) {
 		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
 		ownNames![name] = null;
-	});
+	}
+	
+	for ( name in OPTIONS.shadow.get(options) ) {
+		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
+		ownNames![name] = null;
+	}
 	
 	if ( 'constructor' in ownNames ) { throw Error(__dev__.proto); }
 	
@@ -559,7 +589,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	
 	options.emits &&
 	( isArray(options.emits) ? options.emits : keys(options.emits) ).forEach(function (event) {
-		if ( /[A-Z]|^onvnode|(?:capture|once|passive)$/.test('on' + event) ) { throw Error(__dev__.compile_emits); }
+		if ( typeof event==='string' && /[A-Z]|^onvnode|(?:capture|once|passive)$/.test('on' + event) ) { throw Error(__dev__.compile_emits); }
 	});
 	
 	if (
@@ -648,7 +678,15 @@ export type SymbolMethods = {
 	readonly [SYMBOL]? :Readonly<TypedPropertyDescriptor<unknown>>,
 };
 
-type Watcher = { [option :string] :boolean | string } & { $ :string | CallableFunction, handler :CallableFunction };
+type Watcher = {
+	[option :string] :boolean | string,
+} & {
+	$ :string | { (this :_Vue, self :_Vue) :unknown },
+	handler (this :_Vue, value :unknown, oldValue? :unknown) :void | Promise<void>,
+	deep? :boolean,
+	immediate? :boolean,
+	flush? :string,
+};
 
 declare const SYMBOL :unique symbol;
 

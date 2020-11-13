@@ -3,6 +3,7 @@ import SyntaxError from '.SyntaxError';
 import ReferenceError from '.ReferenceError';
 import RegExp from '.RegExp';
 import Set from '.Set';
+import Map from '.Map';
 import throwError from '.throw.Error';
 
 import { newRegExp, groupify } from '@ltd/j-regexp';
@@ -100,6 +101,13 @@ let delimiters_1 :string = '';
 
 export let compatible_template :boolean = true;
 export let compatible_render :boolean = true;
+
+let sheet = new Map<string, string>();
+const REF = /^#[a-z]\w*#$/i;
+const Ref = ($ref$ :string) => {
+	if ( !REF.test($ref$) ) { throw Error(`${$ref$} 格式不符合预期`); }
+	return $ref$.slice(1, -1);
+};
 
 let shadow_name :string = '';
 let shadow_hasNames :boolean = false;
@@ -202,7 +210,8 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 		const attributes :Attributes = tag.attributes!;
 		const v_pre :boolean = V_PRE || 'v-pre' in attributes;
 		const v_for :boolean = v_pre ? false : V_FOR || 'v-for' in attributes;
-		let shadowRoot :string | null = null;
+		let sheetRef :{ ref :string, name :string } | null = null;
+		let shadowRoot :{ along :string, name :string } | null = null;
 		if ( v_pre ) {
 			if ( STYLE_BY_COMPONENT_IS && xName==='style' ) { throw SyntaxError(STYLE_BY_COMPONENT_IS.pre); }
 			if ( !V_PRE && xName==='template'
@@ -331,11 +340,16 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 							if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
 							already = name;
 							if ( name[0]==='#' && name[name.length - 1]==='#' && name.length>1 ) {
-								if ( BUILT_IN.has(xName) ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM，并以“#”结尾加以区分，该功能不能用在 ${xName} 标签上`); }
-								if ( !notComponent ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` component 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
-								if ( xName.includes('-') ? SVG_MathML.test(xName) : !HTML_5.test(xName) ) { throw Error(`HTML 原生标签中，只有 ${HTML5.join('、')} 支持 Shadow DOM，其中不包括“${xName}”`); }
-								if ( attributes[name]!==EMPTY ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM，并以“#”结尾加以区分，该功能不支持属性值`); }
-								shadowRoot = Shadow(name);
+								if ( BUILT_IN.has(xName) ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在 ${xName} 标签上`); }
+								if ( !notComponent ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` component 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
+								if ( xName.includes('-') ? SVG_MathML.test(xName) : !HTML_5.test(xName) && xName!=='style' ) { throw Error(`HTML 原生标签中，只有 ${HTML5.join('、')} 支持 Shadow DOM，其中不包括“${xName}”，而同步样式表功能也只支持 style 标签`); }
+								if ( attributes[name]!==EMPTY ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不支持属性值`); }
+								if ( xName==='style' ) {
+									if ( 'ref' in attributes || ':ref' in attributes ) { throw Error(`jVue 的同步样式表的功能需要借助 ref 属性实现，因此该 style 标签上不能已经存在 ref 或 :ref 属性`); }
+									if ( 'v-text' in attributes || 'v-html' in attributes ) { throw Error(`jVue 的同步样式表功能将代理 style 的 textContent，因此标签上出现 v-text 或 v-html 是不合理的`); }
+									sheetRef = { ref: Ref(name), name };
+								}
+								else { shadowRoot = { along: Shadow(name), name }; }
 							}
 							else {
 								const value = attributes[name];
@@ -358,7 +372,11 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 						}
 					}
 				}
-				if ( shadowRoot ) { delete attributes[shadowRoot]; }
+				if ( sheetRef ) {
+					delete attributes[sheetRef.name];
+					attributes['ref'] = sheetRef.ref;
+				}
+				else if ( shadowRoot ) { delete attributes[shadowRoot.name]; }
 				if ( attributes['key']===BAD_KEY ) { throw ReferenceError(`使用“${BAD_KEY}”作为 key 无法按预期工作`); }
 				if ( attributes['ref']===BAD_REF ) { throw ReferenceError(`使用“${BAD_REF}”作为 ref 无法按预期工作`); }
 			}
@@ -368,13 +386,13 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			STYLE_BY_COMPONENT_IS && xName==='style' ? ( attributes['is'] = xName, 'component' ) : xName,
 			attributes,
 			__class__,
-			shadowRoot ? { along: shadowRoot, aside: void_elements.test(xName) || 'localName' in parentNode } : null,
+			shadowRoot ? { along: shadowRoot.along, aside: void_elements.test(xName) || 'localName' in parentNode } : null,
 		));
 		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING ) { continue; }
-		const foreign :boolean = FOREIGN || xName==='svg' || xName==='math';
 		if ( void_elements.test(xName) ) { throw SyntaxError(`template 文件中如果出现 HTML void 元素（小写；即便已经过时、废弃或是非标准），宜添加自闭合斜线以避免歧义`); }
-		if ( html.startsWith('</', index) ) {
+		const foreign :boolean = FOREIGN || xName==='svg' || xName==='math';
+		if ( !html.startsWith('</', index) ) {
 			if ( LISTING.test(xName) ) { throw SyntaxError(`已过时的 ${XName} 标签内容处理方式不定，除非自闭合或内容为空，否则${XName==='listing' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑使用“<component is="${xName}">”或“<${xName} v-text="..." />”）`); }
 			if ( PLAINTEXT.test(xName) || XMP.test(xName) || XMP.test(XName) && ( xName = XName ) ) {
 				throw SyntaxError(
@@ -422,7 +440,16 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 					}
 					else {
 						const expression :string = new Mustache(inner, v_pre, delimiters_0, delimiters_1).toExpression();
-						if ( expression ) { attributes['v-text'] = expression; }
+						if ( expression ) {
+							if ( sheetRef ) {
+								if ( sheet.size===sheet.set(sheetRef.ref, expression).size ) { throw Error(`出现了重复的同步样式表名“#${sheetRef.ref}#”`); }
+								if ( compatible_render || compatible_template ) {
+									compatible_render = false;
+									compatible_template = false;
+								}
+							}
+							else { attributes['v-text'] = expression; }
+						}
 					}
 				}
 				else {
@@ -464,17 +491,24 @@ export default class Content extends Node {
 		super();
 		try {
 			parseAppend('', this, false, false, false);
+			if ( sheet.size ) {
+				_.sheet = sheet;
+				sheet = new Map;
+			}
 			if ( shadow_name ) { _.shadow = shadow_hasNames ? [ shadow_name, ...shadow_names ].join('.') : shadow_name; }
 		}
 		catch (error) {
+			sheet = new Map;
 			error.message = `${error.message}：\n${Snippet(inner, index)}`;
 			throw error;
 		}
 		finally {
 			partial = null;
 			html = '';
-			shadow_name = '';
-			shadow_names.clear();
+			if ( shadow_name ) {
+				shadow_name = '';
+				shadow_names.clear();
+			}
 		}
 		if ( !compatible_template ) { this.#compatible_template = false; }
 		if ( !compatible_render ) { this.#compatible_render = false; }

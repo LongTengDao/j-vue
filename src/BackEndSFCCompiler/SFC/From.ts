@@ -63,7 +63,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 			const { render, staticRenderFns } = Render2(innerHTML, mode, false);
 			yield `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
-				yield `export ${mode} Render = ${Render3(innerHTML, mode, false, _(template).shadow)};${eol}`;/// (); import!
+				yield `export ${mode} Render = ${Render3(innerHTML, mode, false, _(template))};${eol}`;/// (); import!
 			}
 			if ( compatible_render ) {
 				yield `export ${mode} render = ${render};${eol}`;
@@ -121,7 +121,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 		let index = 0;
 		while ( index!==lines_length ) { yield lines[index++]; }
 		if ( mode!=='var' ) {
-			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, true, _(template).shadow)}, ${scope});${eol}`;/// (); import or ~~runtime~~?
+			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, true, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
 		}
 		if ( compatible_render ) {
 			yield `export ${mode} render = /*#__PURE__*/_Render(${render}, ${scope});${eol}`;

@@ -205,6 +205,7 @@ export default class Template extends Block {
 freeze(Template.prototype);
 
 export type Private = object & {
+	sheet? :Map<string, string>
 	shadow? :string
 	abbr? :Partial
 	keys? :string[]

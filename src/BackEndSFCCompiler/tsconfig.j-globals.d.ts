@@ -18,6 +18,9 @@ declare module '.Function.prototype.apply' { export default Function.prototype.a
 
 declare module '.Infinity' { export default Infinity; }
 
+declare module '.Map' { export default constructor;
+	class constructor<K, V> extends Map<K, V> { constructor (entries? :Iterable<{ readonly 0 :K, readonly 1 :V }>) }
+}
 declare module '.Map.prototype.has?' { export default Map.prototype.has; }
 
 declare module '.Math.floor' { export default Math.floor; }
