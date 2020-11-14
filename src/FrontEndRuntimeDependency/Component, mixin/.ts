@@ -24,7 +24,7 @@ import isPrototypeOf from '.Object.prototype.isPrototypeOf';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
 
-import { that, proProto, proConstructor, proNames, proData, devData } from './Data';
+import { that, NAMES, proProto, proConstructor, proNames, proData, devData } from './Data';
 import { ShadowAssigner, ShadowChecker } from './Shadow';
 
 export { Component as default };
@@ -317,6 +317,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 				watcher.immediate = true;
 				watcher.flush = 'sync';
 			}, watchers2);
+			watchers2.reverse();
 			var beforeMount = options.beforeMount;
 			options.beforeMount = beforeMount
 				? function beforeBeforeMount () {
@@ -336,6 +337,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	else { options.data = function (self :_Vue) { return proData(self as Context, protoDescriptors, constructor, Vue3, restNames, shadowAssigner); }; }
 	
 	if ( watchers.length || !__dev__ && ( skipConstructor && protoDescriptors || skipData ) ) {
+		watchers.length && watchers.reverse();
 		var created = options.created;
 		switch ( ( __dev__ ? ( skipConstructor ? 's' : 'n' ) : '_' ) + ( watchers.length ? 'w' : '_' ) + ( created ? 'c' : '_' ) ) {
 			case 'swc':
@@ -479,7 +481,7 @@ function collectNames (options :_ObjectAPI, constructor :ClassAPI | null) :Names
 	if ( !restNames ) {
 		if ( constructor ) { restNames = OPTIONS.rest.get(constructor); }
 		if ( !restNames ) {
-			restNames = create(NULL) as Names;
+			restNames = create(NAMES);
 			var extend = options.extends;
 			extend && assign(restNames, collectNames(extend, null));
 			var mixins = options.mixins;

@@ -8,10 +8,40 @@ import create from '.Object.create';
 import assign from '.Object.assign?';
 import getPrototypeOf from '.Object.getPrototypeOf';
 import propertyIsEnumerable from '.Object.prototype.propertyIsEnumerable';
+import error from '.console.error';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
 
 export var that :Context | null = null;
+
+export var NAMES = assign && /*#__PURE__*/assign(create(null), {
+	_: null,
+	_c: null,
+	_computedWatchers: null,
+	_data: null,
+	_directInactive: null,
+	_events: null,
+	_hasHookEvent: null,
+	_hasMove: null,
+	_inactive: null,
+	_isBeingDestroyed: null,
+	_isDestroyed: null,
+	_isMounted: null,
+	_isVue: null,
+	_leaving: null,
+	_name: null,
+	_props: null,
+	_provided: null,
+	_reflow: null,
+	_renderProxy: null,
+	_self: null,
+	_staticTrees: null,
+	_uid: null,
+	_update: null,
+	_vnode: null,
+	_watcher: null,
+	_watchers: null,
+});
 
 export function proProto (self :Context, protoDescriptors :ProtoDescriptors) {
 	
@@ -83,9 +113,9 @@ export function proData (self :Context, protoDescriptors :ProtoDescriptors | nul
 	}
 	else {
 		var nowNames = Keys(ctx);
-		var index = 0;
-		while ( index!==nowNames.length ) {
-			name = nowNames[index++];
+		var index = nowNames.length;
+		while ( index ) {
+			name = nowNames[--index];
 			if ( !( name in restNames ) && name[0]!=='$' ) { data[name] = ctx[name as keyof Context]; }
 		}
 	}
@@ -98,6 +128,12 @@ export function devData (self :Context, protoDescriptors :ProtoDescriptors | nul
 	
 	var _ = self._;
 	var ctx = _ ? _.ctx : self;
+	for ( var name in ctx ) {
+		if ( name[0]==='_' && !( name in NAMES ) ) {
+			error(Error('[jVue bug]: vm.' + name + ' is unknown but exists'));
+			break;
+		}
+	}
 	var oldDescriptors = assign(create(NULL), getOwnPropertyDescriptors(ctx), protoDescriptors);
 	if ( protoDescriptors ) {
 		for ( var $name in protoDescriptors ) { if ( $name in ctx ) { throw Error(__dev__.runtime_reserved); } }
@@ -138,8 +174,7 @@ export function devData (self :Context, protoDescriptors :ProtoDescriptors | nul
 	}
 	if ( dataNames ) {
 		var count = 0;
-		//@ts-ignore
-		for ( var name in dataNames ) { ++count; }
+		for ( name in dataNames ) { ++count; }
 		if ( count!==difNames.length ) { throw Error(__dev__.runtime_data); }
 		difNames.forEach(function (name) {
 			if ( !( name in dataNames ) ) { throw Error(__dev__.runtime_data); }

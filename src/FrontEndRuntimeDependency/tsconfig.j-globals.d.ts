@@ -104,6 +104,8 @@ declare module '.class.isPrimitive' { export default isPrimitive;
 	function isPrimitive<T> (value :T) :T extends object ? false : true;
 }
 
+declare module '.console.error' { export default console.error; }
+
 declare module '.default' { export default Default;
 	function Default<Exports extends { readonly [name :string] :any, readonly default? :Module<Exports> }> (exports :Exports) :Module<Exports>;
 	function Default<Statics extends { readonly [name :string] :any, readonly default? :ModuleFunction<Statics, Main> }, Main extends Callable | Newable | Callable & Newable> (main :Main, statics :Statics) :ModuleFunction<Statics, Main>;
