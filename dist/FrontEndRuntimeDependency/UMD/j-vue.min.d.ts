@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'17.1.2';
+	export const version :'17.2.0';
 	
 	export function Identifier () :string;
 	
@@ -465,10 +465,10 @@ declare namespace exports {
 		methods? :{ [name :string] :{ (this :Vue, ...args :unknown[]) :any } },
 		computed? :{
 			[name :string] :
-				{ (this :Vue) :unknown } |
+				{ (this :Vue, self :Vue) :unknown } |
 				{
-					get? (this :Vue) :unknown,
-					set (this :Vue, value :unknown) :void | Promise<void>,
+					get? (this :Vue, self :Vue) :unknown,
+					set? (this :Vue, value :unknown) :void | Promise<void>,
 				}
 		},
 		setup? (

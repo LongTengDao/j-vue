@@ -308,7 +308,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			options.beforeMount = beforeMount
 				? function beforeBeforeMount () {
 					$watch(this, watchers2);
-					return beforeMount!.call(this);
+					return beforeMount!.apply(this);
 				}
 				: function beforeBeforeMount () {
 					$watch(this, watchers2);
@@ -337,7 +337,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 				options.created = function beforeCreated (this :_Vue) {
 					proSymbols(this as Context, symbolMethods!);
 					$watch(this, watchers);
-					return created!.call(this);
+					return created!.apply(this);
 				};
 				break;
 			case 'sw_':
@@ -349,7 +349,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			case 's_c':
 				options.created = function beforeCreated (this :_Vue) {
 					proSymbols(this as Context, symbolMethods!);
-					return created!.call(this);
+					return created!.apply(this);
 				};
 				break;
 			case 's__':
@@ -361,7 +361,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 				options.created = function beforeCreated (this :_Vue) {
 					proConstructor(this as Context, symbolMethods, constructor, Vue3);
 					$watch(this, watchers);
-					return created!.call(this);
+					return created!.apply(this);
 				};
 				break;
 			case 'nw_':
@@ -373,7 +373,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			case 'n_c':
 				options.created = function beforeCreated (this :_Vue) {
 					proConstructor(this as Context, symbolMethods, constructor, Vue3);
-					return created!.call(this);
+					return created!.apply(this);
 				};
 				break;
 			case 'n__':
@@ -384,7 +384,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			case '_wc':
 				options.created = function beforeCreated (this :_Vue) {
 					$watch(this, watchers);
-					return created!.call(this);
+					return created!.apply(this);
 				};
 				break;
 			case '_w_':

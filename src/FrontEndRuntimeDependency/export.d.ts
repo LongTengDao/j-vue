@@ -461,10 +461,10 @@ interface ObjectAPI {
 	methods? :{ [name :string] :{ (this :Vue, ...args :unknown[]) :any } },
 	computed? :{
 		[name :string] :
-			{ (this :Vue) :unknown } |
+			{ (this :Vue, self :Vue) :unknown } |
 			{
-				get? (this :Vue) :unknown,
-				set (this :Vue, value :unknown) :void | Promise<void>,
+				get? (this :Vue, self :Vue) :unknown,
+				set? (this :Vue, value :unknown) :void | Promise<void>,
 			}
 	},
 	setup? (
