@@ -1,10 +1,10 @@
 import Error from '.Error';
-import Symbol from '.Symbol?';
-import Map from '.Map?';
-import WeakMap from '.WeakMap?';
 import TypeError from '.TypeError';
 import Function from '.Function';
+import Symbol from '.Symbol?';
+import WeakMap from '.WeakMap?';
 import isArray from '.Array.isArray';
+import from from '.Array.from?';
 import getPrototypeOf from '.Reflect.getPrototypeOf?=Object.getPrototypeOf';
 import setPrototypeOf from '.Object.setPrototypeOf';
 import getOwnPropertyNames from '.Object.getOwnPropertyNames';
@@ -15,8 +15,8 @@ import get from '.Reflect.get?';
 import apply from '.Reflect.apply?';
 import assign from '.Object.assign?';
 import create from '.Object.create';
-import keys from '.Object.keys';
-import ownKeys from '.Reflect.ownKeys?';
+import Keys from '.Object.keys';
+import OwnKeys from '.Reflect.ownKeys?';
 import freeze from '.Object.freeze';
 import PROTO_BUG from '.Object.prototype';
 import hasOwnProperty from '.Object.prototype.hasOwnProperty';
@@ -24,7 +24,7 @@ import isPrototypeOf from '.Object.prototype.isPrototypeOf';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
 
-import { that, proSymbols, proConstructor, proNames, proData, devData } from './Data';
+import { that, proProto, proConstructor, proNames, proData, devData } from './Data';
 import { ShadowAssigner, ShadowChecker } from './Shadow';
 
 export { Component as default };
@@ -87,26 +87,27 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	
 	var options :_ObjectAPI | undefined = DID_OPTIONS.get(constructor) || TMP_OPTIONS.get(constructor);
 	if ( options ) { return options; }
-	options = create(NULL) as _ObjectAPI;
+	OPTIONS.constructor.set(options = create(NULL) as _ObjectAPI, constructor);
 	
 	if ( isMixins(constructor) ) {
 		var static_mixins = constructor[_mixins]!;
-		var mixins = options.mixins = [] as _ObjectAPI[];
+		var mixins = new OPTIONS.Set<_ObjectAPI>();
 		var index = 0;
-		while ( mixins.length!==static_mixins.length ) {
+		while ( index!==static_mixins.length ) {
 			var mixin = static_mixins[index++];
 			if ( isComponentConstructor(mixin) ) {
 				var mixinOptions = ToOptions(mixin, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
 				if ( isMixins(mixin) ) {
 					var mixinMixins = mixinOptions.mixins!;
 					var mixinIndex = 0;
-					while ( mixinIndex!==mixinMixins.length ) { mixins[mixins.length] = mixinMixins[mixinIndex++]; }
+					while ( mixinIndex!==mixinMixins.length ) { mixins.add(mixinMixins[mixinIndex++]); }
 				}
-				else { mixins[mixins.length] = mixinOptions; }
+				else { mixins.add(mixinOptions); }
 			}
-			else { mixins[mixins.length] = mixin as _ObjectAPI; }
+			else { mixins.add(mixin as _ObjectAPI); }
 		}
-		__dev__ && check(options, __dev__, constructor);
+		options.mixins = from(mixins);
+		__dev__ && check(options, __dev__);
 		collectNames(options, constructor);
 		TMP_OPTIONS.set(constructor, options);
 		return options;
@@ -174,6 +175,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	}
 	
 	var prototype = constructor.prototype;
+	var protoDescriptors :ProtoDescriptors | null = null;
 	
 	var protoNames = getOwnPropertyNames(prototype);
 	index = protoNames.length;
@@ -260,10 +262,10 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 					while ( indexOfQ );
 				}
 			}
+			else if ( protoName[0]==='$' ) {
+				( protoDescriptors || ( protoDescriptors = create(NULL) as ProtoDescriptors ) )[protoName] = assign(create(NULL), descriptor);
+			}
 			else {
-				if ( __dev__ ) {
-					if ( protoName[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-				}
 				if ( descriptor.hasOwnProperty('value') ) {
 					if ( protoName!=='constructor' || descriptor.value!==constructor ) {
 						( options.methods || ( options.methods = create(NULL) as NonNullable<_ObjectAPI['methods']> ) )[protoName] = assertFunction(descriptor.value);
@@ -279,7 +281,18 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		}
 	}
 	
-	__dev__ && check(options, __dev__, constructor);
+	var protoSymbols = getOwnPropertySymbols(prototype) as typeof SYMBOL[];
+	if ( ( index = protoSymbols.length ) ) {
+		if ( !protoDescriptors ) { protoDescriptors = create(NULL) as ProtoDescriptors; }
+		do {
+			var protoSymbol :typeof SYMBOL = protoSymbols[--index];
+			protoDescriptors![protoSymbol] = assign(create(NULL), getOwnPropertyDescriptor(prototype, protoSymbol));
+		}
+		while ( index );
+	}
+	protoDescriptors && OPTIONS.proto.set(options, protoDescriptors = assign(create(NULL), protoDescriptors));
+	
+	__dev__ && check(options, __dev__);
 	
 	var restNames = collectNames(options, constructor);
 	
@@ -297,7 +310,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		var sheet = Render.sheet;
 		if ( sheet ) {
 			var watchers2 :Watcher[] = [];
-			ownKeys(sheet).forEach(function (this :Watcher[], key, index) {
+			OwnKeys(sheet).forEach(function (this :Watcher[], key, index) {
 				var watcher = this[index] = create(NULL) as Watcher;
 				watcher.$ = assertFunction(sheet![key]);
 				watcher.handler = function (this :_Vue, css :string) { ( this.$refs[key] as HTMLStyleElement ).textContent = css; };
@@ -317,68 +330,60 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		options.render = assertFunction(new Render(Vue3!));
 	}
 	
-	var protoSymbols = getOwnPropertySymbols(prototype) as typeof SYMBOL[];
-	index = protoSymbols.length;
-	var symbolMethods = index ? create(NULL) as { [SYMBOL]? :TypedPropertyDescriptor<unknown> } : null;
-	while ( index ) {
-		var protoSymbol :typeof SYMBOL = protoSymbols[--index];
-		symbolMethods![protoSymbol] = assign(create(NULL), getOwnPropertyDescriptor(prototype, protoSymbol));
-	}
-	
-	if ( __dev__ ) { options.data = function (self :_Vue) { return devData(self as Context, symbolMethods, constructor, Vue3, skipData, dataNames, restNames, shadowAssigner, shadowChecker, skipConstructor, __dev__); }; }
+	if ( __dev__ ) { options.data = function (self :_Vue) { return devData(self as Context, protoDescriptors, constructor, Vue3, skipData, dataNames, restNames, shadowAssigner, shadowChecker, skipConstructor, __dev__); }; }
 	else if ( skipConstructor || skipData ) {}
-	else if ( dataNames ) { options.data = function (self :_Vue) { return proNames(self as Context, symbolMethods, constructor, Vue3, dataNames!, shadowAssigner); }; }
-	else { options.data = function (self :_Vue) { return proData(self as Context, symbolMethods, constructor, Vue3, restNames, shadowAssigner); }; }
+	else if ( dataNames ) { options.data = function (self :_Vue) { return proNames(self as Context, protoDescriptors, constructor, Vue3, dataNames!, shadowAssigner); }; }
+	else { options.data = function (self :_Vue) { return proData(self as Context, protoDescriptors, constructor, Vue3, restNames, shadowAssigner); }; }
 	
-	if ( watchers.length || !__dev__ && ( skipConstructor && symbolMethods || skipData ) ) {
+	if ( watchers.length || !__dev__ && ( skipConstructor && protoDescriptors || skipData ) ) {
 		var created = options.created;
 		switch ( ( __dev__ ? ( skipConstructor ? 's' : 'n' ) : '_' ) + ( watchers.length ? 'w' : '_' ) + ( created ? 'c' : '_' ) ) {
 			case 'swc':
 				options.created = function beforeCreated (this :_Vue) {
-					proSymbols(this as Context, symbolMethods!);
+					proProto(this as Context, protoDescriptors!);
 					$watch(this, watchers);
 					return created!.apply(this);
 				};
 				break;
 			case 'sw_':
 				options.created = function beforeCreated (this :_Vue) {
-					proSymbols(this as Context, symbolMethods!);
+					proProto(this as Context, protoDescriptors!);
 					$watch(this, watchers);
 				};
 				break;
 			case 's_c':
 				options.created = function beforeCreated (this :_Vue) {
-					proSymbols(this as Context, symbolMethods!);
+					proProto(this as Context, protoDescriptors!);
 					return created!.apply(this);
 				};
 				break;
 			case 's__':
 				options.created = function beforeCreated (this :_Vue) {
-					proSymbols(this as Context, symbolMethods!);
+					proProto(this as Context, protoDescriptors!);
 				};
 				break;
 			case 'nwc':
 				options.created = function beforeCreated (this :_Vue) {
-					proConstructor(this as Context, symbolMethods, constructor, Vue3);
+					proConstructor(this as Context, protoDescriptors, constructor, Vue3);
 					$watch(this, watchers);
 					return created!.apply(this);
 				};
 				break;
 			case 'nw_':
 				options.created = function beforeCreated (this :_Vue) {
-					proConstructor(this as Context, symbolMethods, constructor, Vue3);
+					proConstructor(this as Context, protoDescriptors, constructor, Vue3);
 					$watch(this, watchers);
 				};
 				break;
 			case 'n_c':
 				options.created = function beforeCreated (this :_Vue) {
-					proConstructor(this as Context, symbolMethods, constructor, Vue3);
+					proConstructor(this as Context, protoDescriptors, constructor, Vue3);
 					return created!.apply(this);
 				};
 				break;
 			case 'n__':
 				options.created = function beforeCreated (this :_Vue) {
-					proConstructor(this as Context, symbolMethods, constructor, Vue3);
+					proConstructor(this as Context, protoDescriptors, constructor, Vue3);
 				};
 				break;
 			case '_wc':
@@ -420,13 +425,14 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	
 }
 
-var OPTIONS = WeakMap && /*#__PURE__*/function () {
+var OPTIONS = /*#__PURE__*/function () {
 	try {
-		return Function('WeakMap,Map', '"use strict";\
+		return Function('"use strict";\
 class EasyMap extends WeakMap{into(key){let sub=this.get(key);sub??this.set(key,sub=new EasyMap);return sub}}EasyMap.prototype.get=WeakMap.prototype.get;EasyMap.prototype.set=WeakMap.prototype.set;\
 class StrongMap extends Map{}StrongMap.prototype.get=Map.prototype.get;StrongMap.prototype.set=Map.prototype.set;StrongMap.prototype.forEach=Map.prototype.forEach;\
-return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyMap,data:new EasyMap,shadow:new EasyMap}\
-')(WeakMap, Map);
+class StrongSet extends Set{}StrongSet.prototype.add=Set.prototype.add;StrongSet.prototype[Symbol.iterator]=Set.prototype[Symbol.iterator];\
+return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyMap,data:new EasyMap,proto:new EasyMap,constructor:new EasyMap,shadow:new EasyMap,Set:StrongSet}\
+')();
 	}
 	catch (error) {}
 }() as {
@@ -435,7 +441,10 @@ return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyM
 	super :WeakMap<ClassAPI, ClassAPI>,
 	rest :WeakMap<ClassAPI | _ObjectAPI, Names>,
 	data :WeakMap<_ObjectAPI, Names>,
+	proto :WeakMap<_ObjectAPI, ProtoDescriptors>,
+	constructor :WeakMap<_ObjectAPI, ClassAPI>,
 	shadow :WeakMap<_ObjectAPI, Names>,
+	Set :SetConstructor,
 };
 interface EasyMap<K extends object, V> extends WeakMap<K, V> {into (key :K) :V;}
 
@@ -461,7 +470,10 @@ function $watch (that :_Vue, watchers :readonly Watcher[]) {
 	while ( index );
 }
 
-export type Names = { [name :string] :unknown };
+export type Names<T = unknown> = {
+	[name :string] :T,
+	[SYMBOL]? :T,
+};
 function collectNames (options :_ObjectAPI, constructor :ClassAPI | null) :Names {
 	var restNames :Names | undefined = OPTIONS.rest.get(options);
 	if ( !restNames ) {
@@ -471,26 +483,13 @@ function collectNames (options :_ObjectAPI, constructor :ClassAPI | null) :Names
 			var extend = options.extends;
 			extend && assign(restNames, collectNames(extend, null));
 			var mixins = options.mixins;
-			if ( mixins ) {
-				var index = mixins.length;
-				while ( index ) { assign(restNames, collectNames(mixins[--index], null)); }
-			}
+			if ( mixins ) { for ( var index = mixins.length; index; ) { assign(restNames, collectNames(mixins[--index], null)); } }
 			var props = options.props;
 			var name :string;
-			if ( isArray(props) ) {
-				for ( index = props.length; index; ) {
-					name = props[--index];
-					restNames[name] = null;
-				}
-			}
+			if ( isArray(props) ) { for ( index = props.length; index; ) { restNames[props[--index]] = null; } }
 			else { for ( name in props ) { restNames[name] = null; } }
 			props = options.inject;
-			if ( isArray(props) ) {
-				for ( index = props.length; index; ) {
-					name = props[--index];
-					restNames[name] = null;
-				}
-			}
+			if ( isArray(props) ) { for ( index = props.length; index; ) { restNames[props[--index]] = null; } }
 			else { for ( name in props ) { restNames[name] = null; } }
 			for ( name in options.methods ) { restNames[name] = null; }
 			for ( name in options.computed ) { restNames[name] = null; }
@@ -514,71 +513,77 @@ function devAssertFunction<T> (this :__Dev__, fn :T) {
 	return fn as T extends CallableFunction ? T : never;
 }
 
-var CHECKED = WeakMap && /*#__PURE__*/new WeakMap<ClassAPI | _ObjectAPI, Names>();
+var CHECKED = WeakMap && /*#__PURE__*/new WeakMap<ClassAPI | _ObjectAPI, Names<ClassAPI | _ObjectAPI>>();
 function forKeys (option :{} | undefined, callback :(name :string) => void) {
 	if ( isArray(option) ) { option.forEach(callback); }
 	else { for ( var key in option ) { callback(key); } }
 }
-function check (options :_ObjectAPI & { readonly name? :string, readonly displayName? :string }, __dev__ :__Dev__, constructor :ClassAPI | null) {
+function check (options :_ObjectAPI & { readonly name? :string, readonly displayName? :string }, __dev__ :__Dev__) :Names<ClassAPI | _ObjectAPI> {
 	
-	var ownNames = CHECKED.get(constructor || options);
-	if ( ownNames ) { return ownNames; }
-	var allNames = create(NULL) as Names;
+	var belong = OPTIONS.constructor.get(options) || options;
+	var ownKeys = CHECKED.get(belong);
+	if ( ownKeys ) { return ownKeys; }
+	var allKeys = create(NULL) as Names<ClassAPI | _ObjectAPI>;
 	
 	( options.extends ? [ options.extends ] : [] ).concat(options.mixins || []).forEach(function (mixin) {
-		var mixinNames = check(mixin, __dev__, null);
+		var mixinNames = check(mixin, __dev__);
 		for ( var name in mixinNames ) {
-			if ( name in allNames ) { throw Error(__dev__.compile_overwrite); }
+			if ( name in allKeys && mixinNames[name]!==allKeys[name] ) { throw Error(__dev__.compile_overwrite); }
 		}
-		assign(allNames, mixinNames);
+		assign(allKeys, mixinNames);
 	});
 	
-	ownNames = create(NULL) as Names;
+	ownKeys = create(NULL) as Names<ClassAPI | _ObjectAPI>;
+	
+	var protoDescriptors = OPTIONS.proto.get(options);
+	protoDescriptors && OwnKeys(protoDescriptors).forEach(function (key) {
+		ownKeys![key] = belong;
+	});
 	
 	forKeys(options.props, function (name) {
 		if ( /-|^(?:key$|[oO][nN]|ref$)/.test(name) ) { throw Error(__dev__.compile_props); }
 		if ( name in PROTO_BUG ) { throw Error(__dev__.proto); }
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
-		ownNames![name] = null;
+		if ( name in ownKeys! ) { throw Error(__dev__.compile_redefined); }
+		ownKeys![name] = belong;
 	});
 	
 	forKeys(options.inject, function (name) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
-		ownNames![name] = null;
+		if ( name in ownKeys! ) { throw Error(__dev__.compile_redefined); }
+		ownKeys![name] = belong;
 	});
 	
 	var name :string;
 	
 	for ( name in options.methods ) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( name in ownNames ) { throw Error(__dev__.compile_redefined); }
-		ownNames[name] = null;
+		if ( name in ownKeys ) { throw Error(__dev__.compile_redefined); }
+		ownKeys[name] = belong;
 	}
 	
 	for ( name in options.computed ) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
-		if ( name in ownNames ) { throw Error(__dev__.compile_redefined); }
-		ownNames[name] = null;
+		if ( name in ownKeys ) { throw Error(__dev__.compile_redefined); }
+		ownKeys[name] = belong;
 	}
 	
 	for ( name in OPTIONS.data.get(options) ) {
-		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
-		ownNames![name] = null;
+		if ( name in ownKeys! ) { throw Error(__dev__.compile_redefined); }
+		ownKeys![name] = belong;
 	}
 	
 	for ( name in OPTIONS.shadow.get(options) ) {
-		if ( name in ownNames! ) { throw Error(__dev__.compile_redefined); }
-		ownNames![name] = null;
+		if ( name in ownKeys! ) { throw Error(__dev__.compile_redefined); }
+		ownKeys![name] = belong;
 	}
 	
-	if ( 'constructor' in ownNames ) { throw Error(__dev__.proto); }
+	if ( 'constructor' in ownKeys ) { throw Error(__dev__.proto); }
 	
-	for ( name in ownNames ) {
-		if ( name in allNames ) { throw Error(__dev__.compile_overwrite); }
-	}
-	assign(allNames, ownNames);
+	OwnKeys(ownKeys).forEach(function (key) {
+		if ( key in allKeys ) { throw Error(__dev__.compile_overwrite); }
+	});
+	assign(allKeys, ownKeys);
 	
 	[ options.name, options.displayName ].forEach(function (name :unknown) {
 		if ( typeof name==='string'
@@ -588,7 +593,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	});
 	
 	options.emits &&
-	( isArray(options.emits) ? options.emits : keys(options.emits) ).forEach(function (event) {
+	( isArray(options.emits) ? options.emits : Keys(options.emits) ).forEach(function (event) {
 		if ( typeof event==='string' && /[A-Z]|^onvnode|(?:capture|once|passive)$/.test('on' + event) ) { throw Error(__dev__.compile_emits); }
 	});
 	
@@ -598,9 +603,8 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 		options.props && ( isArray(options.props) ? options.props.includes('is') : 'is' in options.props )// 3
 	) { throw Error(__dev__.compile_is); }
 	
-	constructor && CHECKED.set(constructor, allNames);
-	CHECKED.set(options, allNames);
-	return allNames;
+	CHECKED.set(belong, allKeys);
+	return allKeys;
 	
 }
 
@@ -674,8 +678,9 @@ export interface Data {
 	[SYMBOL]? :unknown,
 }
 
-export type SymbolMethods = {
-	readonly [SYMBOL]? :Readonly<TypedPropertyDescriptor<unknown>>,
+export type ProtoDescriptors = {
+	[name :string] :Readonly<TypedPropertyDescriptor<unknown>>,
+	[SYMBOL]? :Readonly<TypedPropertyDescriptor<unknown>>,
 };
 
 type Watcher = {

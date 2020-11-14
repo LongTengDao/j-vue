@@ -75,7 +75,7 @@ declare module 'j-vue' {
 		{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &
 		{ new<Sub extends Component<Sub>> () :
 			Component<Sub> &
-			{ [Name in OwnNames<Mixins>] :Mixins[Name] }
+			{ [Name in OwnKeys<Mixins>] :Mixins[Name] }
 		};
 	const _mixins :unique symbol;
 	

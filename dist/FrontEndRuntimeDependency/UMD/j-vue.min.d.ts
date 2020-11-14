@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'17.2.0';
+	export const version :'17.2.1';
 	
 	export function Identifier () :string;
 	
@@ -47,7 +47,7 @@ declare namespace exports {
 		{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &
 		{ new<Sub extends Component<Sub>> () :
 			Component<Sub> &
-			{ [Name in OwnNames<Mixins>] :Mixins[Name] }
+			{ [Name in OwnKeys<Mixins>] :Mixins[Name] }
 		};
 	const _mixins :unique symbol;
 	
@@ -69,6 +69,7 @@ declare namespace exports {
 	type ClassAPI = typeof AnyComponent;
 	abstract class AnyComponent<Sub extends SubComponent<Sub>> extends SubComponent<Sub> {
 		protected constructor ();
+		get _data () :any;
 		get _inject () :any;
 		get _props () :any;
 		get _directives () :any;
@@ -93,10 +94,12 @@ declare namespace exports {
 		protected _render? () :VNode | ( VNode | string )[];
 		protected _provide? () :{ [key :string] :unknown };
 		
+		get _data () :void | readonly OwnNames<Sub>[];
 		get _inject () :void | Inject<Sub>;
 		get _props () :void | Props<Sub>;
 		get _directives () :void | Directives<Sub>;
 		
+		static readonly data :void;
 		static readonly directives :void | Directives<Vue>;
 		static readonly provide :void | { [key :string] :unknown };
 		
@@ -143,7 +146,6 @@ declare namespace exports {
 		
 		private _mixins :void;
 		private _extends :void;
-		private _data :void;
 		private _watch :void;
 		private _methods :void;
 		private _computed :void;
@@ -182,7 +184,6 @@ declare namespace exports {
 		
 		private static readonly mixins :void;
 		private static readonly extends :void;
-		private static readonly data :void;
 		private static readonly watch :void;
 		private static readonly methods :void;
 		private static readonly computed :void;

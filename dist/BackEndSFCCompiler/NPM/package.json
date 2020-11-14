@@ -1,7 +1,7 @@
 {
 	"name": "j-vue",
 	"description": ".vue single-file component back-end compiler. Belong to \"Plan J\".／.vue 单文件组件后端编译工具。从属于“简计划”。",
-	"version": "17.2.0",
+	"version": "17.2.1",
 	"license": "LGPL-3.0",
 	"author": "龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)",
 	"bugs": "https://GitHub.com/LongTengDao/j-vue/issues",

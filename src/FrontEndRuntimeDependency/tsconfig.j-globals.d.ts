@@ -1,5 +1,6 @@
 
 declare module '.Array' { export default Array; }
+declare module '.Array.from?' { export default Array.from; }
 declare module '.Array.isArray' { export default isArray;
 	function isArray (value :any) :value is readonly any[];
 }
@@ -14,10 +15,6 @@ declare module '.Function' { export default Function; }
 declare module '.Function.prototype.apply' { export default Function.prototype.apply; }
 
 declare module '.Infinity' { export default Infinity; }
-
-declare module '.Map?' { export default constructor;
-	class constructor<K, V> extends Map<K, V> { constructor (entries? :Iterable<{ readonly 0 :K, readonly 1 :V }>) }
-}
 
 declare module '.Math.floor' { export default Math.floor; }
 

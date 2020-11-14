@@ -13,18 +13,18 @@ import NULL from '.null.prototype';
 
 export var that :Context | null = null;
 
-export function proSymbols (self :Context, symbolMethods :SymbolMethods) {
+export function proProto (self :Context, protoDescriptors :ProtoDescriptors) {
 	
 	var _ = self._;
-	defineProperties(_ ? _.ctx : self, symbolMethods);
+	defineProperties(_ ? _.ctx : self, protoDescriptors);
 	
 }
 
-export function proConstructor (self :Context, symbolMethods :SymbolMethods | null, constructor :ClassAPI, Vue3 :_Vue3 | undefined) {
+export function proConstructor (self :Context, protoDescriptors :ProtoDescriptors | null, constructor :ClassAPI, Vue3 :_Vue3 | undefined) {
 	
 	var _ = self._;
 	var ctx = _ ? _.ctx : self;
-	symbolMethods && defineProperties(ctx, symbolMethods);
+	protoDescriptors && defineProperties(ctx, protoDescriptors);
 	
 	var previous = that;
 	that = self;
@@ -33,11 +33,11 @@ export function proConstructor (self :Context, symbolMethods :SymbolMethods | nu
 	
 }
 
-export function proNames (self :Context, symbolMethods :SymbolMethods | null, constructor :ClassAPI, Vue3 :_Vue3 | undefined, dataNames :Names, shadowAssigner :ShadowAssigner | null) {
+export function proNames (self :Context, protoDescriptors :ProtoDescriptors | null, constructor :ClassAPI, Vue3 :_Vue3 | undefined, dataNames :Names, shadowAssigner :ShadowAssigner | null) {
 	
 	var _ = self._;
 	var ctx = _ ? _.ctx : self;
-	symbolMethods && defineProperties(ctx, symbolMethods);
+	protoDescriptors && defineProperties(ctx, protoDescriptors);
 	
 	var previous = that;
 	that = self;
@@ -60,11 +60,11 @@ export function proNames (self :Context, symbolMethods :SymbolMethods | null, co
 	
 }
 
-export function proData (self :Context, symbolMethods :SymbolMethods | null, constructor :ClassAPI, Vue3 :_Vue3 | undefined, restNames :Names, shadowAssigner :ShadowAssigner | null) {
+export function proData (self :Context, protoDescriptors :ProtoDescriptors | null, constructor :ClassAPI, Vue3 :_Vue3 | undefined, restNames :Names, shadowAssigner :ShadowAssigner | null) {
 	
 	var _ = self._;
 	var ctx = _ ? _.ctx : self;
-	symbolMethods && defineProperties(ctx, symbolMethods);
+	protoDescriptors && defineProperties(ctx, protoDescriptors);
 	
 	var previous = that;
 	that = self;
@@ -75,7 +75,7 @@ export function proData (self :Context, symbolMethods :SymbolMethods | null, con
 	if ( _ ) {
 		var accessCache = _.accessCache;
 		for ( var name in ctx ) {
-			if ( !( name in restNames ) ) {
+			if ( !( name in restNames ) && name[0]!=='$' ) {
 				data[name] = ctx[name as keyof Context];
 				if ( name in accessCache ) { accessCache[name as keyof Context] = undefined; }
 			}
@@ -86,7 +86,7 @@ export function proData (self :Context, symbolMethods :SymbolMethods | null, con
 		var index = 0;
 		while ( index!==nowNames.length ) {
 			name = nowNames[index++];
-			if ( !( name in restNames ) ) { data[name] = ctx[name as keyof Context]; }
+			if ( !( name in restNames ) && name[0]!=='$' ) { data[name] = ctx[name as keyof Context]; }
 		}
 	}
 	shadowAssigner && shadowAssigner(self, data);
@@ -94,12 +94,15 @@ export function proData (self :Context, symbolMethods :SymbolMethods | null, con
 	
 }
 
-export function devData (self :Context, symbolMethods :SymbolMethods | null, constructor :ClassAPI, Vue3 :_Vue3 | undefined, skipData :boolean, dataNames :Names | null, restNames :Names, shadowAssigner :ShadowAssigner | null, shadowChecker :ShadowChecker | undefined, skipConstructor :boolean, __dev__ :__Dev__) {
+export function devData (self :Context, protoDescriptors :ProtoDescriptors | null, constructor :ClassAPI, Vue3 :_Vue3 | undefined, skipData :boolean, dataNames :Names | null, restNames :Names, shadowAssigner :ShadowAssigner | null, shadowChecker :ShadowChecker | undefined, skipConstructor :boolean, __dev__ :__Dev__) {
 	
 	var _ = self._;
 	var ctx = _ ? _.ctx : self;
-	var oldDescriptors = assign(create(NULL), getOwnPropertyDescriptors(ctx), symbolMethods);
-	symbolMethods && defineProperties(ctx, symbolMethods);
+	var oldDescriptors = assign(create(NULL), getOwnPropertyDescriptors(ctx), protoDescriptors);
+	if ( protoDescriptors ) {
+		for ( var $name in protoDescriptors ) { if ( $name in ctx ) { throw Error(__dev__.runtime_reserved); } }
+		defineProperties(ctx, protoDescriptors);
+	}
 	
 	var previous = that;
 	that = self;
@@ -121,33 +124,38 @@ export function devData (self :Context, symbolMethods :SymbolMethods | null, con
 			)
 		) { throw Error(__dev__.runtime_redefined); }
 	});
-	var difKeys = ownKeys(ctx).filter(function (key) {
+	var difKeys :( string | symbol )[] = ownKeys(ctx).filter(function (key) {
 		return !( key in oldDescriptors );
 	});
-	if ( skipConstructor || skipData ) {
+	if ( skipConstructor ) {
 		if ( difKeys.length ) { throw Error(__dev__.runtime_data); }
+	}
+	var difNames = difKeys.filter(function (key) :key is string {
+		return typeof key==='string' && key[0]!=='$';
+	});
+	if ( skipData ) {
+		if ( difNames.length ) { throw Error(__dev__.runtime_data); }
 	}
 	if ( dataNames ) {
 		var count = 0;
-		for ( var key in dataNames ) { ++count; }
-		if ( count!==difKeys.length ) { throw Error(__dev__.runtime_data); }
-		difKeys.forEach(function () {
-			if ( !( key in dataNames ) ) { throw Error(__dev__.runtime_data); }
+		//@ts-ignore
+		for ( var name in dataNames ) { ++count; }
+		if ( count!==difNames.length ) { throw Error(__dev__.runtime_data); }
+		difNames.forEach(function (name) {
+			if ( !( name in dataNames ) ) { throw Error(__dev__.runtime_data); }
 		});
 	}
-	difKeys.forEach(function (this :object, key) {
-		if ( key in this && !( key in {} ) || key in restNames ) { throw Error(__dev__.runtime_redefined); }
-		if ( typeof key==='symbol' ) { throw Error(__dev__.runtime_symbol); }
-		if ( key[0]==='_' || key[0]==='$' ) { throw Error(__dev__.runtime_reserved); }
-		//@ts-ignore
-		if ( key==='constructor' ) { throw Error(__dev__.proto); }
-		if ( !propertyIsEnumerable.call(ctx, key)) { throw Error(__dev__.runtime_enumerable); }
+	difNames.forEach(function (this :object, name) {
+		if ( name in this && !( name in {} ) || name in restNames ) { throw Error(__dev__.runtime_redefined); }
+		if ( name[0]==='_' ) { throw Error(__dev__.runtime_reserved); }
+		if ( name==='constructor' ) { throw Error(__dev__.proto); }
+		if ( !propertyIsEnumerable.call(ctx, name)) { throw Error(__dev__.runtime_enumerable); }
 	}, getPrototypeOf(ctx));
 	
 	var data = create(NULL) as Data;
-	difKeys.forEach(function (key) {
-		( data as Data )[key] = ctx[key];
-		if ( _ && key in _.accessCache ) { _.accessCache[key] = undefined; }
+	difNames.forEach(function (name) {
+		( data as Data )[name] = ctx[name as keyof Context];
+		if ( _ && name in _.accessCache ) { _.accessCache[name as keyof Context] = undefined; }
 	});
 	if ( shadowAssigner ) {
 		shadowChecker!(data);
@@ -158,5 +166,5 @@ export function devData (self :Context, symbolMethods :SymbolMethods | null, con
 }
 
 import type { ShadowAssigner, ShadowChecker } from './Shadow';
-import type { SymbolMethods, ClassAPI, Context, Data, __Dev__, Names } from './';
+import type { ProtoDescriptors, ClassAPI, Context, Data, __Dev__, Names } from './';
 import type { _Vue3 } from 'j-vue';
