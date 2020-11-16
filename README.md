@@ -14,6 +14,7 @@ Now we can use TypeScript and class like this to resolve this problem, without a
 ```ts
 import { Component, mixin } from 'j-vue';
 
+
 abstract class Mixin0 extends Component<Mixin0> {
     #d = 0;
     m0 () { return ++this.#d; }
@@ -30,11 +31,14 @@ interface Mixin1 extends Component<Mixin1> {
 
 const Mixins = mixin<Mixin0 & Mixin1>(Mixin0, Mixin1);
 
+
 abstract class SuperComponent<Sub extends Component<Sub>> extends Mixins<Sub> {
     s () :void {}
 }
 
+
 abstract class SubComponent extends SuperComponent<SubComponent> {
+    
     
     /* methods */
     
@@ -43,15 +47,18 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     // Even `vm.constructor`! Anything possible in object-api, is possible in class-api!
     ['constructor'] () { }
     
+    
     /* computed */
     
     get c () { return this.d; }
     set c (value) { this.d = value; }
     
+    
     /* hooks (Non-static for type, starts with `_` wouldn't waste any name) */
     
     // No conflict to methods and so on
     _created () { this.c; }
+    
     
     /* watch (Non-static for type, starts with `_watch:`) */
     
@@ -69,17 +76,20 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     get '_watch:placeholder2 (can be any unique words in fact);immediate' () { return this.#r.value; }
     set '_watch:placeholder2 (can be any unique words in fact);immediate' (r) { }
     
+    
     /* props (Non-static for type, also starts with `_`) */
     
     get _props () { return [ 'p' ] as const; }
     
     declare readonly p? :string;
     
+    
     /* inject (Like props) */
     
     get _inject () { return [ 'i' ] as const; }
     
     declare readonly i :boolean;
+    
     
     /* data */
     
@@ -88,10 +98,12 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     // Mark it `protected` or `private`, to prevent access outside
     protected D :number = 0;
     
+    
     // Hard private field can also be used! Though not reative directly (Which can also be intended)
     #p :number = 0;
     readonly #r :{ value :number } = Vue3.ref(0);
     readonly #c :{ readonly value :number } = Vue3.computed(() => this.#r.value);
+    
     
     protected constructor (Vue3? :any) {// Really run once like options.data()! With real this!
         
@@ -112,11 +124,13 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
         
     }
     
+    
     _render () {
         return arguments.length>1
             ? Vue3.h('p', [ this.d ])
             : this.$createElement!('p', [ this.d ]);
     }
+    
     
     /* Other options, like multiple ways to write render */
     
@@ -135,6 +149,7 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
         }
     } as any;
     
+    
     static template = `<p>{{ d }}</p>`;
     
     static inheritAttrs = true;
@@ -144,6 +159,7 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     static provide = {};
     
     static emits = [ 'e' ];
+    
     
 };
 
