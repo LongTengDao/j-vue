@@ -48,9 +48,9 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     get c () { return this.d; }
     set c (value) { this.d = value; }
     
-    /* hooks (Non-static for type, starts with `_` wouldn't waste any name and conflict with methods!) */
+    /* hooks (Non-static for type, starts with `_` wouldn't waste any name) */
     
-    // No conflict to methods and so on, wouldn't waste any name!
+    // No conflict to methods and so on
     _created () { this.c; }
     
     /* watch (Non-static for type, starts with `_watch:`) */
@@ -86,7 +86,7 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     // Mark it `protected`, to prevent access outside
     protected d :number = 0;
     
-    // Hard private field can be used, too! Though not reative directly (Which can also be intended)
+    // Hard private field can also be used! Though not reative directly (Which can also be intended)
     #p :number = 0;
     readonly #r :{ value :number } = Vue3.ref(0);
     readonly #c :{ readonly value :number } = Vue3.computed(() => this.#r.value);
