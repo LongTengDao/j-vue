@@ -38,7 +38,9 @@ const PROP_SYNC = /\.(?:prop|sync)(?:$|\.)/;
 const BIND_PROP_SYNC = /^:.*?\.(?:prop|sync)(?:$|\.)/s;
 const V_MODEL_ = /^v-model(?::|(?=\.)(?!(?:\.(?:lazy|number|trim))+$))/;
 const STARTS_WITH_LOWERCASE_AND_NOT = /^(?:[abd-z]|(?!component$))/;
-const ON_UPPER_CASE_ONCE = /[A-Z]|^[^.]*(?:capture|once|passive)(?:\.|$)/;
+const VNODE = /^@-?vnode/i;
+const VNODE_EVENT = /^@[vV]node(?:(?:-b|B)efore)?(?:-[a-z]|[A-Z])[a-z]*$/;
+const ON_MODIFIER = /^[^.]*(?:capture|once|passive)(?:\.|$)/i;
 const ATTR_ON = /^:?on/i;
 const ATTR_ = /^:?_/;
 const HTML5 = `
@@ -323,7 +325,12 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 						if ( name[1]==='_' ) { throw ReferenceError(`“_”开头的 listener 可能无法按预期工作`); }
 						if ( 3 ) {
 							if ( NATIVE_D.test(name) ) { throw Error(`Vue 3 中 v-on 已不再支持 .native、键位数字修饰符`); }
-							if ( ON_UPPER_CASE_ONCE.test('on' + name.slice(name[0]==='@' ? 1 : 5)) ) { throw Error(`Vue 3 中事件名不应出现大写，且不应以 capture、once、passive 结尾以免与 .capture、.once、.passive 修饰符编译的结果混淆`); }
+							if ( VNODE.test(name) ) {
+								if ( !VNODE_EVENT.test(name) ) { throw Error(`以 vnode 起始的“${name}”可能是 Vue 3 中新增的内置事件，它需要通过大写或连字符正确断词`); }
+							}
+							else {
+								if ( ON_MODIFIER.test('on' + name.slice(1)) ) { throw Error(`Vue 3 中事件名不应以 capture、once、passive 结尾以免与 .capture、.once、.passive 修饰符编译的结果混淆`); }
+							}
 						}
 						if ( compatible_template && NON_ASCII_SIMPLE_PATH.test(attributes[name]!) ) { compatible_template = false; }
 					}

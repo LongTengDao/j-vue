@@ -5,6 +5,7 @@ import Template from './Template';
 import Render, { StaticRenderFns } from './Render, StaticRenderFns';
 import Style, { remove } from './Style, remove';
 import Component, { mixin } from './Component, mixin/';
+import prop from './v-prop';
 
 export {
 	version,
@@ -14,6 +15,7 @@ export {
 	Render, StaticRenderFns,
 	Style, remove,
 	Component, mixin,
+	prop,
 };
 
 import Default from '.default';
@@ -25,4 +27,5 @@ export default Default({
 	Render: Render, StaticRenderFns: StaticRenderFns,
 	Style: Style, remove: remove,
 	Component: Component, mixin: mixin,
+	prop: prop,
 });

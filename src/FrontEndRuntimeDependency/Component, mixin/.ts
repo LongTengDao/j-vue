@@ -296,7 +296,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	
 	var restNames = collectNames(options, constructor);
 	
-	if ( Render && ( Vue3 || !Render.length ) ) {
+	if ( Render && Vue3 ) {
 		var shadow = Render.shadow;
 		if ( shadow ) {
 			if ( __dev__ ) {
@@ -596,7 +596,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	
 	options.emits &&
 	( isArray(options.emits) ? options.emits : Keys(options.emits) ).forEach(function (event) {
-		if ( typeof event==='string' && /[A-Z]|^onvnode|(?:capture|once|passive)$/.test('on' + event) ) { throw Error(__dev__.compile_emits); }
+		if ( typeof event==='string' && /^on-?vnode|(?:capture|once|passive)$/.test('on' + event) ) { throw Error(__dev__.compile_emits); }
 	});
 	
 	if (
@@ -610,7 +610,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	
 }
 
-var UPPER = /[A-Z]/g;
+var UPPER = /[A-Z]/;
 function fixPascal (pascal :string, cases :Names) {
 	if ( pascal[pascal.length - 1]!=='_' ) {
 		var first = pascal[0].toLowerCase();

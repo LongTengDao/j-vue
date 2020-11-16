@@ -10,7 +10,7 @@ declare module '*?j-vue=' {
 }
 
 declare module '*?j-vue' {
-	export { Identifier, Scope, Style, remove, Component, mixin } from 'j-vue';
+	export { Identifier, Scope, Style, remove, Component, mixin, prop } from 'j-vue';
 	
 	export const scopeFunction :jVue.Scope<void>;
 	export const scopeObject :jVue.Scope<string>;
@@ -79,6 +79,14 @@ declare module 'j-vue' {
 		};
 	const _mixins :unique symbol;
 	
+	export const prop :Readonly<{
+		beforeMount (el :Element, binding :{ arg? :any, value? :any }) :void,
+		bind (el :Element, binding :{ arg? :any, value? :any }) :void,
+		
+		updated (el :Element, binding :{ arg? :any, value? :any }) :void,
+		componentUpdated (el :Element, binding :{ arg? :any, value? :any }) :void,
+	}>;
+	
 	export { exports as default };
 	const exports :Readonly<{
 		version :typeof version,
@@ -91,6 +99,7 @@ declare module 'j-vue' {
 		remove :typeof remove,
 		Component :typeof Component,
 		mixin :typeof mixin,
+		prop :typeof prop,
 		default :typeof exports,
 	}>;
 	
@@ -314,9 +323,9 @@ declare module 'j-vue' {
 	}
 	
 	type Props<This extends Vue> =
-		Exclude<OwnNames<This>, 'is'>[] |
+		Exclude<OwnNames<This>, 'key' | 'ref'>[] |
 		NonArray<{
-			[Key in Exclude<OwnNames<This>, 'is'>]? :
+			[Key in Exclude<OwnNames<This>, 'key' | 'ref'>]? :
 			ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |
 			NonArray<{
 				type? :ConstructorType<This[Key]> | ConstructorType<This[Key]>[],
@@ -387,7 +396,7 @@ declare module 'j-vue' {
 				previousVNode? :VNode & { /**@deprecated*/ readonly context? :This },
 			) :void | Promise<void>
 		} | {
-			[Hook in 'created' | 'beforeMount' | 'mounted'  | 'beforeUpdate' | 'updated'                        | 'beforeUnmount' | 'unmounted']? :{
+			[Hook in 'beforeMount' | 'mounted'  | 'beforeUpdate' | 'updated'                     | 'beforeUnmount' | 'unmounted']? :{
 				(
 					this :void,
 					el :Element,
@@ -409,7 +418,7 @@ declare module 'j-vue' {
 			}
 		} & {
 			/**@deprecated*/
-			[Hook in             'bind'/*   */ | 'inserted'                  | 'update'/**/ | 'componentUpdated'                  | 'unbind'   ]? :{
+			[Hook in 'bind'        | 'inserted'                  | 'update'  | 'componentUpdated'                  | 'unbind'   ]? :{
 				(
 					this :void,
 					el :Element,
