@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.2.3';
+const version = '17.2.4';
 
 const Error$1 = Error;
 
@@ -6466,7 +6466,7 @@ function * From (tab        , mode                         , styles         , te
 	}
 	
 	const _from_ = VisibleStringLiteral(from);
-	yield `export { Identifier, Scope, Style, remove, Component } from ${_from_};${eol}`;
+	yield `export { Identifier, Scope, Style, remove, Component, mixin, prop } from ${_from_};${eol}`;
 	yield `import { Scope, Template, Render as _Render, StaticRenderFns } from ${_from_};${eol}${eol}`;
 	
 	const scopeKeys = template && _(template).keys;

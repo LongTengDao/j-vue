@@ -81,7 +81,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	}
 	
 	const _from_ = VisibleStringLiteral(from);
-	yield `export { Identifier, Scope, Style, remove, Component } from ${_from_};${eol}`;
+	yield `export { Identifier, Scope, Style, remove, Component, mixin, prop } from ${_from_};${eol}`;
 	yield `import { Scope, Template, Render as _Render, StaticRenderFns } from ${_from_};${eol}${eol}`;
 	
 	const scopeKeys = template && _(template).keys;

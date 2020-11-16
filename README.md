@@ -292,7 +292,7 @@ sfc.export('const');
 // export const Render          = jVue.Render( ... );
 // export const render          = jVue.Render( ... );
 // export const staticRenderFns = StaticRenderFns( ... );
-// export { Identifier, Scope, Style, remove, Component, mixin } from 'j-vue';
+// export { Identifier, Scope, Style, remove, Component, mixin, prop } from 'j-vue';
 ```
 
 [②]: #user-content-2

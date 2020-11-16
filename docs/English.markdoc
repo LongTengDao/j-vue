@@ -49,7 +49,7 @@ Back-End SFC Compiler
 			When the second parameter `from` is string or default, it will be used as the module id to introduce the jVue front-end runtime dependency library.
 			
 			Then here is going to generate the component's `scopeFunction` (or `scopeObject`), `template`, `Render`, `render`, `staticRenderFns` self using information export string, according to the contents in `template` and `style` blocks or their `src' attribute.
-			`Identifier`, `Scope`, `Style`, `remove`, `Component`, `mixin` of `j-vue` will be exported too, to make them simply to use.
+			`Identifier`, `Scope`, `Style`, `remove`, `Component`, `mixin`, `prop` of `j-vue` will be exported too, to make them simply to use.
 			Module content is similar to this:
 			
 			```	.js
@@ -59,7 +59,7 @@ Back-End SFC Compiler
 				export var Render          = /*#__PURE__*/ jVue.Render('({ h }){ return function render () { return h("br") }; }', scopeFunction);
 				export var render          = /*#__PURE__*/ jVue.Render('return this.$createElement("br");', scopeFunction);
 				export var staticRenderFns = /*#__PURE__*/ jVue.StaticRenderFns([], scopeFunction);
-				export { Identifier, Scope, Style, remove, Component, mixin } from 'j-vue';
+				export { Identifier, Scope, Style, remove, Component, mixin, prop } from 'j-vue';
 			
 			When use `'const'` or `'let'`, the parameter of `Render` and `StaticRenderFns` (the compiled template) will also be compressed as ES 6.
 			
@@ -184,3 +184,8 @@ Front-End Runtime Dependency
 			The parameter `codes` is an `Array` of `string`, and the value returned is an `Array` of `function` (using <renderOrRender> to generate each one).
 			
 			If the second parameter `scope` exists, then all parts matched <RE> in each `string`, will be tried to be replaced to the `key` (the matched part after `.slice(2, -2)`) mapped value in the `scope`.
+			
+		`jVue.prop`
+		-----------	
+			
+			Because Vue 3 removed the `.prop` modifier of `v-bind`, jVue add simple directive `v-prop`, you can set prop one by one via `v-prop:key="value"`, or set together via `v-prop="{ key: value }"`.

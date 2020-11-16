@@ -49,7 +49,7 @@
 			当第二个参数 `from` 缺省或为字符串时，代表引入 jVue 前端运行时依赖库的模块名。
 			
 			这时，会根据 `template` 块和 `style` 块中的内容，或其 `src` 属性，生成组件自身的 `scopeFunction`（或 `scopeObject`）、`template`、`Render`、`render`、`staticRenderFns` 信息导出模块字符串。
-			`j-vue` 中的 `Identifier`、`Scope`、`Style`、`remove`、`Component`、`mixin` 内容也会一并导出，以便于使用。
+			`j-vue` 中的 `Identifier`、`Scope`、`Style`、`remove`、`Component`、`mixin`、`prop` 内容也会一并导出，以便于使用。
 			模块内容类似这样：
 			
 			```	.js
@@ -59,7 +59,7 @@
 				export var Render          = /*#__PURE__*/ jVue.Render('({ h }){ return function render () { return h("br") }; }', scopeFunction);
 				export var render          = /*#__PURE__*/ jVue.Render('return this.$createElement("br");', scopeFunction);
 				export var staticRenderFns = /*#__PURE__*/ jVue.StaticRenderFns([], scopeFunction);
-				export { Identifier, Scope, Style, remove, Component, mixin } from 'j-vue';
+				export { Identifier, Scope, Style, remove, Component, mixin, prop } from 'j-vue';
 			
 			当使用 `'const'` 或 `'let'` 时，`Render` 和 `StaticRenderFns` 的参数（编译后的模板）也会作为 ES 6 代码进行压缩。
 			
@@ -184,3 +184,8 @@
 			参数 `codes` 是一个 `string` `Array`，返回 `function` `Array`（逐一用 <渲染函数或渲染函数类> 生成）。
 			
 			如果存在第二个参数 `scope`，那么生成时用的每个 `string` 中所有匹配 <正则> 的部分，都会尝试被替换成 `scope` 中该 `key`（匹配部分 `.slice(2, -2)` 后的值）所映射的值。
+			
+		`jVue.prop`
+		-----------	
+			
+			由于 Vue 3 取消了 `v-bind` 的 `.prop` 修饰符，jVue 特新增了简单的 `v-prop` 指令，可以用 `v-prop:key="value"` 的方式逐一指定，也可以用 `v-prop="{ key: value }"` 的方式一齐指定。
