@@ -7,6 +7,27 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 	const semver = await get('src/version');
 	
 	await build({
+		src: 'src/FrontEndRuntimeDependency',
+		dist: 'dist/FrontEndRuntimeDependency',
+		UMD: { main_global: 'jVue' },
+		ESM: true,
+		ES: 5,
+		semver,
+		name,
+		user: 'LongTengDao',
+		Auth,
+		Copy,
+		Desc: [
+			'构建后的 .vue 文件的前端运行时依赖。从属于“简计划”。',
+			'The front-end runtime dependency for built .vue files. Belong to "Plan J".'
+		],
+		locate: {
+			'@ltd/j-regexp': ful('../../LongTengDao/j-regexp/dist/ESM/.j-regexp.js'),
+			'lib:css-keywords': ful('lib/css-keywords/dist.js'),
+		},
+	});
+	
+	await build({
 		src: 'src/BackEndSFCCompiler',
 		dist: 'dist/BackEndSFCCompiler',
 		NPM: {
@@ -37,27 +58,6 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 			'@ltd/j-es': ful('../../LongTengDao/j-es/dist/ESM/.j-es.js'),
 			'lib:entities': ful('lib/entities/dist.js'),
 			'lib:elements': ful('lib/elements/dist.js'),
-		},
-	});
-	
-	await build({
-		src: 'src/FrontEndRuntimeDependency',
-		dist: 'dist/FrontEndRuntimeDependency',
-		UMD: { main_global: 'jVue' },
-		ESM: true,
-		ES: 5,
-		semver,
-		name,
-		user: 'LongTengDao',
-		Auth,
-		Copy,
-		Desc: [
-			'构建后的 .vue 文件的前端运行时依赖。从属于“简计划”。',
-			'The front-end runtime dependency for built .vue files. Belong to "Plan J".'
-		],
-		locate: {
-			'@ltd/j-regexp': ful('../../LongTengDao/j-regexp/dist/ESM/.j-regexp.js'),
-			'lib:css-keywords': ful('lib/css-keywords/dist.js'),
 		},
 	});
 	
