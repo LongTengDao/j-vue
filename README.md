@@ -83,8 +83,10 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     
     /* data */
     
-    // Mark it `protected`, to prevent access outside
-    protected d :number = 0;
+    d :number = 0;
+    
+    // Mark it `protected` or `private`, to prevent access outside
+    protected D :number = 0;
     
     // Hard private field can also be used! Though not reative directly (Which can also be intended)
     #p :number = 0;
