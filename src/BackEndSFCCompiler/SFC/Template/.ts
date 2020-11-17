@@ -54,7 +54,7 @@ const isVue2Compatible = (content :Content) => {
 		if ( !content.length ) {
 			return false;//throw Error(`从 Vue 2 开始，组件的 template 中不得为空`);
 		}
-		if ( 2 ) {///
+		Vue2: {///
 			if ( !( 'v-if' in ( content[0] as Element ).attributes ) ) {
 				return false;//throw Error(`Vue 2 只允许组件的 template 存在一个根节点`);
 			}

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.2.4';
+const version = '17.3.0';
 
 const Error$1 = Error;
 
@@ -3205,9 +3205,7 @@ const Tag = (html        , position        , foreign          = false, SHORTHAND
 						switch ( name[0] ) {
 							case '.':
 								if ( _PROP.test(name) ) {
-									{
-										throw SyntaxError$1(`Vue 3 中 v-bind 已不再支持 .prop 修饰符，无法为您转译“${name}”`);
-									}
+									 throw SyntaxError$1(`Vue 3 中 v-bind 已不再支持 .prop 修饰符，无法为您转译“${name}”，建议使用指令`);//name = `:${name.slice(1)}.prop`;
 								}
 								break;
 							case '#':
@@ -5394,12 +5392,6 @@ const SVG = 'color-profile';
 const NON_HTML = /[^\dA-Za-z]/;
 const STARTS_WITH_UPPERCASE = /^(?![A-Za-z])/;
 
-const xSlot = (attributes            ) => {
-	if ( 'v-slot' in attributes ) { return false; }
-	for ( const name in attributes ) { if ( name[0]==='#' ) { return false; } }
-	return true;
-};
-
 const checkNameBeing = (xName        , attributes            , is         )       => {
 	if ( 'v-html' in attributes && ( xName==='xmp' || xName==='plaintext' || xName==='listing' ) ) {
 		throw SyntaxError$1(is
@@ -5407,13 +5399,11 @@ const checkNameBeing = (xName        , attributes            , is         )     
 			: `请避免在已废弃的 xmp、plaintext 或 listing 标签上使用 v-html，它的实际行为（可能）是 v-text`
 		);
 	}
-	{
-		if ( compatible_template || compatible_render ) {
-				if ( !foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName) ) {
-					compatible_template = false;
-					compatible_render = false;
-					//throw SyntaxError(is ? `通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大写变种“${xName}”，不被 Vue 2 作为组件对待` : `SVG 命名空间中的 foreign 标签的大写变种“${xName}”，同样不被 Vue 2 作为组件对待`);
-				}
+	 if ( compatible_render ) {
+		if ( !foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName) ) {
+			///compatible_template = false;
+			compatible_render = false;
+			//throw SyntaxError(is ? `通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大写变种“${xName}”，不被 Vue 2 作为组件对待` : `SVG 命名空间中的 foreign 标签的大写变种“${xName}”，同样不被 Vue 2 作为组件对待`);
 		}
 	}
 };
@@ -5459,7 +5449,7 @@ const Shadow = ($name_names$        ) => {
 	return name + hasNames + names;
 };
 
-const parseAppend = (parentNode_XName        , parentNode                   , V_PRE         , FOREIGN         , V_FOR         )       => {
+const parseAppend = (parentNode_XName        , parentNode                   , V_PRE         , FOREIGN         , V_FOR         , requireKey         )       => {
 	for ( ; ; ) {
 		const tag = Tag(html, index, FOREIGN, !V_PRE);
 		const { type } = tag;
@@ -5524,11 +5514,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			}
 			if ( afterColon.includes('-') ) {
 				if ( NON_PCENChar.test(afterColon) ) { throw Error$1(`“${xName}”${index>0 ? '的后半部分' : ''}中含有不符合限定的字符，并不是一个合格的自定义元素名（如果这是一个组件，请避免使用小写字母开头）`); }
-				if ( compatible_template ) {
-					if ( xName===SVG ) {
-						compatible_template = false;
-					}
-				}
+				if ( compatible_template && xName===SVG ) { compatible_template = false; }
 			}
 			else {
 				if ( NON_HTML.test(afterColon) ) { throw Error$1(`HTML 原生标签中不会包含“${xName}”${index>0 ? '的后半部分' : ''}这种含有特殊字符的元素名（如果这是一个组件，请避免使用小写字母开头）`); }
@@ -5537,24 +5523,18 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 		if ( xName==='script' ) { throw SyntaxError$1(`Vue 不允许 template 中存在 script 标签`); }
 		const attributes             = tag.attributes ;
 		const v_pre          = V_PRE || 'v-pre' in attributes;
-		const v_for          = v_pre ? false : V_FOR || 'v-for' in attributes;
+		const v_for          = !v_pre && ( V_FOR || 'v-for' in attributes );
+		const lackKey          = !v_pre && !( 'key' in attributes ) && !( ':key' in attributes );
+		const v_if          = 'v-if' in attributes || 'v-else' in attributes || 'v-else-if' in attributes;
+		const isTemplate          = xName==='template';
 		let sheetRef                                       = null;
 		let shadowRoot                                         = null;
 		if ( v_pre ) {
-			if ( !V_PRE && xName==='template'
-				&& !( 'v-if' in attributes )
-				&& !('v-else-if' in attributes)
-				&& !('v-else' in attributes)
-				&& !( 'v-for' in attributes )
-				&& xSlot(attributes)
-			) {
-				throw SyntaxError$1(`应当避免没有 v-if/else-if/else/for/slot 指令的 template 元素，这在 Vue 2 与 3 中存在歧义，且没有必要（真需要时，考虑使用“<component is="template">”，或在其上级标签上设置 v-pre）`);
-			}
+			if ( !V_PRE && isTemplate ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
 		}
 		else {
-			{
-				if ( 'v-is' in attributes ) { throw SyntaxError$1(`v-is 是 Vue 3 新增的内置指令，在单文件组件模板中不可能需要被用到；在 Vue 2 中也请避开使用`); }
-			}
+			if ( compatible_render && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render = false; }
+			 if ( 'v-is' in attributes ) { throw SyntaxError$1(`v-is 是 Vue 3 新增的内置指令，在单文件组件模板中不可能需要被用到；在 Vue 2 中也请避开使用`); }
 			if ( xName==='component' ) {
 				if ( ':is' in attributes ) ;
 				else if ( 'is' in attributes ) { checkNameBeing(attributes.is , attributes, true); }
@@ -5570,13 +5550,13 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					);
 				}
 				checkNameBeing(xName, attributes, false);
-				//if ( 3 ) {
+				//Vue3: {
 				//	if ( STYLE_BY_COMPONENT_IS && xName==='style' ) {
 				//		if ( ':is' in attributes || 'is' in attributes ) { throw SyntaxError(STYLE_BY_COMPONENT_IS.is); }
 				//	}
 				//	checkNameBeing(xName, attributes, false);
 				//}
-				//if ( 2 ) {
+				//Vue2: {
 				//	if ( ':is' in attributes ) {
 				//		if ( STYLE_BY_COMPONENT_IS && xName==='style' ) { throw SyntaxError(STYLE_BY_COMPONENT_IS.is); }
 				//	}
@@ -5590,38 +5570,41 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			if ( 'inline-template' in attributes ) { throw Error$1(`jVue 不支持包含 inline-template 的模板编译，且该功能在 Vue 3 中已经被废弃`); }
 			if ( 'v-cloak' in attributes ) { throw SyntaxError$1(`单文件组件模板中不可能用到 v-cloak 指令`); }
 			if ( 'v-for' in attributes ) {
+				if ( !notComponent && lackKey ) {
+					throw SyntaxError$1(`v-for 用在组件上时必须具有 key 属性` + ( xName==='component' ? '' : `（如果“${xName}”不是一个组件，请避免使用大写字母开头）` ));
+				}
 				const value = attributes['v-for'] ;
 				const index = value.search(forAliasRE);
 				if ( index<0 ) { throw SyntaxError$1(`“v-for="${value}"”的格式有误`); }
 				Params(value.slice(0, index).replace(TRIM, ''), 1, 3, `“v-for="${value}"”中的“of/in”前`);
 			}
-			{
-				if ( v_for && 'ref' in attributes ) {
-					throw SyntaxError$1(`Vue 3 不再支持在有 v-for 的标签及其内部标签上设置 ref，请用 :ref 模式代替`);
-				}
-			}
+			 if ( v_for && 'ref' in attributes ) { throw SyntaxError$1(`Vue 3 不再支持在有 v-for 的标签及其内部标签上设置 ref，请用 :ref 模式代替`); }
 			if ( xName==='slot' ) {
-				if ( BAD_SLOT_NAME.test(attributes['name'] || 'default') ) { throw ReferenceError$1(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+				if ( 'name' in attributes ) {
+					if ( !attributes['name'] ) {
+						throw ReferenceError$1(attributes['name']===EMPTY
+							? `slot name 必须有值，否则在 Vue 2 和 3 之间存在歧义`
+							: `slot name="" 应该是误用，因为 v-slot: 是不可行的`
+						);
+					}
+					if ( BAD_SLOT_NAME.test(attributes['name']) ) { throw ReferenceError$1(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
+				}
 				for ( let name in attributes ) {
 					const bind = name[0]===':';
 					if ( bind ) {
-						{
-							if ( PROP_SYNC.test(name) ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符`); }
-						}
+						 if ( PROP_SYNC.test(name) ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符`); }
 						name = name.slice(1);
 					}
 					else if ( name.startsWith('v-') && !SLOT_DIRECTIVE.test(name) || name[0]==='@' || name[0]==='#' ) {
 						throw SyntaxError$1(`slot 组件上除 v-pre、v-once、v-for、v-if、v-else-if、v-else 和 v-bind 以外的指令都会被忽略，如果想要绑定 ${name} 为作用域属性，请使用 v-bind:${name}`);
 					}
 					if ( name===BAD_SCOPE ) { throw ReferenceError$1(`使用“${BAD_SCOPE}”作为 scope 无法按预期工作`); }
-					if ( name==='key' || name==='ref' ) { throw SyntaxError$1(`${name}（key、ref）在 slot 组件上是无效的${bind ? '，即便使用 v-bind: 结果也是一样' : ''}`); }
+					 if ( name==='key' || name==='ref' ) { throw SyntaxError$1(`${name}（key、ref）在 Vue 2 slot 组件上是无效的${bind ? '，即便使用 v-bind: 结果也是一样' : ''}`); }
 				}
 			}
 			else {
 				if ( compatible_template ) {
-					{
-						if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
-					}
+					 if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
 					if (
 						xName==='BaseTransition' || xName==='Suspense' || xName==='Teleport' || xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup'
 					) { compatible_template = false; }
@@ -5630,25 +5613,19 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					if (
 						///xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup' ||
 						xName==='base-transition' || xName==='suspense' || xName==='teleport' ||
-						xName==='template' && ( 'key' in attributes || ':key' in attributes )
+						isTemplate && !lackKey
 					) { compatible_render = false; }
 				}
-				if ( 'v-if' in attributes || 'v-else-if' in attributes || 'v-else' in attributes ) {
-					if ( 'v-for' in attributes ) { throw Error$1(`v-for 和 v-if 等的优先级在 Vue 2 和 3 中不同，请避免同时使用`); }///compatible_template = false;
-				}
-				else if ( xName==='template' && !( 'v-for' in attributes ) && xSlot(attributes) ) {
-					throw SyntaxError$1(`应当避免没有 v-if/else-if/else/for/slot 指令的 template 元素，这在 Vue 2 与 3 中存在歧义，且没有必要（真需要时，考虑使用“<component is="template">”，或在其上级标签上设置 v-pre）`);
-				}
-				{
+				 {
 					if ( 'slot' in attributes || ':slot' in attributes ) { throw SyntaxError$1(`slot 已被 v-slot 取代（如果只是碰巧重名，请使用 :slot.camel）`); }
 					if ( 'slot-scope' in attributes ) { throw SyntaxError$1(`slot-scope 已被 v-slot 取代（如果只是碰巧重名，请使用 :slot-scope）`); }
-					if ( 'scope' in attributes && xName==='template' ) { throw SyntaxError$1(`template scope 已被 v-slot 取代`); }
+					if ( 'scope' in attributes && isTemplate ) { throw SyntaxError$1(`template scope 已被 v-slot 取代`); }
 				}
 				let already = '';
 				for ( const name in attributes ) {
 					if ( name[0]==='@' ) {
 						if ( name[1]==='_' ) { throw ReferenceError$1(`“_”开头的 listener 可能无法按预期工作`); }
-						{
+						 {
 							if ( NATIVE_D.test(name) ) { throw Error$1(`Vue 3 中 v-on 已不再支持 .native、键位数字修饰符`); }
 							if ( VNODE.test(name) ) {
 								if ( !VNODE_EVENT.test(name) ) { throw Error$1(`以 vnode 起始的“${name}”可能是 Vue 3 中新增的内置事件，它需要通过大写或连字符正确断词`); }
@@ -5661,13 +5638,11 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					}
 					else {
 						if ( ATTR_.test(name) ) { throw ReferenceError$1(`“_”开头的 attr 可能无法按预期工作`); }
-						{
+						 {
 							if ( ATTR_ON.test(name) ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
 							if ( BIND_PROP_SYNC.test(name) ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符`); }
 						}
-						{
-							if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
-						}
+						 if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
 						if ( slotRE.test(name) ) {
 							if ( already ) { throw SyntaxError$1(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
 							already = name;
@@ -5685,14 +5660,14 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 							}
 							else {
 								const value = attributes[name];
-								if ( xName==='template' ) {
+								if ( isTemplate ) {
 									if ( !( 'localName' in parentNode ) ) { throw Error$1(`插槽所在的 template 必须位于组件标签内`); }
 									if ( STARTS_WITH_LOWERCASE_AND_NOT.test(parentNode.localName) ) {
 										throw Error$1(`插槽所在的 template 必须位于组件标签的根层` + ( BUILT_IN.has(parentNode.localName) ? `` : `（如果 ${parentNode.localName} 是组件，则请避免使用小写字母开头）` ));
 									}
 								}
 								else {
-									if ( notComponent ) { throw Error$1(`插槽只能出现在 template 或组件上` + ( BUILT_IN.has(xName) ? `` : `（如果 ${xName} 是组件，则请避免使用小写字母开头）`)); }
+									if ( notComponent ) { throw Error$1(`插槽只能出现在 template 或组件上` + ( BUILT_IN.has(xName) ? `` : `（如果 ${xName} 是组件，则请避免使用小写字母开头）` )); }
 									if ( name!=='v-slot' && name!=='#default' ) { throw SyntaxError$1(`具名插槽只能出现在 template 上`); }
 									if ( value===EMPTY ) { throw Error$1(`无值的默认插槽 v-slot 指令没有必要显式地写在组件上`); }
 								}
@@ -5704,6 +5679,9 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 						}
 					}
 				}
+				if ( isTemplate && !v_if && !already && !( 'v-for' in attributes ) ) {
+					throw SyntaxError$1(`应当避免没有 v-if/else-if/else/for/slot 指令的 template 元素，这在 Vue 2 与 3 中存在歧义，且没有必要`);
+				}
 				if ( sheetRef ) {
 					delete attributes[sheetRef.name];
 					attributes['ref'] = sheetRef.ref;
@@ -5711,6 +5689,15 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 				else if ( shadowRoot ) { delete attributes[shadowRoot.name]; }
 				if ( attributes['key']===BAD_KEY ) { throw ReferenceError$1(`使用“${BAD_KEY}”作为 key 无法按预期工作`); }
 				if ( attributes['ref']===BAD_REF ) { throw ReferenceError$1(`使用“${BAD_REF}”作为 ref 无法按预期工作`); }
+			}
+			if ( v_if ) {
+				if ( 'v-if' in attributes ) {
+					if ( 'v-for' in attributes ) { throw Error$1(`v-if 和 v-for 等的优先级在 Vue 2 和 3 中不同，请避免同时使用`); }///if ( compatible_template ) { compatible_template = false; }
+					if ( 'v-else-if' in attributes || 'v-else' in attributes ) { throw SyntaxError$1(`v-if/v-else-if/v-else 一次只能出现一个`); }
+				}
+				else {
+					if ( 'v-else-if' in attributes && 'v-else' in attributes ) { throw SyntaxError$1(`v-if/v-else-if/v-else 一次只能出现一个`); }
+				}
 			}
 		}
 		if ( compatible_template && xName==='style' && !STYLE_BY_COMPONENT_IS ) { compatible_template = false; }
@@ -5799,7 +5786,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 				continue;
 			}
 		}
-		parseAppend(XName, element, v_pre, foreign, v_for);// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
+		parseAppend(XName, element, v_pre, foreign, v_for, compatible_render && lackKey && notComponent && xName!=='slot' && ( requireKey || 'v-for' in attributes || v_if ));// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
 	}
 };
 
@@ -5822,7 +5809,7 @@ class Content extends Node {
 		compatible_render = true;
 		super();
 		try {
-			parseAppend('', this, false, false, false);
+			parseAppend('', this, false, false, false, false);
 			if ( sheet.size ) {
 				_.sheet = sheet;
 				sheet = new Map$1;
@@ -5912,7 +5899,7 @@ const isVue2Compatible = (content         ) => {
 		if ( !content.length ) {
 			return false;//throw Error(`从 Vue 2 开始，组件的 template 中不得为空`);
 		}
-		{///
+		 {///
 			if ( !( 'v-if' in ( content[0]            ).attributes ) ) {
 				return false;//throw Error(`Vue 2 只允许组件的 template 存在一个根节点`);
 			}

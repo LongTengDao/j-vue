@@ -75,10 +75,7 @@ export const Tag = (html :string, position :number, foreign :boolean = false, SH
 						switch ( name[0] ) {
 							case '.':
 								if ( _PROP.test(name) ) {
-									if ( 3 ) {
-										throw SyntaxError(`Vue 3 中 v-bind 已不再支持 .prop 修饰符，无法为您转译“${name}”`);
-									}
-									name = `:${name.slice(1)}.prop`;
+									Vue3: throw SyntaxError(`Vue 3 中 v-bind 已不再支持 .prop 修饰符，无法为您转译“${name}”，建议使用指令`);//name = `:${name.slice(1)}.prop`;
 								}
 								break;
 							case '#':
