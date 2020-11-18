@@ -1,7 +1,7 @@
 export = exports;
 declare namespace exports {
 	
-	export const version :'17.3.0';
+	export const version :'17.3.1';
 	
 	export class SFC {
 		

@@ -139,7 +139,9 @@ let BODY :boolean;
 const Sheets = (sheet :Map<string, string>) => {
 	let literal = '{';
 	for ( const { 0: ref, 1: exp } of sheet ) {
-		literal += `${ref}:({${findGlobals(parse(exp, parserOptions)).names().join(',')}})=>${exp},`;
+		if ( exp ) {
+			literal += `${ref}:({${findGlobals(parse(exp, parserOptions)).names().join(',')}})=>${exp},`;
+		}
 	}
 	return literal.slice(0, -1) + '}';
 };
