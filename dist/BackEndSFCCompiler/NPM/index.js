@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.3.1';
+const version = '17.4.0';
 
 const Error$1 = Error;
 
@@ -2986,14 +2986,19 @@ const getOwnPropertyDescriptor$1 = (
 var ownKeys = typeof Reflect==='object' ? Reflect.ownKeys : Object.getOwnPropertyNames;
 const getOwnPropertyDescriptors = (
 	/*! j-globals: null.getOwnPropertyDescriptors (internal) */
-	function getOwnPropertyDescriptors (object) {
-		var descriptorMap = /*#__PURE__*/ create(NULL);
-		for ( var keys = /*#__PURE__*/ ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
-			var key = keys[index];
-			descriptorMap[key] = /*#__PURE__*/ getOwnPropertyDescriptor$1(object, key);
+	function () {
+		function __PURE__ (object) {
+			var descriptorMap = create(NULL);
+			for ( var keys = ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
+				var key = keys[index];
+				descriptorMap[key] = getOwnPropertyDescriptor$1(object, key);
+			}
+			return descriptorMap;
 		}
-		return descriptorMap;
-	}
+		return function getOwnPropertyDescriptors (object) {
+			return /*#__PURE__*/__PURE__(object);
+		};
+	}()
 	/*¡ j-globals: null.getOwnPropertyDescriptors (internal) */
 );
 
@@ -5647,7 +5652,12 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 							if ( ATTR_ON.test(name) ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
 							if ( BIND_PROP_SYNC.test(name) ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符`); }
 						}
-						 if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
+						if ( notComponent ) {
+							if ( V_MODEL_.test(name) ) { throw SyntaxError$1(`只有组件上的 v-model 才能附带 :arg 参数或自定义修饰符`); }
+						}
+						else {
+							 if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
+						}
 						if ( slotRE.test(name) ) {
 							if ( already ) { throw SyntaxError$1(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
 							already = name;

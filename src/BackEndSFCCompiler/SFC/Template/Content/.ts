@@ -324,7 +324,12 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 							if ( ATTR_ON.test(name) ) { throw ReferenceError(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
 							if ( BIND_PROP_SYNC.test(name) ) { throw SyntaxError(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符`); }
 						}
-						Vue2: if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
+						if ( notComponent ) {
+							if ( V_MODEL_.test(name) ) { throw SyntaxError(`只有组件上的 v-model 才能附带 :arg 参数或自定义修饰符`); }
+						}
+						else {
+							Vue2: if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
+						}
 						if ( slotRE.test(name) ) {
 							if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
 							already = name;
