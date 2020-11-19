@@ -3,7 +3,7 @@ import checkNewline from '.return';// 如果只限制 script 块正文前面的�
 
 import Snippet from './Snippet';
 import { Tag, ELEMENT_START, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT } from './Tag';
-import Script, { ScriptSetup } from './Script/';
+import Script from './Script/';
 import Style from './Style/';
 import Template from './Template/';
 import CustomBlock from './CustomBlock';
@@ -97,7 +97,7 @@ const parseComponent = (sfc :SFC, vue :string) :void => {
 				if ( 'setup' in tag.attributes! ) {
 					if ( 'src' in tag.attributes! ) { throw SyntaxError(`src 属性不能使用在 script setup 块上`); }
 					if ( sfc.script && 'src' in sfc.script.attributes ) { throw SyntaxError(`src 属性不能使用在同时具有 script setup 块的 .vue 文件内的 script 块上`); }
-					sfc.scriptSetup = new ScriptSetup(tag.attributes!, inner);
+					sfc.scriptSetup = new Script(tag.attributes!, inner);
 				}
 				else {
 					if ( 'src' in tag.attributes! && sfc.scriptSetup ) { throw SyntaxError(`src 属性不能使用在同时具有 script setup 块的 .vue 文件内的 script 块上`); }

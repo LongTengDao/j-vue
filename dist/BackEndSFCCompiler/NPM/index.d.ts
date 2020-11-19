@@ -1,7 +1,7 @@
 export = exports;
 declare namespace exports {
 	
-	export const version :'17.5.4';
+	export const version :'17.5.5';
 	
 	export class SFC {
 		
@@ -11,7 +11,7 @@ declare namespace exports {
 		eol :'\n' | '\r\n' | '\r' | '\u2028' | '\u2029' | '';
 		tab :string;
 		
-		readonly script :null | {
+		script :null | {
 			readonly blockName :'script'
 			readonly attributes :{ readonly [Name in string]? :string }
 			inner? :string
@@ -20,7 +20,7 @@ declare namespace exports {
 			innerJS :string
 		};
 		
-		readonly scriptSetup :null | {
+		scriptSetup :null | {
 			readonly blockName :'script'
 			readonly attributes :{ readonly [Name in string]? :string }
 			inner :string
@@ -54,7 +54,7 @@ declare namespace exports {
 			readonly lang? :string
 		}>;
 		
-		export (mode :'default', from? :string) :string;
+		export (mode :'default') :string;
 		export (mode :'const' | 'var' | 'let', from? :string | null) :string;
 		export (mode :{
 			'var' :'const' | 'var' | 'let',

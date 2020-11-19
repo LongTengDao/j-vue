@@ -51,8 +51,8 @@ export default class SFC {
 		try { this.eol = VUE_EOL(vue); }
 		catch (error) {
 			throw SyntaxError(
-				`.vue 文件的换行符必须是 LF（U+0A）、CRLF（U+0D U+0A）或 CR（U+0D）中的唯一一个`+
-				`，而且`+// script 标签内容前
+				`.vue 文件的换行符必须是 LF（U+0A）、CRLF（U+0D U+0A）或 CR（U+0D）中的唯一一个` +
+				`，而且` +// script 标签内容前
 				`不得包含对 JS 是换行符、而对 HTML 和 CSS 不是换行符的 LS（U+2028）或 PS（U+2029），也不得包含对 CSS 是换行符、而对 HTML 和 JS 不是换行符的 FF（U+0C）`//，否则源图映射的行号和列号可能出错
 			);
 		}
@@ -66,7 +66,7 @@ export default class SFC {
 	}
 	
 	script :Script | null = null;
-	scriptSetup :ScriptSetup | null = null;
+	scriptSetup :Script | null = null;
 	readonly styles :Style[] = [];
 	template :Template | null = null;
 	readonly customBlocks :CustomBlock[] = [];
@@ -78,27 +78,19 @@ export default class SFC {
 		'map'? :boolean | 'inline',
 		'src'? (src :string) :Promise<string>,
 		'lang'? (lang :string, inner :string) :string | Promise<string>,
-	}, from? :string | null) :string | Promise<string | { code :string, map :any }> {
+	}, from :string | null = 'j-vue') :string | Promise<string | { code :string, map :any }> {
 		if ( typeof mode==='object' ) { return one(this, mode); }
 		const { bom, tab, eol, script, styles, template } = this;
 		if ( mode==='default' ) {
-			if ( script ) {
-				if ( script.inner===undefined ) {
-					return bom
-						+`export { default } from ${StringLiteral(script.src!)};`;
-				}
-				else {
-					return bom+
-						script.innerJS.replace(ES_EOL, eol);
-				}
-			}
-			else {
-				throw Error(`由于 Vue 2 和 3 所需的 render 函数不同，.vue 的 script 块现在不能省略`);
-			}
+			if ( this.scriptSetup ) { throw Error(`jVue 暂未支持编译 script setup`); }
+			if ( !script ) { throw Error(`由于 Vue 2 和 3 所需的 render 函数不同，.vue 的 script 块现在不能省略`); }
+			return script.inner===undefined
+				? bom + `export { default } from ${StringLiteral(script.src!)};`
+				: bom + script.innerJS.replace(ES_EOL, eol);
 		}
 		else {
 			let code :string = bom;
-			for ( const chunk of From(tab, mode, styles, template, from===null ? null : from===undefined ? 'j-vue' : from, eol) ) { code += chunk; }
+			for ( const chunk of From(tab, mode, styles, template, from, eol) ) { code += chunk; }
 			return code;
 		}
 	}
@@ -107,7 +99,7 @@ export default class SFC {
 
 freeze(SFC.prototype);
 
-import type { default as Script, ScriptSetup } from './Script/';
+import type Script from './Script/';
 import type Style from './Style/';
 import type Template from './Template/';
 import type CustomBlock from './CustomBlock';

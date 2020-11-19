@@ -6,7 +6,7 @@ export default class Element extends Node {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
 	
-	constructor (localName :string, attributes :Attributes, __class__ :string | undefined, shadowRoot :{ readonly along :string, readonly aside :boolean } | null) {
+	constructor (localName :string, attributes :Attributes, __class__ :string | undefined, shadowRoot :{ readonly along :string, readonly inside :boolean } | null) {
 		super();
 		if ( __class__ ) {
 			attributes.class = attributes.class
@@ -21,7 +21,7 @@ export default class Element extends Node {
 	
 	readonly localName :string;
 	readonly attributes :Attributes;
-	readonly #shadowRoot :{ readonly along :string, aside :boolean } | null;
+	readonly #shadowRoot :{ readonly along :string, readonly inside :boolean } | null;
 	
 	get outerHTML () {
 		let innerHTML :string = '';
@@ -29,9 +29,9 @@ export default class Element extends Node {
 		while ( index ) { innerHTML = this[--index]!.outerHTML+innerHTML; }
 		if ( this.#shadowRoot ) {
 			innerHTML = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">${innerHTML}</teleport>`;
-			return this.#shadowRoot.aside
-				? `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />${innerHTML}`
-				: `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">${innerHTML}</${this.localName}>`;
+			return this.#shadowRoot.inside
+				? `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">${innerHTML}</${this.localName}>`
+				: `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />${innerHTML}`;
 		}
 		else {
 			return innerHTML
@@ -43,19 +43,7 @@ export default class Element extends Node {
 	* beautify (this :Element, tab :string = '\t') :Generator<string, void, undefined> {
 		if ( this.#shadowRoot ) {
 			const teleport = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">`;
-			if ( this.#shadowRoot.aside ) {
-				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />`;
-				yield teleport;
-				const { length } = this;
-				let index = 0;
-				while ( index!==length ) {
-					for ( const line of this[index++]!.beautify(tab) ) {
-						yield `${tab}${line}`;
-					}
-				}
-				yield `</teleport>`;
-			}
-			else {
+			if ( this.#shadowRoot.inside ) {
 				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">`;
 				yield tab + teleport;
 				const { length } = this;
@@ -67,6 +55,18 @@ export default class Element extends Node {
 				}
 				yield `${tab}</teleport>`;
 				yield `</${this.localName}>`;
+			}
+			else {
+				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />`;
+				yield teleport;
+				const { length } = this;
+				let index = 0;
+				while ( index!==length ) {
+					for ( const line of this[index++]!.beautify(tab) ) {
+						yield `${tab}${line}`;
+					}
+				}
+				yield `</teleport>`;
 			}
 		}
 		else {

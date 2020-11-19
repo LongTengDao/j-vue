@@ -12,8 +12,7 @@ import KEYS from '../../../FrontEndRuntimeDependency/Scope/KEYS';
 
 import _ from '../private';
 import Block from '../Block';
-import Content, { compatible_render as _compatible_render } from './Content/';
-import Element from './Content/Element';
+import Content, { compatible_render as _compatible_render, hasSingleElementChild as isVue2Compatible } from './Content/';
 import { ASCII_WHITESPACE as s, TOKENS, AliasName, localOrComponentNameWithoutDot, className, TAG_EMIT_CHAR, TAG_LIKE, isLocalOrComponentNameDotable, NameAs__Key__ } from '../RE';
 import { EMPTY } from '../Attributes';
 import { DELIMITERS_0, DELIMITERS_1 } from '../Mustache';
@@ -38,35 +37,6 @@ $`;
 const HTML = newRegExp('i')`^(?:HTML|${s}*text/html${s}*)$`;
 
 export let compatible_render :boolean = true;
-
-const isVue2Compatible = (content :Content) => {
-	const { length } = content;
-	let index = 0;
-	while ( index!==length ) {
-		const child = content[index++];
-		if ( !( child instanceof Element ) ) { return false; }//throw Error(`Vue 2 要求组件的根节点必须是元素节点`);
-		if ( !( 'v-pre' in child.attributes ) ) {
-			if ( child.localName==='template' || child.localName==='slot' ) { return false; }//throw Error(`Vue 2 不允许组件的根节点为 template 或 slot 元素`);
-		}
-	}
-	if ( !length ) { return false; }//throw Error(`从 Vue 2 开始，组件的根节点不得为空`);
-	let { attributes } = content[0] as Element;
-	if ( length===1 ) {
-		if ( 'v-for' in attributes && !( 'v-pre' in attributes ) ) { return false; }//throw Error(`Vue 2 不允许组件的根节点是 v-for 节点`);
-	}
-	else {
-		if ( !( 'v-if' in attributes ) || 'v-pre' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
-		const lastIndex = length - 1;
-		index = 1;
-		while ( index!==lastIndex ) {
-			( { attributes } = content[index++] as Element );
-			if ( !( 'v-else-if' in attributes ) || 'v-pre' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
-		}
-		( { attributes } = content[lastIndex] as Element );
-		if ( !( 'v-else-if' in attributes ) && !( 'v-else' in attributes ) || 'v-pre' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
-	}
-	return true;
-};
 
 export default class Template extends Block {
 	

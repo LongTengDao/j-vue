@@ -76,21 +76,6 @@ export default class Script extends Block {
 
 freeze(Script.prototype);
 
-export class ScriptSetup extends Script {
-	
-	get [Symbol.toStringTag] () { return 'SFC.ScriptSetup'; }
-	
-	constructor (attributes :Attributes, inner :string | undefined) {
-		throw Error(`jVue 暂未支持编译 script setup`);///
-		return super(attributes, inner) as unknown as this;
-	}
-	
-	///innerJS
-	
-}
-
-freeze(ScriptSetup.prototype);
-
 export type Private = object & {
 	innerJS? :string
 };

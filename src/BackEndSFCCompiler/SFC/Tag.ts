@@ -78,16 +78,16 @@ export const Tag = (html :string, position :number, foreign :boolean = false, SH
 									Vue3: throw SyntaxError(`Vue 3 中 v-bind 已不再支持 .prop 修饰符，无法为您转译“${name}”，建议使用指令`);//name = `:${name.slice(1)}.prop`;
 								}
 								break;
-							case '#':
-							case '@':
 							case ':':
+							case '@':
+							case '#':
 								if ( name.length===1 || name[1]==='.' ) { throw SyntaxError(`: @ # 的 arg 不能为空`); }
 								break;
 							case 'v':
 								if ( V_DIR.test(name) ) {
-									name = name[2]==='s' ? `#${name.slice(7)}` :
+									name = name[2]==='b' ? name.slice(6) :
 										name[2]==='o' ? `@${name.slice(5)}` :
-											name.slice(6);
+											`#${name.slice(7)}`;
 									if ( name.length===1 || name[1]==='.' ) { throw SyntaxError(`v-bind: v-on: v-slot: 的 arg 不能为空`); }
 								}
 								break;
