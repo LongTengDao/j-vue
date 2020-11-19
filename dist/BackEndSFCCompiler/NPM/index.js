@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.5.1';
+const version = '17.5.2';
 
 const Error$1 = Error;
 
@@ -5366,7 +5366,7 @@ const NATIVE_D = /\.(?:native|\d+)(?:$|\.)/;
 const PROP_SYNC = /\.(?:prop|sync)(?:$|\.)/;
 const BIND_PROP_SYNC = /^:.*?\.(?:prop|sync)(?:$|\.)/s;
 const V_MODEL_ = /^v-model(?::|(?=\.)(?!(?:\.(?:lazy|number|trim))+$))/;
-const STARTS_WITH_LOWERCASE_AND_NOT = /^(?:[abd-z]|(?!component$))/;
+const STARTS_WITH_LOWERCASE_AND_NOT = /^(?:[abd-z]|c(?!omponent$))/;
 const VNODE = /^@-?vnode/i;
 const VNODE_EVENT = /^@[vV]node(?:(?:-b|B)efore)?(?:-[a-z]|[A-Z])[a-z]*$/;
 const ON_MODIFIER = /^[^.]*(?:capture|once|passive)(?:\.|$)/i;
