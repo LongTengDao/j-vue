@@ -18,7 +18,7 @@ const escapeCSS_LF_CR_LS_PS = ($0 :string) :string => $0==='\n' ? '\\00000A' : $
 const escapeHTML_LF_CR_LS_PS = ($0 :string) :string => $0==='\n' ? '&#x0A;' : $0==='\r' ? '&#0D;' : $0==='\u2028' ? '&#x2028;' : '&#x2029;';
 const VisibleStringLiteral = (id :string) :string => {
 	const literal :string = StringLiteral(id);
-	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` )+literal.slice(2) : literal;
+	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` ) + literal.slice(2) : literal;
 };
 
 const __KEY__ = newRegExp('i')`^__${KEYS}__$`;
@@ -60,14 +60,14 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 			yield eol;
 			const { innerHTML } = template;
 			const __ = compatible_template ? '' : '//';
-			const { render, staticRenderFns } = Render2(innerHTML, mode, false);
+			const literal = { eol, tab };
+			const { render, staticRenderFns } = Render2(innerHTML, mode, literal);
 			yield `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
-				yield `export ${mode} Render = ${Render3(innerHTML, mode, false, _(template))};${eol}`;/// (); import!
+				yield `export ${Render3(innerHTML, mode, literal, _(template))}${eol}`;/// (); import!
 			}
 			if ( compatible_render ) {
-				yield `export ${mode} render = ${render};${eol}`;
-				yield `render._withStripped = true;${eol}`;
+				yield `export ${mode} render = /*#__PURE__*/${mode==='var' ? `function (render) { return render._withStripped = render; }` : `( render => render._withStripped = render )`}(${render});${eol}`;
 				yield staticRenderFns.length
 					? `export ${mode} staticRenderFns = [${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}];${eol}`
 					: `export ${mode} staticRenderFns = [ ];${eol}`;
@@ -113,7 +113,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	if ( template ) {
 		const { innerHTML } = template;
 		const __ = compatible_template ? '' : '//';
-		const { render, staticRenderFns } = Render2(innerHTML, mode, true);
+		const { render, staticRenderFns } = Render2(innerHTML, mode, null);
 		const lines = [];
 		let lines_length = 0;
 		for ( const line of template.content.beautify(tab) ) { lines[lines_length++] = `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`; }
@@ -121,7 +121,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 		let index = 0;
 		while ( index!==lines_length ) { yield lines[index++]; }
 		if ( mode!=='var' ) {
-			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, true, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
+			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
 		}
 		if ( compatible_render ) {
 			yield `export ${mode} render = /*#__PURE__*/_Render(${render}, ${scope});${eol}`;

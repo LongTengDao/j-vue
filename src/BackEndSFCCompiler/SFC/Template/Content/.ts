@@ -212,7 +212,12 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 		let shadowRoot :{ along :string, name :string } | null = null;
 		if ( v_pre ) {
 			if ( STYLE_BY_COMPONENT_IS && xName==='style' ) { throw SyntaxError(STYLE_BY_COMPONENT_IS.pre); }
-			if ( !V_PRE && isTemplate ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
+			if ( !V_PRE ) {
+				if ( isTemplate ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
+				if ( 'v-for' in attributes ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 v-for 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
+				if ( 'v-else-if' in attributes || 'v-else' in attributes ) { throw SyntaxError(`从自身开始带有 v-pre 指令且具有 v-else-if/v-else 属性的元素在 Vue 3 中会带上 v-pre 属性，且这没有意义，请避免使用`); }
+			}
+			if ( xName==='slot' ) { throw SyntaxError(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
 		}
 		else {
 			if ( compatible_render && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render = false; }
@@ -368,7 +373,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 					}
 				}
 				if ( isTemplate && !v_if && !already && !( 'v-for' in attributes ) ) {
-					throw SyntaxError(`应当避免没有 v-if/else-if/else/for/slot 指令的 template 元素，这在 Vue 2 与 3 中存在歧义，且没有必要`);
+					throw SyntaxError(`应当避免没有 v-if/v-else-if/v-else/v-for/v-slot 指令的 template 元素，这在 Vue 2 与 3 中存在歧义，且没有必要`);
 				}
 				if ( sheetRef ) {
 					delete attributes[sheetRef.name];

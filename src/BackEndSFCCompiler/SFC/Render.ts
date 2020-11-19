@@ -127,14 +127,14 @@ const CONST_RETURN = /^(?:cons|le)t ({ [\w :,]+ }) = Vue\n(.*)$/s;
 const with_this__return_ = 'with(this){return ';
 
 const _$s = 'conslqikbveugdp'.split('').map($ => `_${$}`);// tmf
-const _function____use_strict__return_ = {
-	var: `(function(){"use strict";var _vm = this, ${_$s.map(_$ => `${_$} = _vm.${_$}`).join(', ')}; return `,
-	let: `(function(){"use strict";let _vm = this, { ${_$s.join(', ')} } = _vm._self; return `,
-	const: `(function(){"use strict";const _vm = this, { ${_$s.join(', ')} } = _vm._self; return `,
+const mode_ = {
+	var: _$s.map(_$ => `${_$} = _vm.${_$}`).join(', '),
+	let: `{ ${_$s.join(', ')} } = _vm._self`,
+	const: `{ ${_$s.join(', ')} } = _vm._self`,
 } as const;
 
 let MODE :'var' | 'let' | 'const';
-let BODY :boolean;
+let LITERAL :{ eol :string, tab :string } | null;
 
 const Sheets = (sheet :Map<string, string>) => {
 	let literal = '{';
@@ -145,9 +145,9 @@ const Sheets = (sheet :Map<string, string>) => {
 	}
 	return literal.slice(0, -1) + '}';
 };
-const NecessaryStringLiteral = (body :string, name :'\'render\'' | number) :string => {
+const NecessaryStringLiteral = (body :string, name :null | number) :string => {
 	if ( !body.startsWith(with_this__return_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
-	const func :string = `${_function____use_strict__return_[MODE]}${body.slice(with_this__return_.length, -1)};});`;
+	const func :string = `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`;
 	const AST = parse(func, parserOptions);
 	const globals = findGlobals(AST);
 	_$ = 1 + _$s.length;
@@ -171,16 +171,21 @@ const NecessaryStringLiteral = (body :string, name :'\'render\'' | number) :stri
 		_vm_func += '_vm.' + name;
 	}
 	if ( index!==func.length ) { _vm_func += func.slice(index); }
-	if ( BODY ) { _vm_func = MinifyBODY(_vm_func); }
+	if ( !LITERAL ) { _vm_func = MinifyBODY(_vm_func); }
 	body = _vm_func.slice(_vm_func.indexOf(';') + 1, _vm_func.lastIndexOf('}'));
-	return BODY
-		? StringLiteral(body)
-		: ecma===5 ? `function(){${body}}` : `{[${name}](){${body}}}[${name}]`;
+	return LITERAL
+		? name===null
+			? ecma===5
+				? `${LITERAL.eol}${LITERAL.tab}function render () {${LITERAL.eol}${body}}${LITERAL.eol}`
+				: `{${LITERAL.eol}${LITERAL.tab}render () {${LITERAL.eol}${body}}${LITERAL.eol}}.render`
+			: `{${LITERAL.eol}${LITERAL.tab}${LITERAL.tab}${name}${ecma===5 ? ': function' : ''} () {${LITERAL.eol}${LITERAL.tab}${body.replace('return ', return_ => LITERAL!.tab + return_)}${LITERAL.tab}}${LITERAL.eol}${LITERAL.tab}}[${name}]`
+		: StringLiteral(body);
 };
 
 const onError = (error :SyntaxError) :never => { throw Error(`.vue template 官方编译未通过：\n       ${error.message}`); };
 const isCustomElement = test.bind(/^(?![A-Z]|base-transition$|component$|keep-alive$|s(?:lot|uspense)$|te(?:mplate|leport)$)/);
-export const Render3 = (innerHTML :string, mode :'let' | 'const', body :boolean, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }) :string => {
+const NSS = /\n+((?:  )*)/g;
+export const Render3 = (innerHTML :string, mode :'let' | 'const', literal :{ eol :string, tab :string } | null, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }) :string => {
 	const { code } = compile3[mode](innerHTML, {
 		onError,
 		isCustomElement,
@@ -194,25 +199,24 @@ export const Render3 = (innerHTML :string, mode :'let' | 'const', body :boolean,
 	ecma = parserOptions.ecmaVersion = 2014;
 	const globals = findGlobals(parse(Render, parserOptions));
 	globals.size && throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回的内容与预期不符（存在变量泄漏：“${globals.names().join('”“')}”）`);
-	if ( body ) { Render = MinifyBODY(Render); }
-	Render = Render.slice(13, -1);
+	Render = ( literal ? Render.replace(NSS, (nss, ss) => literal.eol + literal.tab.repeat(2 + ss.length/2)) : MinifyBODY(Render) ).slice(13, -1);
 	const index = Render.indexOf('=>');
 	const left = Render.slice(0, index);
-	const right = Render.slice(index + 2);
-	return body
-		? StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}`) + (sheet ? `static sheet=${Sheets(sheet)}` : '' ) + ( sheet && shadow ? ';' : '' ) + (shadow ? `static shadow=${StringLiteral(shadow)}` : ''))
-		: `class { constructor ${left} ${right[0]==='{' ? right : `{ return ${right}; }`} ${sheet ? `static sheet = ${Sheets(sheet)}; ` : ''}${shadow ? `static shadow = ${StringLiteral(shadow)}; ` : ''}}`;
+	let right = Render.slice(index + 2);
+	return literal
+		? `class Render {${literal.eol}${literal.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${literal.eol}${literal.tab}${literal.tab}return ${right}`};${literal.eol}${literal.tab}}${sheet ? `${literal.eol}${literal.tab}static sheet = ${Sheets(sheet)};` : ''}${shadow ? `${literal.eol}${literal.tab}static shadow = ${StringLiteral(shadow)};` : ''}${literal.eol}}`
+		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${Sheets(sheet)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
 };
 
-export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', body :boolean) :{ readonly render :string, readonly staticRenderFns :readonly string[] } => {
+export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', literal :{ eol :string, tab :string } | null) :{ readonly render :string, readonly staticRenderFns :readonly string[] } => {
 	const { errors, tips, render, staticRenderFns } = compile2[mode](innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n       ${errors.join('\n       ')}`); }
 	if ( tips.length ) { throw Error(`.vue template 官方编译建议：\n       ${tips.join('\n       ')}`); }
-	BODY = body;
+	LITERAL = literal;
 	MODE = mode;
 	ecma = parserOptions.ecmaVersion = mode==='var' ? 5 : 2014;
 	return {
-		render: NecessaryStringLiteral(render, `'render'`),
+		render: NecessaryStringLiteral(render, null),
 		staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),
 	};
 };

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.5.3';
+const version = '17.5.4';
 
 const Error$1 = Error;
 
@@ -5541,7 +5541,12 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 		let sheetRef                                       = null;
 		let shadowRoot                                         = null;
 		if ( v_pre ) {
-			if ( !V_PRE && isTemplate ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
+			if ( !V_PRE ) {
+				if ( isTemplate ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
+				if ( 'v-for' in attributes ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令的 v-for 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
+				if ( 'v-else-if' in attributes || 'v-else' in attributes ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令且具有 v-else-if/v-else 属性的元素在 Vue 3 中会带上 v-pre 属性，且这没有意义，请避免使用`); }
+			}
+			if ( xName==='slot' ) { throw SyntaxError$1(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
 		}
 		else {
 			if ( compatible_render && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render = false; }
@@ -5697,7 +5702,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					}
 				}
 				if ( isTemplate && !v_if && !already && !( 'v-for' in attributes ) ) {
-					throw SyntaxError$1(`应当避免没有 v-if/else-if/else/for/slot 指令的 template 元素，这在 Vue 2 与 3 中存在歧义，且没有必要`);
+					throw SyntaxError$1(`应当避免没有 v-if/v-else-if/v-else/v-for/v-slot 指令的 template 元素，这在 Vue 2 与 3 中存在歧义，且没有必要`);
 				}
 				if ( sheetRef ) {
 					delete attributes[sheetRef.name];
@@ -5902,36 +5907,30 @@ const HTML = newRegExp('i')`^(?:HTML|${ASCII_WHITESPACE}*text/html${ASCII_WHITES
 let compatible_render$1          = true;
 
 const isVue2Compatible = (content         ) => {
+	const { length } = content;
 	let index = 0;
-	for ( const { length } = content; index!==length; ) {
+	while ( index!==length ) {
 		const child = content[index++];
-		if ( !( child instanceof Element ) ) {
-			return false;//throw Error(`从 Vue 2 开始，组件的 template 的根节点必须是元素节点`);
-		}
-		if ( child.localName==='template' || child.localName==='slot' ) {
-			return false;//throw Error(`从 Vue 2 开始，组件的 template 的根节点必须是元素节点，且不能为 template 或 slot 元素`);
+		if ( !( child instanceof Element ) ) { return false; }//throw Error(`Vue 2 要求组件的根节点必须是元素节点`);
+		if ( !( 'v-pre' in child.attributes ) ) {
+			if ( child.localName==='template' || child.localName==='slot' ) { return false; }//throw Error(`Vue 2 不允许组件的根节点为 template 或 slot 元素`);
 		}
 	}
-	if ( content.length!==1 ) {
-		if ( !content.length ) {
-			return false;//throw Error(`从 Vue 2 开始，组件的 template 中不得为空`);
+	if ( !length ) { return false; }//throw Error(`从 Vue 2 开始，组件的根节点不得为空`);
+	let { attributes } = content[0]           ;
+	if ( length===1 ) {
+		if ( 'v-for' in attributes && !( 'v-pre' in attributes ) ) { return false; }//throw Error(`Vue 2 不允许组件的根节点是 v-for 节点`);
+	}
+	else {
+		if ( !( 'v-if' in attributes ) || 'v-pre' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
+		const lastIndex = length - 1;
+		index = 1;
+		while ( index!==lastIndex ) {
+			( { attributes } = content[index++]            );
+			if ( !( 'v-else-if' in attributes ) || 'v-pre' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
 		}
-		 {///
-			if ( !( 'v-if' in ( content[0]            ).attributes ) ) {
-				return false;//throw Error(`Vue 2 只允许组件的 template 存在一个根节点`);
-			}
-			const lastIndex = content.length - 1;
-			let index = 1;
-			while ( index!==lastIndex ) {
-				if ( !( 'v-else-if' in ( content[index++]            ).attributes ) ) {
-					return false;//throw Error(`Vue 2 只允许组件的 template 存在一个根节点`);
-				}
-			}
-			const { attributes } = content[lastIndex]           ;
-			if ( !( 'v-else-if' in attributes ) && !( 'v-else' in attributes ) ) {
-				return false;//throw Error(`Vue 2 只允许组件的 template 存在一个根节点`);
-			}
-		}
+		( { attributes } = content[lastIndex]            );
+		if ( !( 'v-else-if' in attributes ) && !( 'v-else' in attributes ) || 'v-pre' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
 	}
 	return true;
 };
@@ -6054,7 +6053,7 @@ class Template extends Block {
 	
 	get innerHTML ()         {
 		const { content } = this;
-		compatible_render$1 = compatible_render && isVue2Compatible(content);
+		 compatible_render$1 = compatible_render && isVue2Compatible(content);
 		return content.outerHTML;
 	}
 	set innerHTML (value        ) {
@@ -6313,14 +6312,14 @@ const CONST_RETURN = /^(?:cons|le)t ({ [\w :,]+ }) = Vue\n(.*)$/s;
 const with_this__return_ = 'with(this){return ';
 
 const _$s = 'conslqikbveugdp'.split('').map($ => `_${$}`);// tmf
-const _function____use_strict__return_ = {
-	var: `(function(){"use strict";var _vm = this, ${_$s.map(_$ => `${_$} = _vm.${_$}`).join(', ')}; return `,
-	let: `(function(){"use strict";let _vm = this, { ${_$s.join(', ')} } = _vm._self; return `,
-	const: `(function(){"use strict";const _vm = this, { ${_$s.join(', ')} } = _vm._self; return `,
+const mode_ = {
+	var: _$s.map(_$ => `${_$} = _vm.${_$}`).join(', '),
+	let: `{ ${_$s.join(', ')} } = _vm._self`,
+	const: `{ ${_$s.join(', ')} } = _vm._self`,
 }         ;
 
 let MODE                         ;
-let BODY         ;
+let LITERAL                                     ;
 
 const Sheets = (sheet                     ) => {
 	let literal = '{';
@@ -6331,9 +6330,9 @@ const Sheets = (sheet                     ) => {
 	}
 	return literal.slice(0, -1) + '}';
 };
-const NecessaryStringLiteral = (body        , name                       )         => {
+const NecessaryStringLiteral = (body        , name               )         => {
 	if ( !body.startsWith(with_this__return_) ) { throw Error$1(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
-	const func         = `${_function____use_strict__return_[MODE]}${body.slice(with_this__return_.length, -1)};});`;
+	const func         = `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`;
 	const AST = parse(func, parserOptions$1);
 	const globals = findGlobals(AST);
 	_$ = 1 + _$s.length;
@@ -6357,16 +6356,21 @@ const NecessaryStringLiteral = (body        , name                       )      
 		_vm_func += '_vm.' + name;
 	}
 	if ( index!==func.length ) { _vm_func += func.slice(index); }
-	if ( BODY ) { _vm_func = MinifyBODY(_vm_func); }
+	if ( !LITERAL ) { _vm_func = MinifyBODY(_vm_func); }
 	body = _vm_func.slice(_vm_func.indexOf(';') + 1, _vm_func.lastIndexOf('}'));
-	return BODY
-		? StringLiteral(body)
-		: ecma===5 ? `function(){${body}}` : `{[${name}](){${body}}}[${name}]`;
+	return LITERAL
+		? name===null
+			? ecma===5
+				? `${LITERAL.eol}${LITERAL.tab}function render () {${LITERAL.eol}${body}}${LITERAL.eol}`
+				: `{${LITERAL.eol}${LITERAL.tab}render () {${LITERAL.eol}${body}}${LITERAL.eol}}.render`
+			: `{${LITERAL.eol}${LITERAL.tab}${LITERAL.tab}${name}${ecma===5 ? ': function' : ''} () {${LITERAL.eol}${LITERAL.tab}${body.replace('return ', return_ => LITERAL .tab + return_)}${LITERAL.tab}}${LITERAL.eol}${LITERAL.tab}}[${name}]`
+		: StringLiteral(body);
 };
 
 const onError = (error             )        => { throw Error$1(`.vue template 官方编译未通过：\n       ${error.message}`); };
 const isCustomElement = test.bind(/^(?![A-Z]|base-transition$|component$|keep-alive$|s(?:lot|uspense)$|te(?:mplate|leport)$)/);
-const Render3 = (innerHTML        , mode                 , body         , { sheet, shadow }                                                                    )         => {
+const NSS = /\n+((?:  )*)/g;
+const Render3 = (innerHTML        , mode                 , literal                                     , { sheet, shadow }                                                                    )         => {
 	const { code } = compile3[mode](innerHTML, {
 		onError,
 		isCustomElement,
@@ -6380,25 +6384,24 @@ const Render3 = (innerHTML        , mode                 , body         , { shee
 	ecma = parserOptions$1.ecmaVersion = 2014;
 	const globals = findGlobals(parse(Render, parserOptions$1));
 	globals.size && throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回的内容与预期不符（存在变量泄漏：“${globals.names().join('”“')}”）`);
-	if ( body ) { Render = MinifyBODY(Render); }
-	Render = Render.slice(13, -1);
+	Render = ( literal ? Render.replace(NSS, (nss, ss) => literal.eol + literal.tab.repeat(2 + ss.length/2)) : MinifyBODY(Render) ).slice(13, -1);
 	const index = Render.indexOf('=>');
 	const left = Render.slice(0, index);
-	const right = Render.slice(index + 2);
-	return body
-		? StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}`) + (sheet ? `static sheet=${Sheets(sheet)}` : '' ) + ( sheet && shadow ? ';' : '' ) + (shadow ? `static shadow=${StringLiteral(shadow)}` : ''))
-		: `class { constructor ${left} ${right[0]==='{' ? right : `{ return ${right}; }`} ${sheet ? `static sheet = ${Sheets(sheet)}; ` : ''}${shadow ? `static shadow = ${StringLiteral(shadow)}; ` : ''}}`;
+	let right = Render.slice(index + 2);
+	return literal
+		? `class Render {${literal.eol}${literal.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${literal.eol}${literal.tab}${literal.tab}return ${right}`};${literal.eol}${literal.tab}}${sheet ? `${literal.eol}${literal.tab}static sheet = ${Sheets(sheet)};` : ''}${shadow ? `${literal.eol}${literal.tab}static shadow = ${StringLiteral(shadow)};` : ''}${literal.eol}}`
+		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${Sheets(sheet)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
 };
 
-const Render2 = (innerHTML        , mode                         , body         )                                                                           => {
+const Render2 = (innerHTML        , mode                         , literal                                     )                                                                           => {
 	const { errors, tips, render, staticRenderFns } = compile2[mode](innerHTML);
 	if ( errors.length ) { throw Error$1(`.vue template 官方编译未通过：\n       ${errors.join('\n       ')}`); }
 	if ( tips.length ) { throw Error$1(`.vue template 官方编译建议：\n       ${tips.join('\n       ')}`); }
-	BODY = body;
+	LITERAL = literal;
 	MODE = mode;
 	ecma = parserOptions$1.ecmaVersion = mode==='var' ? 5 : 2014;
 	return {
-		render: NecessaryStringLiteral(render, `'render'`),
+		render: NecessaryStringLiteral(render, null),
 		staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),
 	};
 };
@@ -6409,7 +6412,7 @@ const escapeCSS_LF_CR_LS_PS = ($0        )         => $0==='\n' ? '\\00000A' : $
 const escapeHTML_LF_CR_LS_PS = ($0        )         => $0==='\n' ? '&#x0A;' : $0==='\r' ? '&#0D;' : $0==='\u2028' ? '&#x2028;' : '&#x2029;';
 const VisibleStringLiteral = (id        )         => {
 	const literal         = StringLiteral(id);
-	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` )+literal.slice(2) : literal;
+	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` ) + literal.slice(2) : literal;
 };
 
 const __KEY__ = newRegExp('i')`^__${KEYS}__$`;
@@ -6451,14 +6454,14 @@ function * From (tab        , mode                         , styles         , te
 			yield eol;
 			const { innerHTML } = template;
 			const __ = compatible_template ? '' : '//';
-			const { render, staticRenderFns } = Render2(innerHTML, mode, false);
+			const literal = { eol, tab };
+			const { render, staticRenderFns } = Render2(innerHTML, mode, literal);
 			yield `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
-				yield `export ${mode} Render = ${Render3(innerHTML, mode, false, _(template))};${eol}`;/// (); import!
+				yield `export ${Render3(innerHTML, mode, literal, _(template))}${eol}`;/// (); import!
 			}
 			if ( compatible_render$1 ) {
-				yield `export ${mode} render = ${render};${eol}`;
-				yield `render._withStripped = true;${eol}`;
+				yield `export ${mode} render = /*#__PURE__*/${mode==='var' ? `function (render) { return render._withStripped = render; }` : `( render => render._withStripped = render )`}(${render});${eol}`;
 				yield staticRenderFns.length
 					? `export ${mode} staticRenderFns = [${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}];${eol}`
 					: `export ${mode} staticRenderFns = [ ];${eol}`;
@@ -6504,7 +6507,7 @@ function * From (tab        , mode                         , styles         , te
 	if ( template ) {
 		const { innerHTML } = template;
 		const __ = compatible_template ? '' : '//';
-		const { render, staticRenderFns } = Render2(innerHTML, mode, true);
+		const { render, staticRenderFns } = Render2(innerHTML, mode, null);
 		const lines = [];
 		let lines_length = 0;
 		for ( const line of template.content.beautify(tab) ) { lines[lines_length++] = `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`; }
@@ -6512,7 +6515,7 @@ function * From (tab        , mode                         , styles         , te
 		let index = 0;
 		while ( index!==lines_length ) { yield lines[index++]; }
 		if ( mode!=='var' ) {
-			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, true, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
+			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
 		}
 		if ( compatible_render$1 ) {
 			yield `export ${mode} render = /*#__PURE__*/_Render(${render}, ${scope});${eol}`;
