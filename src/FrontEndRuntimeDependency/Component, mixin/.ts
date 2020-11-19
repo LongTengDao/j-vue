@@ -414,13 +414,13 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		options.displayName && fixPascal(options.displayName, cases);
 		for ( var pascal in components ) {
 			if ( __dev__ ) {
-				if ( /^(?![A-Z])/.test(pascal) ) { throw Error(__dev__.compile_name); }
+				if ( !pascal || STARTS_WITH_LOWERCASE.test(pascal) ) { throw Error(__dev__.compile_name); }
 			}
 			var value = components[pascal];
 			if ( isComponentConstructor(value) ) { components[pascal] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
 			fixPascal(pascal, cases);
 		}
-		assign(components, cases);
+		assign(components, cases, components);
 	}
 	
 	return options;
@@ -462,7 +462,7 @@ var SYMBOLS = /*#__PURE__*/getOwnPropertyNames(Symbol).reduce(function (SYMBOLS,
 	return SYMBOLS;
 }, create(NULL) as { [SYMBOL] :unknown });
 
-var WATCH_OPTIONS = /;[a-z;=]*$/;
+var WATCH_OPTIONS = /;[a-z;=]*$/i;
 function $watch (that :_Vue, watchers :readonly Watcher[]) {
 	var index = watchers.length;
 	do {
@@ -515,6 +515,7 @@ function devAssertFunction<T> (this :__Dev__, fn :T) {
 	return fn as T extends CallableFunction ? T : never;
 }
 
+var STARTS_WITH_LOWERCASE = /^[a-z]/;
 var CHECKED = WeakMap && /*#__PURE__*/new WeakMap<ClassAPI | _ObjectAPI, Names<ClassAPI | _ObjectAPI>>();
 function forKeys (option :{} | undefined, callback :(name :string) => void) {
 	if ( isArray(option) ) { option.forEach(callback); }
@@ -589,7 +590,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	
 	[ options.name, options.displayName ].forEach(function (name :unknown) {
 		if ( typeof name==='string'
-			? /^(?![A-Z])/.test(name) || options.components && options.components[name] && options.components[name]!==options
+			? !name || STARTS_WITH_LOWERCASE.test(name) || options.components && options.components[name] && options.components[name]!==options
 			: name!==undefined
 		) { throw Error(__dev__.compile_name); }
 	});
@@ -612,12 +613,12 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 
 var UPPER = /[A-Z]/;
 function fixPascal (pascal :string, cases :Names) {
-	if ( pascal[pascal.length - 1]!=='_' ) {
-		var first = pascal[0].toLowerCase();
-		var rest = pascal.slice(1);
-		cases[first + rest] = null;
-		hyphenate(first, rest, cases);
-	}
+	var First = pascal[0];
+	var first = First.toLowerCase();
+	var rest = pascal.slice(1);
+	cases[first + rest] = null;
+	hyphenate(first, rest, cases);
+	first===First || hyphenate(First, rest, cases);
 }
 function hyphenate (before :string, after :string, cases :Names) {
 	var index = after.search(UPPER);
