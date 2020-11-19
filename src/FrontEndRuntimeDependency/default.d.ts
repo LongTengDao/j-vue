@@ -292,7 +292,7 @@ declare namespace exports {
 	}
 	
 	type Props<This extends Vue> =
-		Exclude<OwnNames<This>, 'key' | 'ref'>[] |
+		readonly Exclude<OwnNames<This>, 'key' | 'ref'>[] |
 		NonArray<{
 			[Key in Exclude<OwnNames<This>, 'key' | 'ref'>]? :
 			ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |
@@ -318,7 +318,7 @@ declare namespace exports {
 	};
 	
 	type Inject<This extends Vue> =
-		OwnNames<This>[] |
+		readonly OwnNames<This>[] |
 		NonArray<{
 			[Key in OwnKeys<This>]? :
 			string | symbol |
@@ -329,7 +329,7 @@ declare namespace exports {
 		}>;
 	
 	type Emits =
-		string[] |
+		readonly string[] |
 		NonArray<{ [event :string] :null | { (this :void, ...args :readonly unknown[]) :boolean } }>;
 	
 	type Directives<This extends Vue> = { [name :string] :Directive<This> };

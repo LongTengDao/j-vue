@@ -321,7 +321,7 @@ declare module 'j-vue' {
 	}
 	
 	type Props<This extends Vue> =
-		Exclude<OwnNames<This>, 'key' | 'ref'>[] |
+		readonly Exclude<OwnNames<This>, 'key' | 'ref'>[] |
 		NonArray<{
 			[Key in Exclude<OwnNames<This>, 'key' | 'ref'>]? :
 			ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |
@@ -347,7 +347,7 @@ declare module 'j-vue' {
 	};
 	
 	type Inject<This extends Vue> =
-		OwnNames<This>[] |
+		readonly OwnNames<This>[] |
 		NonArray<{
 			[Key in OwnKeys<This>]? :
 			string | symbol |
@@ -358,7 +358,7 @@ declare module 'j-vue' {
 		}>;
 	
 	type Emits =
-		string[] |
+		readonly string[] |
 		NonArray<{ [event :string] :null | { (this :void, ...args :readonly unknown[]) :boolean } }>;
 	
 	type Directives<This extends Vue> = { [name :string] :Directive<This> };

@@ -1,4 +1,4 @@
-export const version :'17.5.0';
+export const version :'17.5.1';
 
 export function Identifier () :string;
 
@@ -289,7 +289,7 @@ declare abstract class Vue$ {
 }
 
 type Props<This extends Vue> =
-	Exclude<OwnNames<This>, 'key' | 'ref'>[] |
+	readonly Exclude<OwnNames<This>, 'key' | 'ref'>[] |
 	NonArray<{
 		[Key in Exclude<OwnNames<This>, 'key' | 'ref'>]? :
 		ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |
@@ -315,7 +315,7 @@ type ConstructorType<T> = {
 };
 
 type Inject<This extends Vue> =
-	OwnNames<This>[] |
+	readonly OwnNames<This>[] |
 	NonArray<{
 		[Key in OwnKeys<This>]? :
 		string | symbol |
@@ -326,7 +326,7 @@ type Inject<This extends Vue> =
 	}>;
 
 type Emits =
-	string[] |
+	readonly string[] |
 	NonArray<{ [event :string] :null | { (this :void, ...args :readonly unknown[]) :boolean } }>;
 
 type Directives<This extends Vue> = { [name :string] :Directive<This> };

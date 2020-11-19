@@ -64,7 +64,7 @@ export const Tag = (html :string, position :number, foreign :boolean = false, SH
 					let value :string | undefined;
 					if ( name.includes('=') ) {
 						( { 1: name, 2: value } = ATTRIBUTE_NAME_VALUE.exec(name)! );
-						value[0]==='"' || value[0]==='\'' ? value.slice(1, -1) : value;
+						if ( value[0]==='"' || value[0]==='\'' ) { value = value.slice(1, -1); }
 						//if ( BAD_ENTITY.test(value) && (
 						//	name==='href' ? xName==='a' || xName==='area' :
 						//	name==='src' && ( xName==='img' || xName==='iframe' || xName==='source' || xName==='video' || xName==='audio' || xName==='track' )
