@@ -249,21 +249,17 @@ declare abstract class Vue$ {
 	
 	$forceUpdate (this :this) :void;
 	
-	$scopedSlots? :ScopedSlots;
 	$options :Readonly<ObjectAPI>;
-	$parent? :Vue;
+	$scopedSlots? :ScopedSlots;
 	$slots? :ScopedSlots;
+	$parent? :Vue;
+	$root :Vue;
 	$attrs :{ readonly [name :string] :unknown };
 	$refs :{ readonly [name :string] :unknown };
-	$root :Vue;
-	
-	private $el? :never;
-	
-	private $data? :never;
-	private $props? :never;
+	$el? :null | Element | Comment | Text;
 	
 	/**@deprecated*/
-	private $createElement? :$createElement;
+	$createElement? :$createElement;
 	
 	/**@deprecated*/
 	private $isServer? :never;
@@ -286,6 +282,8 @@ declare abstract class Vue$ {
 	/**@deprecated*/
 	private $on? :never;
 	
+	private $props? :never;
+	private $data? :never;
 	private $? :never;
 	
 }
