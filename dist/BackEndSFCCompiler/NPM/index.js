@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '17.5.2';
+const version = '17.5.3';
 
 const Error$1 = Error;
 
@@ -3345,7 +3345,8 @@ const { 3: compile3, 2: compile2 }
 	);
 	
 	const Var2 = Replacer(
-		[ `var map = {};`, `var map = Object.create(null);` ],
+		[ /(?<! in ){}(?=[);,])(?!\)\.)/g, `Object.create(null)`, 23 ],
+		[ `el.attrsMap.hasOwnProperty('v-for')`, `hasOwn(el.attrsMap, 'v-for')` ],
 		[ `el.tag === 'style' ||` ],
 		[ /(var simplePathRE = \/)(.*?\*)/s, (match        , pre        , aim        ) => pre + aim.replace(/(?<=\$)/g, NON_ASCII$1) + '$|' + aim ],
 		[ RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].var, 2 ],

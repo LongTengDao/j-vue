@@ -70,7 +70,8 @@ export const { 3: compile3, 2: compile2 } :{
 	);
 	
 	const Var2 = Replacer(
-		[ `var map = {};`, `var map = Object.create(null);` ],
+		[ /(?<! in ){}(?=[);,])(?!\)\.)/g, `Object.create(null)`, 23 ],
+		[ `el.attrsMap.hasOwnProperty('v-for')`, `hasOwn(el.attrsMap, 'v-for')` ],
 		[ `el.tag === 'style' ||` ],
 		[ /(var simplePathRE = \/)(.*?\*)/s, (match :string, pre :string, aim :string) => pre + aim.replace(/(?<=\$)/g, NON_ASCII) + '$|' + aim ],
 		[ RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].var, 2 ],
