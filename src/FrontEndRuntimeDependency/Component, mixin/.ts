@@ -216,7 +216,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 				skipConstructor = true;
 			}
 		}
-		else if ( protoName[0]==='_' && !protoName.startsWith('_watch:') ) {
+		else if ( protoName[0]==='_' && !( protoName.startsWith('_watch(') ) ) {
 			if ( __dev__ ) {
 				var protoName1 = protoName.slice(1);
 				if ( protoName1[0]==='_' ) { throw Error(__dev__.compile_reserved); }
@@ -234,30 +234,30 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		else {
 			var descriptor :PropertyDescriptor = getOwnPropertyDescriptor(prototype, protoName);
 			if ( protoName[0]==='_' ) {
-				var indexOfQ = protoName.search(WATCH_OPTIONS);
+				var indexOfQ = protoName.lastIndexOf(')');
 				var watcher = watchers[watchers.length] = create(NULL) as Watcher;
 				if ( descriptor.hasOwnProperty('value') ) {
-					watcher.$ = indexOfQ<0
-						? protoName.slice(7)
-						: protoName.slice(7, indexOfQ);
+					watcher.$ = protoName.slice(7, indexOfQ).trim();
 					watcher.handler = assertFunction(descriptor.value);
 				}
 				else {
 					watcher.$ = assertFunction(descriptor.get);
 					watcher.handler = assertFunction(descriptor.set);
 				}
-				if ( indexOfQ>0 ) {
-					++indexOfQ;
+				if ( indexOfQ + 1!==protoName.length ) {
+					indexOfQ += 2;
 					do {
 						var indexOfA = protoName.indexOf(';', indexOfQ);
 						var pair = indexOfA<0
 							? protoName.slice(indexOfQ)
 							: protoName.slice(indexOfQ, indexOfA);
 						indexOfQ = indexOfA + 1;
-						var indexOfE = pair.indexOf('=');
-						indexOfE<0
-							? watcher[pair] = true
-							: watcher[pair.slice(0, indexOfE)] = pair.slice(indexOfE + 1);
+						if ( pair ) {
+							var indexOfE = pair.indexOf('=');
+							indexOfE<0
+								? watcher[pair] = true
+								: watcher[pair.slice(0, indexOfE)] = pair.slice(indexOfE + 1);
+						}
 					}
 					while ( indexOfQ );
 				}
@@ -462,7 +462,6 @@ var SYMBOLS = /*#__PURE__*/getOwnPropertyNames(Symbol).reduce(function (SYMBOLS,
 	return SYMBOLS;
 }, create(NULL) as { [SYMBOL] :unknown });
 
-var WATCH_OPTIONS = /;[a-z;=]*$/i;
 function $watch (that :_Vue, watchers :readonly Watcher[]) {
 	var index = watchers.length;
 	do {

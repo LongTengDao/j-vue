@@ -60,21 +60,21 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     _created () { this.c; }
     
     
-    /* watch (Non-static for type, starts with `_watch:`) */
+    /* watch (Non-static for type, starts with `_watch(`) */
     
     // watch exp (key) & handler (value)
-    '_watch:d' (d :this['d'], old_d :this['d']) { }
+    '_watch(d)' (d :this['d'], old_d :this['d']) { }
     
     // watch exp (key) & handler (value) (with options)
-    '_watch:d;deep;immediate;flush=pre' (d :this['d'], old_d? :this['d']) { }
+    '_watch(d);deep;immediate;flush=pre' (d :this['d'], old_d? :this['d']) { }
     
     // watch fn (getter) & handler (setter), better for auto type
-    get '_watch:placeholder' () { return this.d; }
-    set '_watch:placeholder' (d) { }
+    get '_watch(placeholder)' () { return this.d; }
+    set '_watch(placeholder)' (d) { }
     
     // watch fn (getter) & handler (setter) (another)
-    get '_watch:placeholder2 (can be any unique words in fact);immediate' () { return this.#r.value; }
-    set '_watch:placeholder2 (can be any unique words in fact);immediate' (r) { }
+    get '_watch(placeholder2--can be any unique words in fact);immediate' () { return this.#r.value; }
+    set '_watch(placeholder2--can be any unique words in fact);immediate' (r) { }
     
     
     /* props (Non-static for type, also starts with `_`) */
