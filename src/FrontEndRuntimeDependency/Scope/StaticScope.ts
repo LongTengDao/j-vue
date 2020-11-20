@@ -18,7 +18,7 @@ var prepare_ :{ (scope :Scope) :void } | null = typeof _==='symbol' ? null : /*#
 	return function $ (scope :Scope) { defineProperty(scope, _, _descriptor); };
 }();
 
-function Search (keys :string[]) { return new RegExp('__' + groupify(keys, false, true) + '__', 'g'); }
+function Search (keys :string[]) :RegExp { return RegExp('__' + groupify(keys, false, true) + '__', 'g'); }
 function Replacer (scope :StaticScope) { return function replacer (__key__ :string) :string { return scope[__key__.slice(2, -2)]; }; }
 
 var StaticScope = function StaticScope (this :StaticScope, keys :string[]) :void {

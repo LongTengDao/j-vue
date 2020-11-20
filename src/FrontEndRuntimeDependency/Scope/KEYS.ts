@@ -1,1 +1,1 @@
-export default /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
+export default /[^\x00-@[-`{-\x7F\s][^\x00-/:-@[-`{-\x7F\s]*(?:_[^\x00-/:-@[-`{-\x7F\s]+)*/g;

@@ -3,7 +3,7 @@ import SyntaxError from '.SyntaxError';
 import ReferenceError from '.ReferenceError';
 import freeze from '.Object.freeze';
 
-import { isAliasName } from '../../RE';
+import { STARTS_WITH_UPPER_CASE } from '../../RE';
 import * as is from './is';
 import * as TOKEN from './TOKEN';
 import QualifiedRule from './QualifiedRule';
@@ -31,11 +31,11 @@ const checkScoped = (rules :Sheet | import('./AtRule').DeclarationList, start :n
 					if ( length ) {
 						let index = 0;
 						do { if ( !__KEY__.test(classSelectorsPART[index].literal) ) { throw ReferenceError(`.${classSelectorsPART[index].literal} 将对全局生效`); } }
-						while ( ++index!==length )
+						while ( ++index!==length );
 					}
 					else { throw ReferenceError(`${( rule as QualifiedRule ).selectorTextAt(index)} 将对全局生效`); }
 				}
-				while ( ++index!==length )
+				while ( ++index!==length );
 				break;
 			case AtRule:
 				const { block } = rule as AtRule;
@@ -71,10 +71,10 @@ export default class Sheet extends Array<ImportRule | AtRule | KeyframesRule | Q
 				while ( index!==length ) {
 					const typeSelector = TOKEN.typeSelectors[index++];
 					let { cssText } = typeSelector;
-					/* AliasName: */if ( isAliasName(cssText) ) {
+					if ( STARTS_WITH_UPPER_CASE.test(cssText) ) {
 						typeSelector.cssText = typeSelector.ns_
 							? ( cssText = abbr(cssText) )[0]==='.'//!newRegExp('i')`^${TOKEN.ident_token_start}`.test(cssText = abbr(cssText))
-								? '*'+cssText
+								? '*' + cssText
 								: cssText
 							: abbr(cssText);
 					}
@@ -86,7 +86,7 @@ export default class Sheet extends Array<ImportRule | AtRule | KeyframesRule | Q
 	}
 	
 	checkScoped (__KEY__ :{ readonly test :(this :object, string :string) => boolean }) :void {
-		checkScoped(this, this.#imports_length+this.#namespaces_length, __KEY__);
+		checkScoped(this, this.#imports_length + this.#namespaces_length, __KEY__);
 	}
 	
 	appendToken (this :Sheet) :Sheet | ImportRule | AtRule | KeyframesRule | QualifiedRule | SquareBracketBlock | Declaration | null {
@@ -107,7 +107,7 @@ export default class Sheet extends Array<ImportRule | AtRule | KeyframesRule | Q
 					atRule = new ImportRule(this);
 				}
 				else if ( is.namespace(name) ) {
-					if ( this.length!==this.#imports_length+this.#namespaces_length ) { break; }
+					if ( this.length!==this.#imports_length + this.#namespaces_length ) { break; }
 					++this.#namespaces_length;
 					atRule = new AtRule(this, name);
 				}

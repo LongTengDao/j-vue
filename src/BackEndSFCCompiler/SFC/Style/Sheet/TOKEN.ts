@@ -5,7 +5,7 @@ import { newRegExp } from '@ltd/j-regexp';
 
 import * as is from './is';
 
-export const nonASCII = /\x80-\uFFFF/;
+export const nonASCII = /\x80-\uFFFF/i;
 const hex_digit = /[0-9A-F]/i;
 const escape = newRegExp('i')`
 	\\
@@ -16,7 +16,7 @@ const escape = newRegExp('i')`
 		[^\n\f\r]
 	)
 `;
-const ws = /\t\n\f\r /;
+const ws = /\t\n\f\r /i;
 export const ident_token_start = newRegExp('i')`
 	(?:
 		-
@@ -49,16 +49,16 @@ const hash_token = newRegExp('i')`
 		${escape}
 	)*
 `;
-const string_token = newRegExp`
+const string_token = newRegExp('is')`
 	"
-	(?:\\(?:\r\n?|.)|[^\\"\n\f\r])*
+	(?:\\(?:\r\n|.)|[^\\"\n\f\r])*
 	"?
 |
 	'
-	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
+	(?:\\(?:\r\n|.)|[^\\'\n\f\r])*
 	'?
 `;
-const url_token = newRegExp('i')`
+const url_token = newRegExp('is')`
 	url
 	(?:
 		\(
@@ -99,7 +99,7 @@ const TOKENS = newRegExp('gis')`
 	|
 	@${ident_token}
 |
-	${number_token}(?:${ident_token}|%)?
+	${number_token.source}(?:${ident_token}|%)?
 |
 	${hash_token}
 |
@@ -116,11 +116,11 @@ const BAD_URL = newRegExp('i')`
 	^
 	url\(
 	(?!
-	[${ws}]*
-	(?:${escape}|[^${ws}"'()\\])*
-	[${ws}]*
-	\)
-	$
+			[${ws}]*
+			(?:${escape}|[^${ws}"'()\\])*
+			[${ws}]*
+		\)
+		$
 	)
 `;
 const NUMBER = /[\d.]/;

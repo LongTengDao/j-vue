@@ -2,7 +2,7 @@ import SyntaxError from '.SyntaxError';
 import checkNewline from '.return';// 如果只限制 script 块正文前面的换行符，则在此函数中检测 FF LS PS
 
 import Snippet from './Snippet';
-import { Tag, ELEMENT_START, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT } from './Tag';
+import { Tag, ELEMENT_START, ELEMENT_END, COMMENT, TEXT } from './Tag';
 import Script from './Script/';
 import Style from './Style/';
 import Template from './Template/';
@@ -31,10 +31,6 @@ const parseComponent = (sfc :SFC, vue :string) :void => {
 			
 			const tag = Tag(vue, index);
 			switch ( tag.type ) {
-				case ELEMENT_START:
-				case ELEMENT_SELF_CLOSING:
-					index = tag.end;
-					break;
 				case COMMENT:
 					index = tag.end;
 					continue;
@@ -59,18 +55,21 @@ const parseComponent = (sfc :SFC, vue :string) :void => {
 					break;
 			}
 			
+			let INDEX = index;
+			index = tag.end;
+			
 			let inner :string | undefined;
 			if ( tag.type===ELEMENT_START ) {
 				if ( index===length ) { throw SyntaxError(`开始标签后缺少结束标签“</${blockName}>”`); }
 				if ( vue[index]===eol_0 ) {
-					const innerStart = index+eol_length;
-					const endTagStart = vue.indexOf(`${eol}</${blockName}>`, index)+eol_length;
+					const innerStart = index + eol_length;
+					const endTagStart = vue.indexOf(`${eol}</${blockName}>`, index) + eol_length;
 					if ( endTagStart<eol_length ) { throw SyntaxError(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`); }
-					index = endTagStart+3+blockName.length;
-					inner = endTagStart===innerStart || endTagStart-eol_length===innerStart ? '' : vue.slice(innerStart, endTagStart-eol_length);
+					index = endTagStart + 3 + blockName.length;
+					inner = endTagStart===innerStart || endTagStart - eol_length===innerStart ? '' : vue.slice(innerStart, endTagStart - eol_length);
 					if ( blockName!=='style' ) {
 						inner =
-							checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '')+
+							checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '') +
 							inner;
 					}
 				}
@@ -79,17 +78,19 @@ const parseComponent = (sfc :SFC, vue :string) :void => {
 					index = vue.indexOf(eol_0, index);
 					if ( index<0 ) { index = length; }
 					if ( !vue.endsWith(`</${blockName}>`, index) ) { throw SyntaxError(`开始标签后不紧跟换行则启用单行块模式，该行应以对应的结束标签结尾`); }
-					inner = vue.slice(innerStart, index-3-blockName.length);
+					inner = vue.slice(innerStart, index - 3 - blockName.length);
 					if ( blockName!=='style' ) {
 						const previousLineEnd = vue.lastIndexOf(eol_0, innerStart);
-						const lastLineStart = previousLineEnd<0 ? 0 : previousLineEnd+eol_length;
+						const lastLineStart = previousLineEnd<0 ? 0 : previousLineEnd + eol_length;
 						inner =
-							checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '')+
-							checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB, ' ')+
+							checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '') +
+							checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB, ' ') +
 							inner;
 					}
 				}
 			}
+			
+			[ index, INDEX ] = [ INDEX, index ];
 			
 			if ( blockName==='template' ) { sfc.template = new Template(tag.attributes!, inner); }
 			else if ( blockName==='style' ) { sfc.styles[sfc.styles.length] = new Style(tag.attributes!, inner); }
@@ -105,6 +106,8 @@ const parseComponent = (sfc :SFC, vue :string) :void => {
 				}
 			}
 			else { sfc.customBlocks[sfc.customBlocks.length] = new CustomBlock(blockName, tag.attributes!, inner); }
+			
+			index = INDEX;
 			
 			if ( index!==length ) {
 				if ( vue[index]===eol_0 ) { index += eol_length; }

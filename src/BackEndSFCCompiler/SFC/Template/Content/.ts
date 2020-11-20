@@ -12,7 +12,7 @@ import { NON_SCALAR as SURROGATE_IN_INPUT_STREAM } from '@ltd/j-utf';
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
 import { forAliasRE, slotRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_V_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF, NON_ASCII_SIMPLE_PATH, STYLE_BY_COMPONENT_IS, BUILT_IN } from '../../../dependencies';
-import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR, isAliasName, NameIs__Key__, NON_PCENChar } from '../../RE';
+import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR, STARTS_WITH_UPPER_CASE, NameIs__Key__, NON_PCENChar } from '../../RE';
 import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF, PLAINTEXT, LISTING, XMP } from '../../Tag';
 import { EMPTY } from '../../Attributes';
 import Params from '../../Params';
@@ -65,6 +65,7 @@ const SVG_MathML = newRegExp('i')`^${groupify(`
 `.match(/\S+/g)!)}$`;
 const NON_HTML = /[^\dA-Za-z]/;
 const STARTS_WITH_LETTER = /^[A-Za-z]/;
+const NS3 = /:(?:(?![A-Z_a-z])|.*?:)/s;
 
 const checkNameBeing = (xName :string, attributes :Attributes, is :boolean) :void => {
 	if ( 'v-html' in attributes && ( xName==='xmp' || xName==='plaintext' || xName==='listing' ) ) {
@@ -208,19 +209,21 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			///	alias = _[0];
 			///	addOn = ' ' + _.slice(1).join(' ');
 			///}
-			/* AliasName: */
-			if ( isAliasName(alias) ) {
+			if ( STARTS_WITH_UPPER_CASE.test(alias) ) {
 				if ( alias in partial ) {
 					const _ = partial[alias];
-					xName = _.tagName==='_' ? alias + '_' : _.tagName;
+					xName = _.tagName==='_' ? alias + '_' : _.tagName || alias;
 					__class__ = _.class + addOn;
 				}
-				else if ( partial_with_tagName && NameIs__Key__(alias) ) {
-					xName = partial_with_tagName==='_' ? alias + '_' : partial_with_tagName;
+				else if ( partial_with_tagName!==' ' && NameIs__Key__(alias) ) {
+					xName = partial_with_tagName==='_' ? alias + '_' : partial_with_tagName || alias;
 					__class__ = `__${alias}__` + addOn;
 				}
 			}
 		}
+		
+		if ( compatible_render && NS3.test(xName) ) { compatible_render = false; }
+		
 		const notComponent = STARTS_WITH_LOWERCASE_AND_NOT.test(xName);
 		let afterColon = xName;
 		if ( notComponent ) {
@@ -264,7 +267,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			if ( xName==='component' ) {
 				if ( ':is.camel' in attributes ) { throw ReferenceError(`component :is.camel 在 Vue 2 和 3 中存在歧义，请避免使用`); }
 				if ( ':is' in attributes ) {}
-				else if ( 'is' in attributes ) { checkNameBeing(attributes.is!, attributes, true); }
+				else if ( 'is' in attributes ) { checkNameBeing(attributes['is']!, attributes, true); }
 				else { throw SyntaxError(`component 组件不能缺少 is 属性`); }
 			}
 			else {
@@ -339,7 +342,10 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 								if ( ON_MODIFIER.test('on' + name.slice(1)) ) { throw Error(`Vue 3 中事件名不应以 capture、once、passive 结尾以免与 .capture、.once、.passive 修饰符编译的结果混淆`); }
 							}
 						}
-						if ( compatible_template && NON_ASCII_SIMPLE_PATH.test(attributes[name]!) ) { compatible_template = false; }
+						if ( compatible_template ) {
+							const value = attributes[name];
+							if ( value!==EMPTY && NON_ASCII_SIMPLE_PATH.test(value) ) { compatible_template = false; }
+						}
 					}
 					else {
 						if ( ATTR_.test(name) ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); }
@@ -372,6 +378,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 								else { shadowRoot = { name, along: Shadow(name) }; }
 							}
 							else {
+								if ( name.includes('.') && !name.includes('[') ) { throw SyntaxError(`v-slot 名字面量中不能含有“.”，因为这会造成解析歧义`); }
 								const value = attributes[name];
 								if ( isTemplate ) {
 									if ( !parentNode_XName ) { throw Error(`插槽所在的 template 必须位于组件标签内`); }
@@ -519,7 +526,7 @@ export default class Content extends Node {
 		delimiters_0 = _.delimiters_0;
 		delimiters_1 = _.delimiters_1;
 		partial = _.abbr ?? null;
-		partial_with_tagName = partial?.['']?.tagName ?? '';
+		partial_with_tagName = partial?.['']?.tagName ?? ' ';
 		html = inner;
 		index = 0;
 		compatible_template = true;

@@ -4,10 +4,9 @@ import { newRegExp } from '@ltd/j-regexp';
 
 import KEYS from '../../FrontEndRuntimeDependency/Scope/KEYS';
 
-const KEY = newRegExp('i')`^${KEYS}$`;
-export const NameIs__Key__ = (Name :string) :boolean => KEY.test(Name);
+export const NameIs__Key__ = newRegExp`^${KEYS}$`.test;
 export const NameAs__Key__ = (Name :string) :string => {
-	if ( KEY.test(Name) ) { return `__${Name}__`; }
+	if ( NameIs__Key__(Name) ) { return `__${Name}__`; }
 	throw Error(`“${Name}”不满足自动生成动态值的条件`);
 };
 
@@ -18,31 +17,18 @@ export const NONCHARACTER = newRegExp('u')`[
 ]`;
 export const CONTROL_CHARACTER = /[\x01-\x08\x0B\x0E-\x1F\x7F-\x9F]/;
 
-export const ASCII_WHITESPACE = /[\t\n\f\r ]/;
+export const ASCII_WHITESPACE = /[\t\n\f\r ]/.source;
 const ASCII_ALPHA = /[A-Za-z]/;
 
 export const TOKENS = /[^\t\n\f\r=; ]+/g;
 const PCENCharWithoutDot = /[\-\w\xB7\xC0-\xD6\xD8-\xF6\xF8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]/u.source.slice(1, -1);// /[\u{10000}-\u{EFFFF}]/u => /(?:[\uD800-\uDB7F][\uDC00-\uDFFF])/
-export const NON_PCENChar = newRegExp('u')`
-	[^.${PCENCharWithoutDot}]
-`;
-/* AliasName: */export const AliasName = newRegExp('u')`
-	[A-Z][${PCENCharWithoutDot}]*
-`;
-/* AliasName: */const _AliasName_ = newRegExp('u')`^${AliasName}$`;
-/* AliasName: */export const isAliasName = (name :string) => _AliasName_.test(name);
-export const localOrComponentNameWithoutDot = newRegExp('u')`
-	[A-Za-z][${PCENCharWithoutDot}]*
-`;
-const _localOrComponentNameDotable_ = newRegExp('u')`
-	^
-	[A-Za-z][.${PCENCharWithoutDot}]*
-	$
-`;
+export const NON_PCENChar = newRegExp('u')`	[^.${PCENCharWithoutDot}]	`;
+export const AliasName = /[A-Z][\-.\w:\x80-\u{10FFFF}]*/u;//newRegExp('u')`	[A-Z][${PCENCharWithoutDot}]*	`;
+export const STARTS_WITH_UPPER_CASE = /^[A-Z]/;
+export const localOrComponentNameWithoutDot = newRegExp('u')`	[A-Za-z][${PCENCharWithoutDot}]*	`;
+const _localOrComponentNameDotable_ = newRegExp('u')`^	[A-Za-z][.${PCENCharWithoutDot}]*	$`;
 export const isLocalOrComponentNameDotable = (name :string) => _localOrComponentNameDotable_.test(name);
-export const localNameWithoutDot = newRegExp('u')`
-	[a-z][${PCENCharWithoutDot}]*
-`;
+export const localNameWithoutDot = newRegExp('u')`	[a-z][${PCENCharWithoutDot}]*	`;
 export const className = newRegExp('u')`
 	(?:
 		-
@@ -101,7 +87,7 @@ export const TAG = newRegExp`
 	>
 `;
 
-export const TAG_EMIT_CHAR = /[\t\n\f\r />]/;
+export const TAG_EMIT_CHAR = /[\t\n\f\r />]/.source;
 export const TAG_LIKE = newRegExp`
 	<
 	(?:

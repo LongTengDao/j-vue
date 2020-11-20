@@ -202,4 +202,4 @@ export function devData (self :Context, protoDescriptors :ProtoDescriptors | nul
 
 import type { ShadowAssigner, ShadowChecker } from './Shadow';
 import type { ProtoDescriptors, ClassAPI, Context, Data, __Dev__, Names } from './';
-import type { _Vue3 } from 'j-vue';
+import type { Vue3 as _Vue3 } from 'j-vue';

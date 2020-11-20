@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '18.0.0';
+const version = '19.0.0';
 
 const Error$1 = Error;
 
@@ -140,7 +140,7 @@ const from = (
 	/*¡ j-globals: Buffer.from (fallback) */
 );
 
-const RegExp_prototype = RegExp.prototype;
+const REGEXP = RegExp.prototype;
 
 /*!
  * 模块名称：j-utf
@@ -154,7 +154,7 @@ const RegExp_prototype = RegExp.prototype;
  */
 
 var NON_SCALAR = (
-	'unicode' in RegExp_prototype
+	'unicode' in REGEXP
 		? RegExp$1('[\\uD800-\\uDFFF]', 'u')
 		: /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/
 );
@@ -267,13 +267,9 @@ function buffer2object (buffer        , options          )                      
 
 /*¡ j-utf */
 
-const THROW = (
-	/*! j-globals: throw (internal) */
-	function THROW (error) {
-		throw error;
-	}
-	/*¡ j-globals: throw (internal) */
-);
+const exec = RegExp.prototype.exec;
+
+const getOwnPropertySymbols = typeof Object!=='undefined' ? Object.getOwnPropertySymbols : undefined;
 
 /*!@preserve@license
  * 模块名称：j-regexp
@@ -286,6 +282,11 @@ const THROW = (
  * 项目主页：https://GitHub.com/LongTengDao/j-regexp/
  */
 
+var test_bind                                           = test.bind ? /*#__PURE__*/test.bind.bind(test       )        : function (re        ) { return function (string        ) { return test.call(re, string); }; };
+var exec_bind                                           = exec.bind ? /*#__PURE__*/exec.bind.bind(exec       )        : function (re        ) { return function (string        ) { return exec.call(re, string); }; };
+var symbols = getOwnPropertySymbols ? /*#__PURE__*/getOwnPropertySymbols(REGEXP).reverse() : null;
+var values = symbols && /*#__PURE__*/symbols.map(function (symbol) { return REGEXP[symbol]; });
+
 var NT = /[\n\t]/g;
 var SEARCH_ESCAPE = /\\./g;
 function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
@@ -295,29 +296,72 @@ function RE (               template                      ) {
 	var source = raw[0];
 	var length = arguments.length;
 	var index = 1;
-	if ( this.unicode ) {
+	var value                 ;
+	if ( this.U ) {
 		while ( index<length ) {
-			var value = arguments[index];
-			source += ( typeof value==='string' ? value : value.source || THROW(TypeError$1(typeof value)) ) + raw[index++].replace(SEARCH_ESCAPE, graveAccentReplacer);
+			value = arguments[index];
+			source += ( typeof value==='string' ? value : this.check(value) ) + raw[index++];
 		}
 	}
 	else {
 		while ( index<length ) {
-			var value = arguments[index];
-			source += ( typeof value==='string' ? value : value.source || THROW(TypeError$1(typeof value)) ) + raw[index++];
+			value = arguments[index];
+			source += ( typeof value==='string' ? value : this.check(value) ) + raw[index++].replace(SEARCH_ESCAPE, graveAccentReplacer);
 		}
 	}
-	return RegExp$1(source.replace(NT, ''), this.flags);
+	var re = RegExp$1(source = source.replace(NT, ''), this.flags);
+	this.addon(re.test = test_bind(re), re.exec = exec_bind(re), source);
+	if ( symbols ) {
+		index = symbols.length;
+		while ( index ) { re[symbols[--index]] = values [index]; }
+	}
+	return re;
 }
 
-function newRegExp (template_flags                               )                                                          {
-	if ( typeof template_flags==='object' ) {
-		return /*#__PURE__*/ Reflect_apply(RE, { flags: '', unicode: false }, arguments                                                               );
+function check (               re        ) {
+	var source = re.source;
+	if ( !source ) { throw TypeError$1(typeof re); }
+	if ( re.unicode===this.U ) { throw SyntaxError$1('unicode'); }
+	if ( re.ignoreCase===this.I ) { throw SyntaxError$1('ignoreCase'); }
+	if ( re.multiline===this.M && ( source.indexOf('^')>=0 || source.indexOf('$')>=0 ) ) { throw SyntaxError$1('multiline'); }
+	if ( re.dotAll===this.S && source.indexOf('.')>=0 ) { throw SyntaxError$1('dotAll'); }
+	return source;
+}
+
+function addon (               test       , exec       , source        ) {
+	test.source = exec.source = source;
+	test.unicode = exec.unicode = this.U;
+	test.ignoreCase = exec.ignoreCase = this.I;
+	test.multiline = exec.multiline = source.indexOf('^')<0 && source.indexOf('$')<0 ? null : this.M;
+	test.dotAll = exec.dotAll = source.indexOf('.')<0 ? null : this.S;
+}
+
+var CONTEXT          = {
+	flags: '',
+	U: true,
+	I: true,
+	M: true,
+	S: true,
+	check: check,
+	addon: addon
+};
+
+function newRegExp (flags_template                               )                                                        {
+	if ( typeof flags_template==='string' ) {
+		var context          = {
+			flags: flags_template,
+			U: /*#__PURE__*/ flags_template.indexOf('u')<0,
+			I: /*#__PURE__*/ flags_template.indexOf('i')<0,
+			M: /*#__PURE__*/ flags_template.indexOf('m')<0,
+			S: /*#__PURE__*/ flags_template.indexOf('s')<0,
+			check: check,
+			addon: addon
+		};
+		return function newRegExp (template                      )         {
+			return /*#__PURE__*/ Reflect_apply(RE, context, arguments                                       );
+		};
 	}
-	var context          = { flags: template_flags, unicode: /*#__PURE__*/ template_flags.indexOf('u')>=0 };
-	return function newRegExp (template                      )         {
-		return /*#__PURE__*/ Reflect_apply(RE, context, arguments                                                               );
-	};
+	return /*#__PURE__*/ Reflect_apply(RE, CONTEXT, arguments                                       );
 }
 
 var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
@@ -370,12 +414,11 @@ function sourcify (group       , needEscape         )         {
 
 /*¡ j-regexp */
 
-const KEYS = /[a-z][a-z0-9]*(?:_[a-z0-9]+)*/ig;
+const KEYS = /[^\x00-@[-`{-\x7F\s][^\x00-/:-@[-`{-\x7F\s]*(?:_[^\x00-/:-@[-`{-\x7F\s]+)*/g;
 
-const KEY = newRegExp('i')`^${KEYS}$`;
-const NameIs__Key__ = (Name        )          => KEY.test(Name);
+const NameIs__Key__ = newRegExp`^${KEYS}$`.test;
 const NameAs__Key__ = (Name        )         => {
-	if ( KEY.test(Name) ) { return `__${Name}__`; }
+	if ( NameIs__Key__(Name) ) { return `__${Name}__`; }
 	throw Error$1(`“${Name}”不满足自动生成动态值的条件`);
 };
 
@@ -386,31 +429,18 @@ const NONCHARACTER = newRegExp('u')`[
 ]`;
 const CONTROL_CHARACTER = /[\x01-\x08\x0B\x0E-\x1F\x7F-\x9F]/;
 
-const ASCII_WHITESPACE = /[\t\n\f\r ]/;
+const ASCII_WHITESPACE = /[\t\n\f\r ]/.source;
 const ASCII_ALPHA = /[A-Za-z]/;
 
 const TOKENS = /[^\t\n\f\r=; ]+/g;
 const PCENCharWithoutDot = /[\-\w\xB7\xC0-\xD6\xD8-\xF6\xF8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]/u.source.slice(1, -1);// /[\u{10000}-\u{EFFFF}]/u => /(?:[\uD800-\uDB7F][\uDC00-\uDFFF])/
-const NON_PCENChar = newRegExp('u')`
-	[^.${PCENCharWithoutDot}]
-`;
-/* AliasName: */const AliasName = newRegExp('u')`
-	[A-Z][${PCENCharWithoutDot}]*
-`;
-/* AliasName: */const _AliasName_ = newRegExp('u')`^${AliasName}$`;
-/* AliasName: */const isAliasName = (name        ) => _AliasName_.test(name);
-const localOrComponentNameWithoutDot = newRegExp('u')`
-	[A-Za-z][${PCENCharWithoutDot}]*
-`;
-const _localOrComponentNameDotable_ = newRegExp('u')`
-	^
-	[A-Za-z][.${PCENCharWithoutDot}]*
-	$
-`;
+const NON_PCENChar = newRegExp('u')`	[^.${PCENCharWithoutDot}]	`;
+const AliasName = /[A-Z][\-.\w:\x80-\u{10FFFF}]*/u;//newRegExp('u')`	[A-Z][${PCENCharWithoutDot}]*	`;
+const STARTS_WITH_UPPER_CASE = /^[A-Z]/;
+const localOrComponentNameWithoutDot = newRegExp('u')`	[A-Za-z][${PCENCharWithoutDot}]*	`;
+const _localOrComponentNameDotable_ = newRegExp('u')`^	[A-Za-z][.${PCENCharWithoutDot}]*	$`;
 const isLocalOrComponentNameDotable = (name        ) => _localOrComponentNameDotable_.test(name);
-const localNameWithoutDot = newRegExp('u')`
-	[a-z][${PCENCharWithoutDot}]*
-`;
+const localNameWithoutDot = newRegExp('u')`	[a-z][${PCENCharWithoutDot}]*	`;
 const className = newRegExp('u')`
 	(?:
 		-
@@ -469,7 +499,7 @@ const TAG = newRegExp`
 	>
 `;
 
-const TAG_EMIT_CHAR = /[\t\n\f\r />]/;
+const TAG_EMIT_CHAR = /[\t\n\f\r />]/.source;
 const TAG_LIKE = newRegExp`
 	<
 	(?:
@@ -499,8 +529,9 @@ const IS_TAG = newRegExp`
  */
 
 var clearRegExp = '$_' in RegExp$1
-	? function () {
+	? /*#__PURE__*/function () {
 		var REGEXP = /^/;
+		REGEXP.test = REGEXP.test;
 		return function clearRegExp                (value    )                {
 			REGEXP.test('');
 			return value;
@@ -688,8 +719,6 @@ const parseInt$1 = parseInt;
 const fromCodePoint = String.fromCodePoint;
 
 const keys = Object.keys;
-
-const getOwnPropertySymbols = typeof Object!=='undefined' ? Object.getOwnPropertySymbols : undefined;
 
 const Null = (
 	/*! j-globals: null.constructor (internal) */
@@ -3138,6 +3167,16 @@ class Attributes extends Null$1         {
 		return literal;
 	}
 	
+	#dot = '';
+	static dot (attributes            , __key__         ) {
+		if ( __key__ ) { attributes.#dot += ' ' + __key__; }
+		else if ( attributes.#dot ) {
+			attributes['class'] = attributes['class']
+				? attributes.#dot.slice(1) + ' ' + attributes['class']
+				: attributes.#dot.slice(1);
+		}
+	}
+	
 	static 'default' = Null$1(Attributes);
 	
 }
@@ -3155,26 +3194,29 @@ const XMP = /^xmp$/i;
 
 //const BAD_ENTITY = /&[a-z][a-z\d]*[^a-z\d;]/;
 
-const _PROP = /^\.(?:[\w$]+|\[[\w$]+])$/;
 const V_DIR = /^v-(?:slot|on|bind):/;
+const V_DOT = /^v-(?:bind|on|slot)\./;
+const V__ = /^v-(?:text|html|show|if|else(?:-if)?|for|pre|cloak|once|is)[:.]/;
+const V_BO = /^(?:[:@]|v-(?:bind|on)$)/;
+const V_ = /^(?:[:@#]|v-)/;
 
-const Tag = (html        , position        , foreign          = false, SHORTHAND          = false) => {
+const Tag = (html        , position        , foreign          , SHORTHAND                 = null) => {
 	
 	let rest        ;
 	
 	if ( html[position]==='<' ) {
 		
-		if ( html[position+1]==='!' ) {
-			if ( !html.startsWith('--', position+2) ) { throw SyntaxError$1(html.startsWith('[CDATA[', position+2) && !foreign ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内` : `标准的注释语法应由“<!--”而非“ <!”开启`); }
-			if ( html[position+4]==='>' || html.startsWith('->', position+4) ) { throw SyntaxError$1(`紧随“<!--”注释开始语法之后出现的“>”或“->”会造成注释意外中断`); }
-			const end         = html.indexOf('-->', position+4);
-			if ( end<0 ) { throw SyntaxError$1(html.includes('--!>', position+4) ? '应使用“-->”而非“--!>”关闭注释节点' : '存在未关闭的注释节点'); }
-			const data         = html.slice(position+4, end);
+		if ( html[position + 1]==='!' ) {
+			if ( !html.startsWith('--', position + 2) ) { throw SyntaxError$1(html.startsWith('[CDATA[', position + 2) && !foreign ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内` : `标准的注释语法应由“<!--”而非“ <!”开启`); }
+			if ( html[position + 4]==='>' || html.startsWith('->', position + 4) ) { throw SyntaxError$1(`紧随“<!--”注释开始语法之后出现的“>”或“->”会造成注释意外中断`); }
+			const end         = html.indexOf('-->', position + 4);
+			if ( end<0 ) { throw SyntaxError$1(html.includes('--!>', position + 4) ? '应使用“-->”而非“--!>”关闭注释节点' : '存在未关闭的注释节点'); }
+			const data         = html.slice(position + 4, end);
 			if ( data.includes('--!>') ) { throw SyntaxError$1(`“--!>”会造成注释意外中断`); }
-			return { type: COMMENT, data, end: end+3 };
+			return { type: COMMENT, data, end: end + 3 };
 		}
 		
-		if ( html[position+1]==='?' ) { throw SyntaxError$1(foreign ? `不知该如何对待“<?”开启的 XML 指令/声明` : `在 HTML 上下文中，“<?”XML 指令/声明只会被作为注释对待，而且其引号属性并不安全`); }
+		if ( html[position + 1]==='?' ) { throw SyntaxError$1(foreign ? `不知该如何对待“<?”开启的 XML 指令/声明` : `在 HTML 上下文中，“<?”XML 指令/声明只会被作为注释对待，而且其引号属性并不安全`); }
 		
 		rest = html.slice(position);
 		
@@ -3185,7 +3227,7 @@ const Tag = (html        , position        , foreign          = false, SHORTHAND
 			if ( endSolidus ) {
 				if ( attributesLiteral ) { throw SyntaxError$1(`结束标签中存在属性`); }
 				if ( selfClosingSolidus ) { throw SyntaxError$1(`结束标签中存在自关闭斜杠`); }
-				return { type: ELEMENT_END, xName, end: position+length };
+				return { type: ELEMENT_END, xName, end: position + length };
 			}
 			
 			const attributes             = new Attributes;
@@ -3194,9 +3236,10 @@ const Tag = (html        , position        , foreign          = false, SHORTHAND
 				const { length } = pairs;
 				let index = 0;
 				if ( SHORTHAND && pairs.includes('v-pre') ) { SHORTHAND = false; }
+				const DOT = SHORTHAND!==null;
 				while ( index!==length ) {
 					let name = pairs[index++];
-					let value                    ;
+					let value                ;
 					if ( name.includes('=') ) {
 						( { 1: name, 2: value } = ATTRIBUTE_NAME_VALUE.exec(name)  );
 						if ( value[0]==='"' || value[0]==='\'' ) { value = value.slice(1, -1); }
@@ -3206,13 +3249,12 @@ const Tag = (html        , position        , foreign          = false, SHORTHAND
 						//) ) { throw Error(`${xName} 标签中的 ${name} 属性值 ${value} 中存在可疑的实体，无论它是否是 URI 参数，请明确转义`); }
 						value = unescape(value);
 					}
+					if ( DOT && name[0]==='.' ) {
+						for ( const classItem of name.slice(1).split('.') ) { Attributes.dot(attributes, NameAs__Key__(classItem)); }
+						continue;
+					}
 					if ( SHORTHAND ) {
 						switch ( name[0] ) {
-							case '.':
-								if ( _PROP.test(name) ) {
-									 throw SyntaxError$1(`Vue 3 中 v-bind 已不再支持 .prop 修饰符，无法为您转译“${name}”，建议使用指令`);//name = `:${name.slice(1)}.prop`;
-								}
-								break;
 							case ':':
 							case '@':
 							case '#':
@@ -3225,29 +3267,33 @@ const Tag = (html        , position        , foreign          = false, SHORTHAND
 											`#${name.slice(7)}`;
 									if ( name.length===1 || name[1]==='.' ) { throw SyntaxError$1(`v-bind: v-on: v-slot: 的 arg 不能为空`); }
 								}
+								else if ( V_DOT.test(name) ) { throw SyntaxError$1(`无 arg 的 v-bind、v-on 和 v-slot 不能使用修饰符`); }
+								else if ( V__.test(name) ) { throw SyntaxError$1(`v-text/v-html/v-show/v-if/v-else-if/v-else/v-for/v-pre/v-cloak/v-once/v-is 不能有 arg 或修饰符`); }
 								break;
 						}
 					}
 					if ( name in attributes ) { throw SyntaxError$1(`标签中出现了重复的属性“${name}”`); }
-					if (
-						( name[0]===':' ? name.slice(1) : ':' + name ) in attributes
-						&&
-						( name[0]===':' ? name[1]!=='@' && name[1]!=='#' : name[0]!=='@' && name[0]!=='#' )
+					if ( name[0]===':'
+						? name.slice(1) in attributes && !V_.test(name.slice(1))
+						: ':' + name in attributes && !V_.test(name)
 					) {
 						throw SyntaxError$1(`标签中出现了重复的属性“${name[0]===':' ? name.slice(1) : ':' + name}”和“${name}”`);
 					}
+					if ( V_BO.test(name) && ( !value || !( value = value.trim() ) ) ) { throw SyntaxError$1(`v-bind/v-on 的 value 不得为空`); }
 					attributes[name] = value;
 				}
+				if ( attributes['v-pre']!==EMPTY ) { throw SyntaxError$1(`v-pre 指令不能有值`); }
 				if ( attributesLiteral[attributesLiteral.length - 1]==='/' ) { throw SyntaxError$1(`标签结尾处的“/”有歧义，无法达到标注标签为自闭合的目的，而是会作为最后一个无引号属性值的结束字符`); }
+				DOT && Attributes.dot(attributes);
 			}
 			if ( selfClosingSolidus ) {
-				return { type: ELEMENT_SELF_CLOSING, xName, attributes, end: position+length };
+				return { type: ELEMENT_SELF_CLOSING, xName, attributes, end: position + length };
 			}
 			else {
 				if ( VOID_ELEMENTS.test(xName) ) { throw SyntaxError$1(`.vue 文件中如果出现 HTML void 元素（无论大小写；即便已经过时、废弃或是非标准），必须自闭合使用并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`); }
 				if ( PLAINTEXT.test(xName) ) { throw SyntaxError$1(`已过时的 ${xName} 标签没有结束方式，除非自闭合，否则${xName==='plaintext' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑使用“<component is="${xName}">”）`); }
 				if ( LISTING.test(xName) && !rest.startsWith('</', length) ) { throw SyntaxError$1(`已过时的 ${xName} 标签内容处理方式不定，除非自闭合或内容为空，否则${xName==='listing' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑使用“<component is="${xName}">”或“<${xName} v-text="..." />”）`); }
-				return { type: ELEMENT_START, xName, attributes, end: position+length };
+				return { type: ELEMENT_START, xName, attributes, end: position + length };
 			}
 		}
 		
@@ -3257,7 +3303,7 @@ const Tag = (html        , position        , foreign          = false, SHORTHAND
 	
 	if ( rest ) {
 		let end         = rest.search(TAG_LIKE);
-		end = end<0 ? html.length : position+end;
+		end = end<0 ? html.length : position + end;
 		return { type: TEXT, raw: html.slice(position, end), end };
 	}
 	
@@ -3295,15 +3341,16 @@ const BAD_SCOPE = '__proto__';
 const BAD_KEY = '__proto__';
 const BAD_REF = '__proto__';
 const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
-const NON_ASCII$1 = '\\u3007\\u4E00-\\u9FA5';
+const NON = /[^\x00-#%-/:-@[-^`{-\x7F\s]/.source;
 const NON_ASCII_SIMPLE_PATH = newRegExp`
 	^\s*
 		(?:
 			[A-Za-z_$]
 			[\w$]*
 		)?
-		[${NON_ASCII$1}]
-		[\w$${NON_ASCII$1}]*
+		[^\x00-\x7F\s]
+		${NON}*
+		(?:\([^)]*?\);*)?
 	\s*$
 `;
 const BUILT_IN = new Set$1(`
@@ -3334,11 +3381,12 @@ const { 3: compile3, 2: compile2 }
 	const Const3dom = Replacer(
 		[ `|| node.tag === 'style'` ],
 		[ `makeMap('style,iframe,script,noscript', true)`, `makeMap('style,script', true)` ],
-		[ /compilerCore\.isBuiltInType\(tag, ([^)]+)\)/g, (match        , p1        ) => `tag===${p1.replace(/\B[A-Z]/g, (W        ) => `-${W.toLowerCase()}`).toLowerCase()}`, 2 ],
+		[ /compilerCore\.isBuiltInType\(tag, ([^)]+)\)/g, (match        , p1        ) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 2 ],
 	);
 	const Const3core = Replacer(
 		[ /!shared\.isGloballyWhitelisted\([^)]*\)|identifier\.name !== `(?:require|arguments)`/g, 'true', 4 ],
-		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match        , p1        ) => `tag===${p1.replace(/\B[A-Z]/g, (W        ) => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
+		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match        , p1        ) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
+		[ /(?<=^const memberExpRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ]
 	);
 	const Let3core = Replacer(
 		[ /push\(`const /g, 'push\(`let ', NaN ],
@@ -3348,9 +3396,9 @@ const { 3: compile3, 2: compile2 }
 		[ /(?<! in ){}(?=[);,])(?!\)\.)/g, `Object.create(null)`, 23 ],
 		[ `el.attrsMap.hasOwnProperty('v-for')`, `hasOwn(el.attrsMap, 'v-for')` ],
 		[ `el.tag === 'style' ||` ],
-		[ /(var simplePathRE = \/)(.*?\*)/s, (match        , pre        , aim        ) => pre + aim.replace(/(?<=\$)/g, NON_ASCII$1) + '$|' + aim ],
+		[ /(?<=^var simplePathRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ],
 		[ RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].var, 2 ],
-		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, (origin        ) => ( { undefined: 'void null', $$v: '$event' }[origin                       ] ), 4 ],
+		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin                       ] ), 4 ],
 	);
 	const Const2 = Replacer(
 		[ RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].const, 2 ],
@@ -3414,7 +3462,7 @@ const { 3: compile3, 2: compile2 }
 					--count;
 					return typeof replacer==='function' ? replacer(...args) : replacer;
 				});
-				if ( count ) { throw Error$1(`jVue 内部版本依赖错误`); }
+				if ( count ) { throw Error$1(`jVue 内部版本依赖错误：${typeof search==='string' ? '`' + search + '`' : search} 剩下了 ${count} 处`); }
 			}
 			return content;
 		};
@@ -3605,7 +3653,7 @@ const {
 	}
 });
 
-const nonASCII = /\x80-\uFFFF/;
+const nonASCII = /\x80-\uFFFF/i;
 const hex_digit = /[0-9A-F]/i;
 const escape = newRegExp('i')`
 	\\
@@ -3616,7 +3664,7 @@ const escape = newRegExp('i')`
 		[^\n\f\r]
 	)
 `;
-const ws = /\t\n\f\r /;
+const ws = /\t\n\f\r /i;
 const ident_token_start = newRegExp('i')`
 	(?:
 		-
@@ -3649,16 +3697,16 @@ const hash_token = newRegExp('i')`
 		${escape}
 	)*
 `;
-const string_token = newRegExp`
+const string_token = newRegExp('is')`
 	"
-	(?:\\(?:\r\n?|.)|[^\\"\n\f\r])*
+	(?:\\(?:\r\n|.)|[^\\"\n\f\r])*
 	"?
 |
 	'
-	(?:\\(?:\r\n?|.)|[^\\'\n\f\r])*
+	(?:\\(?:\r\n|.)|[^\\'\n\f\r])*
 	'?
 `;
-const url_token = newRegExp('i')`
+const url_token = newRegExp('is')`
 	url
 	(?:
 		\(
@@ -3699,7 +3747,7 @@ const TOKENS$1 = newRegExp('gis')`
 	|
 	@${ident_token}
 |
-	${number_token}(?:${ident_token}|%)?
+	${number_token.source}(?:${ident_token}|%)?
 |
 	${hash_token}
 |
@@ -3716,11 +3764,11 @@ const BAD_URL = newRegExp('i')`
 	^
 	url\(
 	(?!
-	[${ws}]*
-	(?:${escape}|[^${ws}"'()\\])*
-	[${ws}]*
-	\)
-	$
+			[${ws}]*
+			(?:${escape}|[^${ws}"'()\\])*
+			[${ws}]*
+		\)
+		$
 	)
 `;
 const NUMBER = /[\d.]/;
@@ -4790,11 +4838,11 @@ const checkScoped = (rules                                            , start   
 					if ( length ) {
 						let index = 0;
 						do { if ( !__KEY__.test(classSelectorsPART[index].literal) ) { throw ReferenceError$1(`.${classSelectorsPART[index].literal} 将对全局生效`); } }
-						while ( ++index!==length )
+						while ( ++index!==length );
 					}
 					else { throw ReferenceError$1(`${( rule                  ).selectorTextAt(index)} 将对全局生效`); }
 				}
-				while ( ++index!==length )
+				while ( ++index!==length );
 				break;
 			case AtRule:
 				const { block } = rule          ;
@@ -4830,10 +4878,10 @@ class Sheet extends Array$1                                                     
 				while ( index!==length ) {
 					const typeSelector = typeSelectors[index++];
 					let { cssText } = typeSelector;
-					/* AliasName: */if ( isAliasName(cssText) ) {
+					if ( STARTS_WITH_UPPER_CASE.test(cssText) ) {
 						typeSelector.cssText = typeSelector.ns_
 							? ( cssText = abbr(cssText) )[0]==='.'//!newRegExp('i')`^${TOKEN.ident_token_start}`.test(cssText = abbr(cssText))
-								? '*'+cssText
+								? '*' + cssText
 								: cssText
 							: abbr(cssText);
 					}
@@ -4845,7 +4893,7 @@ class Sheet extends Array$1                                                     
 	}
 	
 	checkScoped (__KEY__                                                              )       {
-		checkScoped(this, this.#imports_length+this.#namespaces_length, __KEY__);
+		checkScoped(this, this.#imports_length + this.#namespaces_length, __KEY__);
 	}
 	
 	appendToken (           )                                                                                                        {
@@ -4866,7 +4914,7 @@ class Sheet extends Array$1                                                     
 					atRule = new ImportRule(this);
 				}
 				else if ( namespace(name) ) {
-					if ( this.length!==this.#imports_length+this.#namespaces_length ) { break; }
+					if ( this.length!==this.#imports_length + this.#namespaces_length ) { break; }
 					++this.#namespaces_length;
 					atRule = new AtRule(this, name);
 				}
@@ -4904,7 +4952,7 @@ class Sheet extends Array$1                                                     
 }
 freeze(Sheet.prototype);
 
-/* AliasName: */const SELECTOR = newRegExp('u')`^
+const SELECTOR = newRegExp('u')`^
 	${ASCII_WHITESPACE}*(?:
 		${AliasName}${ASCII_WHITESPACE}*
 		(?:=${ASCII_WHITESPACE}*
@@ -5105,8 +5153,8 @@ class Element extends Node {
 	constructor (localName        , attributes            , __class__                    , shadowRoot                                                             ) {
 		super();
 		if ( __class__ ) {
-			attributes.class = attributes.class
-				? __class__+' '+attributes.class
+			attributes['class'] = attributes['class']
+				? __class__+' '+attributes['class']
 				: __class__;
 		}
 		this.localName = localName;
@@ -5381,6 +5429,7 @@ const SVG_MathML = newRegExp('i')`^${groupify(`
 `.match(/\S+/g) )}$`;
 const NON_HTML = /[^\dA-Za-z]/;
 const STARTS_WITH_LETTER = /^[A-Za-z]/;
+const NS3 = /:(?:(?![A-Z_a-z])|.*?:)/s;
 
 const checkNameBeing = (xName        , attributes            , is         )       => {
 	if ( 'v-html' in attributes && ( xName==='xmp' || xName==='plaintext' || xName==='listing' ) ) {
@@ -5524,19 +5573,21 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			///	alias = _[0];
 			///	addOn = ' ' + _.slice(1).join(' ');
 			///}
-			/* AliasName: */
-			if ( isAliasName(alias) ) {
+			if ( STARTS_WITH_UPPER_CASE.test(alias) ) {
 				if ( alias in partial ) {
 					const _ = partial[alias];
-					xName = _.tagName==='_' ? alias + '_' : _.tagName;
+					xName = _.tagName==='_' ? alias + '_' : _.tagName || alias;
 					__class__ = _.class + addOn;
 				}
-				else if ( partial_with_tagName && NameIs__Key__(alias) ) {
-					xName = partial_with_tagName==='_' ? alias + '_' : partial_with_tagName;
+				else if ( partial_with_tagName!==' ' && NameIs__Key__(alias) ) {
+					xName = partial_with_tagName==='_' ? alias + '_' : partial_with_tagName || alias;
 					__class__ = `__${alias}__` + addOn;
 				}
 			}
 		}
+		
+		if ( compatible_render && NS3.test(xName) ) { compatible_render = false; }
+		
 		const notComponent = STARTS_WITH_LOWERCASE_AND_NOT.test(xName);
 		let afterColon = xName;
 		if ( notComponent ) {
@@ -5579,7 +5630,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			if ( xName==='component' ) {
 				if ( ':is.camel' in attributes ) { throw ReferenceError$1(`component :is.camel 在 Vue 2 和 3 中存在歧义，请避免使用`); }
 				if ( ':is' in attributes ) ;
-				else if ( 'is' in attributes ) { checkNameBeing(attributes.is , attributes, true); }
+				else if ( 'is' in attributes ) { checkNameBeing(attributes['is'] , attributes, true); }
 				else { throw SyntaxError$1(`component 组件不能缺少 is 属性`); }
 			}
 			else {
@@ -5654,7 +5705,10 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 								if ( ON_MODIFIER.test('on' + name.slice(1)) ) { throw Error$1(`Vue 3 中事件名不应以 capture、once、passive 结尾以免与 .capture、.once、.passive 修饰符编译的结果混淆`); }
 							}
 						}
-						if ( compatible_template && NON_ASCII_SIMPLE_PATH.test(attributes[name] ) ) { compatible_template = false; }
+						if ( compatible_template ) {
+							const value = attributes[name];
+							if ( value!==EMPTY && NON_ASCII_SIMPLE_PATH.test(value) ) { compatible_template = false; }
+						}
 					}
 					else {
 						if ( ATTR_.test(name) ) { throw ReferenceError$1(`“_”开头的 attr 可能无法按预期工作`); }
@@ -5687,6 +5741,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 								else { shadowRoot = { name, along: Shadow(name) }; }
 							}
 							else {
+								if ( name.includes('.') && !name.includes('[') ) { throw SyntaxError$1(`v-slot 名字面量中不能含有“.”，因为这会造成解析歧义`); }
 								const value = attributes[name];
 								if ( isTemplate ) {
 									if ( !parentNode_XName ) { throw Error$1(`插槽所在的 template 必须位于组件标签内`); }
@@ -5834,7 +5889,7 @@ class Content extends Node {
 		delimiters_0 = _.delimiters_0;
 		delimiters_1 = _.delimiters_1;
 		partial = _.abbr ?? null;
-		partial_with_tagName = partial?.['']?.tagName ?? '';
+		partial_with_tagName = partial?.['']?.tagName ?? ' ';
 		html = inner;
 		index = 0;
 		compatible_template = true;
@@ -5902,7 +5957,7 @@ class Content extends Node {
 
 const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
-/* AliasName: */const PARTIAL = newRegExp('u')`^
+const PARTIAL = newRegExp('u')`^
 	${ASCII_WHITESPACE}*(?:
 		${AliasName}${ASCII_WHITESPACE}*
 		=${ASCII_WHITESPACE}*
@@ -5911,7 +5966,7 @@ const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 		${ASCII_WHITESPACE}*;
 	${ASCII_WHITESPACE}*)*
 $`;
-/* AliasName: */const PARTIAL_WITH_TAG = newRegExp('u')`^
+const PARTIAL_WITH_TAG = newRegExp('u')`^
 	${ASCII_WHITESPACE}*(?:
 		${AliasName}${ASCII_WHITESPACE}*;
 	${ASCII_WHITESPACE}*)*
@@ -5976,12 +6031,12 @@ class Template extends Block {
 		for ( const name in attributes ) {
 			if ( name.startsWith('.abbr:') ) {
 				const tagName = name.slice(6);
-				if ( tagName!=='_' && !isLocalOrComponentNameDotable(tagName) ) { throw SyntaxError$1(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
+				if ( tagName && tagName!=='_' && !isLocalOrComponentNameDotable(tagName) ) { throw SyntaxError$1(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
 				const abbr = _this.abbr ?? ( _this.abbr = create$1(NULL)            );
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError$1(`template 功能块的无值“.abbr:*”属性只能有一个`); }
-					abbr[''] = { tagName };
+					abbr[''] = { tagName, class: '' };
 				}
 				else {
 					if ( !PARTIAL_WITH_TAG.test(literal) ) { throw SyntaxError$1(`template 功能块的“${name}”属性语法错误：\n${literal}`); }
@@ -6061,7 +6116,7 @@ class CustomBlock extends Block {
 		else {
 			if ( ESCAPABLE_RAW_TEXT_ELEMENTS.test(blockName) ) { throw SyntaxError$1(`.vue 文件中的自定义块尚没有明确的语义约定，请避免使用 textarea / title 标签及其大小写变种`); }
 			if ( TAG_LIKE.test(inner) ) { throw SyntaxError$1(`.vue 文件的 ${blockName} 自定义块中，存在标签语法标记，这可能模糊正常结束判定的结果`); }
-			return super(blockName, attributes, false, inner, new RegExp$1(`^</${blockName}${TAG_EMIT_CHAR}`, 'i'))                   ;
+			return super(blockName, attributes, false, inner, RegExp$1(`^</${blockName}${TAG_EMIT_CHAR}`, 'i'))                   ;
 		}
 	}
 	
@@ -6089,10 +6144,6 @@ const parseComponent = (sfc     , vue        )       => {
 			
 			const tag = Tag(vue, index);
 			switch ( tag.type ) {
-				case ELEMENT_START:
-				case ELEMENT_SELF_CLOSING:
-					index = tag.end;
-					break;
 				case COMMENT:
 					index = tag.end;
 					continue;
@@ -6117,18 +6168,21 @@ const parseComponent = (sfc     , vue        )       => {
 					break;
 			}
 			
+			let INDEX = index;
+			index = tag.end;
+			
 			let inner                    ;
 			if ( tag.type===ELEMENT_START ) {
 				if ( index===length ) { throw SyntaxError$1(`开始标签后缺少结束标签“</${blockName}>”`); }
 				if ( vue[index]===eol_0 ) {
-					const innerStart = index+eol_length;
-					const endTagStart = vue.indexOf(`${eol}</${blockName}>`, index)+eol_length;
+					const innerStart = index + eol_length;
+					const endTagStart = vue.indexOf(`${eol}</${blockName}>`, index) + eol_length;
 					if ( endTagStart<eol_length ) { throw SyntaxError$1(vue.includes(`</${blockName}>`, index) ? '开始标签后紧跟换行则启用多行模式，结束标签应在后续某行的行首' : `开始标签后缺少结束标签“</${blockName}>”`); }
-					index = endTagStart+3+blockName.length;
-					inner = endTagStart===innerStart || endTagStart-eol_length===innerStart ? '' : vue.slice(innerStart, endTagStart-eol_length);
+					index = endTagStart + 3 + blockName.length;
+					inner = endTagStart===innerStart || endTagStart - eol_length===innerStart ? '' : vue.slice(innerStart, endTagStart - eol_length);
 					if ( blockName!=='style' ) {
 						inner =
-							checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '')+
+							checkNewline(vue.slice(0, innerStart)).replace(NON_EOL, '') +
 							inner;
 					}
 				}
@@ -6137,17 +6191,19 @@ const parseComponent = (sfc     , vue        )       => {
 					index = vue.indexOf(eol_0, index);
 					if ( index<0 ) { index = length; }
 					if ( !vue.endsWith(`</${blockName}>`, index) ) { throw SyntaxError$1(`开始标签后不紧跟换行则启用单行块模式，该行应以对应的结束标签结尾`); }
-					inner = vue.slice(innerStart, index-3-blockName.length);
+					inner = vue.slice(innerStart, index - 3 - blockName.length);
 					if ( blockName!=='style' ) {
 						const previousLineEnd = vue.lastIndexOf(eol_0, innerStart);
-						const lastLineStart = previousLineEnd<0 ? 0 : previousLineEnd+eol_length;
+						const lastLineStart = previousLineEnd<0 ? 0 : previousLineEnd + eol_length;
 						inner =
-							checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '')+
-							checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB$1, ' ')+
+							checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '') +
+							checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB$1, ' ') +
 							inner;
 					}
 				}
 			}
+			
+			[ index, INDEX ] = [ INDEX, index ];
 			
 			if ( blockName==='template' ) { sfc.template = new Template(tag.attributes , inner); }
 			else if ( blockName==='style' ) { sfc.styles[sfc.styles.length] = new Style(tag.attributes , inner); }
@@ -6163,6 +6219,8 @@ const parseComponent = (sfc     , vue        )       => {
 				}
 			}
 			else { sfc.customBlocks[sfc.customBlocks.length] = new CustomBlock(blockName, tag.attributes , inner); }
+			
+			index = INDEX;
 			
 			if ( index!==length ) {
 				if ( vue[index]===eol_0 ) { index += eol_length; }
@@ -6401,7 +6459,7 @@ const VisibleStringLiteral = (id        )         => {
 	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` ) + literal.slice(2) : literal;
 };
 
-const __KEY__ = newRegExp('i')`^__${KEYS}__$`;
+const __KEY__ = newRegExp`^__${KEYS}__$`;
 
 function * From (tab        , mode                         , styles         , template                 , from               , eol        ) {
 	
@@ -6441,12 +6499,12 @@ function * From (tab        , mode                         , styles         , te
 			const { innerHTML } = template;
 			const __ = compatible_template ? '' : '//';
 			const literal = { eol, tab };
-			const { render, staticRenderFns } = Render2(innerHTML, mode, literal);
 			yield `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
 				yield `export ${Render3(innerHTML, mode, literal, _(template))}${eol}`;/// (); import!
 			}
 			if ( compatible_render$1 ) {
+				const { render, staticRenderFns } = Render2(innerHTML, mode, literal);
 				yield `export ${mode} render = /*#__PURE__*/${mode==='var' ? `function (render) { return render._withStripped = render; }` : `( render => render._withStripped = render )`}(${render});${eol}`;
 				yield staticRenderFns.length
 					? `export ${mode} staticRenderFns = [${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}];${eol}`
@@ -6493,7 +6551,6 @@ function * From (tab        , mode                         , styles         , te
 	if ( template ) {
 		const { innerHTML } = template;
 		const __ = compatible_template ? '' : '//';
-		const { render, staticRenderFns } = Render2(innerHTML, mode, null);
 		const lines = [];
 		let lines_length = 0;
 		for ( const line of template.content.beautify(tab) ) { lines[lines_length++] = `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`; }
@@ -6504,6 +6561,7 @@ function * From (tab        , mode                         , styles         , te
 			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
 		}
 		if ( compatible_render$1 ) {
+			const { render, staticRenderFns } = Render2(innerHTML, mode, null);
 			yield `export ${mode} render = /*#__PURE__*/_Render(${render}, ${scope});${eol}`;
 			yield staticRenderFns.length
 				? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}], ${scope});${eol}`
@@ -6692,7 +6750,7 @@ class SFC {
 }
 freeze(SFC.prototype);
 
-const _tsd = 'declare module \'*?j-vue=\' {\n	export const style :string;\n	export const styles :string[];\n	export const template :string;\n	export const Render :jVue.Render3Constructor;\n	export const render :jVue.Render2;\n	export const staticRenderFns :jVue.Render2[];\n	\n	import type * as jVue from \'j-vue\';\n}\n\ndeclare module \'*?j-vue\' {\n	export { Identifier, Scope, Style, remove, Component, mixin, prop } from \'j-vue\';\n	\n	export const scopeFunction :jVue.Scope<void>;\n	export const scopeObject :jVue.Scope<string>;\n	export const template :string;\n	export const Render :jVue.Render3Constructor;\n	export const render :jVue.Render2;\n	export const staticRenderFns :jVue.Render2[];\n	\n	import type * as jVue from \'j-vue\';\n}\n\ndeclare module \'j-vue\' {\n	export type _Vue = Vue$;\n	export type {\n		SubComponent as _Component,\n		ObjectAPI as _ObjectAPI,\n		Vue3 as _Vue3,\n	};\n	\n	export const version :string;\n	\n	export function Identifier () :string;\n	\n	export const Scope :{\n		<Keys extends string> (this :void | Scope<string | void> | readonly Scope<string | void>[], keys :string) :Scope<Keys>;\n		                      (this :void | Scope<string | void> | readonly Scope<string | void>[]              ) :Scope<void>;\n		readonly prototype :null;\n	};\n	export type Scope<Keys extends string | void> = (\n		Keys extends string ? { readonly [Key in Keys] :string } :\n		Keys extends void ? { (...args :any) :string; readonly prototype? :{ readonly [key :string] :string }; } :\n	never ) & {\n		readonly $ :<T extends Scope<string | void>> (this :T, css? :string, media? :string) => T;\n		readonly [_]? :(string :string) => string;\n		readonly _? :(string :string) => string;\n	};\n	const _ :unique symbol;\n	\n	export function Template (html :string, scope :Scope<string | void>) :string;\n	export function Render (code :string, scope? :Scope<string | void>) :Render2 | Render3Constructor;\n	export function StaticRenderFns (codes :readonly string[], scope? :Scope<string | void>) :Render2[];\n	export type Render3Constructor = {\n		new (Vue3 :Vue3) :Render3;\n		readonly shadow? :string;\n		readonly sheet? :{ readonly [Ref in string] :(this :Vue, self :Vue) => string };\n	};\n	export type Render3 = (this :Vue) => VNode | ( VNode | string )[];\n	export type Render2 = (this :Vue, h :$createElement) => VNode;\n	type $createElement = {\n		(this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[]) :VNode;\n		(this :void, type :string | NonArray,                          children  :( VNode | string )[]) :VNode;\n	};\n	type VNode = NonArray;\n	type NonArray<T extends object = object> = { readonly [index :number] :never } & T;\n	\n	export function Style (css? :string, scope? :Scope<string | void>) :HTMLStyleElement;\n	export function remove (style :HTMLStyleElement) :typeof remove;\n	\n	export abstract class Component<Sub extends SubComponent<Sub>> extends SubComponent<Sub> { protected constructor () }\n	export function mixin<Mixins extends object = object> (...mixins :( ClassAPI | ObjectAPI )[]) :\n		{ [Name in keyof typeof Component] :typeof Component[Name] } &\n		{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &\n		{ new<Sub extends Component<Sub>> () :\n			Component<Sub> &\n			{ [Name in OwnKeys<Mixins>] :Mixins[Name] }\n		};\n	const _mixins :unique symbol;\n	\n	export const prop :Readonly<{\n		beforeMount (el :Element, binding :{ arg? :any, value? :any }) :void,\n		bind (el :Element, binding :{ arg? :any, value? :any }) :void,\n		\n		updated (el :Element, binding :{ arg? :any, value? :any }) :void,\n		componentUpdated (el :Element, binding :{ arg? :any, value? :any }) :void,\n	}>;\n	\n	export { exports as default };\n	const exports :Readonly<{\n		version :typeof version,\n		Identifier :typeof Identifier,\n		Scope :typeof Scope,\n		Template :typeof Template,\n		Render :typeof Render,\n		StaticRenderFns :typeof StaticRenderFns,\n		Style :typeof Style,\n		remove :typeof remove,\n		Component :typeof Component,\n		mixin :typeof mixin,\n		prop :typeof prop,\n		default :typeof exports,\n	}>;\n	\n	type ClassAPI = typeof AnyComponent;\n	abstract class AnyComponent<Sub extends SubComponent<Sub>> extends SubComponent<Sub> {\n		protected constructor ();\n		get _data () :any;\n		get _inject () :any;\n		get _props () :any;\n		get _directives () :any;\n	}\n	abstract class SubComponent<Sub extends Vue> extends Vue {\n		\n		protected _beforeCreated? () :void | Promise<void>;\n		protected _created? () :void | Promise<void>;\n		protected _beforeMount? () :void | Promise<void>;\n		protected _mounted? () :void | Promise<void>;\n		protected _beforeUpdate? () :void | Promise<void>;\n		protected _updated? () :void | Promise<void>;\n		protected _activated? () :void | Promise<void>;\n		protected _deactivated? () :void | Promise<void>;\n		protected _beforeUnmount? () :void | Promise<void>;\n		protected _unmounted? () :void | Promise<void>;\n		/**@deprecated*/\n		protected _beforeDestroy? () :void | Promise<void>;\n		/**@deprecated*/\n		protected _destroyed? () :void | Promise<void>;\n		\n		protected _render? () :VNode | ( VNode | string )[];\n		protected _provide? () :{ [key :string] :unknown };\n		\n		get _data () :void | readonly OwnNames<Sub>[];\n		get _inject () :void | Inject<Sub>;\n		get _props () :void | Props<Sub>;\n		get _directives () :void | Directives<Sub>;\n		\n		static readonly data :void;\n		static readonly directives :void | Directives<Vue>;\n		static readonly provide :void | { [key :string] :unknown };\n		\n		static render :void | Render2 | Render3;\n		\n		static readonly Render :void | Render3Constructor;\n		static readonly staticRenderFns :void | readonly Render2[];\n		static readonly template :void | string;\n		static readonly inheritAttrs :void | boolean;\n		static readonly components :void | { readonly [name :string] :ClassAPI | ObjectAPI };\n		static readonly emits :void | Emits;\n		\n		static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{\n			readonly [Error in\n				| \'proto\'\n				| \'compile_name\'\n				| \'compile_props\'\n				| \'compile_emits\'\n				| \'compile_is\'\n				| \'compile_layout\'\n				| \'compile_reserved\'\n				| \'compile_redefined\'\n				| \'compile_overwrite\'\n				| \'compile_type\'\n				| \'compile_symbol\'\n				| \'compile_shadow\'\n				| \'runtime_shadow\'\n				| \'runtime_redefined\'\n				| \'runtime_symbol\'\n				| \'runtime_reserved\'\n				| \'runtime_enumerable\'\n				| \'runtime_data\'\n			]? :string\n		}) => ObjectAPI;\n		protected constructor (Vue3? :Vue3);\n		\n		private _Render :void;\n		\n		private _staticRenderFns :void;\n		private _template :void;\n		private _inheritAttrs :void;\n		private _components :void;\n		private _emits :void;\n		\n		private _mixins :void;\n		private _extends :void;\n		private _watch :void;\n		private _methods :void;\n		private _computed :void;\n		private _setup :void;\n		\n		private _delimiters :void;\n		\n		/**@deprecated*/\n		private _filters :void;\n		/**@deprecated*/\n		private _comments :void;\n		/**@deprecated*/\n		private _functional :void;\n		/**@deprecated*/\n		private _propsData :void;\n		/**@deprecated*/\n		private _model :void;\n		\n		private static readonly beforeCreated :void;\n		private static readonly created :void;\n		private static readonly beforeMount :void;\n		private static readonly mounted :void;\n		private static readonly beforeUpdate :void;\n		private static readonly updated :void;\n		private static readonly activated :void;\n		private static readonly deactivated :void;\n		private static readonly beforeUnmount :void;\n		private static readonly unmounted :void;\n		/**@deprecated*/\n		private static readonly beforeDestroy :void;\n		/**@deprecated*/\n		private static readonly destroyed :void;\n		\n		private static readonly inject :void;\n		private static readonly props :void;\n		\n		private static readonly mixins :void;\n		private static readonly extends :void;\n		private static readonly watch :void;\n		private static readonly methods :void;\n		private static readonly computed :void;\n		private static readonly setup :void;\n		\n		private static readonly delimiters :void;\n		\n		/**@deprecated*/\n		private static readonly filters :void;\n		/**@deprecated*/\n		private static readonly comments :void;\n		/**@deprecated*/\n		private static readonly functional :void;\n		/**@deprecated*/\n		private static readonly propsData :void;\n		/**@deprecated*/\n		private static readonly model :void;\n		\n	}\n	\n	type OwnNames<T> = Extract<OwnKeys<T>, string>;\n	type OwnKeys<T> = Exclude<keyof T,\n		\'_beforeCreated\' | \'_created\' | \'_beforeMount\' | \'_mounted\' | \'_beforeUpdate\' | \'_updated\' | \'_activated\' | \'_deactivated\' | \'_beforeUnmount\' | \'_unmounted\' | \'_beforeDestroy\' | \'_destroyed\' |\n		\'_render\' | \'_provide\' |\n		\'_inject\' | \'_props\' | \'_directives\' |\n		\'_Render\' |\n		\'_staticRenderFns\' | \'_template\' | \'_inheritAttrs\' | \'_components\' | \'_emits\' | \'_mixins\' |\n		\'_extends\' | \'_data\' | \'_watch\' | \'_methods\' | \'_computed\' | \'_setup\' |\n		\'_delimiters\' |\n		\'_filters\' | \'_comments\' | \'_functional\' | \'_propsData\' | \'_model\' |\n		\'_\' |\n		\'$emit\' |\n		\'$watch\' |\n		\'$nextTick\' |\n		\'$forceUpdate\' |\n		\'$scopedSlots\' | \'$options\' | \'$parent\' | \'$slots\' | \'$attrs\' | \'$refs\' | \'$root\' |\n		\'$el\' |\n		\'$data\' | \'$props\' |\n		\'$createElement\' |\n		\'$children\' | \'$listeners\' | \'$destroy\' | \'$delete\' | \'$mount\' | \'$once\' | \'$set\' | \'$off\' | \'$on\' |\n		\'$\'\n		>;\n	\n	const Vue :{ new () :Vue };\n	type Vue = Readonly<Vue_>;\n	abstract class Vue_ extends Vue$ { private _? :never }\n	abstract class Vue$ {\n		\n		$emit (this :this, event :string, ...args :unknown[]) :this;\n		\n		$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		\n		$nextTick (this :this, callback :(this :this) => void | Promise<void>) :void;\n		$nextTick () :Promise<void>;\n		\n		$forceUpdate (this :this) :void;\n		\n		$options :Readonly<ObjectAPI>;\n		$scopedSlots? :ScopedSlots;\n		$slots? :ScopedSlots;\n		$parent? :Vue;\n		$root :Vue;\n		$attrs :{ readonly [name :string] :unknown };\n		$refs :{ readonly [name :string] :unknown };\n		$el? :null | Element | Comment | Text;\n		\n		/**@deprecated*/\n		$createElement? :$createElement;\n		\n		/**@deprecated*/\n		private $isServer? :never;\n		/**@deprecated*/\n		private $children? :never;\n		/**@deprecated*/\n		private $listeners? :never;\n		/**@deprecated*/\n		private $destroy? :never;\n		/**@deprecated*/\n		private $delete? :never;\n		/**@deprecated*/\n		private $mount? :never;\n		/**@deprecated*/\n		private $once? :never;\n		/**@deprecated*/\n		private $set? :never;\n		/**@deprecated*/\n		private $off? :never;\n		/**@deprecated*/\n		private $on? :never;\n		\n		private $props? :never;\n		private $data? :never;\n		private $? :never;\n		\n	}\n	\n	type Props<This extends Vue> =\n		readonly Exclude<OwnNames<This>, \'key\' | \'ref\'>[] |\n		NonArray<{\n			[Key in Exclude<OwnNames<This>, \'key\' | \'ref\'>]? :\n			ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |\n			NonArray<{\n				type? :ConstructorType<This[Key]> | ConstructorType<This[Key]>[],\n				validator? (value :unknown) :value is This[Key],\n			} & ( {\n				default? :This[Key] extends object ? { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] } : This[Key] | { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] },\n				required? :false,\n			} | {\n				default? :never,\n				required? :boolean,\n			})>\n		}>;\n	type ConstructorType<T> = {\n		new (...args :any) :\n			T extends boolean ? Boolean :\n			T extends number ? Number :\n			T extends string ? String :\n			T extends symbol ? Symbol :\n			T extends bigint ? BigInt :\n			T\n	};\n	\n	type Inject<This extends Vue> =\n		readonly OwnNames<This>[] |\n		NonArray<{\n			[Key in OwnKeys<This>]? :\n			string | symbol |\n			{\n				from? :string | symbol,\n				default? :This[Key] extends object ? { (this :void) :This[Key] } : This[Key] | { (this :void) :This[Key] },\n			}\n		}>;\n	\n	type Emits =\n		readonly string[] |\n		NonArray<{ [event :string] :null | { (this :void, ...args :readonly unknown[]) :boolean } }>;\n	\n	type Directives<This extends Vue> = { [name :string] :Directive<This> };\n	type Directive<This extends Vue> =\n		{\n			(\n				this :void,\n				el :Element,\n				binding :{\n					/**@deprecated*/\n					readonly expression? :undefined,\n					/**@deprecated*/\n					readonly name? :undefined,\n					readonly instance :This,\n					readonly value? :unknown,\n					readonly oldValue? :unknown,\n					readonly arg? :unknown,\n					readonly modifiers :{ readonly [Modifier in string]? :true },\n					readonly dir :Directive<This>,\n				} | {\n					/**@deprecated*/\n					readonly expression? :string,\n					/**@deprecated*/\n					readonly name :string,\n					readonly instance? :undefined,\n					readonly value? :unknown,\n					readonly oldValue? :unknown,\n					readonly arg? :unknown,\n					readonly modifiers :{ readonly [Modifier in string]? :true },\n					readonly dir? :undefined,\n				},\n				vNode :VNode & { /**@deprecated*/ readonly context? :This },\n				previousVNode? :VNode & { /**@deprecated*/ readonly context? :This },\n			) :void | Promise<void>\n		} | {\n			[Hook in \'beforeMount\' | \'mounted\'  | \'beforeUpdate\' | \'updated\'                     | \'beforeUnmount\' | \'unmounted\']? :{\n				(\n					this :void,\n					el :Element,\n					binding :{\n						/**@deprecated*/\n						readonly expression? :void,\n						/**@deprecated*/\n						readonly name? :void,\n						readonly instance :This,\n						readonly value? :unknown,\n						readonly oldValue? :Hook extends \'beforeUpdate\' | \'updated\' ? unknown : void,\n						readonly arg? :unknown,\n						readonly modifiers :{ readonly [Modifier in string]? :true },\n						readonly dir :Directive<This>,\n					},\n					vNode :VNode & { /**@deprecated*/ readonly context? :void },\n					previousVNode :Hook extends \'beforeUpdate\' | \'updated\' ? VNode & { /**@deprecated*/ readonly context? :void } : void,\n				) :void | Promise<void>\n			}\n		} & {\n			/**@deprecated*/\n			[Hook in \'bind\'        | \'inserted\'                  | \'update\'  | \'componentUpdated\'                  | \'unbind\'   ]? :{\n				(\n					this :void,\n					el :Element,\n					binding :{\n						/**@deprecated*/\n						readonly expression? :string,\n						/**@deprecated*/\n						readonly name :string,\n						readonly instance? :void,\n						readonly value? :unknown,\n						readonly oldValue? :Hook extends \'update\' | \'componentUpdated\' ? unknown : void,\n						readonly arg? :unknown,\n						readonly modifiers :{ readonly [Modifier in string]? :true },\n						readonly dir? :void,\n					},\n					vNode :VNode & { /**@deprecated*/ readonly context :This },\n					previousVNode :Hook extends \'update\' | \'componentUpdated\' ? VNode & { /**@deprecated*/ readonly context :This } : void,\n				) :void | Promise<void>\n			}\n		};\n	\n	type ScopedSlots = {\n		readonly [Name in string]? :(this :void, arg :unknown) => readonly VNode[] | undefined\n	};\n	\n	interface ObjectAPI {\n		\n		inheritAttrs? :boolean,\n		template? :string,\n		render? :Render2 | Render3,\n		staticRenderFns? :Render2[],\n		directives? :Directives<Vue>,\n		components? :{ [name :string] :ObjectAPI },\n		provide? :\n			{ [key :string] :unknown } |\n			{ (this :Vue) :{ [key :string] :unknown } },\n		emits? :Emits,\n		\n		inject? :Inject<Vue>,\n		props? :Props<Vue>,\n		\n		/**@deprecated*/\n		filters? :void,\n		/**@deprecated*/\n		comments? :void,\n		/**@deprecated*/\n		functional? :void,\n		/**@deprecated*/\n		propsData? :void,\n		/**@deprecated*/\n		model? :void,\n		\n		beforeCreated? (this :Vue) :void | Promise<void>,\n		created? (this :Vue) :void | Promise<void>,\n		beforeMount? (this :Vue) :void | Promise<void>,\n		mounted? (this :Vue) :void | Promise<void>,\n		beforeUpdate? (this :Vue) :void | Promise<void>,\n		updated? (this :Vue) :void | Promise<void>,\n		activated? (this :Vue) :void | Promise<void>,\n		deactivated? (this :Vue) :void | Promise<void>,\n		beforeUnmount? (this :Vue) :void | Promise<void>,\n		unmounted? (this :Vue) :void | Promise<void>,\n		/**@deprecated*/\n		beforeDestroy? (this :Vue) :void | Promise<void>,\n		/**@deprecated*/\n		destroyed? (this :Vue) :void | Promise<void>,\n		\n		delimiters? :[ string, string ],\n		\n		extends? :ObjectAPI,\n		data? (this :Vue, self :Vue) :{ [name :string] :unknown },\n		watch? :{\n			[exp :string] :\n				{ <Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void> } |\n				{\n					handler<Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void>,\n					deep? :boolean,\n					immediate? :boolean,\n					flush? :\'pre\' | \'post\' | \'sync\',\n				}\n		},\n		methods? :{ [name :string] :{ (this :Vue, ...args :unknown[]) :any } },\n		computed? :{\n			[name :string] :\n				{ (this :Vue, self :Vue) :unknown } |\n				{\n					get? (this :Vue, self :Vue) :unknown,\n					set? (this :Vue, value :unknown) :void | Promise<void>,\n				}\n		},\n		setup? (\n			this :void,\n			props :{ readonly [name :string] :unknown },\n			{} :{\n				readonly attrs :{ readonly [name :string] :unknown },\n				readonly slots :ScopedSlots,\n				readonly emit :(this :void, event :string, ...args :unknown[]) => void,\n			},\n		) :{ [name :string] :unknown } | Render3,\n		\n		mixins? :ObjectAPI[],\n		\n	}\n	\n	type Vue3 = Readonly<{\n		h (this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined } | { [name :string] :{ (this :void, arg :unknown) :VNode[] | undefined } }) :VNode;\n		h (this :void, type :string | NonArray,                          children  :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined }                                                                          ) :VNode;\n	} & { [API in\n		| \'BaseTransition\'\n		| \'Comment\'\n		| \'Fragment\'\n		| \'KeepAlive\'\n		| \'Static\'\n		| \'Suspense\'\n		| \'Teleport\'\n		| \'Text\'\n		| \'Transition\'\n		| \'TransitionGroup\'\n		| \'callWithAsyncErrorHandling\'\n		| \'callWithErrorHandling\'\n		| \'camelize\'\n		| \'capitalize\'\n		| \'cloneVNode\'\n		| \'compile\'\n		| \'computed\'\n		| \'createApp\'\n		| \'createBlock\'\n		| \'createCommentVNode\'\n		| \'createHydrationRenderer\'\n		| \'createRenderer\'\n		| \'createSSRApp\'\n		| \'createSlots\'\n		| \'createStaticVNode\'\n		| \'createTextVNode\'\n		| \'createVNode\'\n		| \'customRef\'\n		| \'defineAsyncComponent\'\n		| \'defineComponent\'\n		| \'getCurrentInstance\'\n		| \'getTransitionRawChildren\'\n		| \'handleError\'\n		| \'hydrate\'\n		| \'initCustomFormatter\'\n		| \'inject\'\n		| \'isProxy\'\n		| \'isReactive\'\n		| \'isReadonly\'\n		| \'isRef\'\n		| \'isVNode\'\n		| \'markRaw\'\n		| \'mergeProps\'\n		| \'nextTick\'\n		| \'onActivated\'\n		| \'onBeforeMount\'\n		| \'onBeforeUnmount\'\n		| \'onBeforeUpdate\'\n		| \'onDeactivated\'\n		| \'onErrorCaptured\'\n		| \'onMounted\'\n		| \'onRenderTracked\'\n		| \'onRenderTriggered\'\n		| \'onUnmounted\'\n		| \'onUpdated\'\n		| \'openBlock\'\n		| \'popScopeId\'\n		| \'provide\'\n		| \'proxyRefs\'\n		| \'pushScopeId\'\n		| \'queuePostFlushCb\'\n		| \'reactive\'\n		| \'readonly\'\n		| \'ref\'\n		| \'registerRuntimeCompiler\'\n		| \'render\'\n		| \'renderList\'\n		| \'renderSlot\'\n		| \'resolveComponent\'\n		| \'resolveDirective\'\n		| \'resolveDynamicComponent\'\n		| \'resolveTransitionHooks\'\n		| \'setBlockTracking\'\n		| \'setDevtoolsHook\'\n		| \'setTransitionHooks\'\n		| \'shallowReactive\'\n		| \'shallowReadonly\'\n		| \'shallowRef\'\n		| \'ssrContextKey\'\n		| \'ssrUtils\'\n		| \'toDisplayString\'\n		| \'toHandlers\'\n		| \'toRaw\'\n		| \'toRef\'\n		| \'toRefs\'\n		| \'transformVNodeArgs\'\n		| \'triggerRef\'\n		| \'unref\'\n		| \'useCssModule\'\n		| \'useCssVars\'\n		| \'useSSRContext\'\n		| \'useTransitionState\'\n		| \'vModelCheckbox\'\n		| \'vModelDynamic\'\n		| \'vModelRadio\'\n		| \'vModelSelect\'\n		| \'vModelText\'\n		| \'vShow\'\n		| \'version\'\n		| \'warn\'\n		| \'watch\'\n		| \'watchEffect\'\n		| \'withCtx\'\n		| \'withDirectives\'\n		| \'withKeys\'\n		| \'withModifiers\'\n		| \'withScopeId\'\n	] :any }>;\n	\n}\n';
+const _tsd = 'declare module \'*?j-vue=\' {\n	export const style :string;\n	export const styles :string[];\n	export const template :string;\n	export const Render :jVue.Render3Constructor;\n	export const render :jVue.Render2;\n	export const staticRenderFns :jVue.Render2[];\n	\n	import type * as jVue from \'j-vue\';\n}\n\ndeclare module \'*?j-vue\' {\n	export { Identifier, Scope, Style, remove, Component, mixin, prop } from \'j-vue\';\n	\n	export const scopeFunction :jVue.Scope<void>;\n	export const scopeObject :jVue.Scope<string>;\n	export const template :string;\n	export const Render :jVue.Render3Constructor;\n	export const render :jVue.Render2;\n	export const staticRenderFns :jVue.Render2[];\n	\n	import type * as jVue from \'j-vue\';\n}\n\ndeclare module \'j-vue\' {\n	export type _Vue = Vue$;\n	export type {\n		SubComponent as _Component,\n		ObjectAPI as _ObjectAPI,\n	};\n	\n	export const version :string;\n	\n	export function Identifier () :string;\n	\n	export const Scope :{\n		<Keys extends string> (this :void | Scope<string | void> | readonly Scope<string | void>[], keys :string) :Scope<Keys>;\n		                      (this :void | Scope<string | void> | readonly Scope<string | void>[]              ) :Scope<void>;\n		readonly prototype :null;\n	};\n	export type Scope<Keys extends string | void> = (\n		Keys extends string ? { readonly [Key in Keys] :string } :\n		Keys extends void ? { (...args :any) :string; readonly prototype? :{ readonly [key :string] :string }; } :\n	never ) & {\n		readonly $ :<T extends Scope<string | void>> (this :T, css? :string, media? :string) => T;\n		readonly [_]? :(string :string) => string;\n		readonly _? :(string :string) => string;\n	};\n	const _ :unique symbol;\n	\n	export function Template (html :string, scope :Scope<string | void>) :string;\n	export function Render (code :string, scope? :Scope<string | void>) :Render2 | Render3Constructor;\n	export function StaticRenderFns (codes :readonly string[], scope? :Scope<string | void>) :Render2[];\n	export type Render3Constructor = {\n		new (Vue3 :Vue3) :Render3;\n		readonly shadow? :string;\n		readonly sheet? :{ readonly [Ref in string] :(this :Vue, self :Vue) => string };\n	};\n	export type Render3 = { (this :Vue) :VNode | ( VNode | string )[] };\n	export type Render2 = { (this :Vue, h :$createElement) :VNode, _withStripped? :unknown };\n	type $createElement = {\n		(this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[]) :VNode;\n		(this :void, type :string | NonArray,                          children  :( VNode | string )[]) :VNode;\n	};\n	type VNode = NonArray;\n	type NonArray<T extends object = object> = { readonly [index :number] :never } & T;\n	\n	export function Style (css? :string, scope? :Scope<string | void>) :HTMLStyleElement;\n	export function remove (style :HTMLStyleElement) :typeof remove;\n	\n	export abstract class Component<Sub extends SubComponent<Sub>> extends SubComponent<Sub> { protected constructor () }\n	export function mixin<Mixins extends object = object> (...mixins :( ClassAPI | ObjectAPI )[]) :\n		{ [Name in keyof typeof Component] :typeof Component[Name] } &\n		{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &\n		{ new<Sub extends Component<Sub>> () :\n			Component<Sub> &\n			{ [Name in OwnKeys<Mixins>] :Mixins[Name] }\n		};\n	const _mixins :unique symbol;\n	\n	export const prop :Readonly<{\n		beforeMount (el :Element, binding :{ arg? :any, value? :any }) :void,\n		bind (el :Element, binding :{ arg? :any, value? :any }) :void,\n		\n		updated (el :Element, binding :{ arg? :any, value? :any }) :void,\n		componentUpdated (el :Element, binding :{ arg? :any, value? :any }) :void,\n	}>;\n	\n	export { exports as default };\n	const exports :Readonly<{\n		version :typeof version,\n		Identifier :typeof Identifier,\n		Scope :typeof Scope,\n		Template :typeof Template,\n		Render :typeof Render,\n		StaticRenderFns :typeof StaticRenderFns,\n		Style :typeof Style,\n		remove :typeof remove,\n		Component :typeof Component,\n		mixin :typeof mixin,\n		prop :typeof prop,\n		default :typeof exports,\n	}>;\n	\n	type ClassAPI = typeof AnyComponent;\n	abstract class AnyComponent<Sub extends SubComponent<Sub>> extends SubComponent<Sub> {\n		protected constructor ();\n		get _data () :any;\n		get _inject () :any;\n		get _props () :any;\n		get _directives () :any;\n	}\n	abstract class SubComponent<Sub extends Vue> extends Vue {\n		\n		protected _beforeCreated? () :void | Promise<void>;\n		protected _created? () :void | Promise<void>;\n		protected _beforeMount? () :void | Promise<void>;\n		protected _mounted? () :void | Promise<void>;\n		protected _beforeUpdate? () :void | Promise<void>;\n		protected _updated? () :void | Promise<void>;\n		protected _activated? () :void | Promise<void>;\n		protected _deactivated? () :void | Promise<void>;\n		protected _beforeUnmount? () :void | Promise<void>;\n		protected _unmounted? () :void | Promise<void>;\n		/**@deprecated*/\n		protected _beforeDestroy? () :void | Promise<void>;\n		/**@deprecated*/\n		protected _destroyed? () :void | Promise<void>;\n		\n		protected _render? () :VNode | ( VNode | string )[];\n		protected _provide? () :{ [key :string] :unknown };\n		\n		get _data () :void | readonly OwnNames<Sub>[];\n		get _inject () :void | Inject<Sub>;\n		get _props () :void | Props<Sub>;\n		get _directives () :void | Directives<Sub>;\n		\n		static readonly data :void;\n		static readonly directives :void | Directives<Vue>;\n		static readonly provide :void | { [key :string] :unknown };\n		\n		static render :void | Render2 | Render3;\n		\n		static readonly Render :void | Render3Constructor;\n		static readonly staticRenderFns :void | readonly Render2[];\n		static readonly template :void | string;\n		static readonly inheritAttrs :void | boolean;\n		static readonly components :void | { readonly [name :string] :ClassAPI | ObjectAPI };\n		static readonly emits :void | Emits;\n		\n		static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{\n			readonly [Error in\n				| \'proto\'\n				| \'compile_name\'\n				| \'compile_props\'\n				| \'compile_emits\'\n				| \'compile_is\'\n				| \'compile_layout\'\n				| \'compile_reserved\'\n				| \'compile_redefined\'\n				| \'compile_overwrite\'\n				| \'compile_type\'\n				| \'compile_symbol\'\n				| \'compile_shadow\'\n				| \'runtime_shadow\'\n				| \'runtime_redefined\'\n				| \'runtime_symbol\'\n				| \'runtime_reserved\'\n				| \'runtime_enumerable\'\n				| \'runtime_data\'\n			]? :string\n		}) => ObjectAPI;\n		protected constructor (Vue3? :Vue3);\n		\n		private _Render :void;\n		\n		private _staticRenderFns :void;\n		private _template :void;\n		private _inheritAttrs :void;\n		private _components :void;\n		private _emits :void;\n		\n		private _mixins :void;\n		private _extends :void;\n		private _watch :void;\n		private _methods :void;\n		private _computed :void;\n		private _setup :void;\n		\n		private _delimiters :void;\n		\n		/**@deprecated*/\n		private _filters :void;\n		/**@deprecated*/\n		private _comments :void;\n		/**@deprecated*/\n		private _functional :void;\n		/**@deprecated*/\n		private _propsData :void;\n		/**@deprecated*/\n		private _model :void;\n		\n		private static readonly beforeCreated :void;\n		private static readonly created :void;\n		private static readonly beforeMount :void;\n		private static readonly mounted :void;\n		private static readonly beforeUpdate :void;\n		private static readonly updated :void;\n		private static readonly activated :void;\n		private static readonly deactivated :void;\n		private static readonly beforeUnmount :void;\n		private static readonly unmounted :void;\n		/**@deprecated*/\n		private static readonly beforeDestroy :void;\n		/**@deprecated*/\n		private static readonly destroyed :void;\n		\n		private static readonly inject :void;\n		private static readonly props :void;\n		\n		private static readonly mixins :void;\n		private static readonly extends :void;\n		private static readonly watch :void;\n		private static readonly methods :void;\n		private static readonly computed :void;\n		private static readonly setup :void;\n		\n		private static readonly delimiters :void;\n		\n		/**@deprecated*/\n		private static readonly filters :void;\n		/**@deprecated*/\n		private static readonly comments :void;\n		/**@deprecated*/\n		private static readonly functional :void;\n		/**@deprecated*/\n		private static readonly propsData :void;\n		/**@deprecated*/\n		private static readonly model :void;\n		\n	}\n	\n	type OwnNames<T> = Extract<OwnKeys<T>, string>;\n	type OwnKeys<T> = Exclude<keyof T,\n		\'_beforeCreated\' | \'_created\' | \'_beforeMount\' | \'_mounted\' | \'_beforeUpdate\' | \'_updated\' | \'_activated\' | \'_deactivated\' | \'_beforeUnmount\' | \'_unmounted\' | \'_beforeDestroy\' | \'_destroyed\' |\n		\'_render\' | \'_provide\' |\n		\'_inject\' | \'_props\' | \'_directives\' |\n		\'_Render\' |\n		\'_staticRenderFns\' | \'_template\' | \'_inheritAttrs\' | \'_components\' | \'_emits\' | \'_mixins\' |\n		\'_extends\' | \'_data\' | \'_watch\' | \'_methods\' | \'_computed\' | \'_setup\' |\n		\'_delimiters\' |\n		\'_filters\' | \'_comments\' | \'_functional\' | \'_propsData\' | \'_model\' |\n		\'_\' |\n		\'$emit\' |\n		\'$watch\' |\n		\'$nextTick\' |\n		\'$forceUpdate\' |\n		\'$scopedSlots\' | \'$options\' | \'$parent\' | \'$slots\' | \'$attrs\' | \'$refs\' | \'$root\' |\n		\'$el\' |\n		\'$data\' | \'$props\' |\n		\'$createElement\' |\n		\'$children\' | \'$listeners\' | \'$destroy\' | \'$delete\' | \'$mount\' | \'$once\' | \'$set\' | \'$off\' | \'$on\' |\n		\'$\'\n		>;\n	\n	const Vue :{ new () :Vue };\n	type Vue = Readonly<Vue_>;\n	abstract class Vue_ extends Vue$ { private _? :never }\n	abstract class Vue$ {\n		\n		$emit (this :this, event :string, ...args :unknown[]) :this;\n		\n		$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		\n		$nextTick (this :this, callback :(this :this) => void | Promise<void>) :void;\n		$nextTick () :Promise<void>;\n		\n		$forceUpdate (this :this) :void;\n		\n		$options :Readonly<ObjectAPI>;\n		$scopedSlots? :ScopedSlots;\n		$slots? :ScopedSlots;\n		$parent? :Vue;\n		$root :Vue;\n		$attrs :{ readonly [name :string] :unknown };\n		$refs :{ readonly [name :string] :unknown };\n		$el? :null | Element | Comment | Text;\n		\n		/**@deprecated*/\n		$createElement? :$createElement;\n		\n		/**@deprecated*/\n		private $isServer? :never;\n		/**@deprecated*/\n		private $children? :never;\n		/**@deprecated*/\n		private $listeners? :never;\n		/**@deprecated*/\n		private $destroy? :never;\n		/**@deprecated*/\n		private $delete? :never;\n		/**@deprecated*/\n		private $mount? :never;\n		/**@deprecated*/\n		private $once? :never;\n		/**@deprecated*/\n		private $set? :never;\n		/**@deprecated*/\n		private $off? :never;\n		/**@deprecated*/\n		private $on? :never;\n		\n		private $props? :never;\n		private $data? :never;\n		private $? :never;\n		\n	}\n	\n	type Props<This extends Vue> =\n		readonly Exclude<OwnNames<This>, \'key\' | \'ref\'>[] |\n		NonArray<{\n			[Key in Exclude<OwnNames<This>, \'key\' | \'ref\'>]? :\n			ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |\n			NonArray<{\n				type? :ConstructorType<This[Key]> | ConstructorType<This[Key]>[],\n				validator? (value :unknown) :value is This[Key],\n			} & ( {\n				default? :This[Key] extends object ? { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] } : This[Key] | { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] },\n				required? :false,\n			} | {\n				default? :never,\n				required? :boolean,\n			})>\n		}>;\n	type ConstructorType<T> = {\n		new (...args :any) :\n			T extends boolean ? Boolean :\n			T extends number ? Number :\n			T extends string ? String :\n			T extends symbol ? Symbol :\n			T extends bigint ? BigInt :\n			T\n	};\n	\n	type Inject<This extends Vue> =\n		readonly OwnNames<This>[] |\n		NonArray<{\n			[Key in OwnKeys<This>]? :\n			string | symbol |\n			{\n				from? :string | symbol,\n				default? :This[Key] extends object ? { (this :void) :This[Key] } : This[Key] | { (this :void) :This[Key] },\n			}\n		}>;\n	\n	type Emits =\n		readonly string[] |\n		NonArray<{ [event :string] :null | { (this :void, ...args :readonly unknown[]) :boolean } }>;\n	\n	type Directives<This extends Vue> = { [name :string] :Directive<This> };\n	type Directive<This extends Vue> =\n		{\n			(\n				this :void,\n				el :Element,\n				binding :{\n					/**@deprecated*/\n					readonly expression? :undefined,\n					/**@deprecated*/\n					readonly name? :undefined,\n					readonly instance :This,\n					readonly value? :unknown,\n					readonly oldValue? :unknown,\n					readonly arg? :unknown,\n					readonly modifiers :{ readonly [Modifier in string]? :true },\n					readonly dir :Directive<This>,\n				} | {\n					/**@deprecated*/\n					readonly expression? :string,\n					/**@deprecated*/\n					readonly name :string,\n					readonly instance? :undefined,\n					readonly value? :unknown,\n					readonly oldValue? :unknown,\n					readonly arg? :unknown,\n					readonly modifiers :{ readonly [Modifier in string]? :true },\n					readonly dir? :undefined,\n				},\n				vNode :VNode & { /**@deprecated*/ readonly context? :This },\n				previousVNode? :VNode & { /**@deprecated*/ readonly context? :This },\n			) :void | Promise<void>\n		} | {\n			[Hook in \'beforeMount\' | \'mounted\'  | \'beforeUpdate\' | \'updated\'                     | \'beforeUnmount\' | \'unmounted\']? :{\n				(\n					this :void,\n					el :Element,\n					binding :{\n						/**@deprecated*/\n						readonly expression? :void,\n						/**@deprecated*/\n						readonly name? :void,\n						readonly instance :This,\n						readonly value? :unknown,\n						readonly oldValue? :Hook extends \'beforeUpdate\' | \'updated\' ? unknown : void,\n						readonly arg? :unknown,\n						readonly modifiers :{ readonly [Modifier in string]? :true },\n						readonly dir :Directive<This>,\n					},\n					vNode :VNode & { /**@deprecated*/ readonly context? :void },\n					previousVNode :Hook extends \'beforeUpdate\' | \'updated\' ? VNode & { /**@deprecated*/ readonly context? :void } : void,\n				) :void | Promise<void>\n			}\n		} & {\n			/**@deprecated*/\n			[Hook in \'bind\'        | \'inserted\'                  | \'update\'  | \'componentUpdated\'                  | \'unbind\'   ]? :{\n				(\n					this :void,\n					el :Element,\n					binding :{\n						/**@deprecated*/\n						readonly expression? :string,\n						/**@deprecated*/\n						readonly name :string,\n						readonly instance? :void,\n						readonly value? :unknown,\n						readonly oldValue? :Hook extends \'update\' | \'componentUpdated\' ? unknown : void,\n						readonly arg? :unknown,\n						readonly modifiers :{ readonly [Modifier in string]? :true },\n						readonly dir? :void,\n					},\n					vNode :VNode & { /**@deprecated*/ readonly context :This },\n					previousVNode :Hook extends \'update\' | \'componentUpdated\' ? VNode & { /**@deprecated*/ readonly context :This } : void,\n				) :void | Promise<void>\n			}\n		};\n	\n	type ScopedSlots = {\n		readonly [Name in string]? :(this :void, arg :unknown) => readonly VNode[] | undefined\n	};\n	\n	interface ObjectAPI {\n		\n		inheritAttrs? :boolean,\n		template? :string,\n		render? :Render2 | Render3,\n		staticRenderFns? :Render2[],\n		directives? :Directives<Vue>,\n		components? :{ [name :string] :ObjectAPI },\n		provide? :\n			{ [key :string] :unknown } |\n			{ (this :Vue) :{ [key :string] :unknown } },\n		emits? :Emits,\n		\n		inject? :Inject<Vue>,\n		props? :Props<Vue>,\n		\n		/**@deprecated*/\n		filters? :void,\n		/**@deprecated*/\n		comments? :void,\n		/**@deprecated*/\n		functional? :void,\n		/**@deprecated*/\n		propsData? :void,\n		/**@deprecated*/\n		model? :void,\n		\n		beforeCreated? (this :Vue) :void | Promise<void>,\n		created? (this :Vue) :void | Promise<void>,\n		beforeMount? (this :Vue) :void | Promise<void>,\n		mounted? (this :Vue) :void | Promise<void>,\n		beforeUpdate? (this :Vue) :void | Promise<void>,\n		updated? (this :Vue) :void | Promise<void>,\n		activated? (this :Vue) :void | Promise<void>,\n		deactivated? (this :Vue) :void | Promise<void>,\n		beforeUnmount? (this :Vue) :void | Promise<void>,\n		unmounted? (this :Vue) :void | Promise<void>,\n		/**@deprecated*/\n		beforeDestroy? (this :Vue) :void | Promise<void>,\n		/**@deprecated*/\n		destroyed? (this :Vue) :void | Promise<void>,\n		\n		delimiters? :[ string, string ],\n		\n		extends? :ObjectAPI,\n		data? (this :Vue, self :Vue) :{ [name :string] :unknown },\n		watch? :{\n			[exp :string] :\n				{ <Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void> } |\n				{\n					handler<Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void>,\n					deep? :boolean,\n					immediate? :boolean,\n					flush? :\'pre\' | \'post\' | \'sync\',\n				}\n		},\n		methods? :{ [name :string] :{ (this :Vue, ...args :unknown[]) :any } },\n		computed? :{\n			[name :string] :\n				{ (this :Vue, self :Vue) :unknown } |\n				{\n					get? (this :Vue, self :Vue) :unknown,\n					set? (this :Vue, value :unknown) :void | Promise<void>,\n				}\n		},\n		setup? (\n			this :void,\n			props :{ readonly [name :string] :unknown },\n			{} :{\n				readonly attrs :{ readonly [name :string] :unknown },\n				readonly slots :ScopedSlots,\n				readonly emit :(this :void, event :string, ...args :unknown[]) => void,\n			},\n		) :{ [name :string] :unknown } | Render3,\n		\n		mixins? :ObjectAPI[],\n		\n	}\n	\n	export type Vue3 = Readonly<{\n		h (this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined } | { [name :string] :{ (this :void, arg :unknown) :VNode[] | undefined } }) :VNode;\n		h (this :void, type :string | NonArray,                          children  :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined }                                                                          ) :VNode;\n	} & { [API in\n		| \'BaseTransition\'\n		| \'Comment\'\n		| \'Fragment\'\n		| \'KeepAlive\'\n		| \'Static\'\n		| \'Suspense\'\n		| \'Teleport\'\n		| \'Text\'\n		| \'Transition\'\n		| \'TransitionGroup\'\n		| \'callWithAsyncErrorHandling\'\n		| \'callWithErrorHandling\'\n		| \'camelize\'\n		| \'capitalize\'\n		| \'cloneVNode\'\n		| \'compile\'\n		| \'computed\'\n		| \'createApp\'\n		| \'createBlock\'\n		| \'createCommentVNode\'\n		| \'createHydrationRenderer\'\n		| \'createRenderer\'\n		| \'createSSRApp\'\n		| \'createSlots\'\n		| \'createStaticVNode\'\n		| \'createTextVNode\'\n		| \'createVNode\'\n		| \'customRef\'\n		| \'defineAsyncComponent\'\n		| \'defineComponent\'\n		| \'getCurrentInstance\'\n		| \'getTransitionRawChildren\'\n		| \'handleError\'\n		| \'hydrate\'\n		| \'initCustomFormatter\'\n		| \'inject\'\n		| \'isProxy\'\n		| \'isReactive\'\n		| \'isReadonly\'\n		| \'isRef\'\n		| \'isVNode\'\n		| \'markRaw\'\n		| \'mergeProps\'\n		| \'nextTick\'\n		| \'onActivated\'\n		| \'onBeforeMount\'\n		| \'onBeforeUnmount\'\n		| \'onBeforeUpdate\'\n		| \'onDeactivated\'\n		| \'onErrorCaptured\'\n		| \'onMounted\'\n		| \'onRenderTracked\'\n		| \'onRenderTriggered\'\n		| \'onUnmounted\'\n		| \'onUpdated\'\n		| \'openBlock\'\n		| \'popScopeId\'\n		| \'provide\'\n		| \'proxyRefs\'\n		| \'pushScopeId\'\n		| \'queuePostFlushCb\'\n		| \'reactive\'\n		| \'readonly\'\n		| \'ref\'\n		| \'registerRuntimeCompiler\'\n		| \'render\'\n		| \'renderList\'\n		| \'renderSlot\'\n		| \'resolveComponent\'\n		| \'resolveDirective\'\n		| \'resolveDynamicComponent\'\n		| \'resolveTransitionHooks\'\n		| \'setBlockTracking\'\n		| \'setDevtoolsHook\'\n		| \'setTransitionHooks\'\n		| \'shallowReactive\'\n		| \'shallowReadonly\'\n		| \'shallowRef\'\n		| \'ssrContextKey\'\n		| \'ssrUtils\'\n		| \'toDisplayString\'\n		| \'toHandlers\'\n		| \'toRaw\'\n		| \'toRef\'\n		| \'toRefs\'\n		| \'transformVNodeArgs\'\n		| \'triggerRef\'\n		| \'unref\'\n		| \'useCssModule\'\n		| \'useCssVars\'\n		| \'useSSRContext\'\n		| \'useTransitionState\'\n		| \'vModelCheckbox\'\n		| \'vModelDynamic\'\n		| \'vModelRadio\'\n		| \'vModelSelect\'\n		| \'vModelText\'\n		| \'vShow\'\n		| \'version\'\n		| \'warn\'\n		| \'watch\'\n		| \'watchEffect\'\n		| \'withCtx\'\n		| \'withDirectives\'\n		| \'withKeys\'\n		| \'withModifiers\'\n		| \'withScopeId\'\n	] :any }>;\n	\n}\n';
 
 const _ID_ = /'(\*?\??j-vue=?)'/g;
 

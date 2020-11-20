@@ -15,7 +15,7 @@ import _ from '../private';
 import { EMPTY } from '../Attributes';
 import Sheet from './Sheet/';
 
-/* AliasName: */const SELECTOR = newRegExp('u')`^
+const SELECTOR = newRegExp('u')`^
 	${s}*(?:
 		${AliasName}${s}*
 		(?:=${s}*

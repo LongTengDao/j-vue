@@ -19,7 +19,7 @@ export default class CustomBlock extends Block {
 		else {
 			if ( ESCAPABLE_RAW_TEXT_ELEMENTS.test(blockName) ) { throw SyntaxError(`.vue 文件中的自定义块尚没有明确的语义约定，请避免使用 textarea / title 标签及其大小写变种`); }
 			if ( TAG_LIKE.test(inner) ) { throw SyntaxError(`.vue 文件的 ${blockName} 自定义块中，存在标签语法标记，这可能模糊正常结束判定的结果`); }
-			return super(blockName, attributes, false, inner, new RegExp(`^</${blockName}${TAG_EMIT_CHAR}`, 'i')) as unknown as this;
+			return super(blockName, attributes, false, inner, RegExp(`^</${blockName}${TAG_EMIT_CHAR}`, 'i')) as unknown as this;
 		}
 	}
 	

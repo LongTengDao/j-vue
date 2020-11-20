@@ -28,8 +28,8 @@ declare namespace exports {
 		readonly shadow? :string;
 		readonly sheet? :{ readonly [Ref in string] :(this :Vue, self :Vue) => string };
 	};
-	export type Render3 = (this :Vue) => VNode | ( VNode | string )[];
-	export type Render2 = (this :Vue, h :$createElement) => VNode;
+	export type Render3 = { (this :Vue) :VNode | ( VNode | string )[] };
+	export type Render2 = { (this :Vue, h :$createElement) :VNode, _withStripped? :unknown };
 	type $createElement = {
 		(this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[]) :VNode;
 		(this :void, type :string | NonArray,                          children  :( VNode | string )[]) :VNode;
@@ -492,7 +492,7 @@ declare namespace exports {
 		
 	}
 	
-	type Vue3 = Readonly<{
+	export type Vue3 = Readonly<{
 		h (this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined } | { [name :string] :{ (this :void, arg :unknown) :VNode[] | undefined } }) :VNode;
 		h (this :void, type :string | NonArray,                          children  :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined }                                                                          ) :VNode;
 	} & { [API in

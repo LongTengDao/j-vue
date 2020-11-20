@@ -100,6 +100,7 @@ declare module '.Reflect.ownKeys' { export default ownKeys;
 
 declare module '.RegExp' { export default RegExp; }
 declare module '.RegExp.prototype' { export default RegExp.prototype; }
+declare module '.RegExp.prototype.exec' { export default RegExp.prototype.exec; }
 declare module '.RegExp.prototype.test' { export default RegExp.prototype.test; }
 
 declare module '.Set' { export default constructor;
@@ -211,9 +212,6 @@ declare module '.return' { export default RETURN;
 	function RETURN<T> (value :T) :T;
 }
 
-declare module '.throw' { export default THROW;
-	function THROW (error :any) :never;
-}
 declare module '.throw.Error' { export default throwError;
 	function throwError (message? :string) :never;
 }

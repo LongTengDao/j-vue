@@ -697,4 +697,4 @@ type Watcher = {
 
 declare const SYMBOL :unique symbol;
 
-import type { _Component, _Vue, _ObjectAPI, _Vue3, Render2 as _Render2, Render3 as _Render3, Render3Constructor as _Render3Constructor } from 'j-vue';
+import type { _Component, _Vue, _ObjectAPI, Vue3 as _Vue3, Render2 as _Render2, Render3 as _Render3, Render3Constructor as _Render3Constructor } from 'j-vue';

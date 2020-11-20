@@ -21,7 +21,7 @@ const VisibleStringLiteral = (id :string) :string => {
 	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` ) + literal.slice(2) : literal;
 };
 
-const __KEY__ = newRegExp('i')`^__${KEYS}__$`;
+const __KEY__ = newRegExp`^__${KEYS}__$`;
 
 export default function * From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string) {
 	
@@ -61,12 +61,12 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 			const { innerHTML } = template;
 			const __ = compatible_template ? '' : '//';
 			const literal = { eol, tab };
-			const { render, staticRenderFns } = Render2(innerHTML, mode, literal);
 			yield `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
 				yield `export ${Render3(innerHTML, mode, literal, _(template))}${eol}`;/// (); import!
 			}
 			if ( compatible_render ) {
+				const { render, staticRenderFns } = Render2(innerHTML, mode, literal);
 				yield `export ${mode} render = /*#__PURE__*/${mode==='var' ? `function (render) { return render._withStripped = render; }` : `( render => render._withStripped = render )`}(${render});${eol}`;
 				yield staticRenderFns.length
 					? `export ${mode} staticRenderFns = [${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}];${eol}`
@@ -113,7 +113,6 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 	if ( template ) {
 		const { innerHTML } = template;
 		const __ = compatible_template ? '' : '//';
-		const { render, staticRenderFns } = Render2(innerHTML, mode, null);
 		const lines = [];
 		let lines_length = 0;
 		for ( const line of template.content.beautify(tab) ) { lines[lines_length++] = `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`; }
@@ -124,6 +123,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
 		}
 		if ( compatible_render ) {
+			const { render, staticRenderFns } = Render2(innerHTML, mode, null);
 			yield `export ${mode} render = /*#__PURE__*/_Render(${render}, ${scope});${eol}`;
 			yield staticRenderFns.length
 				? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}], ${scope});${eol}`

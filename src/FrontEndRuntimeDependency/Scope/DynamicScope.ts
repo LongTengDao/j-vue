@@ -1,10 +1,12 @@
+import RegExp from '.RegExp';
 import isArray from '.Array.isArray';
 
+import KEYS from './KEYS';
 import Identifier from '../Identifier';
 import { StaticScope } from './StaticScope';
 import { _, $ } from './_';
 
-var SEARCH = /__[a-z][a-z0-9]*(?:_[a-z0-9]+)*__/ig;
+var __KEY__ = RegExp('__' + KEYS.source + '__', 'g');
 
 function get (cache :StaticScope, key :string) :string { return cache[key] || ( cache[key] = Identifier() ); }
 
@@ -59,7 +61,7 @@ function DynamicScope (cache :StaticScope) :DynamicScope {
 	} as DynamicScope;
 	scope.prototype = cache;
 	scope.$ = $;
-	scope[_] = function _ (string :string) { return string.replace(SEARCH, _replacer); };
+	scope[_] = function _ (string :string) { return string.replace(__KEY__, _replacer); };
 	function _replacer (__key__ :string) :string { return get(cache, __key__.slice(2, -2)); }
 	return scope;
 }

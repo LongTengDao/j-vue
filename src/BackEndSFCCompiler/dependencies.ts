@@ -20,15 +20,16 @@ export const BAD_SCOPE = '__proto__';
 export const BAD_KEY = '__proto__';
 export const BAD_REF = '__proto__';
 export const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
-const NON_ASCII = '\\u3007\\u4E00-\\u9FA5';
+const NON = /[^\x00-#%-/:-@[-^`{-\x7F\s]/.source;
 export const NON_ASCII_SIMPLE_PATH = newRegExp`
 	^\s*
 		(?:
 			[A-Za-z_$]
 			[\w$]*
 		)?
-		[${NON_ASCII}]
-		[\w$${NON_ASCII}]*
+		[^\x00-\x7F\s]
+		${NON}*
+		(?:\([^)]*?\);*)?
 	\s*$
 `;
 export const BUILT_IN = new Set(`
@@ -59,11 +60,12 @@ export const { 3: compile3, 2: compile2 } :{
 	const Const3dom = Replacer(
 		[ `|| node.tag === 'style'` ],
 		[ `makeMap('style,iframe,script,noscript', true)`, `makeMap('style,script', true)` ],
-		[ /compilerCore\.isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, (W :string) => `-${W.toLowerCase()}`).toLowerCase()}`, 2 ],
+		[ /compilerCore\.isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 2 ],
 	);
 	const Const3core = Replacer(
 		[ /!shared\.isGloballyWhitelisted\([^)]*\)|identifier\.name !== `(?:require|arguments)`/g, 'true', 4 ],
-		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, (W :string) => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
+		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
+		[ /(?<=^const memberExpRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ]
 	);
 	const Let3core = Replacer(
 		[ /push\(`const /g, 'push\(`let ', NaN ],
@@ -73,9 +75,9 @@ export const { 3: compile3, 2: compile2 } :{
 		[ /(?<! in ){}(?=[);,])(?!\)\.)/g, `Object.create(null)`, 23 ],
 		[ `el.attrsMap.hasOwnProperty('v-for')`, `hasOwn(el.attrsMap, 'v-for')` ],
 		[ `el.tag === 'style' ||` ],
-		[ /(var simplePathRE = \/)(.*?\*)/s, (match :string, pre :string, aim :string) => pre + aim.replace(/(?<=\$)/g, NON_ASCII) + '$|' + aim ],
+		[ /(?<=^var simplePathRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ],
 		[ RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].var, 2 ],
-		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, (origin :string) => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],
+		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],
 	);
 	const Const2 = Replacer(
 		[ RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].const, 2 ],
@@ -139,7 +141,7 @@ export const { 3: compile3, 2: compile2 } :{
 					--count;
 					return typeof replacer==='function' ? replacer(...args) : replacer;
 				});
-				if ( count ) { throw Error(`jVue 内部版本依赖错误`); }
+				if ( count ) { throw Error(`jVue 内部版本依赖错误：${typeof search==='string' ? '`' + search + '`' : search} 剩下了 ${count} 处`); }
 			}
 			return content;
 		};

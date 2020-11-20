@@ -9,8 +9,8 @@ export default class Element extends Node {
 	constructor (localName :string, attributes :Attributes, __class__ :string | undefined, shadowRoot :{ readonly along :string, readonly inside :boolean } | null) {
 		super();
 		if ( __class__ ) {
-			attributes.class = attributes.class
-				? __class__+' '+attributes.class
+			attributes['class'] = attributes['class']
+				? __class__+' '+attributes['class']
 				: __class__;
 		}
 		this.localName = localName;

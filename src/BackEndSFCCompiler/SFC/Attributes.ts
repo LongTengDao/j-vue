@@ -26,6 +26,16 @@ export default class Attributes extends Null<string> {
 		return literal;
 	}
 	
+	#dot = '';
+	static dot (attributes :Attributes, __key__? :string) {
+		if ( __key__ ) { attributes.#dot += ' ' + __key__; }
+		else if ( attributes.#dot ) {
+			attributes['class'] = attributes['class']
+				? attributes.#dot.slice(1) + ' ' + attributes['class']
+				: attributes.#dot.slice(1);
+		}
+	}
+	
 	static 'default' = Null(Attributes);
 	
 };

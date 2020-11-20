@@ -19,7 +19,7 @@ import { DELIMITERS_0, DELIMITERS_1 } from '../Mustache';
 
 const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 
-/* AliasName: */const PARTIAL = newRegExp('u')`^
+const PARTIAL = newRegExp('u')`^
 	${s}*(?:
 		${AliasName}${s}*
 		=${s}*
@@ -28,7 +28,7 @@ const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
 		${s}*;
 	${s}*)*
 $`;
-/* AliasName: */const PARTIAL_WITH_TAG = newRegExp('u')`^
+const PARTIAL_WITH_TAG = newRegExp('u')`^
 	${s}*(?:
 		${AliasName}${s}*;
 	${s}*)*
@@ -93,12 +93,12 @@ export default class Template extends Block {
 		for ( const name in attributes ) {
 			if ( name.startsWith('.abbr:') ) {
 				const tagName = name.slice(6);
-				if ( tagName!=='_' && !isLocalOrComponentNameDotable(tagName) ) { throw SyntaxError(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
+				if ( tagName && tagName!=='_' && !isLocalOrComponentNameDotable(tagName) ) { throw SyntaxError(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
 				const abbr = _this.abbr ?? ( _this.abbr = create(NULL) as Partial );
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError(`template 功能块的无值“.abbr:*”属性只能有一个`); }
-					abbr[''] = { tagName };
+					abbr[''] = { tagName, class: '' };
 				}
 				else {
 					if ( !PARTIAL_WITH_TAG.test(literal) ) { throw SyntaxError(`template 功能块的“${name}”属性语法错误：\n${literal}`); }
@@ -180,6 +180,6 @@ export type Private = object & {
 	delimiters_0 :string
 	delimiters_1 :string
 };
-export type Partial = { [xName :string] :{ readonly tagName :string, readonly class :string } } & { '' :{ readonly tagName :string } };
+export type Partial = { [xName :string] :{ readonly tagName :string, readonly class :string } };
 
 import type Attributes from '../Attributes';

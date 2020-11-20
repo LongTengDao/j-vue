@@ -87,12 +87,17 @@ declare module '.Reflect.ownKeys?' { export default ownKeys;
 }
 
 declare module '.RegExp' { export default RegExp; }
+declare module '.RegExp.prototype' { export default RegExp.prototype; }
+declare module '.RegExp.prototype.exec' { export default RegExp.prototype.exec; }
+declare module '.RegExp.prototype.test' { export default RegExp.prototype.test; }
 
 declare module '.String.fromCharCode' { export default String.fromCharCode; }
 
 declare module '.Symbol.species?' { export default Symbol.species; }
 declare module '.Symbol.toStringTag?' { export default Symbol.toStringTag; }
 declare module '.Symbol?' { export default Symbol; }
+
+declare module '.SyntaxError' { export default SyntaxError; }
 
 declare module '.TypeError' { export default TypeError; }
 
@@ -130,10 +135,6 @@ declare module '.native' { export default _; const _ :never; }
 
 declare module '.null.prototype' { export default NULL;
 	const NULL :object | null;
-}
-
-declare module '.throw' { export default THROW;
-	function THROW (error :any) :never;
 }
 
 declare module '.undefined' { export default undefined; }
