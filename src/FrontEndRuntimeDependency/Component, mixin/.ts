@@ -543,7 +543,8 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	});
 	
 	forKeys(options.props, function (name) {
-		if ( /-|^(?:key$|[oO][nN]|ref$)/.test(name) ) { throw Error(__dev__.compile_props); }
+		if ( typeof name!=='string' ) { throw Error(__dev__.compile_type); }
+		if ( /-|^(?:key$|on|ref$)/.test(name) ) { throw Error(__dev__.compile_props); }
 		if ( name in PROTO_BUG ) { throw Error(__dev__.proto); }
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
 		if ( name in ownKeys! ) { throw Error(__dev__.compile_redefined); }
@@ -551,6 +552,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	});
 	
 	forKeys(options.inject, function (name) {
+		if ( typeof name!=='string' ) { throw Error(__dev__.compile_type); }
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
 		if ( name in ownKeys! ) { throw Error(__dev__.compile_redefined); }
 		ownKeys![name] = belong;
@@ -596,7 +598,8 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	
 	options.emits &&
 	( isArray(options.emits) ? options.emits : Keys(options.emits) ).forEach(function (event) {
-		if ( typeof event==='string' && /^on-?vnode|(?:capture|once|passive)$/.test('on' + event) ) { throw Error(__dev__.compile_emits); }
+		if ( typeof event!=='string' ) { throw Error(__dev__.compile_type); }
+		if ( /(?:capture|once|passive)$/i.test('on' + event) || /^-?[vV]node/.test(event) ) { throw Error(__dev__.compile_emits); }
 	});
 	
 	if (

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '19.1.0';
+const version = '19.2.0';
 
 const Error$1 = Error;
 
@@ -5401,10 +5401,10 @@ const NATIVE_D = /\.(?:native|\d+)(?:$|\.)/;
 const V_MODEL_ = /^v-model(?::|(?=\.)(?!(?:\.(?:lazy|number|trim))+$))/;
 const STARTS_WITH_LOWERCASE_AND_NOT = /^(?:[abd-z]|c(?!omponent$))/;
 const STARTS_WITH_LOWERCASE_AND_NOT_NOR = /^(?:[abd-rt-z]|c(?!omponent$)|s(?!uspense$))/;
-const VNODE = /^@-?vnode/i;
+const VNODE = /^@-?[vV]node/;
 const VNODE_EVENT = /^@[vV]node(?:(?:-b|B)efore)?(?:-[a-z]|[A-Z])[a-z]*$/;
 const ON_MODIFIER = /^[^.]*(?:capture|once|passive)(?:\.|$)/i;
-const ATTR_ON = /^:?on/i;
+const ATTR_ON = /^:?on/;
 const ATTR_ = /^:?_/;
 const HTML5 = `
 	body
