@@ -32,7 +32,7 @@ type $createElement = {
 	(this :void, type :string | NonArray,                          children  :( VNode | string )[]) :VNode;
 };
 type VNode = NonArray;
-type NonArray<T extends object = object> = { readonly [index :number] :never } & T;
+type NonArray<T extends object = { [name :string] :unknown }> = { readonly [index :number] :never } & T;
 
 export function Style (css? :string, scope? :Scope<string | void>) :HTMLStyleElement;
 export function remove (style :HTMLStyleElement) :typeof remove;
