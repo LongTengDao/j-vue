@@ -1,6 +1,7 @@
 declare module '*?j-vue=' {
 	export const style :string;
 	export const styles :string[];
+	export const delimiters :[ '{{', '}}' ];
 	export const template :string;
 	export const Render :jVue.Render3Constructor;
 	export const render :jVue.Render2;
@@ -14,6 +15,7 @@ declare module '*?j-vue' {
 	
 	export const scopeFunction :jVue.Scope<void>;
 	export const scopeObject :jVue.Scope<string>;
+	export const delimiters :[ '{{', '}}' ];
 	export const template :string;
 	export const Render :jVue.Render3Constructor;
 	export const render :jVue.Render2;
@@ -144,6 +146,7 @@ declare module 'j-vue' {
 		static readonly Render :void | Render3Constructor;
 		static readonly staticRenderFns :void | readonly Render2[];
 		static readonly template :void | string;
+		static readonly delimiters :void | [ string, string ];
 		static readonly inheritAttrs :void | boolean;
 		static readonly components :void | { readonly [name :string] :ClassAPI | ObjectAPI };
 		static readonly emits :void | Emits;
@@ -176,6 +179,7 @@ declare module 'j-vue' {
 		
 		private _staticRenderFns :void;
 		private _template :void;
+		private _delimiters :void;
 		private _inheritAttrs :void;
 		private _components :void;
 		private _emits :void;
@@ -186,8 +190,6 @@ declare module 'j-vue' {
 		private _methods :void;
 		private _computed :void;
 		private _setup :void;
-		
-		private _delimiters :void;
 		
 		/**@deprecated*/
 		private _filters :void;
@@ -224,8 +226,6 @@ declare module 'j-vue' {
 		private static readonly methods :void;
 		private static readonly computed :void;
 		private static readonly setup :void;
-		
-		private static readonly delimiters :void;
 		
 		/**@deprecated*/
 		private static readonly filters :void;

@@ -63,6 +63,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 			const { innerHTML } = template;
 			const __ = compatible_template ? '' : '//';
 			const literal = { eol, tab };
+			yield `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
 			yield `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
 				yield `export ${Render3(innerHTML, mode, literal, _(template))}${eol}`;/// (); import!
@@ -135,6 +136,7 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 		index = 0;
 		while ( index!==lines_length ) { yield lines[index++]; }
 		yield `${__}export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, ${scope});${eol}`;
+		yield `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
 	}
 	
 };

@@ -48,7 +48,7 @@ export default class Element extends Node {
 		}
 		else {
 			return innerHTML
-				? `<${tag_attrs(this)}>${innerHTML}</${this.localName}>`
+				? `<${tag_attrs(this)}>${this.localName==='textarea' || this.localName==='pre' ? '\n' + innerHTML : innerHTML}</${this.localName}>`
 				: `<${tag_attrs(this)} />`;
 		}
 	}

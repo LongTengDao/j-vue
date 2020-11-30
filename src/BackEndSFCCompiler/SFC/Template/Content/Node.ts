@@ -8,7 +8,7 @@ export default abstract class Node {
 	
 	readonly firstChild :Element | Text | null = null;
 	readonly nextSibling :Element | Text | null = null;
-	afterInsert (this :Content | Element, refChild :Element | Text | null, newChild :Element | Text) {
+	afterAppend (this :Content | Element, refChild :Element | Text | null, newChild :Element | Text) {
 		return refChild
 			? ( refChild as any ).nextSibling = newChild
 			: ( this as any ).firstChild = newChild;

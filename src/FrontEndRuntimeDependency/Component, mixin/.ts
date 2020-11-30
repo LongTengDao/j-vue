@@ -94,13 +94,13 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		var mixins = new OPTIONS.Set<_ObjectAPI>();
 		var index = 0;
 		while ( index!==static_mixins.length ) {
-			var mixin = static_mixins[index++];
+			var mixin = static_mixins[index++]!;
 			if ( isComponentConstructor(mixin) ) {
 				var mixinOptions = ToOptions(mixin, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
 				if ( isMixins(mixin) ) {
 					var mixinMixins = mixinOptions.mixins!;
 					var mixinIndex = 0;
-					while ( mixinIndex!==mixinMixins.length ) { mixins.add(mixinMixins[mixinIndex++]); }
+					while ( mixinIndex!==mixinMixins.length ) { mixins.add(mixinMixins[mixinIndex++]!); }
 				}
 				else { mixins.add(mixinOptions); }
 			}
@@ -139,7 +139,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	var shadowAssigner :ShadowAssigner | null = null;
 	var skipConstructor = false;
 	while ( index ) {
-		var staticName = staticNames[--index];
+		var staticName = staticNames[--index]!;
 		if ( staticName==='Render' ) { var Render :_Render3Constructor | undefined = constructor[staticName] as _Render3Constructor; }
 		//@ts-ignore
 		else if ( staticName==='name' || staticName==='length' ) {
@@ -183,7 +183,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	var skipData = false;
 	var dataNames :Names | null = null;
 	while ( index ) {
-		var protoName = protoNames[--index];
+		var protoName = protoNames[--index]!;
 		if ( protoName==='_data' ) {
 			var _data = get(prototype, protoName, undefined);
 			if ( _data ) {
@@ -285,7 +285,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	if ( ( index = protoSymbols.length ) ) {
 		if ( !protoDescriptors ) { protoDescriptors = create(NULL) as ProtoDescriptors; }
 		do {
-			var protoSymbol :typeof SYMBOL = protoSymbols[--index];
+			var protoSymbol :typeof SYMBOL = protoSymbols[--index]!;
 			protoDescriptors![protoSymbol] = assign(create(NULL), getOwnPropertyDescriptor(prototype, protoSymbol));
 		}
 		while ( index );
@@ -413,12 +413,14 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		//@ts-ignore
 		options.displayName && fixPascal(options.displayName, cases);
 		for ( var pascal in components ) {
-			if ( __dev__ ) {
-				if ( !pascal || STARTS_WITH_LOWERCASE.test(pascal) ) { throw Error(__dev__.compile_name); }
-			}
 			var value = components[pascal];
-			if ( isComponentConstructor(value) ) { components[pascal] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
-			fixPascal(pascal, cases);
+			if ( value ) {
+				if ( __dev__ ) {
+					if ( !pascal || STARTS_WITH_LOWERCASE.test(pascal) ) { throw Error(__dev__.compile_name); }
+				}
+				if ( isComponentConstructor(value) ) { components[pascal] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
+				fixPascal(pascal, cases);
+			}
 		}
 		assign(components, cases, components);
 	}
@@ -484,13 +486,13 @@ function collectNames (options :_ObjectAPI, constructor :ClassAPI | null) :Names
 			var extend = options.extends;
 			extend && assign(restNames, collectNames(extend, null));
 			var mixins = options.mixins;
-			if ( mixins ) { for ( var index = mixins.length; index; ) { assign(restNames, collectNames(mixins[--index], null)); } }
+			if ( mixins ) { for ( var index = mixins.length; index; ) { assign(restNames, collectNames(mixins[--index]!, null)); } }
 			var props = options.props;
 			var name :string;
-			if ( isArray(props) ) { for ( index = props.length; index; ) { restNames[props[--index]] = null; } }
+			if ( isArray(props) ) { for ( index = props.length; index; ) { restNames[props[--index]!] = null; } }
 			else { for ( name in props ) { restNames[name] = null; } }
 			props = options.inject;
-			if ( isArray(props) ) { for ( index = props.length; index; ) { restNames[props[--index]] = null; } }
+			if ( isArray(props) ) { for ( index = props.length; index; ) { restNames[props[--index]!] = null; } }
 			else { for ( name in props ) { restNames[name] = null; } }
 			for ( name in options.methods ) { restNames[name] = null; }
 			for ( name in options.computed ) { restNames[name] = null; }
@@ -615,7 +617,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 
 var UPPER = /[A-Z]/;
 function fixPascal (pascal :string, cases :Names) {
-	var First = pascal[0];
+	var First = pascal[0]!;
 	var first = First.toLowerCase();
 	var rest = pascal.slice(1);
 	cases[first + rest] = null;
@@ -627,7 +629,7 @@ function hyphenate (before :string, after :string, cases :Names) {
 	if ( index<0 ) { cases[before + after] = null; }
 	else {
 		if ( index ) { before += after.slice(0, index); }
-		var char = after[index];
+		var char = after[index]!;
 		after = after.slice(index + 1);
 		hyphenate(before + '-' + char.toLowerCase(), after, cases);
 		hyphenate(before + '-' + char, after, cases);

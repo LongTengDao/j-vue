@@ -15,7 +15,7 @@ import Block from '../Block';
 import Content, { compatible_render as _compatible_render, isSingleElementChild as isVue2Compatible } from './Content/';
 import { ASCII_WHITESPACE as s, TOKENS, AliasName, localOrComponentNameWithoutDot, className, TAG_EMIT_CHAR, TAG_LIKE, isLocalOrComponentNameDotable, NameAs__Key__ } from '../RE';
 import { EMPTY } from '../Attributes';
-import { DELIMITERS_0, DELIMITERS_1 } from '../Mustache';
+import { DELIMITERS_0, DELIMITERS_1 } from './Content/Mustache';
 
 const TEMPLATE_END_TAG = newRegExp.i!`</template${TAG_EMIT_CHAR}`;
 
@@ -97,14 +97,14 @@ export default class Template extends Block {
 			if ( pairs ) {
 				let index = pairs.length;
 				do {
-					const x_selectors = pairs[--index].match(PARTS)!;
-					const xName :string = x_selectors[0];
+					const x_selectors = pairs[--index]!.match(PARTS)!;
+					const xName :string = x_selectors[0]!;
 					if ( xName in abbr ) { throw SyntaxError(`template 功能块的“.abbr”属性值中存在重复的条目“${xName}”`); }
 					let className :string = '';
 					let attrs :Null<string> | null = null;
 					let i = 2;
 					while ( i!==x_selectors.length ) {
-						const selector = x_selectors[i++];
+						const selector = x_selectors[i++]!;
 						if ( selector[0]==='.' ) {
 							className += selector==='.'
 								? ' ' + NameAs__Key__(xName)
@@ -134,7 +134,7 @@ export default class Template extends Block {
 						}
 					}
 					abbr[xName] = {
-						tagName: x_selectors[1],
+						tagName: x_selectors[1]!,
 						class: className.slice(1),
 						attrs,
 					};
@@ -157,9 +157,9 @@ export default class Template extends Block {
 					const pairs = literal.split(';');
 					let index = pairs.length;
 					while ( index ) {
-						const tokens = pairs[--index].match(TOKENS);
+						const tokens = pairs[--index]!.match(TOKENS);
 						if ( tokens ) {
-							const xName :string = tokens[0];
+							const xName :string = tokens[0]!;
 							if ( xName in abbr ) { throw SyntaxError(`template 功能块的“${name}”属性值中存在重复的条目“${xName}”`); }
 							abbr[xName] = { tagName, class: NameAs__Key__(xName), attrs: null };
 						}

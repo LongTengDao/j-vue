@@ -3,8 +3,9 @@ import Array from '.Array';
 
 import { StringLiteral } from '@ltd/j-es';
 
-import { BAD_INS } from '../dependencies';
-import * as Entities from './Entities';
+import { BAD_INS } from '../../../dependencies';
+import * as Entities from '../../Entities';
+import Text from './Text';
 
 const TNR = /^[\t\n\r]+|[\t\n\r]+$/g;
 const NT = /(?:\n\t|\r\n?)\t*/g;
@@ -21,7 +22,10 @@ const trimTab = (raw :string) :string => {
 export const DELIMITERS_0 = '{{';
 export const DELIMITERS_1 = '}}';
 
-export default class Mustache extends Array<string> {
+export default class Mustache extends ( Array as { new () :{} } ) {
+	
+	[index :number] :string;
+	declare readonly length :number;
 	
 	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Mustache'; }
 	
@@ -65,7 +69,7 @@ export default class Mustache extends Array<string> {
 		return this;
 	}
 	
-	toExpression (this :Mustache) :string {
+	[Symbol.toPrimitive] (this :Mustache) :string {
 		const expression :string[] = [];
 		let expression_length = 0;
 		let isTemplate :boolean = true;
@@ -80,26 +84,30 @@ export default class Mustache extends Array<string> {
 		return expression.join('+');
 	}
 	
-	toData (this :Mustache) :string {
-		if ( this.#pre ) { return this[0]!; }
-		let data :string = '';
-		let isTemplate :boolean = true;
-		let index = 0;
+	* [Symbol.iterator] (this :Mustache) :Generator<Text, void, void> {
+		if ( this.#pre ) {
+			const data = this[0]!;
+			if ( data ) { yield new Text(data); }
+			return;
+		}
+		const data = this[0]!;
+		if ( data ) { yield new Text(data.replace(OPEN_LIKE, escapeOpenLike)); }
+		let isTemplate :boolean = false;
+		let index = 1;
 		const { length } = this;
-		do {
+		while ( index!==length ) {
 			const each = this[index++]!;
 			if ( isTemplate ) {
-				data += each.replace(OPEN_LIKE, escapeOpenLike);
+				const data = each;
+				if ( data ) { yield new Text(data.replace(OPEN_LIKE, escapeOpenLike)); }
 				isTemplate = false;
 			}
 			else {
-				data.includes('}}') && throwSyntaxError(`插值中不能存在原生结束标记“}}”，因为可能出现“{{ {'}}':{ }} }}”的情况，没有简单的方式进行统一转义`);
-				data += `{{${each && each[each.length - 1]==='}' ? each + ' ' : each}}}`;
+				each.includes('}}') && throwSyntaxError(`插值中不能存在原生结束标记“}}”，因为可能出现“{{ {'}}':{ }} }}”的情况，没有简单的方式进行统一转义`);
+				yield new Text(`{{ ${each} }}`);//each[each.length - 1]==='}'
 				isTemplate = true;
 			}
 		}
-		while ( index!==length );
-		return data;
 	}
 	
 };

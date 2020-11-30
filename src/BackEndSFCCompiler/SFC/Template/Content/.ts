@@ -21,7 +21,7 @@ import Params from '../../Params';
 import Node from './Node';
 import Element, { RawTextElement } from './Element';
 import Text from './Text';
-import Mustache from '../../Mustache';
+import Mustache from './Mustache';
 import Snippet from '../../Snippet';
 import { minify } from '@ltd/j-css';
 
@@ -167,8 +167,9 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			break;
 		}
 		if ( type===TEXT ) {
-			const data :string = new Mustache(tag.raw!, V_PRE, delimiters_0, delimiters_1).toData();
-			data && parentNode.afterInsert(lastChild, lastChild = new Text(data));
+			for ( const text of new Mustache(tag.raw!, V_PRE, delimiters_0, delimiters_1) ) {
+				parentNode.afterAppend(lastChild, lastChild = text);
+			}
 			index = tag.end;
 			continue;
 		}
@@ -461,7 +462,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			}
 		}
 		if ( compatible_template && xName==='style' && !STYLE_BY_COMPONENT_IS ) { compatible_template = false; }
-		parentNode.afterInsert(lastChild, lastChild = xName==='style'
+		parentNode.afterAppend(lastChild, lastChild = xName==='style'
 			? new RawTextElement(
 				STYLE_BY_COMPONENT_IS ? ( attributes['is'] = xName, 'component' ) : 'style',
 				attributes,
@@ -529,7 +530,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 				if ( xName==='style' ) {
 					if ( v_pre ) { ( lastChild as RawTextElement ).textContent = minify(inner); }
 					else {
-						const expression :string = new Mustache(inner, v_pre, delimiters_0, delimiters_1).toExpression();
+						const expression :string = '' + new Mustache(inner, v_pre, delimiters_0, delimiters_1);
 						if ( expression ) {
 							sheetRef
 								? sheet.set(sheetRef.ref, expression)
@@ -540,10 +541,14 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 				else {
 					const mustache = new Mustache(inner, v_pre, delimiters_0, delimiters_1);
 					if ( mustache.length!==1 && xName==='textarea' ) { throw Error(`有插值的 textarea 标签这种用例没有意义`); }
-					if ( mustache[0] ) {
-						v_pre
-							? lastChild.afterInsert(null, new Text(( xName==='textarea' ? '\n' : '' ) + mustache[0]))
-							: attributes['v-text'] = mustache.toExpression();
+					if ( v_pre ) {
+						for ( const text of mustache ) {
+							lastChild.afterAppend(null, text);
+						}
+					}
+					else {
+						const expression = '' + mustache;
+						if ( expression ) { attributes['v-text'] = expression; }
 					}
 				}
 				const tag = Tag(html, index = endTagStart, foreign);

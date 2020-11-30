@@ -307,6 +307,7 @@ sfc.export('default');
 sfc.export('const');
 // import * as jVue from 'j-vue';
 // export const scopeFunction   = jVue.Scope().$( ... );
+// export const delimiters      = [ '{{', '}}' ];
 // export const template        = jVue.Template( ... );
 // export const Render          = jVue.Render( ... );
 // export const render          = jVue.Render( ... );

@@ -53,6 +53,7 @@
 			```	.js
 				import * as jVue from 'j-vue';
 				export var scopeFunction   = /*#__PURE__*/ jVue.Scope();
+				export var delimiters      = [ '{{', '}}' ];
 				export var template        = /*#__PURE__*/ jVue.Template('<br />', scopeFunction);
 				export var Render          = /*#__PURE__*/ jVue.Render('({ h }){ return function render () { return h("br") }; }', scopeFunction);
 				export var render          = /*#__PURE__*/ jVue.Render('return this.$createElement("br");', scopeFunction);
@@ -65,6 +66,7 @@
 			
 			```	.js
 				export var styles          = [];
+				export var delimiters      = [ '{{', '}}' ];
 				export var template        = '<br />';
 				export var Render          = class Render { constructor ({ h }) { return function render () { return h('br'); }; } };
 				export var render          = function render () { return this.$createElement('br'); };
