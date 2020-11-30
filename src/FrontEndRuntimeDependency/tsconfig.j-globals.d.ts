@@ -8,6 +8,8 @@ declare module '.Array.isArray?=' { export default isArray;
 	function isArray (value :any) :value is readonly any[];
 }
 declare module '.Array.prototype' { export default Array.prototype; }
+declare module '.Array.prototype.join' { export default Array.prototype.join; }
+declare module '.Array.prototype.unshift' { export default Array.prototype.unshift; }
 
 declare module '.Error' { export default Error; }
 
@@ -72,10 +74,9 @@ declare module '.Object.prototype.propertyIsEnumerable' { export default Object.
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
 declare module '.Object.setPrototypeOf' { export default Object.setPrototypeOf; }
 
+declare module '.Proxy?' { export default Proxy; }
+
 declare module '.Reflect.apply?' { export default apply;
-	function apply<This, Args extends readonly any[], Target extends (this :This, ...args :Args) => any> (target :Target, thisArg :This, args :Args) :Target extends (this :This, ...args :Args) => infer R ? R : never;
-}
-declare module '.Reflect.apply?=' { export default apply;
 	function apply<This, Args extends readonly any[], Target extends (this :This, ...args :Args) => any> (target :Target, thisArg :This, args :Args) :Target extends (this :This, ...args :Args) => infer R ? R : never;
 }
 declare module '.Reflect.get?' { export default Reflect.get; }
@@ -87,11 +88,11 @@ declare module '.Reflect.ownKeys?' { export default ownKeys;
 }
 
 declare module '.RegExp' { export default RegExp; }
-declare module '.RegExp.prototype' { export default RegExp.prototype; }
 declare module '.RegExp.prototype.exec' { export default RegExp.prototype.exec; }
 declare module '.RegExp.prototype.test' { export default RegExp.prototype.test; }
 
 declare module '.String.fromCharCode' { export default String.fromCharCode; }
+declare module '.String.prototype.match' { export default String.prototype.match; }
 
 declare module '.Symbol.species?' { export default Symbol.species; }
 declare module '.Symbol.toStringTag?' { export default Symbol.toStringTag; }

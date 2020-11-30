@@ -46,7 +46,7 @@ const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner!); }
 	}
 	const main :string = sfc.export('default', x_from) as string;
-	let round :number = 1;
+	let round = 1;
 	const bundle = await rollup(assign(create(NULL), rollupOptions, {
 		acorn: Null({
 			ecmaVersion: x_var==='var' ? 5 : 2014,

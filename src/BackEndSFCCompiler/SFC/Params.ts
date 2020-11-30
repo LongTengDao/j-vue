@@ -20,7 +20,7 @@ const Pattern = (node :Pattern) :void => {
 			if ( name[0]==='_' || name[0]==='$' ) { NAMES[NAMES.length] = name; }
 			break;
 		case 'ObjectPattern':// { Pattern }
-			let propertyIndex :number = 0;
+			let propertyIndex = 0;
 			for ( const { properties } = node, { length } = properties; propertyIndex!==length; ) {
 				const property = properties[propertyIndex++];
 				switch ( property.type ) {
@@ -58,7 +58,7 @@ const Params = (parameters :string, min :number, max :number, attribute :string)
 	let program :Program;
 	try { program = parse(`(${parameters})=>{}`, parserOptions) as any; }
 	catch (error) {
-		const index :number = error.pos-1;
+		const index = error.pos-1;
 		throw SyntaxError(`${attribute}的内容“${parameters.slice(0, index)}”✗“${parameters.slice(index)}”解析失败`);
 	}
 	const { body } = program;

@@ -75,8 +75,6 @@ declare namespace exports {
 		
 	}
 	
-	export function CSS (this :void, css :string) :string;
-	
 	export function TSD (this :void, {}? :{ readonly [ID in
 		  'j-vue' |
 		'*?j-vue' |

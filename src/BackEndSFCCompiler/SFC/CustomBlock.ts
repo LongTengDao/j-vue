@@ -25,6 +25,6 @@ export default class CustomBlock extends Block {
 	
 };
 
-freeze(CustomBlock.prototype);
+freeze(freeze(CustomBlock).prototype);
 
 import type Attributes from './Attributes';

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '19.2.0';
+const version = '19.2.1';
 
 const Error$1 = Error;
 
@@ -36,22 +36,24 @@ const isArray = (
 	/*¡ j-globals: Array.isArray (polyfill) */
 );
 
-const Reflect_apply = Reflect.apply;
+const apply$1 = Reflect.apply;
 
 const Array$1 = Array;
+
+const propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 
 const NULL = (
 	/*! j-globals: null.prototype (internal) */
 	Object.seal
-		? /*#__PURE__*/ Object.preventExtensions(Object.create(null))
+		? /*#__PURE__*/Object.preventExtensions(Object.create(null))
 		: null
 	/*¡ j-globals: null.prototype (internal) */
 );
 
-var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-var hasOwn = getOwnPropertyDescriptor
-	? function (object, key) { return /*#__PURE__*/ getOwnPropertyDescriptor(object, key); }
-	: function (object, key) { return /*#__PURE__*/ hasOwnProperty.call(object, key); };// && object!=null
+var isEnum = /*#__PURE__*/propertyIsEnumerable.call.bind(propertyIsEnumerable);
+var hasOwn = hasOwnProperty.bind
+	? /*#__PURE__*/hasOwnProperty.call.bind(hasOwnProperty)
+	: function (object, key) { return /*#__PURE__*/hasOwnProperty.call(object, key); };// && object!=null
 
 var create = Object.create;
 
@@ -59,9 +61,7 @@ const test = RegExp.prototype.test;
 
 const create$1 = Object.create;
 
-const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-
-const toStringTag = typeof Symbol!=='undefined' ? Symbol.toStringTag : undefined;
+const toStringTag = Symbol.toStringTag;
 
 const defineProperty = Object.defineProperty;
 
@@ -73,7 +73,7 @@ const Default = (
 		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
 			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create$1(NULL); }
 			if ( assign ) { assign(exports, addOnOrigin); }
-			else { for ( var key in addOnOrigin ) { if ( Object_getOwnPropertyDescriptor(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
+			else { for ( var key in addOnOrigin ) { if ( hasOwn(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
 			exports.default = exports;
 			if ( toStringTag ) {
 				var descriptor = create$1(NULL);
@@ -140,7 +140,7 @@ const from = (
 	/*¡ j-globals: Buffer.from (fallback) */
 );
 
-const REGEXP = RegExp.prototype;
+const RegExp_prototype = RegExp.prototype;
 
 /*!
  * 模块名称：j-utf
@@ -154,7 +154,7 @@ const REGEXP = RegExp.prototype;
  */
 
 var NON_SCALAR = (
-	'unicode' in REGEXP
+	'unicode' in RegExp_prototype
 		? RegExp$1('[\\uD800-\\uDFFF]', 'u')
 		: /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/
 );
@@ -269,7 +269,7 @@ function buffer2object (buffer        , options          )                      
 
 const exec = RegExp.prototype.exec;
 
-const getOwnPropertySymbols = typeof Object!=='undefined' ? Object.getOwnPropertySymbols : undefined;
+const Proxy$1 = Proxy;
 
 /*!@preserve@license
  * 模块名称：j-regexp
@@ -282,86 +282,66 @@ const getOwnPropertySymbols = typeof Object!=='undefined' ? Object.getOwnPropert
  * 项目主页：https://GitHub.com/LongTengDao/j-regexp/
  */
 
-var test_bind                                           = test.bind ? /*#__PURE__*/test.bind.bind(test       )        : function (re        ) { return function (string        ) { return test.call(re, string); }; };
-var exec_bind                                           = exec.bind ? /*#__PURE__*/exec.bind.bind(exec       )        : function (re        ) { return function (string        ) { return exec.call(re, string); }; };
-var symbols = getOwnPropertySymbols ? /*#__PURE__*/getOwnPropertySymbols(REGEXP).reverse() : null;
-var values = symbols && /*#__PURE__*/symbols.map(function (symbol) { return REGEXP[symbol]; });
+var test_bind                                           = /*#__PURE__*/test.bind.bind(test       )       ;
+var exec_bind                                           = /*#__PURE__*/exec.bind.bind(exec       )       ;
 
-var NT = /[\n\t]/g;
-var SEARCH_ESCAPE = /\\./g;
+var NT = /[\n\t]+/g;
+var ESCAPE = /\\./g;
 function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
 
 function RE (               template                      ) {
+	var U = this.U;
+	var I = this.I;
+	var M = this.M;
+	var S = this.S;
 	var raw = template.raw;
-	var source = raw[0];
-	var length = arguments.length;
+	var source = raw[0].replace(NT, '');
 	var index = 1;
-	var value                 ;
-	if ( this.U ) {
-		while ( index<length ) {
-			value = arguments[index];
-			source += ( typeof value==='string' ? value : this.check(value) ) + raw[index++];
+	var length = arguments.length;
+	while ( index!==length ) {
+		var value = arguments[index];
+		if ( typeof value==='string' ) { source += value; }
+		else {
+			var value_source = value.source;
+			if ( typeof value_source!=='string' ) { throw TypeError$1(typeof value); }
+			if ( value.unicode===U ) { throw SyntaxError$1('unicode'); }
+			if ( value.ignoreCase===I ) { throw SyntaxError$1('ignoreCase'); }
+			if ( value.multiline===M && ( value_source.indexOf('^')>=0 || value_source.indexOf('$')>=0 ) ) { throw SyntaxError$1('multiline'); }
+			if ( value.dotAll===S && value_source.indexOf('.')>=0 ) { throw SyntaxError$1('dotAll'); }
+			source += value_source;
 		}
+		source += raw[index++].replace(NT, '');
 	}
-	else {
-		while ( index<length ) {
-			value = arguments[index];
-			source += ( typeof value==='string' ? value : this.check(value) ) + raw[index++].replace(SEARCH_ESCAPE, graveAccentReplacer);
-		}
-	}
-	var re = RegExp$1(source = source.replace(NT, ''), this.flags);
-	this.addon(re.test = test_bind(re), re.exec = exec_bind(re), source);
-	if ( symbols ) {
-		index = symbols.length;
-		while ( index ) { re[symbols[--index]] = values [index]; }
-	}
+	var re = RegExp$1(U ? source = source.replace(ESCAPE, graveAccentReplacer) : source, this.flags);
+	var test = re.test = test_bind(re);
+	var exec = re.exec = exec_bind(re);
+	test.source = exec.source = source;
+	test.unicode = exec.unicode = U;
+	test.ignoreCase = exec.ignoreCase = I;
+	test.multiline = exec.multiline = source.indexOf('^')<0 && source.indexOf('$')<0 ? null : M;
+	test.dotAll = exec.dotAll = source.indexOf('.')<0 ? null : S;
 	return re;
 }
 
-function check (               re        ) {
-	var source = re.source;
-	if ( !source ) { throw TypeError$1(typeof re); }
-	if ( re.unicode===this.U ) { throw SyntaxError$1('unicode'); }
-	if ( re.ignoreCase===this.I ) { throw SyntaxError$1('ignoreCase'); }
-	if ( re.multiline===this.M && ( source.indexOf('^')>=0 || source.indexOf('$')>=0 ) ) { throw SyntaxError$1('multiline'); }
-	if ( re.dotAll===this.S && source.indexOf('.')>=0 ) { throw SyntaxError$1('dotAll'); }
-	return source;
-}
+var RE_bind = /*#__PURE__*/RE.bind.bind(RE       );
 
-function addon (               test       , exec       , source        ) {
-	test.source = exec.source = source;
-	test.unicode = exec.unicode = this.U;
-	test.ignoreCase = exec.ignoreCase = this.I;
-	test.multiline = exec.multiline = source.indexOf('^')<0 && source.indexOf('$')<0 ? null : this.M;
-	test.dotAll = exec.dotAll = source.indexOf('.')<0 ? null : this.S;
-}
+var newRegExp = /*#__PURE__*/new Proxy$1(RE, /*#__PURE__*/freeze({
+	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT, args); },
+	get: function (RE, flags        ) { return RE_bind(Context(flags)); },
+	defineProperty: function () { return false; },
+	preventExtensions: function () { return false; }
+}));
 
-var CONTEXT          = {
-	flags: '',
-	U: true,
-	I: true,
-	M: true,
-	S: true,
-	check: check,
-	addon: addon
-};
+var CONTEXT          = /*#__PURE__*/Context('');
 
-function newRegExp (flags_template                               )                                                        {
-	if ( typeof flags_template==='string' ) {
-		var context          = {
-			flags: flags_template,
-			U: /*#__PURE__*/ flags_template.indexOf('u')<0,
-			I: /*#__PURE__*/ flags_template.indexOf('i')<0,
-			M: /*#__PURE__*/ flags_template.indexOf('m')<0,
-			S: /*#__PURE__*/ flags_template.indexOf('s')<0,
-			check: check,
-			addon: addon
-		};
-		return function newRegExp (template                      )         {
-			return /*#__PURE__*/ Reflect_apply(RE, context, arguments                                       );
-		};
-	}
-	return /*#__PURE__*/ Reflect_apply(RE, CONTEXT, arguments                                       );
+function Context (flags        )          {
+	return {
+		U: flags.indexOf('u')<0,
+		I: flags.indexOf('i')<0,
+		M: flags.indexOf('m')<0,
+		S: flags.indexOf('s')<0,
+		flags: flags
+	};
 }
 
 var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
@@ -419,10 +399,10 @@ const KEYS = /[^\x00-@[-`{-\x7F\s][^\x00-/:-@[-`{-\x7F\s]*(?:_[^\x00-/:-@[-`{-\x
 const NameIs__Key__ = newRegExp`^${KEYS}$`.test;
 const NameAs__Key__ = (Name        )         => {
 	if ( NameIs__Key__(Name) ) { return `__${Name}__`; }
-	throw Error$1(`“${Name}”不满足自动生成动态值的条件`);
+	throw SyntaxError$1(`“${Name}”不满足自动生成动态值的条件`);
 };
 
-const NONCHARACTER = newRegExp('u')`[
+const NONCHARACTER = newRegExp.u `[
 	\uFDD0-\uFDEF
 	\uFFFE\u{1FFFE}\u{2FFFE}\u{3FFFE}\u{4FFFE}\u{5FFFE}\u{6FFFE}\u{7FFFE}\u{8FFFE}\u{9FFFE}\u{AFFFE}\u{BFFFE}\u{CFFFE}\u{DFFFE}\u{EFFFE}\u{FFFFE}\u{10FFFE}
 	\uFFFF\u{1FFFF}\u{2FFFF}\u{3FFFF}\u{4FFFF}\u{5FFFF}\u{6FFFF}\u{7FFFF}\u{8FFFF}\u{9FFFF}\u{AFFFF}\u{BFFFF}\u{CFFFF}\u{DFFFF}\u{EFFFF}\u{FFFFF}\u{10FFFF}
@@ -434,14 +414,14 @@ const ASCII_ALPHA = /[A-Za-z]/;
 
 const TOKENS = /[^\t\n\f\r=; ]+/g;
 const PCENCharWithoutDot = /[\-\w\xB7\xC0-\xD6\xD8-\xF6\xF8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]/u.source.slice(1, -1);// /[\u{10000}-\u{EFFFF}]/u => /(?:[\uD800-\uDB7F][\uDC00-\uDFFF])/
-const NON_PCENChar = newRegExp('u')`	[^.${PCENCharWithoutDot}]	`;
-const AliasName = /[A-Z][\-.\w:\x80-\u{10FFFF}]*/u;//newRegExp('u')`	[A-Z][${PCENCharWithoutDot}]*	`;
+const NON_PCENChar = newRegExp.u `	[^.${PCENCharWithoutDot}]	`;
+const AliasName = /[A-Z][\-.\w:\x80-\u{10FFFF}]*/u;//newRegExp.u!`	[A-Z][${PCENCharWithoutDot}]*	`;
 const STARTS_WITH_UPPER_CASE = /^[A-Z]/;
-const localOrComponentNameWithoutDot = newRegExp('u')`	[A-Za-z][${PCENCharWithoutDot}]*	`;
-const _localOrComponentNameDotable_ = newRegExp('u')`^	[A-Za-z][.${PCENCharWithoutDot}]*	$`;
+const localOrComponentNameWithoutDot = newRegExp.u `	[A-Za-z][${PCENCharWithoutDot}]*	`;
+const _localOrComponentNameDotable_ = newRegExp.u `^	[A-Za-z][.${PCENCharWithoutDot}]*	$`;
 const isLocalOrComponentNameDotable = (name        ) => _localOrComponentNameDotable_.test(name);
-const localNameWithoutDot = newRegExp('u')`	[a-z][${PCENCharWithoutDot}]*	`;
-const className = newRegExp('u')`
+const localNameWithoutDot = newRegExp.u `	[a-z][${PCENCharWithoutDot}]*	`;
+const className = newRegExp.u `
 	(?:
 		-
 		(?:
@@ -469,7 +449,7 @@ const ATTRIBUTE_NAME_VALUE = newRegExp`
 		|
 		${UNQUOTED_ATTRIBUTE_VALUE}
 	)`;
-const ATTRIBUTE = newRegExp('g')`
+const ATTRIBUTE = newRegExp.g `
 	${ATTRIBUTE_NAME}
 	(?:
 		${ASCII_WHITESPACE}*
@@ -652,10 +632,10 @@ const NON_ASCII = /[^\x00-\x7F]/u;
 const NON_TAB = /[^\t\x20]/g;
 const Snippet = (whole        , errorPosition        )         => {
 	
-	const linesAroundError                                      = [];
-	let linesAroundError_length         = 0;
-	const linesBeforeError           = whole.slice(0, errorPosition).split('\n');
-	const errorLineNumber         = linesBeforeError.length;
+	const linesAroundError                                                        = [];
+	let linesAroundError_length = 0;
+	const linesBeforeError = whole.slice(0, errorPosition).split('\n');
+	const errorLineNumber = linesBeforeError.length;
 	
 	if ( errorLineNumber>1 ) {
 		linesAroundError[linesAroundError_length++] = {
@@ -664,7 +644,7 @@ const Snippet = (whole        , errorPosition        )         => {
 		};
 	}
 	
-	const errorLineEnd         = whole.indexOf('\n', errorPosition);
+	const errorLineEnd = whole.indexOf('\n', errorPosition);
 	linesAroundError[linesAroundError_length++] = {
 		number: errorLineNumber+'',
 		value: linesBeforeError[errorLineNumber-1]+( errorLineEnd<0
@@ -681,8 +661,8 @@ const Snippet = (whole        , errorPosition        )         => {
 	if ( errorLineEnd<0 ) { maxLengthOfLineNumber = ( errorLineNumber+'' ).length; }
 	else {
 		maxLengthOfLineNumber = ( errorLineNumber+1+'' ).length;
-		const nextEnd         = whole.indexOf('\n', errorLineEnd+1);
-		const next         = nextEnd<0
+		const nextEnd = whole.indexOf('\n', errorLineEnd+1);
+		const next = nextEnd<0
 			? whole.slice(errorLineEnd+1)
 			: whole.slice(errorLineEnd+1, nextEnd);
 		linesAroundError[linesAroundError_length++] = {
@@ -710,6 +690,193 @@ const ESCAPABLE_RAW_TEXT_ELEMENTS = /^t(?:extarea|itle)$/i;
 
 const FOREIGN_ELEMENTS = /^(?:animate(?:Motion|Transform)?|c(?:ircle|lipPath|olor\-profile|ursor)|d(?:e(?:fs|sc)|iscard)|ellipse|f(?:e(?:Blend|Co(?:lorMatrix|mpo(?:nentTransfer|site)|nvolveMatrix)|D(?:i(?:ffuseLighting|s(?:placementMap|tanceLight))|ropShadow)|F(?:lood|unc[ABGR])|GaussianBlur|Image|M(?:erge(?:Node)?|orphology)|Offset|PointLight|Sp(?:ecularLighting|otLight)|T(?:ile|urbulence))|ilter|o(?:nt\-face|reignObject))|g(?:lyph)?|hatch(?:path)?|image|line(?:arGradient)?|m(?:a(?:rker|sk)|e(?:sh(?:gradient|patch|row)?|tadata)|issing\-glyph|path)|p(?:at(?:h|tern)|oly(?:gon|line))|r(?:adialGradient|ect)|s(?:et|olidcolor|top|vg|witch|ymbol)|t(?:ext(?:Path)?|itle|span)|u(?:nknown|se)|view)$/i;
 
+const WeakMap$1 = WeakMap;
+
+const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+
+const defineProperties = Object.defineProperties;
+
+const Reflect_construct = Reflect.construct;
+
+const Reflect_defineProperty = Reflect.defineProperty;
+
+const Reflect_deleteProperty = Reflect.deleteProperty;
+
+const Reflect_ownKeys = Reflect.ownKeys;
+
+const setPrototypeOf = Object.setPrototypeOf;
+
+const getPrototypeOf = Object.getPrototypeOf;
+
+const preventExtensions = Object.preventExtensions;
+
+const getOwnPropertyDescriptor = (
+	/*! j-globals: null.getOwnPropertyDescriptor (internal) */
+	function () {
+		function __PURE__ (descriptor) {
+			var propertyDescriptor = create(NULL);
+			if ( descriptor.hasOwnProperty('value') ) {
+				propertyDescriptor.value = descriptor.value;
+				propertyDescriptor.writable = descriptor.writable;
+			}
+			else {
+				propertyDescriptor.get = descriptor.get;
+				propertyDescriptor.set = descriptor.set;
+			}
+			propertyDescriptor.enumerable = descriptor.enumerable;
+			propertyDescriptor.configurable = descriptor.configurable;
+			return propertyDescriptor;
+		}
+		return function getOwnPropertyDescriptor (object, key) {
+			return /*#__PURE__*/__PURE__(/*#__PURE__*/Object_getOwnPropertyDescriptor(object, key));
+		};
+	}()
+	/*¡ j-globals: null.getOwnPropertyDescriptor (internal) */
+);
+
+var ownKeys = typeof Reflect==='object' ? Reflect.ownKeys : Object.getOwnPropertyNames;
+const getOwnPropertyDescriptors = (
+	/*! j-globals: null.getOwnPropertyDescriptors (internal) */
+	function () {
+		function __PURE__ (object) {
+			var descriptorMap = create(NULL);
+			for ( var keys = ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
+				var key = keys[index];
+				descriptorMap[key] = getOwnPropertyDescriptor(object, key);
+			}
+			return descriptorMap;
+		}
+		return function getOwnPropertyDescriptors (object) {
+			return /*#__PURE__*/__PURE__(object);
+		};
+	}()
+	/*¡ j-globals: null.getOwnPropertyDescriptors (internal) */
+);
+
+const Keeper = (
+	/*! j-globals: Array (internal) */
+	/*#__PURE__*/function () {
+		const DELETED = class extends null { set length (value) { while ( value ) { this[--value] = null; } } }.prototype;
+		//new Proxy({}, {
+		//	defineProperty: () => true,// indexes
+		//	set: () => true,// length
+		//});
+		const weak = new WeakMap;
+		weak.get = weak.get;
+		weak.set = weak.set;
+		const properties = getOwnPropertyDescriptors(freeze(freeze(class extends Array$1 {
+			static [Symbol.species] = class extends null { constructor () { return DELETED; } };
+			constructor () { return super(); }
+			get slice () { }
+			get concat () { }
+			get map () { }
+			get filter () { }
+			get flat () { }
+			get flatMap () { }
+			get __proto__ () { return getPrototypeOf(this); }
+			set __proto__ (proto) { setPrototypeOf(this, weak.get(proto) ?? weak.set(proto, preventExtensions(create$1(proto, properties))).get(proto)); }
+		}).prototype));
+		return properties.constructor.value;
+	}()
+	/*¡ j-globals: Array (internal) */
+);
+
+/*!@preserve@license
+ * 模块名称：j-orderify
+ * 模块功能：返回一个能保证给定对象的属性按此后添加顺序排列的 proxy，即使键名是 symbol，或整数 string。从属于“简计划”。
+   　　　　　Return a proxy for given object, which can guarantee own keys are in setting order, even if the key name is symbol or int string. Belong to "Plan J".
+ * 模块版本：7.0.1
+ * 许可条款：LGPL-3.0
+ * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
+ * 问题反馈：https://GitHub.com/LongTengDao/j-orderify/issues
+ * 项目主页：https://GitHub.com/LongTengDao/j-orderify/
+ */
+
+const hasOwnProperty_call = /*#__PURE__*/hasOwnProperty.call.bind(hasOwnProperty);
+
+const target2keeper = new WeakMap$1                
+	                                                                      
+	                                                                         
+ ;
+const proxy2target = new WeakMap$1     
+	                             
+	                                                 
+	                                                   
+ ;
+const target2proxy = new WeakMap$1     
+	                                                  
+	                                                   
+ ;
+
+const handlers                       = /*#__PURE__*/assign(create$1(NULL), {
+	defineProperty:                 (target                   , key   , descriptor                    )          => {
+		if ( hasOwnProperty_call(target, key) ) {
+			return Reflect_defineProperty(target, key, assign(create$1(NULL), descriptor));
+		}
+		if ( Reflect_defineProperty(target, key, assign(create$1(NULL), descriptor)) ) {
+			const keeper = target2keeper.get(target) ;
+			keeper[keeper.length] = key;
+			return true;
+		}
+		return false;
+	},
+	deleteProperty:                 (target                   , key   )          => {
+		if ( Reflect_deleteProperty(target, key) ) {
+			const keeper = target2keeper.get(target) ;
+			const index = keeper.indexOf(key);
+			index<0 || keeper.splice(index, 1);
+			return true;
+		}
+		return false;
+	},
+	ownKeys:                    (target   ) => target2keeper.get(target)                         ,
+	construct:                                     (target                         , args   , newTarget     )    => orderify(Reflect_construct(target, args, newTarget)),
+	apply:                                        (target                              , thisArg   , args   )    => orderify(apply$1(target, thisArg, args)),
+});
+
+const newProxy =                                              (target   , keeper           )    => {
+	target2keeper.set(target, keeper);
+	const proxy = new Proxy$1   (target, handlers);
+	proxy2target.set(proxy, target);
+	return proxy;
+};
+
+const orderify =                    (object   )    => {
+	if ( proxy2target.has(object) ) { return object; }
+	let proxy = target2proxy.get(object)                 ;
+	if ( proxy ) { return proxy; }
+	proxy = newProxy(object, assign(new Keeper          (), Reflect_ownKeys(object)));
+	target2proxy.set(object, proxy);
+	return proxy;
+};
+
+const Null = /*#__PURE__*/function () {
+	function throwConstructing ()        { throw TypeError$1(`Super constructor Null cannot be invoked with 'new'`); }
+	function throwApplying ()        { throw TypeError$1(`Super constructor Null cannot be invoked without 'new'`); }
+	const Nullify = (constructor                             ) => {
+		delete constructor.prototype.constructor;
+		freeze(constructor.prototype);
+		return constructor;
+	};
+	function Null (           constructor                              ) {
+		return new.target
+			? new.target===Null
+				? /*#__PURE__*/throwConstructing()
+				: /*#__PURE__*/newProxy(this, new Keeper     ())
+			: typeof constructor==='function'
+				? /*#__PURE__*/Nullify(constructor)
+				: /*#__PURE__*/throwApplying();
+	}
+	//@ts-ignore
+	Null.prototype = null;
+	defineProperty(Null, 'name', assign(create$1(NULL), { value: '', configurable: false }));
+	//delete Null.length;
+	freeze(Null);
+	return Null;
+}()                                           ;
+
+/*¡ j-orderify */
+
 const ReferenceError$1 = ReferenceError;
 
 const RangeError$1 = RangeError;
@@ -718,21 +885,23 @@ const parseInt$1 = parseInt;
 
 const fromCodePoint = String.fromCodePoint;
 
-const keys = Object.keys;
+const Keys = Object.keys;
 
-const Null = (
+const getOwnPropertySymbols = typeof Object!=='undefined' ? Object.getOwnPropertySymbols : undefined;
+
+const Null$1 = (
 	/*! j-globals: null.constructor (internal) */
-	/*#__PURE__*/ function () {
+	/*#__PURE__*/function () {
 		var assign = Object.assign || function assign (target, source) {
-			var keys$1, index, key;
-			for ( keys$1 = keys(source), index = 0; index<keys$1.length;++index ) {
-				key = keys$1[index];
+			var keys, index, key;
+			for ( keys = Keys(source), index = 0; index<keys.length;++index ) {
+				key = keys[index];
 				target[key] = source[key];
 			}
 			if ( getOwnPropertySymbols ) {
-				for ( keys$1 = getOwnPropertySymbols(source), index = 0; index<keys$1.length;++index ) {
-					key = keys$1[index];
-					if ( Object_getOwnPropertyDescriptor(source, key).enumerable ) { [key] = source[key]; }
+				for ( keys = getOwnPropertySymbols(source), index = 0; index<keys.length;++index ) {
+					key = keys[index];
+					if ( isEnum(source, key) ) { [key] = source[key]; }
 				}
 			}
 			return target;
@@ -746,8 +915,8 @@ const Null = (
 			return origin===undefined$1
 				? this
 				: typeof origin==='function'
-					? /*#__PURE__*/ Nullify(origin)
-					: /*#__PURE__*/ assign(/*#__PURE__*/ create(NULL), origin);
+					? /*#__PURE__*/Nullify(origin)
+					: /*#__PURE__*/assign(/*#__PURE__*/create(NULL), origin);
 		};
 		delete Null.name;
 		//try { delete Null.length; } catch (error) {}
@@ -758,7 +927,7 @@ const Null = (
 	/*¡ j-globals: null.constructor (internal) */
 );
 
-const SEMICOLON_ENTITIES = /*#__PURE__*/ Null({
+const SEMICOLON_ENTITIES = /*#__PURE__*/ Null$1({
 	Aacute: 'Á',
 	aacute: 'á',
 	Abreve: 'Ă',
@@ -2886,7 +3055,7 @@ const SEMICOLON_ENTITIES = /*#__PURE__*/ Null({
 	zwnj: '\u200C',
 });
 
-const CONTINUE_ENTITIES = /*#__PURE__*/ Null({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
+const CONTINUE_ENTITIES = /*#__PURE__*/ Null$1({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
 
 const ESCAPABLE_INNER_TEXT = /[\t\n\r\x20&<\xA0\u2000-\u200A\u2028\u2029\u202F\u3000]/g;// 除了必须转义的，还有防止被 Vue 编译器剔除的空白
 const escapableInnerTextReplacer = ($0        ) => `&#${$0.charCodeAt(0)};`;
@@ -2898,7 +3067,7 @@ const escapeAttributeValue = (text        )         => text.replace(ESCAPABLE_AT
 
 //export const test = (text :string) => { if ( / /.test(text) ) {} };
 
-const CONTROL_TO_CHAR = Null({
+const CONTROL_TO_CHAR = Null$1({
 	0x80: 0x20AC,
 	0x82: 0x201A,
 	0x83: 0x0192,
@@ -2974,212 +3143,115 @@ const unescape = (string        , fallback          )         =>
 		? string.replace(ENTITIES_TO_TRY, unescape_or_return)
 		: string.replace(ENTITIES, unescape_or_throw);
 
-const WeakMap$1 = WeakMap;
+//const BAD_ENTITY = /&[a-z][a-z\d]*[^a-z\d;]/;
 
-const Proxy$1 = Proxy;
+const V_DIR = /^v-(?:slot(?:$|:)|on:|bind:)/;
+const V_DOT = /^v-(?:bind|on|slot)\./;
+const V__ = /^v-(?:text|html|show|if|else(?:-if)?|for|pre|cloak|once|is)[:.]/;
+const V_BO = /^(?:[:@]|v-(?:bind|on)$)/;
+const V_ = /^(?:[:@#]|v-|class$|style$)/;
 
-const Reflect_construct = Reflect.construct;
-
-const Reflect_defineProperty = Reflect.defineProperty;
-
-const Reflect_deleteProperty = Reflect.deleteProperty;
-
-const Reflect_ownKeys = Reflect.ownKeys;
-
-const setPrototypeOf = Object.setPrototypeOf;
-
-const getOwnPropertyDescriptor$1 = (
-	/*! j-globals: null.getOwnPropertyDescriptor (internal) */
-	function () {
-		function __PURE__ (descriptor) {
-			var propertyDescriptor = create(NULL);
-			if ( descriptor.hasOwnProperty('value') ) {
-				propertyDescriptor.value = descriptor.value;
-				propertyDescriptor.writable = descriptor.writable;
-			}
-			else {
-				propertyDescriptor.get = descriptor.get;
-				propertyDescriptor.set = descriptor.set;
-			}
-			propertyDescriptor.enumerable = descriptor.enumerable;
-			propertyDescriptor.configurable = descriptor.configurable;
-			return propertyDescriptor;
-		}
-		return function getOwnPropertyDescriptor (object, key) {
-			return /*#__PURE__*/__PURE__(/*#__PURE__*/Object_getOwnPropertyDescriptor(object, key));
-		};
-	}()
-	/*¡ j-globals: null.getOwnPropertyDescriptor (internal) */
-);
-
-var ownKeys = typeof Reflect==='object' ? Reflect.ownKeys : Object.getOwnPropertyNames;
-const getOwnPropertyDescriptors = (
-	/*! j-globals: null.getOwnPropertyDescriptors (internal) */
-	function () {
-		function __PURE__ (object) {
-			var descriptorMap = create(NULL);
-			for ( var keys = ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
-				var key = keys[index];
-				descriptorMap[key] = getOwnPropertyDescriptor$1(object, key);
-			}
-			return descriptorMap;
-		}
-		return function getOwnPropertyDescriptors (object) {
-			return /*#__PURE__*/__PURE__(object);
-		};
-	}()
-	/*¡ j-globals: null.getOwnPropertyDescriptors (internal) */
-);
-
-const NodeList = (
-	/*! j-globals: Array (internal) */
-	/*#__PURE__*/function () {
-		const DELETED = new Proxy$1({}, {
-			defineProperty: () => true,// index
-			set: () => true,// length
-		});
-		const weak = new WeakMap;
-		weak.get = weak.get;
-		weak.set = weak.set;
-		const properties = getOwnPropertyDescriptors(freeze(class extends Array$1 {
-			static [Symbol.species] = class extends null { constructor () { return DELETED; } };
-			constructor () { return super(); }
-			get slice () { }
-			get concat () { }
-			get map () { }
-			get flat () { }
-			get flatMap () { }
-			set __proto__ (proto) { setPrototypeOf(this, weak.get(proto) ?? weak.set(proto, create$1(proto, properties)).get(proto)); }
-		}.prototype));
-		return freeze(properties.constructor.value);
-	}()
-	/*¡ j-globals: Array (internal) */
-);
-
-/*!@preserve@license
- * 模块名称：j-orderify
- * 模块功能：返回一个能保证给定对象的属性按此后添加顺序排列的 proxy，即使键名是 symbol，或整数 string。从属于“简计划”。
-   　　　　　Return a proxy for given object, which can guarantee own keys are in setting order, even if the key name is symbol or int string. Belong to "Plan J".
- * 模块版本：7.0.1
- * 许可条款：LGPL-3.0
- * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
- * 问题反馈：https://GitHub.com/LongTengDao/j-orderify/issues
- * 项目主页：https://GitHub.com/LongTengDao/j-orderify/
- */
-
-const target2keeper = new WeakMap$1                
-	                                                                      
-	                                                                         
- ;
-const proxy2target = new WeakMap$1     
-	                             
-	                                                 
-	                                                   
- ;
-const target2proxy = new WeakMap$1     
-	                                                  
-	                                                   
- ;
-
-const handlers                       = /*#__PURE__*/ assign(create$1(NULL), {
-	defineProperty:                 (target                   , key   , descriptor                    )          => {
-		if ( Reflect_defineProperty(target, key, assign(create$1(NULL), descriptor)) ) {
-			const keeper = target2keeper.get(target) ;
-			keeper.includes(key) || ( keeper[keeper.length] = key );
-			return true;
-		}
-		return false;
-	},
-	deleteProperty:                 (target                   , key   )          => {
-		if ( Reflect_deleteProperty(target, key) ) {
-			const keeper = target2keeper.get(target) ;
-			const index = keeper.indexOf(key);
-			index<0 || keeper.splice(index, 1);
-			return true;
-		}
-		return false;
-	},
-	ownKeys:                    (target   )                      => target2keeper.get(target) ,
-	construct:                                     (target                         , args   , newTarget     )    => orderify(Reflect_construct(target, args, newTarget)),
-	apply:                                        (target                              , thisArg   , args   )    => orderify(Reflect_apply(target, thisArg, args)),
-});
-
-const newProxy =                                              (target   , keeper           )    => {
-	target2keeper.set(target, keeper);
-	const proxy = new Proxy$1   (target, handlers);
-	proxy2target.set(proxy, target);
-	return proxy;
-};
-
-const orderify =                    (object   )    => {
-	if ( proxy2target.has(object) ) { return object; }
-	let proxy = target2proxy.get(object)                 ;
-	if ( proxy ) { return proxy; }
-	proxy = newProxy(object, assign(new NodeList          (), Reflect_ownKeys(object)));
-	target2proxy.set(object, proxy);
-	return proxy;
-};
-
-const Null$1 = /*#__PURE__*/ function (         ) {
-	function throwConstructing ()        { throw TypeError$1(`Super constructor Null cannot be invoked with 'new'`); }
-	function throwApplying ()        { throw TypeError$1(`Super constructor Null cannot be invoked without 'new'`); }
-	const Nullify = (constructor                             ) => {
-		delete constructor.prototype.constructor;
-		freeze(constructor.prototype);
-		return constructor;
-	};
-	function Null (           constructor                              ) {
-		return new.target
-			? new.target===Null
-				? /*#__PURE__*/ throwConstructing()
-				: /*#__PURE__*/ newProxy(this, new NodeList     ())
-			: typeof constructor==='function'
-				? /*#__PURE__*/ Nullify(constructor)
-				: /*#__PURE__*/ throwApplying();
-	}
-	//@ts-ignore
-	Null.prototype = null;
-	defineProperty(Null, 'name', assign(create$1(NULL), { value: '', configurable: false }));
-	//delete Null.length;
-	freeze(Null);
-	return Null;
-}()                                           ;
-
-/*¡ j-orderify */
-
+                              
 const EMPTY        = undefined$1;
 
-class Attributes extends Null$1         {
+class Attributes extends Null         {
 	
-	constructor () { return super()                   ; }
+	static default = Null(Attributes);
 	
 	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	
-	                                                                
-	                                                                            
-	[Symbol.toPrimitive] (                  hint                                 )                  {
-		if ( hint==='number' ) { return keys(this).length; }
-		let literal         = '';
-		for ( const name in this ) {
-			const value = this[name];
-			literal += value===EMPTY ? ` ${name}` : ` ${name}="${escapeAttributeValue(value)}"`;
+	constructor (literal        , SHORTHAND          = false) {
+		super();
+		if ( literal ) {
+			const pairs = literal.match(ATTRIBUTE) ;
+			if ( SHORTHAND && pairs.includes('v-pre') ) { SHORTHAND = false; }
+			let _ = 0;
+			let index = 0;
+			for ( const { length } = pairs; index!==length; ) {
+				let name = pairs[index++];
+				let value                ;
+				if ( name.includes('=') ) {
+					( { 1: name, 2: value } = ATTRIBUTE_NAME_VALUE.exec(name)  );
+					if ( value[0]==='"' || value[0]==='\'' ) { value = value.slice(1, -1); }
+					//if ( BAD_ENTITY.test(value) && (
+					//	name==='href' ? xName==='a' || xName==='area' :
+					//	name==='src' && ( xName==='img' || xName==='iframe' || xName==='source' || xName==='video' || xName==='audio' || xName==='track' )
+					//) ) { throw Error(`${xName} 标签中的 ${name} 属性值 ${value} 中存在可疑的实体，无论它是否是 URI 参数，请明确转义`); }
+					value = unescape(value);
+				}
+				if ( name[0]==='_' ) { ++_; }
+				else if ( SHORTHAND ) {///////////////////
+					switch ( name[0] ) {
+						case ':':
+						case '@':
+						case '#':
+							if ( name.length===1 || name[1]==='.' ) { throw SyntaxError$1(`: @ # 的 arg 不能为空`); }
+							break;
+						case 'v':
+							if ( V_DIR.test(name) ) {
+								name = name[2]==='b' ? name.slice(6) :
+									name[2]==='o' ? `@${name.slice(5)}` :
+										`#${name.length===6 ? 'default' : name.slice(7)}${name[name.length - 1]==='#' ? ' ' : ''}`;
+								if ( name.length===1 || name[1]==='.' ) { throw SyntaxError$1(`v-bind: v-on: v-slot: 的 arg 不能为空`); }
+							}
+							else if ( V_DOT.test(name) ) { throw SyntaxError$1(`无 arg 的 v-bind、v-on 和 v-slot 不能使用修饰符`); }
+							else if ( V__.test(name) ) { throw SyntaxError$1(`v-text/v-html/v-show/v-if/v-else-if/v-else/v-for/v-pre/v-cloak/v-once/v-is 不能有 arg 或修饰符`); }
+							break;
+					}
+					if ( name[0]===':' ? name.slice(1) in this && !V_.test(name.slice(1)) : ':' + name in this && !V_.test(name) ) {
+						throw SyntaxError$1(`标签中出现了重复的属性“${name[0]===':' ? name.slice(1) : ':' + name}”和“${name}”`);
+					}
+					if ( V_BO.test(name) && ( !value || !( value = value.trim() ) ) ) { throw SyntaxError$1(`v-bind/v-on 的 value 不得为空`); }
+				}///////////////////
+				if ( name in this ) { throw SyntaxError$1(`标签中出现了重复的属性“${name}”`); }
+				this[name] = value;
+			}
+			if ( SHORTHAND && 'v-pre' in this ) { throw SyntaxError$1(`v-pre 指令不能有值`); }
+			if ( literal[literal.length - 1]==='/' ) { throw SyntaxError$1(`标签结尾处的“/”有歧义，无法达到标注标签为自闭合的目的，而是会作为最后一个无引号属性值的结束字符`); }
+			this.#_ = _;
 		}
-		return literal;
+		return this;
 	}
 	
-	#dot = '';
-	static dot (attributes            , __key__         ) {
-		if ( __key__ ) { attributes.#dot += ' ' + __key__; }
-		else if ( attributes.#dot ) {
-			attributes['class'] = attributes['class']
-				? attributes.#dot.slice(1) + ' ' + attributes['class']
-				: attributes.#dot.slice(1);
+	#_ = 0;
+	
+	static _asClass  (            attributes            , keys                                         , v_pre         ) {
+		if ( !attributes.#_ ) { return; }
+		let k = '';
+		let kv = '';
+		for ( const name in attributes ) {
+			if ( name[0]==='_' ) {
+				let classItem = name.slice(1);
+				if ( keys ) {
+					if ( !( classItem in keys ) ) { throw Error$1(`${classItem} 没有陈列在 template .keys 中，这种组合是无意义的`); }
+					classItem = `__${classItem}__`;
+				}
+				else { classItem = NameAs__Key__(classItem); }
+				const condition = attributes[name];
+				if ( condition ) {
+					if ( v_pre ) { throw Error$1(`v-pre 下的 ${name}="${condition}" 是无法转写的`); }
+					kv += `,'${classItem}':(${condition})`;
+				}
+				else { k += ' ' + classItem; }
+				delete attributes[name];
+				if ( !--attributes.#_ ) { break; }
+			}
+		}
+		if ( k ) {
+			attributes['class'] = attributes['class'] ? k.slice(1) + ' ' + attributes['class'] : k.slice(1);
+		}
+		if ( kv ) {
+			if ( kv.lastIndexOf(',') ) { kv = `{${kv.slice(1)}}`; }
+			else {
+				const i = kv.indexOf(':');
+				kv = `${kv.slice(i + 1)}?'${kv.slice(1, i)}':''`;
+			}
+			attributes[':class'] = attributes[':class'] ? `[${kv},${attributes[':class']}]` : kv;
 		}
 	}
-	
-	static 'default' = Null$1(Attributes);
 	
 }
+const { _asClass } = Attributes;
 
 const ELEMENT_START      = 1.1;
 const ELEMENT_END      = 1.2;
@@ -3192,15 +3264,7 @@ const PLAINTEXT = /^plaintext$/i;
 const LISTING = /^listing/i;
 const XMP = /^xmp$/i;
 
-//const BAD_ENTITY = /&[a-z][a-z\d]*[^a-z\d;]/;
-
-const V_DIR = /^v-(?:slot|on|bind):/;
-const V_DOT = /^v-(?:bind|on|slot)\./;
-const V__ = /^v-(?:text|html|show|if|else(?:-if)?|for|pre|cloak|once|is)[:.]/;
-const V_BO = /^(?:[:@]|v-(?:bind|on)$)/;
-const V_ = /^(?:[:@#]|v-)/;
-
-const Tag = (html        , position        , foreign          , SHORTHAND                 = null) => {
+const Tag = (html        , position        , foreign          , SHORTHAND          ) => {
 	
 	let rest        ;
 	
@@ -3209,7 +3273,7 @@ const Tag = (html        , position        , foreign          , SHORTHAND       
 		if ( html[position + 1]==='!' ) {
 			if ( !html.startsWith('--', position + 2) ) { throw SyntaxError$1(html.startsWith('[CDATA[', position + 2) && !foreign ? `“<![CDATA[”“]]>”语法只能用于 foreign 元素（MathML 或 SVG）内` : `标准的注释语法应由“<!--”而非“ <!”开启`); }
 			if ( html[position + 4]==='>' || html.startsWith('->', position + 4) ) { throw SyntaxError$1(`紧随“<!--”注释开始语法之后出现的“>”或“->”会造成注释意外中断`); }
-			const end         = html.indexOf('-->', position + 4);
+			const end = html.indexOf('-->', position + 4);
 			if ( end<0 ) { throw SyntaxError$1(html.includes('--!>', position + 4) ? '应使用“-->”而非“--!>”关闭注释节点' : '存在未关闭的注释节点'); }
 			const data         = html.slice(position + 4, end);
 			if ( data.includes('--!>') ) { throw SyntaxError$1(`“--!>”会造成注释意外中断`); }
@@ -3221,80 +3285,26 @@ const Tag = (html        , position        , foreign          , SHORTHAND       
 		rest = html.slice(position);
 		
 		if ( IS_TAG.test(rest) ) {
+			
 			const _ = TAG.exec(rest);
 			if ( !_ ) { throw SyntaxError$1('标签格式有误'); }
 			const { 0: { length }, 1: endSolidus, 2: xName, 3: attributesLiteral, 4: selfClosingSolidus } = _;
+			
 			if ( endSolidus ) {
 				if ( attributesLiteral ) { throw SyntaxError$1(`结束标签中存在属性`); }
 				if ( selfClosingSolidus ) { throw SyntaxError$1(`结束标签中存在自关闭斜杠`); }
 				return { type: ELEMENT_END, xName, end: position + length };
 			}
 			
-			const attributes             = new Attributes;
-			if ( attributesLiteral ) {
-				const pairs = attributesLiteral.match(ATTRIBUTE) ;
-				const { length } = pairs;
-				let index = 0;
-				if ( SHORTHAND && pairs.includes('v-pre') ) { SHORTHAND = false; }
-				const DOT = SHORTHAND!==null;
-				while ( index!==length ) {
-					let name = pairs[index++];
-					let value                ;
-					if ( name.includes('=') ) {
-						( { 1: name, 2: value } = ATTRIBUTE_NAME_VALUE.exec(name)  );
-						if ( value[0]==='"' || value[0]==='\'' ) { value = value.slice(1, -1); }
-						//if ( BAD_ENTITY.test(value) && (
-						//	name==='href' ? xName==='a' || xName==='area' :
-						//	name==='src' && ( xName==='img' || xName==='iframe' || xName==='source' || xName==='video' || xName==='audio' || xName==='track' )
-						//) ) { throw Error(`${xName} 标签中的 ${name} 属性值 ${value} 中存在可疑的实体，无论它是否是 URI 参数，请明确转义`); }
-						value = unescape(value);
-					}
-					if ( DOT && name[0]==='.' ) {
-						for ( const classItem of name.slice(1).split('.') ) { Attributes.dot(attributes, NameAs__Key__(classItem)); }
-						continue;
-					}
-					if ( SHORTHAND ) {
-						switch ( name[0] ) {
-							case ':':
-							case '@':
-							case '#':
-								if ( name.length===1 || name[1]==='.' ) { throw SyntaxError$1(`: @ # 的 arg 不能为空`); }
-								break;
-							case 'v':
-								if ( V_DIR.test(name) ) {
-									name = name[2]==='b' ? name.slice(6) :
-										name[2]==='o' ? `@${name.slice(5)}` :
-											`#${name.slice(7)}`;
-									if ( name.length===1 || name[1]==='.' ) { throw SyntaxError$1(`v-bind: v-on: v-slot: 的 arg 不能为空`); }
-								}
-								else if ( V_DOT.test(name) ) { throw SyntaxError$1(`无 arg 的 v-bind、v-on 和 v-slot 不能使用修饰符`); }
-								else if ( V__.test(name) ) { throw SyntaxError$1(`v-text/v-html/v-show/v-if/v-else-if/v-else/v-for/v-pre/v-cloak/v-once/v-is 不能有 arg 或修饰符`); }
-								break;
-						}
-					}
-					if ( name in attributes ) { throw SyntaxError$1(`标签中出现了重复的属性“${name}”`); }
-					if ( name[0]===':'
-						? name.slice(1) in attributes && !V_.test(name.slice(1))
-						: ':' + name in attributes && !V_.test(name)
-					) {
-						throw SyntaxError$1(`标签中出现了重复的属性“${name[0]===':' ? name.slice(1) : ':' + name}”和“${name}”`);
-					}
-					if ( V_BO.test(name) && ( !value || !( value = value.trim() ) ) ) { throw SyntaxError$1(`v-bind/v-on 的 value 不得为空`); }
-					attributes[name] = value;
-				}
-				if ( attributes['v-pre']!==EMPTY ) { throw SyntaxError$1(`v-pre 指令不能有值`); }
-				if ( attributesLiteral[attributesLiteral.length - 1]==='/' ) { throw SyntaxError$1(`标签结尾处的“/”有歧义，无法达到标注标签为自闭合的目的，而是会作为最后一个无引号属性值的结束字符`); }
-				DOT && Attributes.dot(attributes);
-			}
-			if ( selfClosingSolidus ) {
-				return { type: ELEMENT_SELF_CLOSING, xName, attributes, end: position + length };
-			}
-			else {
-				if ( VOID_ELEMENTS.test(xName) ) { throw SyntaxError$1(`.vue 文件中如果出现 HTML void 元素（无论大小写；即便已经过时、废弃或是非标准），必须自闭合使用并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`); }
-				if ( PLAINTEXT.test(xName) ) { throw SyntaxError$1(`已过时的 ${xName} 标签没有结束方式，除非自闭合，否则${xName==='plaintext' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑使用“<component is="${xName}">”）`); }
-				if ( LISTING.test(xName) && !rest.startsWith('</', length) ) { throw SyntaxError$1(`已过时的 ${xName} 标签内容处理方式不定，除非自闭合或内容为空，否则${xName==='listing' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑使用“<component is="${xName}">”或“<${xName} v-text="..." />”）`); }
-				return { type: ELEMENT_START, xName, attributes, end: position + length };
-			}
+			const attributes             = new Attributes(attributesLiteral, SHORTHAND);
+			
+			if ( selfClosingSolidus ) { return { type: ELEMENT_SELF_CLOSING, xName, attributes, end: position + length }; }
+			
+			if ( VOID_ELEMENTS.test(xName) ) { throw SyntaxError$1(`.vue 文件中如果出现 HTML void 元素（无论大小写；即便已经过时、废弃或是非标准），必须自闭合使用并添加自闭合斜线以避免歧义（因为尚没有明确的扩展约定）`); }
+			if ( PLAINTEXT.test(xName) ) { throw SyntaxError$1(`已过时的 ${xName} 标签没有结束方式，除非自闭合，否则${xName==='plaintext' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑使用“<component is="${xName}">”）`); }
+			if ( LISTING.test(xName) && !rest.startsWith('</', length) ) { throw SyntaxError$1(`已过时的 ${xName} 标签内容处理方式不定，除非自闭合或内容为空，否则${xName==='listing' ? '' : '无论大小写变种均'}不应用于 .vue 文件（真需要时，考虑使用“<component is="${xName}">”或“<${xName} v-text="..." />”）`); }
+			return { type: ELEMENT_START, xName, attributes, end: position + length };
+			
 		}
 		
 	}
@@ -3302,7 +3312,7 @@ const Tag = (html        , position        , foreign          , SHORTHAND       
 	else { rest = html.slice(position); }
 	
 	if ( rest ) {
-		let end         = rest.search(TAG_LIKE);
+		let end = rest.search(TAG_LIKE);
 		end = end<0 ? html.length : position + end;
 		return { type: TEXT, raw: html.slice(position, end), end };
 	}
@@ -3332,7 +3342,6 @@ const gen = {
 };
 
 const forAliasRE = /\s(?:in|of)\s/s;
-const slotRE = /^(?:#|v-slot$)/;// /^(?:#|v-slot(?::|$))/;
 const emptySlotScopeToken = '_empty_';
 const SLOT_DIRECTIVE = /^v-(?:once|for|if|else(?:-if)?|bind)$/;
 const BAD_SLOT_NAME = /^[$_]/;// Vue2: $hasNormal $key $stable _normalized __proto__ // Vue3: $stable _*
@@ -3341,6 +3350,7 @@ const BAD_SCOPE = '__proto__';
 const BAD_KEY = '__proto__';
 const BAD_REF = '__proto__';
 const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
+const NS3 = /:(?:(?![A-Z_a-z])|.*?:)/s;
 const NON = /[^\x00-#%-/:-@[-^`{-\x7F\s]/.source;
 const NON_ASCII_SIMPLE_PATH = newRegExp`
 	^\s*
@@ -3393,15 +3403,17 @@ const { 3: compile3, 2: compile2 }
 	);
 	
 	const Var2 = Replacer(
+		[ /var qnameCapture = "\(.*?\)";/, `var qnameCapture = "([a-zA-Z][^\\\\x00\\\\t\\\\n\\\\f\\\\r />]*)";` ],
+		[ `+ (prop.name)`, `+ (prop.name).replace(/\\\\/g, '\\\\\\\\')` ],
 		[ /(?<! in ){}(?=[);,])(?!\)\.)/g, `Object.create(null)`, 23 ],
 		[ `el.attrsMap.hasOwnProperty('v-for')`, `hasOwn(el.attrsMap, 'v-for')` ],
 		[ `el.tag === 'style' ||` ],
 		[ /(?<=^var simplePathRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ],
-		[ RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].var, 2 ],
+		[ RegExp$1(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].var, 2 ],
 		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin                       ] ), 4 ],
 	);
 	const Const2 = Replacer(
-		[ RegExp$1(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].const, 2 ],
+		[ RegExp$1(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].const, 2 ],
 		[ /function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match        , p1        )         => `(${p1})=>{`, 7 ],
 	);
 	const Let2 = Replacer(
@@ -3415,7 +3427,7 @@ const { 3: compile3, 2: compile2 }
 	let content3core         = require('fs').readFileSync(filename3core, 'utf8');
 	let content3dom         = require('fs').readFileSync(filename3dom, 'utf8');
 	const Compile3 = (content_dom        , content_core        ) => {
-		return Exports                                    (content_dom, filename3dom, Null({
+		return Exports                                    (content_dom, filename3dom, Null$1({
 			'@vue/compiler-core': Exports                                     (content_core, filename3core),
 		})).compile;
 	};
@@ -3451,17 +3463,26 @@ const { 3: compile3, 2: compile2 }
 		},
 	};
 	
-	function Replacer (...replacers   
+	function Replacer (...replacers        
 		                                                                         
-		                                                                                           
-	) {
+		                                                                                       
+	 ) {
 		return function replacer (            content        ) {
 			for ( let [ search, replacer = '', count = 1 ] of replacers ) {
-				if ( search instanceof RegExp$1 && search.global===( count===1 ) ) { throw Error$1(`jVue 内部错误`); }
-				content = content.replace(search, (...args          ) => {
-					--count;
-					return typeof replacer==='function' ? replacer(...args) : replacer;
-				});
+				if ( typeof search!=='string' && search.global===( count===1 ) ) { throw Error$1(`jVue 内部错误`); }
+				if ( typeof replacer==='string' ) {
+					if ( replacer.includes('$') ) { throw Error$1(`jVue 内部错误`); }
+					content = content.replace(search, () => {
+						--count;
+						return replacer          ;
+					});
+				}
+				else {
+					content = content.replace(search, (...args          ) => {
+						--count;
+						return ( replacer                                  )(...args);
+					});
+				}
 				if ( count ) { throw Error$1(`jVue 内部版本依赖错误：${typeof search==='string' ? '`' + search + '`' : search} 剩下了 ${count} 处`); }
 			}
 			return content;
@@ -3470,7 +3491,7 @@ const { 3: compile3, 2: compile2 }
 	
 	function Exports    (content        , filename        , cache            ) {
 		const module_require = ( require('module').createRequire ?? require('module').createRequireFromPath )(filename);
-		const module = Null({ exports: {}      });
+		const module = Null$1({ exports: {}      });
 		require('vm').compileFunction(
 			content,
 			[ 'exports', 'require', 'module', '__filename', '__dirname' ],
@@ -3514,11 +3535,11 @@ class Block                                    {
 	         lang         ;
 	
 }
-freeze(Block.prototype);
+freeze(freeze(Block).prototype);
 
 const Private = (
 	/*! j-globals: private (internal) */
-	/*#__PURE__*/ function (WeakMap) {
+	/*#__PURE__*/function (WeakMap) {
 		function createNULL () { return create$1(NULL); }
 		var GET = createNULL();
 		GET.value = WeakMap.prototype.get;
@@ -3547,7 +3568,7 @@ const Private = (
 
 const _ = Private()                    ;
 
-const SCRIPT_END_TAG = newRegExp('i')`</script${TAG_EMIT_CHAR}`;
+const SCRIPT_END_TAG = newRegExp.i `</script${TAG_EMIT_CHAR}`;
 
 /* TODO:
 <https://mimesniff.spec.whatwg.org/#javascript-mime-type>
@@ -3569,7 +3590,7 @@ text/livescript
 text/x-ecmascript
 text/x-javascript
 */
-const JS = newRegExp('i')`^${ASCII_WHITESPACE}*(?:
+const JS = newRegExp.i `^${ASCII_WHITESPACE}*(?:
 	JS|JavaScript(?:${ASCII_WHITESPACE}*1\.\d)?|JSX
 	|
 	(?:ES|ECMAScript|ECMAS?)(?:${ASCII_WHITESPACE}*\d+)?
@@ -3578,8 +3599,8 @@ const JS = newRegExp('i')`^${ASCII_WHITESPACE}*(?:
 	|
 	(?:text|application)\/(?:ECMAScript|JavaScript(?:;${ASCII_WHITESPACE}*version${ASCII_WHITESPACE}*=${ASCII_WHITESPACE}*1\.\d)?)
 )${ASCII_WHITESPACE}*$`;
-const TS = newRegExp('i')`^${ASCII_WHITESPACE}*T(?:S|ypeScript)${ASCII_WHITESPACE}*$`;
-const TSX = newRegExp('i')`^${ASCII_WHITESPACE}*TSX${ASCII_WHITESPACE}*$`;
+const TS = newRegExp.i `^${ASCII_WHITESPACE}*T(?:S|ypeScript)${ASCII_WHITESPACE}*$`;
+const TSX = newRegExp.i `^${ASCII_WHITESPACE}*TSX${ASCII_WHITESPACE}*$`;
 
 class Script extends Block {
 	
@@ -3611,7 +3632,7 @@ class Script extends Block {
 	}
 	
 }
-freeze(Script.prototype);
+freeze(freeze(Script).prototype);
 
 const throwSyntaxError = (
 	/*! j-globals: throw.SyntaxError (internal) */
@@ -3621,41 +3642,133 @@ const throwSyntaxError = (
 	/*¡ j-globals: throw.SyntaxError (internal) */
 );
 
-if ( /k/i.test('\u212A') || /s/i.test('\u017F') ) { throw Error$1(`ks`); }
+const Map$1 = Map;
+
+const push = Array.prototype.push;
+
+/*!@preserve@license
+ * 模块名称：j-css
+ * 模块功能：CSS 语法相关共享实用程序。从属于“简计划”。
+   　　　　　CSS syntax util. Belong to "Plan J".
+ * 模块版本：1.0.0
+ * 许可条款：LGPL-3.0
+ * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
+ * 问题反馈：https://GitHub.com/LongTengDao/j-css/issues
+ * 项目主页：https://GitHub.com/LongTengDao/j-css/
+ */
+
 const {
 	
 	charset,
-	IMPORT,
+	import: IMPORT,
 	namespace,
 	media,
 	page,
 	'font-face': font_face,
+	'counter-style': counter_style,
 	'*keyframes': keyframes,
 	supports,
-	document: document$1,
 	
+	'*document': document,
+	viewport,
+	
+	'url(': url_,
 	'url-prefix(': url_prefix_,
 	'domain(': domain_,
 	
-	from: from$1,
-	to,
-	none,
-	DEFAULT,
-	inherit,
-	initial,
-	unset,
+	has,
+	of,
 	
-} = new Proxy$1({}                                                    , {
-	get (is, keyword        ) {
-		keyword = keyword.toLowerCase();
-		const KEYWORD = RegExp$1('^' + keyword.replace('(', '\\(').replace('*', '(?:-[a-z][\\da-z]*-)?') + '$', 'i');
-		return { [keyword]: (text        )          => KEYWORD.test(text) }[keyword];
+	'*animation-name': animation_name,
+	
+}                                                   = /*#__PURE__*/( () => {
+	if ( /k/i.test('\u212A') || /s/i.test('\u017F') ) { throw Error$1(`ks`); }
+	return new Proxy$1({}, {
+		get: (is, keyword        ) => test.bind(RegExp$1('^' + keyword.replace('(', '\\(').replace('*', '(?:-[a-z][a-z\\d]*-)?') + '$', 'i'))
+	});
+} )();
+
+var test_bind$1                                           = /*#__PURE__*/test.bind.bind(test       )       ;
+var exec_bind$1                                           = /*#__PURE__*/exec.bind.bind(exec       )       ;
+
+var NT$1 = /[\n\t]+/g;
+var ESCAPE$1 = /\\./g;
+function graveAccentReplacer$1 ($$        ) { return $$==='\\`' ? '`' : $$; }
+
+function RE$1 (               template                      ) {
+	var U = this.U;
+	var I = this.I;
+	var M = this.M;
+	var S = this.S;
+	var raw = template.raw;
+	var source = raw[0].replace(NT$1, '');
+	var index = 1;
+	var length = arguments.length;
+	while ( index!==length ) {
+		var value = arguments[index];
+		if ( typeof value==='string' ) { source += value; }
+		else {
+			var value_source = value.source;
+			if ( typeof value_source!=='string' ) { throw TypeError$1(typeof value); }
+			if ( value.unicode===U ) { throw SyntaxError$1('unicode'); }
+			if ( value.ignoreCase===I ) { throw SyntaxError$1('ignoreCase'); }
+			if ( value.multiline===M && ( value_source.indexOf('^')>=0 || value_source.indexOf('$')>=0 ) ) { throw SyntaxError$1('multiline'); }
+			if ( value.dotAll===S && value_source.indexOf('.')>=0 ) { throw SyntaxError$1('dotAll'); }
+			source += value_source;
+		}
+		source += raw[index++].replace(NT$1, '');
 	}
-});
+	var re = RegExp$1(U ? source = source.replace(ESCAPE$1, graveAccentReplacer$1) : source, this.flags);
+	var test = re.test = test_bind$1(re);
+	var exec = re.exec = exec_bind$1(re);
+	test.source = exec.source = source;
+	test.unicode = exec.unicode = U;
+	test.ignoreCase = exec.ignoreCase = I;
+	test.multiline = exec.multiline = source.indexOf('^')<0 && source.indexOf('$')<0 ? null : M;
+	test.dotAll = exec.dotAll = source.indexOf('.')<0 ? null : S;
+	return re;
+}
+
+var RE_bind$1 = /*#__PURE__*/RE$1.bind.bind(RE$1       );
+
+var newRegExp$1 = /*#__PURE__*/new Proxy$1(RE$1, /*#__PURE__*/freeze({
+	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT$1, args); },
+	get: function (RE, flags        ) { return RE_bind$1(Context$1(flags)); },
+	defineProperty: function () { return false; },
+	preventExtensions: function () { return false; }
+}));
+
+var CONTEXT$1          = /*#__PURE__*/Context$1('');
+
+function Context$1 (flags        )          {
+	return {
+		U: flags.indexOf('u')<0,
+		I: flags.indexOf('i')<0,
+		M: flags.indexOf('m')<0,
+		S: flags.indexOf('s')<0,
+		flags: flags
+	};
+}
+
+/*¡ j-regexp */
+
+const protect = (constructor                                            , pop          )       => /*#__PURE__*/( ()       => {
+	const { prototype } = constructor;
+	pop && defineProperties(prototype, assign(getOwnPropertyDescriptors(getPrototypeOf(prototype)), getOwnPropertyDescriptors(prototype)));
+	freeze(prototype);
+	constructor.default = undefined$1;
+	preventExtensions(constructor);
+} )();
+
+const notKeyframes = /*#__PURE__*/test.bind(/^(?:(?:default|in(?:herit|itial)|none|revert|unset)?$|['"])|,/i);
+
+/// -- var()
+/// @counter-style list-style -type
+/// @font-face font -family
 
 const nonASCII = /\x80-\uFFFF/i;
 const hex_digit = /[0-9A-F]/i;
-const escape = newRegExp('i')`
+const escape = /*#__PURE__*/( () => newRegExp$1.i `
 	\\
 	(?:
 		${hex_digit}{1,6}
@@ -3663,9 +3776,9 @@ const escape = newRegExp('i')`
 		|
 		[^\n\f\r]
 	)
-`;
+` )();
 const ws = /\t\n\f\r /i;
-const ident_token_start = newRegExp('i')`
+const ident_token_start = /*#__PURE__*/( () => newRegExp$1.i `
 	(?:
 		-
 		(?:
@@ -3680,24 +3793,37 @@ const ident_token_start = newRegExp('i')`
 	|
 		${escape}
 	)
-`;
-const ident_token = newRegExp('i')`
+` )();
+const ident_token = /*#__PURE__*/( () => newRegExp$1.i `
 	${ident_token_start}
 	(?:
 		[-\w${nonASCII}]
 	|
 		${escape}
 	)*
-`;
-const hash_token = newRegExp('i')`
+` )();
+const isCompoundSelector = /*#__PURE__*/( () => newRegExp$1.i `
+	^(?!$)
+	(?:${ident_token}|\*)?
+	(?:\|(?:${ident_token}|\*))?
+	(?:\.${ident_token})*
+	$
+`.test )();
+const SIMPLE_SELECTORS = /*#__PURE__*/( () => newRegExp$1.gi `
+	(?:[.|]?${ident_token}|\*)
+` )();
+const hash_token = /*#__PURE__*/( () => newRegExp$1.i `
 	#
 	(?:
 		[-\w${nonASCII}]
 	|
 		${escape}
 	)*
-`;
-const string_token = newRegExp('is')`
+` )();
+const isIdSelector = /*#__PURE__*/( () => newRegExp$1.i `
+	^${hash_token}$
+`.test )();
+const string_token = /*#__PURE__*/( () => newRegExp$1.is `
 	"
 	(?:\\(?:\r\n|.)|[^\\"\n\f\r])*
 	"?
@@ -3705,8 +3831,8 @@ const string_token = newRegExp('is')`
 	'
 	(?:\\(?:\r\n|.)|[^\\'\n\f\r])*
 	'?
-`;
-const url_token = newRegExp('is')`
+` )();
+const url_token = /*#__PURE__*/( () => newRegExp$1.is `
 	url
 	(?:
 		\(
@@ -3723,16 +3849,25 @@ const url_token = newRegExp('is')`
 	)
 |
 	domain\([${ws}]*	[a-z\d\-.:]*	[${ws}]*\)
-`;
-const number_token = newRegExp('i')`
+` )();
+const ESCAPE$1$1 = /\\(?:([\dA-F]{1,6})(?:[ \t\n\f]|\r\n?)?|([\n\f]|\r\n?)|(.))/gis;
+const evaluate = (literal        ) => literal.replace(ESCAPE$1$1, (match        , hex         , char         ) => hex ? fromCodePoint(parseInt$1(hex, 16)) : char ?? '');
+const _ws_ = /*#__PURE__*/( () => newRegExp$1.gi `
+	^
+		${ws}+
+	|
+		${ws}+
+	$
+` )();
+const number_token = /*#__PURE__*/( () => newRegExp$1.i `
 	[-+]?
 	(?:\d+(?:\.\d+)?|\.\d+)
 	(?:e[+-]?\d+)?
-`;
+` )();
 const CDO_token = '<!--';
 const CDC_token = '-->';
 
-const TOKENS$1 = newRegExp('gis')`
+const TOKENS$1 = /*#__PURE__*/( () => newRegExp$1.gis `
 	(?:
 		[${ws}]+
 	|
@@ -3758,9 +3893,9 @@ const TOKENS$1 = newRegExp('gis')`
 	${CDC_token}
 |
 	.
-`;
+` )();
 
-const BAD_URL = newRegExp('i')`
+const BAD_URL = /*#__PURE__*/( () => newRegExp$1.i `
 	^
 	url\(
 	(?!
@@ -3770,25 +3905,25 @@ const BAD_URL = newRegExp('i')`
 		\)
 		$
 	)
-`;
+` )();
 const NUMBER = /[\d.]/;
 const COMMENT$1 = /\/\*.*?\*\//gs;
-const IDENT = newRegExp('i')`
+const IDENT = /*#__PURE__*/( () => newRegExp$1.i `
 	^
 	${ident_token}
 	$
-`;
-const FUNCTION = newRegExp('i')`
+` )();
+const FUNCTION = /*#__PURE__*/( () => newRegExp$1.i `
 	^
 	${ident_token}\(
 	$
-`;
+` )();
 
 const comment = 'c';
 const whitespace = 'w';
 const ident = 'i';
-const at_keyword = 'a';
-const function$ = 'f';
+const atKeyword = 'a';
+const function_ = 'f';
 const hash = 'h';
 const string = 's';
 const number = 'n';
@@ -3799,9 +3934,9 @@ const url = 'u';
 const IdentLike = (literal        ) =>
 	IDENT.test(literal) ? ident :
 		FUNCTION.test(literal) ?
-			url_prefix_(literal) ? throwSyntaxError(`function-token "url-prefix" 不在标准中，而它此刻的内容又存在歧义`) :
-				domain_(literal) ? throwSyntaxError(`function-token "domain" 不在标准中，而它此刻的内容又存在歧义`) :
-					function$ :
+			url_prefix_ (literal) ? throwSyntaxError(`function-token "url-prefix" 不在标准中，而它此刻的内容又存在歧义`) :
+				domain_ (literal) ? throwSyntaxError(`function-token "domain" 不在标准中，而它此刻的内容又存在歧义`) :
+					function_ :
 			BAD_URL.test(literal) ? throwSyntaxError(`bad-url-token`) :
 				url;
 
@@ -3843,8 +3978,8 @@ const Type = (literal        )       => {
 			return literal       ;
 		case '-':
 			if ( literal==='-' ) { return literal; }
-			if ( NUMBER.test(literal[1]) ) { return Numeric(literal); }
-			if ( literal==='-->' ) { throw SyntaxError$1(`用于 SFC 的 CSS 中不应用到 CDC-token`); }
+			if ( NUMBER.test(literal[1] ) ) { return Numeric(literal); }
+			if ( literal==='-->' ) { return throwSyntaxError(`CDC-token`); }
 			break;
 		case '.':
 			return literal==='.' ? literal : Numeric(literal);
@@ -3871,13 +4006,13 @@ const Type = (literal        )       => {
 		case ';':
 			return literal             ;
 		case '<':
-			return literal==='<' ? literal : throwSyntaxError(`用于 SFC 的 CSS 中不应用到 CDO-token`);
+			return literal==='<' ? literal : throwSyntaxError(`CDO-token`);
 		case '=':
 		case '>':
 		case '?':
 			return literal                   ;
 		case '@':
-			return literal==='@' ? literal : at_keyword;
+			return literal==='@' ? literal : atKeyword;
 		case '[':
 			return literal       ;
 		case '\\':
@@ -3895,87 +4030,271 @@ const Type = (literal        )       => {
 	return IdentLike(literal);
 };
 
+const LITERALS                    = [];
+let literals                    = LITERALS;
 let literal         = '';
+let types                           = ''       ;
 let type      ;
+let length         = 0;
+let index         = 0;
+let currentLayer                    = null;
+const collection_type                 = [];
+const collection_class                  = [];
+const collection_attribute                      = [];
+const collection_id               = [];
+const collection_url        = [];
+const collection_keyframes                  = [];
+const collection_animation         = [];
+let collection_selector                 = [];
 
-const parse$1 = (sheet       , source        )       => {
-	let layer        = sheet;
-	const literals           = source.match(TOKENS$1) ?? [];
-	const { length } = literals;
-	let types = '';
-	let index = 0;
-	while ( index!==length ) { types += Type(literals[index++]); }
-	for ( index = 0; index!==length; ++index ) {
-		type = ( types                                       )[index];
-		literal = literals[index];
-		layer = layer.appendToken() ?? throwSyntaxError(`CSS 中出现了 ${layer.constructor.name} 上下文不允许的内容“${literal}”：\n${literals.slice(0, index).join('')}`);
+class KindMap                                                           extends Map$1                               {
+	static default = protect(this, true);
+	constructor () { return super()                   ; }
+	fetch                                                           (                     layers           , key                   , addon         ) {
+		const { length } = layers;
+		let index = 0;
+		while ( index!==length ) {
+			const layer = layers[index++]     ;
+			const literal = layer[key           ]          ;
+			let array                                         = this.get(literal)                                    ;
+			array ?? this.set(literal, array = []                        );
+			addon && ( array = array[addon] ?? ( array[addon] = [] ) );
+			array[array.length] = layer;
+		}
+		return this;
 	}
-	layer===sheet || layer.parent===sheet && !layer.block || throwSyntaxError(`CSS 终止处尚有未完成的结构`);
+	merge                                         (                  layers     , literal        ) {
+		const array = this.get(literal);
+		array
+			? apply$1(push, array, layers)
+			: this.set(literal, layers);
+	}
+}
+
+class Refs {
+	type = collection_type.length
+		? new KindMap              ().fetch(collection_type, 'literal')
+		: null;
+	class = collection_class.length
+		? new KindMap               ().fetch(collection_class, 'itemLiteral')
+		: null;
+	attribute = collection_attribute.length
+		? new KindMap                   ().fetch(collection_attribute, 'nameLiteral')
+		: null;
+	id = collection_id.length
+		? new KindMap            ().fetch(collection_id, 'valueLiteral')
+		: null;
+	url = collection_url.length
+		? new KindMap     ().fetch(collection_url, 'valueLiteral')
+		: null;
+	animationKeyframes                                      = collection_keyframes.length || collection_animation.length
+		? new KindMap                     ().fetch(collection_keyframes, '_nameLiteral', 'rule').fetch(collection_animation, '_literal')
+		: null;
+	selector                        = collection_selector.length
+		? collection_selector
+		: null;
+	constructor () { return this; }
+}
+
+const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
+const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
+const NOT_CHANGES = /\\.?|[^\\\x80-\x9F]+/gs;
+const check = (css        ) => {
+	if ( css[0]==='\uFEFF' ) { throw SyntaxError$1(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
+	if ( NULL_SURROGATE.test(css) ) { throw SyntaxError$1(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
+	if ( NON_PRINTABLE.test(css) ) { throw SyntaxError$1(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
+	if ( css.replace(NOT_CHANGES, '') ) { throw SyntaxError$1(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
 };
 
-const typeSelectors                                                    = [];
+const parent = Symbol('parent');
+const consume = Symbol('consume');
+const stay = () => { --index; };
+const parse$1 = (sheet       , source        ) => {
+	literals = { length } = source.match(TOKENS$1) ;
+	index = 0;
+	//@ts-ignore
+	while ( index!==length ) { types += Type(literals[index++]); }
+	currentLayer = sheet;
+	index = 0;
+	while ( index!==length ) {
+		type = types[index] ;
+		literal = literals[index++] ;
+		currentLayer = currentLayer[consume]() ?? throwSyntaxError(`CSS 中出现了 ${currentLayer[toStringTag       ]} 上下文不允许的内容“${literal}”：\n${( literals             ).slice(0, index - 1).join('')}`);
+	}
+	currentLayer===sheet || currentLayer[parent]===sheet && !( currentLayer                  ) .block || throwSyntaxError(`CSS 终止处尚有未完成的结构`);
+	return (
+		collection_type.length ||
+		collection_class.length ||
+		collection_attribute.length ||
+		collection_id.length ||
+		collection_url.length ||
+		collection_keyframes.length ||
+		collection_animation.length ||
+		collection_selector.length
+			? new Refs : null );
+};
 
 const clear = ()       => {
+	collection_type.length =
+		collection_class.length =
+			collection_attribute.length =
+				collection_id.length =
+					collection_url.length =
+						collection_keyframes.length =
+							collection_animation.length =
+								collection_selector.length = 0;
+	collection_selector.length && ( collection_selector = [] );
+	literals = LITERALS;
+	currentLayer = null;
 	literal = '';
-	typeSelectors.length = 0;
 };
 
-class TypeSelector {
+let indent = '\t';
+let newline = '\n';
+let newlineSelector = true;
+let newlineProperty = true;
+
+const OPTIONS          = Null$1({
+	indent,
+	newline,
+	newlineSelector,
+	newlineProperty,
+});
+                                            
+const Options = (options          = OPTIONS) => {
+	( {
+		indent = '\t',
+		newline = '\n',
+		newlineSelector = true,
+		newlineProperty = true,
+	} = options );
+};
+
+function layerCallback (                  layer            ) { layer[parent] = this; }
+
+class Layer                                           extends ( Array$1                      
+	                       
+	               
+	                                                      
+	                                                                       
+	                                                                               
+    )        {
 	
-	         parent                                  ;
-	cssText        ;
-	         ns_         ;
+	[parent]                    = currentLayer;
 	
-	constructor (parent                                  , literal        , ns_         ) {
-		this.parent = parent;
-		this.cssText = literal;
-		this.ns_ = ns_;
-		return this;
+	                                                                                                                          
+	
+	          constructor () { return super()                   ; }
+	
+	                                                               
+	
+	                                                         
+	
+	                                                                             
+	
+	get lastIndex () { return this.length - 1; }
+	get lastItem () { return this[this.lastIndex]; }
+	set newItem (value       ) { this[this.length] = value; }
+	
+	replaceWith (                                                        layers                                                        ) {
+		const parent$1 = this[parent] ;
+		if ( layers.length===1 ) { ( parent$1[parent$1.indexOf(this)] = layers[0]  )[parent] = parent$1; }
+		else {
+			layers.forEach(layerCallback, parent$1);
+			parent$1.splice(parent$1.indexOf(this), 1, ...layers);
+		}
 	}
+	
+	static default       = protect(Layer);
 	
 }
 
-freeze(TypeSelector.prototype);
-
-class ClassSelector {
+class Url extends Layer       {
 	
-	         parent                                  ;
-	         literal        ;
+	         nameLiteral               ;
+	valueLiteral         = '';
 	
-	constructor (parent                                  , literal        ) {
-		this.parent = parent;
-		this.literal = literal;
-		return this;
-	}
-	
-	get cssText () { return `.${this.literal}`; }
-	
-}
-
-freeze(ClassSelector.prototype);
-
-class SquareBracketBlock extends Array$1         {
-	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.SquareBracketBlock'; }
-	
-	         parent                                  ;
-	
-	constructor (parent                                  ) {
+	constructor (nameLiteral               ) {
 		super();
-		this.parent = parent;
+		currentLayer && ( collection_url[collection_url.length] = this );
+		this.nameLiteral = nameLiteral;
 		return this;
 	}
 	
-	appendToken (                        )                                                               {
+	[consume] (         ) {
+		switch ( type ) {
+			case string:
+				if ( this.valueLiteral ) { break; }
+				this.valueLiteral = literal;
+				return this;
+			case ')':
+				return this[parent];
+			case whitespace:
+			case comment:
+				return this;
+		}
+		return null;
+	}
+	
+	[Symbol.toPrimitive] (         ) { return this.nameLiteral ? `${this.nameLiteral}(${this.valueLiteral})` : this.valueLiteral; }
+	
+	* [Symbol.iterator] (         ) { throw TypeError$1(`beautify url`); }
+	
+	static default = protect(this);
+	
+}
+const newUrl =                        (parent   , key          = 'newItem')    => {
+	const index = literal.indexOf('(');
+	const url = parent[key             ] = new Url(literal.slice(0, index));
+	url.valueLiteral = literal.slice(index + 1, -1).replace(_ws_, '');
+	return parent;
+};
+
+class IdSelector extends Layer       {
+	
+	valueLiteral        ;
+	
+	constructor (valueLiteral        ) {
+		//if ( !valueLiteral ) { throw SyntaxError(`ID Selector 不能为 #`); }
+		super();
+		currentLayer && ( collection_id[collection_id.length] = this );
+		this.valueLiteral = valueLiteral;
+		return this;
+	}
+	
+	[consume] (                )        { throw TypeError$1(`idSelector[consume]`); }
+	
+	[Symbol.toPrimitive] (                ) { return `#${this.valueLiteral}`; }
+	
+	* [Symbol.iterator] (                ) { throw TypeError$1(`beautify idSelector`); }
+	
+	static default = protect(this);
+	
+}
+
+class AttributeSelector extends Layer         {
+	
+	get [Symbol.toStringTag] () { return 'AttributeSelector'; }
+	
+	constructor () { return currentLayer ? collection_attribute[collection_attribute.length] = super()                    : super()                   ; }
+	
+	nameLiteral         = '';
+	
+	[consume] (                       ) {
 		switch ( type ) {
 			case ']':
-				const lastItem = this[this.length-1];
+				if ( !this.nameLiteral ) { break; }
+				const { lastItem } = this;
 				( lastItem===' ' || lastItem==='/**/' ) && --this.length;
-				return this.parent;
+				return this[parent];
 			case whitespace:
-				this.length && ( this[this.length] = ' ' );
+				this.length && ( this.newItem = ' ' );
 				return this;
 			case ident:
+				this.nameLiteral
+					? this.newItem = literal
+					: this.nameLiteral = literal;
+				return this;
 			case '~':
 			case '|':
 			case '^':
@@ -3983,55 +4302,86 @@ class SquareBracketBlock extends Array$1         {
 			case '*':
 			case '=':
 			case string:
-				this[this.length] = literal;
+				if ( !this.nameLiteral ) { break; }
+				this.newItem = literal;
 				return this;
 			case comment:
-				this.length && ( this[this.length] = '/**/' );
+				this.length && ( this.newItem = '/**/' );
 				return this;
 		}
 		return null;
 	}
 	
-	get cssText ()         { return `[${this.join('')}]`; }
+	[Symbol.toPrimitive] (                       ) {
+		return `[${this.nameLiteral}${this.join('')}]`;
+	}
+	
+	* [Symbol.iterator] (                       ) { throw TypeError$1(`beautify attributeSelector`); }
+	
+	                                                
+	
+	static default = protect(this);
 	
 }
-freeze(SquareBracketBlock.prototype);
 
-class ParenthesisBlock extends NodeList                                                                                {
+class Parenthesis extends Layer                                                                                             {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.ParenthesisBlock'; }
+	get [Symbol.toStringTag] () { return 'Parenthesis'; }
 	
-	         parent                                                                      ;
-	                 name        ;
+	                 nameLiteral        ;
 	
-	constructor (parent                                                                      , name        ) {
+	constructor (nameLiteral         ) {
 		super();
-		this.parent = parent;
-		this.name = name;
+		this.nameLiteral = nameLiteral || '';
 		return this;
 	}
 	
-	appendToken (                      )                                                                                                   {
+	[consume] (                 ) {
 		switch ( type ) {
 			case whitespace:
-				this.length && ( this[this.length] = ' ' );
+				this.length && ( this.newItem = ' ' );
 				return this;
-			case function$:
+			case function_:
+				return this.newItem = url_ (literal)
+					? new Url(literal.slice(0, 3))
+					: new Parenthesis(literal.slice(0, -1));
 			case '(':
-				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
-				this[this.length] = parenthesisBlock;
-				return parenthesisBlock;
+				return this.newItem = new Parenthesis;
 			case '[':
-				const squareBracketBlock = new SquareBracketBlock(this);
-				this[this.length] = squareBracketBlock;
-				return squareBracketBlock;
+				return null;
 			case ')':
-				const lastItem = this[this.length-1];
+				const { lastItem } = this;
 				( lastItem===' ' || lastItem==='/**/' ) && --this.length;
-				return this.parent;
+				if ( !this.length ) { return null; }
+				return this[parent];
 			case comment:
-				this.length && ( this[this.length] = '/**/' );
+				this.length && ( this.newItem = '/**/' );
 				return this;
+			case hash:
+			case string:
+			case percentage:
+			case '!':
+			case '$':
+			case '-':
+			case '/':
+			case '?':
+			case ident:
+			case number:
+			case dimension:
+			case '*':
+			case '+':
+			case ',':
+			case '.':
+			case ':':
+			case '>':
+			case '|':
+			case '~':
+				this.newItem = literal;
+				return this;
+			case url:
+				if ( literal[3]==='(' ) { return newUrl(this); }
+				return null;
+			/*
 			case ']':
 			case '{':
 			case '}':
@@ -4043,76 +4393,151 @@ class ParenthesisBlock extends NodeList                                         
 			case ';':
 			case '&':
 			case '%':
-			case at_keyword:
-				return null;
-			/*
-			case TOKEN.ident:
-			case TOKEN.hash:
-			case TOKEN.string:
-			case TOKEN.number:
-			case TOKEN.dimension:
-			case TOKEN.percentage:
-			case TOKEN.url:
-			case '!':
-			case '$':
-			case '*':
-			case '+':
-			case ',':
-			case '-':
-			case '.':
-			case '/':
-			case ':':
-			case '>':
-			case '?':
-			case '|':
-			case '~':
+			case TOKEN.atKeyword:
 			*/
 		}
-		this[this.length] = literal;
-		return this;
+		return null;
 	}
 	
-	get cssText ()         {
-		let cssText = '';
-		let index = this.length;
-		while ( index ) {
-			const child = this[--index] ;
-			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
-		}
-		return `${this.name}(${cssText})`;
+	[Symbol.toPrimitive] (                 ) {
+		return `${this.nameLiteral}(${this.join('')})`;
 	}
+	
+	* [Symbol.iterator] (                 ) { throw TypeError$1(`beautify parenthesis`); }
+	
+	static default = protect(this);
 	
 }
-freeze(ParenthesisBlock.prototype);
 
-class Declaration extends Array$1                            {// property or descriptor
+const needCollect = /*#__PURE__*/test.bind(/^(?:(?:-[a-z][a-z\d]*-)?animation(?:-name)?)$/i);
+
+class Name extends Layer       {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.*.Declaration'; }
+	_literal         = '';
+	get literal () { return this._literal; }
+	set literal (value) {
+		if ( notKeyframes(value) ) { throw SyntaxError$1(`“${value}”无法作为 animation-name`); }
+		this._literal = value;
+	}
 	
-	         parent                                ;
-	         name        ;
-	        colon          = false;
-	///private semicolon :boolean = false;
-	
-	constructor (parent                                , name        ) {
+	constructor (literal        ) {
 		super();
-		this.parent = parent;
-		this.name = name;
+		currentLayer && ( collection_animation[collection_animation.length] = this );
+		this.literal = literal;
 		return this;
 	}
 	
-	appendToken (                 )                                                                                                 {
-		if ( this.colon ) {
+	[consume] (          )        { throw TypeError$1(`name[consume]`); }
+	
+	[Symbol.toPrimitive] (          ) {
+		return this._literal;
+	}
+	
+	* [Symbol.iterator] (          ) { throw TypeError$1(`beautify name`); }
+	
+	                                 
+	
+	static default = protect(this);
+	
+}
+
+class Property extends Layer                {
+	
+	get [Symbol.toStringTag] () { return 'Property'; }
+	
+	         nameLiteral        ;
+	        _colon          = false;
+	        _comma          = true;
+	
+	constructor (nameLiteral        ) {
+		super();
+		this.nameLiteral = nameLiteral;
+		return this;
+	}
+	
+	[consume] (              ) {
+		if ( this._colon ) {
+			switch ( type ) {
+				case ident:
+					if ( !this._comma ) { break; }
+					this.newItem = notKeyframes(literal) ? literal : new Name(literal);
+					this._comma = false;
+					return this;
+				case string:
+					if ( !this._comma ) { break; }
+					this.newItem = new Name(literal);
+					this._comma = false;
+					return this;
+				case ',':
+					if ( this._comma ) { break; }
+					this._comma = true;
+					return this;
+				case ';':
+					if ( this._comma ) { break; }
+					return this[parent];
+				case '}':
+					if ( this._comma ) { break; }
+					return this[parent][parent][parent];
+				case whitespace:
+				case comment:
+					return this;
+			}
+		}
+		else {
+			switch ( type ) {
+				case ':':
+					this._colon = true;
+					return this;
+				case whitespace:
+				case comment:
+					return this;
+			}
+		}
+		return null;
+	}
+	
+	[Symbol.toPrimitive] (              ) {
+		return `${this.nameLiteral}:${this.join(',')};`;
+	}
+	
+	* [Symbol.iterator] (              )                                {
+		yield `${this.nameLiteral}: ${this.join(', ')};`;
+	}
+	
+	                                                     
+	
+	static default = protect(this);
+	
+}
+
+class Declaration extends Layer                             {// property or descriptor
+	
+	get [Symbol.toStringTag] () { return 'Declaration'; }
+	
+	         nameLiteral         ;
+	        _colon          = false;
+	
+	constructor (nameLiteral        ) {
+		if ( needCollect(nameLiteral) ) {
+			if ( nameLiteral[nameLiteral.length - 5]==='-' ) { return new Property(nameLiteral)       ; }
+			throw Error$1(`请用 animation-* 替代 animation`);
+		}
+		super();
+		this.nameLiteral = nameLiteral;
+		return this;
+	}
+	
+	[consume] (                 ) {
+		if ( this._colon ) {
 			switch ( type ) {
 				case ';':
-					///this.semicolon = true;
-					return this.parent;
-				case function$:
-					const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
-					this[this.length] = parenthesisBlock;
-					return parenthesisBlock;
+					if ( !this.length ) { break; }
+					return this[parent];
+				case function_:
+					return this.newItem = new ( url_ (literal) ? Url : Parenthesis )(literal.slice(0, -1));
 				case '}':
-					return this.parent.appendToken()                           ;
+					if ( !this.length ) { break; }
+					return this[parent] [parent] [parent];
 				case '?':
 				case '/':
 				case '-':
@@ -4126,833 +4551,1300 @@ class Declaration extends Array$1                            {// property or des
 				case number:
 				case dimension:
 				case percentage:
-				case url:
-					this[this.length] = literal;
+					this.newItem = literal;
 					return this;
+				case url:
+					if ( literal[3]==='(' ) { return newUrl(this); }
+					break;
 				case whitespace:
-					this.length && ( this[this.length] = ' ' );
+					this.length && ( this.newItem = ' ' );
 					return this;
 				case comment:
-					this.length && ( this[this.length] = '/**/' );
+					this.length && ( this.newItem = '/**/' );
 					return this;
 			}
 		}
 		else {
-			if ( type===':' ) {
-				this.colon = true;
-				return this;
+			switch ( type ) {
+				case ':':
+					this._colon = true;
+					return this;
+				case whitespace:
+				case comment:
+					return this;
 			}
-			if ( type===whitespace || type===comment ) { return this; }
 		}
 		return null;
 	}
 	
-	get cssText ()         {
-		let cssText = '';
-		let index = this.length;
-		while ( index ) {
-			const child = this[--index];
-			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
-		}
-		return `${this.name}:${cssText};`;
+	[Symbol.toPrimitive] (                 ) {
+		return `${this.nameLiteral}:${this.join('')};`;
 	}
 	
-	                                                                               
-	* beautify (                 )                                     {
-		let cssText = '';
-		let index = this.length;
-		while ( index ) {
-			const child = this[--index];
-			cssText = ( typeof child==='string' ? child : child.cssText )+cssText;
-		}
-		yield `${this.name}:${cssText[0]===' ' ? '' : ' '}${cssText};`;
+	* [Symbol.iterator] (                 )                                {
+		yield `${this.nameLiteral}: ${this.join('')};`;
 	}
+	
+	                                             
+	
+	static default = protect(this);
 	
 }
-freeze(Declaration.prototype);
 
-const IDENT$1 = newRegExp('i')`^${ident_token}$`;
-
-class Declarations extends Array$1              {
+class Properties extends Layer           {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.QualifiedRule.Declarations'; }
+	get [Symbol.toStringTag] () { return 'Properties'; }
 	
-	         parent               ;
-	
-	constructor (parent               ) {
+	constructor (parent$1                           ) {
 		super();
-		this.parent = parent;
+		this[parent] = parent$1;
 		return this;
 	}
 	
-	appendToken (                  )                                                                              {
+	[consume] (                ) {
 		switch ( type ) {
 			case whitespace:
 			case comment:
 				return this;
 			case ident:
-				return this[this.length] = new Declaration(this, literal);
+				return this.newItem = new Declaration(literal);
 			case '}':
-				return this.parent.parent;
+				return this[parent][parent];
 		}
 		return null;
 	}
+	
+	[Symbol.toPrimitive] (                ) {
+		return this.join('');
+	}
+	
+	* [Symbol.iterator] (                ) { throw TypeError$1(`beautify properties`); }
+	
+	                                                  
+	
+	static default = protect(this);
 	
 }
 
-freeze(Declarations.prototype);
-
-const replaceTypeSelector = (func                  , qualifiedRule               )          => {
+class TypeSelector extends Layer       {
 	
-	let { length } = func;
-	if ( !length ) { return false; }
+	elementNameLiteral        ;
+	namespaceLiteral               ;
 	
-	const indexes = [];
-	let indexes_length = 0;
-	
-	let index = 1;
-	for ( ; index!==length; ++index ) {
-		if ( func[index]==='/**/' ) {
-			const previousItem = func[index-1];
-			if ( previousItem==='.' || previousItem===':' || previousItem==='|' || func[index+1]==='|' ) { indexes[indexes_length++] = index; }
-		}
-	}
-	if ( indexes_length ) {
-		length -= indexes_length;
-		do { func.splice(indexes[--indexes_length], 1); }
-		while ( indexes_length )
-		indexes.length = 0;
-	}
-	
-	for ( index = 0; index!==length; ++index ) {
-		if ( func[index]==='|' && func[index+1]==='|' ) {
-			if ( func[index+2]==='|' ) { return true; }
-			func[index] = '||';
-			indexes[indexes_length++] = ++index;
-		}
-	}
-	if ( indexes_length ) {
-		length -= indexes_length;
-		do { func.splice(indexes[--indexes_length], 1); }
-		while ( indexes_length )
-		indexes.length = 0;
-	}
-	
-	index = 0;
-	for ( const { classSelectorsPART } = qualifiedRule; index!==length; ++index ) {
-		let item = func[index];
-		if ( item==='.' ) {
-			if ( typeof ( item = func[index+1] )!=='string' || !IDENT$1.test(item) || func[index+2]==='|' ) { return true; }
-			func[index] = classSelectorsPART[classSelectorsPART.length] = new ClassSelector(func, item);
-			indexes[indexes_length++] = ++index;
-		}
-		else if ( item===':' ) {
-			if ( typeof ( item = func[index+1] )==='string' && IDENT$1.test(item) ) {
-				if ( func[index+2]==='|' ) { return true; }
-				++index;
-			}
-		}
-		else if ( item==='*' ) {
-			if ( func[index+1]==='|' && ( item = func[index += 2] )!=='*' ) {
-				if ( typeof item!=='string' || !IDENT$1.test(item) ) { return true; }
-				func[index] = typeSelectors[typeSelectors.length] = new TypeSelector(func, item, true);
-			}
-		}
-		else if ( item==='|' ) { return true; }
-		else if ( typeof item==='string' ) {
-			if ( IDENT$1.test(item) ) {
-				if ( func[index+1]==='|' ) {
-					item = func[index += 2];
-					if ( item!=='*' ) {
-						if ( typeof item!=='string' || !IDENT$1.test(item) ) { return true; }
-						func[index] = typeSelectors[typeSelectors.length] = new TypeSelector(func, item, true);
-					}
-				}
-				else {
-					func[index] = typeSelectors[typeSelectors.length] = new TypeSelector(func, item, false);
-				}
-			}
-		}
-		else if ( item instanceof ParenthesisBlock && replaceTypeSelector(item, qualifiedRule) ) { return true; }
-	}
-	while ( indexes_length ) { func.splice(indexes[--indexes_length], 1); }
-	
-	return false;
-	
-};
-
-class QualifiedRule extends Array$1                                                                                {
-	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.QualifiedRule'; }
-	
-	         parent                                         ;
-	         block              ;
-	#func                          = null;
-	#l            = 0;
-	classSelectorsPART                  = [];
-	         classSelectors                    = [ this.classSelectorsPART ];
-	
-	constructor (parent                                         ) {
+	constructor (elementNameLiteral        , namespaceLiteral                = null) {
+		//if ( !elementNameLiteral ) { throw SyntaxError(`Type Selector 不能为 ${namespaceLiteral}`); }
 		super();
-		this.parent = parent;
-		this.block = new Declarations(this);
+		currentLayer && ( collection_type[collection_type.length] = this );
+		this.elementNameLiteral = elementNameLiteral;
+		this.namespaceLiteral = namespaceLiteral;
 		return this;
 	}
 	
-	appendToken (                     not          )                                                                              {
-		if ( this.#func ) {
-			if ( replaceTypeSelector(this.#func, this) ) { return null; }
-			this.#func = null;
-		}
-		else if ( this.#l ) {
-			if ( type==='|' ) {
-				if ( this.#l===2 ) { return null; }
-				this.#l = 2;
-				return this;
-			}
-			else {
-				let { length } = this;
-				if ( !length ) { return null; }
-				let lastItem = this[length-1];
-				if ( this.#l===2 ) {
-					this[lastItem===' ' || lastItem==='/**/' ? length-1 : length] = '||';
-					return this;
-				}
-				if ( lastItem==='/**/' ) {
-					if ( !--length ) { return null; }
-					lastItem = this[length-1];
-				}
-				if ( lastItem!=='*' ) {
-					const lastIndex = typeSelectors.length-1;
-					if ( lastItem!==typeSelectors[lastIndex] ) { return null; }
-					typeSelectors.length = lastIndex;
-				}
-				this[length] = '|';
-				return this;
-			}
-		}
-		switch ( type ) {
-			case whitespace: {/// [0]
-				const lastItem = this[this.length-1];
-				if ( lastItem===',' || lastItem==='+' || lastItem==='>' || lastItem==='||' ) { return this; }
-				this[this.length] = ' ';
-				return this;
-			}
-			case ':':
-				this[this.length] = type;
-				return this;
-			case '.':
-				this[this.length] = type;
-				return this;
-			case ident:
-				const lastItem = this[this.length-1];
-				if ( lastItem===':' || not ) { this[this.length] = literal; }
-				else {
-					lastItem==='.'
-						? this[this.length-1] = this.classSelectorsPART[this.classSelectorsPART.length] = new ClassSelector(this, literal)
-						: this[this.length] = typeSelectors[typeSelectors.length] = new TypeSelector(this, literal, lastItem==='|');
-				}
-				return this;
-			case ',':
-				this.classSelectors[this.classSelectors.length] = this.classSelectorsPART = [];
-			case '+':
-			case '>': {
-				const lastItem = this[this.length-1];
-				this[lastItem===' ' || lastItem==='/**/' ? this.length-1 : this.length] = literal;
-				return this;
-			}
-			case '|':
-				this.#l = 1;
-				return this;
-			case '*':
-			case '~':
-			case '!':
-			case '$':
-			case '/':
-			case hash:
-			case percentage:// not style rule
-				this[this.length] = literal;
-				return this;
-			case '[':
-				const squareBracketBlock = new SquareBracketBlock(this);
-				this[this.length] = squareBracketBlock;
-				return squareBracketBlock;
-			case function$:
-				if ( this[this.length-1]!==':' ) { break; }
-				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
-				this[this.length] = parenthesisBlock;
-				this.#func = parenthesisBlock;
-				return parenthesisBlock;
-			case '{': {
-				const lastItem = this[this.length-1];
-				( lastItem===' ' || lastItem==='/**/' ) && --this.length;
-				return this.block;
-			}
-			case comment: {/// [0]
-				const lastItem = this[this.length-1];
-				if ( lastItem===',' || lastItem==='+' || lastItem==='>' || lastItem==='||' || lastItem==='|' || lastItem==='.' || lastItem===':' ) { return this; }
-				this[this.length] = '/**/';
-				return this;
-			}
-		}
-		return null;
-	}
+	[consume] (                  )        { throw TypeError$1(`typeSelector[consume]`); }
 	
-	selectorTextAt (                     index        )         {
-		let start = 0;
-		for ( ; index; --index ) { start = this.indexOf(',', start)+1; }
-		let selectorText = '';
-		let end = this.indexOf(',', start);
-		if ( end<0 ) { end = this.length; }
-		while ( start!==end ) {
-			const child = this[start++] ;
-			selectorText += typeof child==='string' ? child : child.cssText;
-		}
-		return selectorText;
-	}
+	get literal () { return this.namespaceLiteral===null ? this.elementNameLiteral : `${this.namespaceLiteral}|${this.elementNameLiteral}`; }
 	
-	        get selectorText ()         {
-		let selectorText = '';
-		let index = this.length;
-		while ( index ) {
-			const child = this[--index] ;
-			selectorText = ( typeof child==='string' ? child : child.cssText )+selectorText;
-		}
-		return selectorText;
-	}
+	[Symbol.toPrimitive] (                  ) { return this.literal; }
 	
-	get cssText ()         {
-		const { block } = this;
-		let blockText = '';
-		let index = block.length;
-		while ( index ) { blockText = block[--index].cssText+blockText; }
-		return blockText && `${this.selectorText}{${blockText.slice(0, -1)}}`;
-	}
+	* [Symbol.iterator] (                  ) { throw TypeError$1(`beautify typeSelector`); }
 	
-	                                                                                 
-	* beautify (                   )                                     {
-		const { block } = this;
-		let blockText = '';
-		let index = block.length;
-		while ( index ) { blockText = block[--index].cssText+' '+blockText; }
-		if ( blockText ) { yield `${this.selectorText} { ${blockText}}`; }
-	}
+	static default = protect(this);
 	
 }
-freeze(QualifiedRule.prototype);
 
-const isCSSWideKeywords = (literal        ) => inherit(literal) || initial(literal) || unset(literal);
-const notCustomIdent = (literal        ) => DEFAULT(literal) || isCSSWideKeywords(literal);
-
-class KeyframesRule extends Array$1                {
+class ClassSelector extends Layer       {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.KeyframesRule'; }
+	         itemLiteral        ;
 	
-	         parent                         ;
-	         #keyword        ;
-	keyframesNameLiteral         = '';
-	#blocked          = false;
-	get block () { return true         ; }
-	
-	constructor (parent                         , keyword        ) {
+	constructor (itemLiteral        ) {
+		//if ( !itemLiteral ) { throw SyntaxError(`Class Selector 不能为 .`); }
 		super();
-		this.parent = parent;
-		this.#keyword = keyword;
+		currentLayer && ( collection_class[collection_class.length] = this );
+		this.itemLiteral = itemLiteral;
 		return this;
 	}
 	
-	appendToken (                   )                                                                 {
-		switch ( type ) {
-			case whitespace:
-			case comment:
-				return this;
-			case ident:
-				if ( this.#blocked ) {
-					if ( !from$1(literal) && !to(literal) ) { break; }
-					const qualifiedRule = new QualifiedRule(this);
-					this[this.length] = qualifiedRule;
-					return qualifiedRule.appendToken(true)                 ;
+	[consume] (                   )        { throw TypeError$1(`classSelector[consume]`); }
+	
+	[Symbol.toPrimitive] (                   ) { return `.${this.itemLiteral}`; }
+	
+	* [Symbol.iterator] (                   ) { throw TypeError$1(`beautify classSelector`); }
+	
+	static default = protect(this);
+	
+}
+
+const notPseudo = /*#__PURE__*/test.bind(/^(?:dir|lang|nth-(?:last-)?(?:col|of-type)|part|state|theme)$/i);
+//	not
+//		标准
+//			:dir()
+//			:lang()
+//			:nth-$last$-of-type()
+//			::part(ident+)
+//		废弃
+///		实验
+///			:nth-$last$-col()
+///			:state()
+///			::theme()
+//	part
+///		实验
+///			:nth-$last$-child(+n+1 n+1 odd oF.class)
+//	is
+//		标准
+//			:host()
+//			:host-context()
+//			::slotted()
+//			:is()
+//			:not()
+//			:where()
+//			:has(>*)
+//		废弃
+//			:*any()
+//			:matches()
+//		实验
+//			:current()
+const isNthChild = /*#__PURE__*/test.bind(/^nth-(?:last-)?child$/i);
+
+const inNthChild = (complexSelector                 ) => ( complexSelector[parent][parent].constructor                                                                                                 )===NthChild;
+
+const followCombinator = ({ lastItem }                ) => lastItem==='>' || lastItem==='+' || lastItem==='~' || lastItem==='||';
+
+const missingCompoundSelector = ({ lastItem }                 ) => !lastItem || lastItem===',' || lastItem==='>' || lastItem==='+' || lastItem==='~' || lastItem==='||';
+
+const NTH_START = /^(?:\+(?:\d+n?)?|-(?:\d+n?|n(?:-\d+)?)|\d+n?|even|n(?:-\d+)?|odd)$/i;
+const NTH_WHOLE = /^(?:[+-]?(?:\d+(?:n(?:[+-]\d+)?)?|event|n(?:[+-]\d+)?)|odd)$/i;
+
+const STATE_BEFORE_NTH = 1         ;
+const STATE_DURING_NTH = 2         ;
+const STATE_AFTER_NTH = 3         ;
+const STATE_OF = 4         ;
+const STATE_AFTER_OF = 5         ;
+
+class NthChild extends Layer       {
+	
+	get [Symbol.toStringTag] () { return 'NthChild'; }
+	
+	                 pseudoLiteral        ;
+	        _state                        = STATE_BEFORE_NTH;
+	nthLiteral         = '';
+	ofLiteral         = '';
+	sLayer                      = null;
+	
+	constructor (pseudoLiteral        ) {
+		///
+		super();
+		this.pseudoLiteral = pseudoLiteral;
+		return this;
+	}
+	
+	[consume] (              ) {
+		switch ( this._state ) {
+			case STATE_BEFORE_NTH:
+				switch ( type ) {
+					case comment:
+					case whitespace:
+						return this;
+					case ident:
+					case '+':
+					case number:
+					case dimension:
+						if ( !NTH_START.test(literal) ) { break; }
+						this.nthLiteral = literal;
+						this._state = STATE_DURING_NTH;
+						return this;
 				}
-				else {
-					const { keyframesNameLiteral } = this;
-					if ( keyframesNameLiteral ) { break; }
-					if ( none(literal) || notCustomIdent(literal) ) { break; }
-					this.keyframesNameLiteral = literal;
-					return this;
+				break;
+			case STATE_DURING_NTH:
+				switch ( type ) {
+					case comment:
+						return this;
+					case ident:
+					case '+':
+					case number:
+					case dimension:
+						this.nthLiteral += literal;
+						return this;
+					case ')':
+						if ( !NTH_WHOLE.test(this.nthLiteral) ) { break; }
+						this._state = 0;
+						return this[parent];
+					case whitespace:
+						if ( !NTH_WHOLE.test(this.nthLiteral) ) { break; }
+						this._state = STATE_AFTER_NTH;
+						return this;
 				}
-			case string:
-				if ( this.keyframesNameLiteral ) { break; }
-				this.keyframesNameLiteral = literal;
-				return this;
-			case '{':
-				if ( !this.keyframesNameLiteral || this.#blocked ) { break; }
-				this.#blocked = true;
-				return this;
-			case '}':
-				if ( !this.#blocked ) { break; }
-				return this.parent;
-			case percentage:
-				if ( !this.#blocked ) { break; }
-				const qualifiedRule = new QualifiedRule(this);
-				this[this.length] = qualifiedRule;
-				return qualifiedRule.appendToken()                 ;
+				break;
+			case STATE_AFTER_NTH:
+				switch ( type ) {
+					case comment:
+					case whitespace:
+						return this;
+					case ')':
+						this._state = 0;
+						return this[parent];
+					case ident:
+						if ( !of (literal) ) { break; }
+						this.ofLiteral = literal;
+						this._state = STATE_OF;
+						return this;
+				}
+				break;
+			case STATE_OF:
+				switch ( type ) {
+					case comment:
+						return this;
+					case whitespace:
+						this._state = STATE_AFTER_OF;
+						return this;
+				}
+				break;
+			case STATE_AFTER_OF:
+				switch ( type ) {
+					case comment:
+					case whitespace:
+						return this;
+					case ')':
+						break;
+					default:
+						stay();
+						this._state = 0;
+						return this.sLayer = new SelectorList(this);
+				}
+				break;
 		}
 		return null;
 	}
 	
-	get cssText ()         {
-		const { keyframesNameLiteral } = this;
-		let blockText = '';
-		let index = this.length;
-		while ( index ) { blockText = this[--index].cssText+blockText; }
-		return `@${this.#keyword}${keyframesNameLiteral[0]==='"' || keyframesNameLiteral[0]==='\'' ? '' : ' '}${keyframesNameLiteral}{${blockText}}`;
+	[Symbol.toPrimitive] (              ) {
+		return `${this.pseudoLiteral}(${this.nthLiteral}${this.sLayer ? ` ${this.ofLiteral} ${this.sLayer}` : ''})`;
 	}
 	
-	* beautify (                     tab         = '\t')                                     {
-		yield `@${this.#keyword} ${this.keyframesNameLiteral} {`;
+	* [Symbol.iterator] (              ) { throw TypeError$1(`beautify nthChild`); }
+	
+	                                        
+	
+	static default = protect(this);
+	
+}
+
+class ComplexSelector extends Layer                                                                                                                    {
+	
+	containsScope (                     )          {
 		const { length } = this;
 		let index = 0;
-		while ( index!==length ) {
-			for ( const line of this[index++].beautify(tab) ) {
-				yield tab+line;
+		do {
+			const each = this[index] ;
+			switch ( each.constructor ) {
+				case ClassSelector:
+				case IdSelector:
+				//case TypeSelector:
+				//case AttributeSelector:
+					return true;
+				case ComplexSelector:
+					if ( ( each                    ).containsScope() ) { return true; }
+					break;
+				case NthChild:
+					const { sLayer } = each            ;
+					if ( sLayer ) {
+						const { length } = sLayer;
+						let index = 0;
+						do { if ( sLayer[index] .containsScope() ) { return true; } }
+						while ( ++index!==length );
+					}
+					break;
 			}
 		}
-		yield `}`;
+		while ( ++index!==length );
+		return false;
 	}
 	
-}
-freeze(KeyframesRule.prototype);
-
-class Multi extends Array$1 {
+	get [Symbol.toStringTag] () { return 'ComplexSelector'; }
 	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.Multi'; }
+	                 pseudoLiteral        ;
+	        _hold                                             = '';
 	
-	         parent                 ;
-	                 declaration             ;
-	                 styleRule               ;
-	#d     ;
-	#sr     ;
-	
-	constructor (parent                 ) {
+	constructor (pseudoLiteral        ) {
 		super();
-		this.parent = parent;
-		this.#d = this.declaration = new Declaration(parent, literal);
-		this.#sr = ( this.styleRule = new QualifiedRule(parent) ).appendToken();// may not style rule
+		this.pseudoLiteral = pseudoLiteral;
 		return this;
 	}
 	
-	appendToken (           ) {
-		const d = this.#d.appendToken();
-		const sr = this.#sr.appendToken();
-		if ( d && sr ) {
-			this.#d = d;
-			this.#sr = sr;
-			return this;
-		}
-		if ( d ) {
-			this.parent[this.parent.length] = this.declaration;
-			return d;
-		}
-		if ( sr ) {
-			this.parent[this.parent.length] = this.styleRule;
-			return sr;
-		}
-		return null;
-	}
-	
-}
-
-freeze(Multi.prototype);
-
-class DeclarationList extends Array$1                                                       {
-	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule.DeclarationList'; }
-	
-	         parent        ;
-	         #noAt          = false;
-	         #noQualified          = false;
-	         #noDeclaration          = false;
-	
-	constructor (parent        ) {
-		super();
-		this.parent = parent;
-		const parent_parent = parent.parent;
-		if ( parent_parent instanceof DeclarationList && page(parent_parent.parent.name) ) {
-			this.#noAt = true;
-			this.#noQualified = true;
-			return;
-		}
-		const { name } = parent;
-		if ( media(name) ) { this.#noDeclaration = true; }
-		//else if ( is.keyframes(name) ) {
-		//	this.#noAt = true;
-		//	this.#noDeclaration = true;
-		//}
-		else if ( font_face(name) ) {
-			this.#noAt = true;
-			this.#noQualified = true;
-		}
-		else if ( page(name) ) { this.#noQualified = true; }
-		else if ( supports(name) || document$1(name) ) { this.#noDeclaration = true; }
-		return this;
-	}
-	
-	appendToken (                     )                                                                                                                     {
-		switch ( type ) {
-			case whitespace:
-			case comment:
-				return this;
-			case at_keyword:
-				if ( this.#noAt ) { break; }
-				const name = literal.slice(1);
-				if ( charset(name) || IMPORT(name) || namespace(name) ) { break; }
-				const atRule = keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name);
-				this[this.length] = atRule;
-				return atRule;
-			case ident:
-				if ( this.#noDeclaration ) {
-					if ( this.#noQualified ) { break; }
-					const styleRule = new QualifiedRule(this);// may not style rule
-					this[this.length] = styleRule;
-					return styleRule.appendToken()                 ;
-				}
-				if ( this.#noQualified ) {
-					const declaration = new Declaration(this, literal);
-					this[this.length] = declaration;
-					return declaration;
-				}
-				return new Multi(this);
-			case '*':
-			case '.':
-			case ':':
-			case '[':
-			///case '|':
-			case '$':
-			case hash:
-			///case TOKEN.percentage:// not style rule
-				if ( this.#noQualified ) { break; }
-				const styleRule = new QualifiedRule(this);
-				this[this.length] = styleRule;
-				return styleRule.appendToken()                                      ;
-			case '}':
-				return this.parent.parent;
-		}
-		return null;
-	}
-	
-}
-
-freeze(DeclarationList.prototype);
-
-class AtRule extends Array$1                                                 {
-	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.AtRule'; }
-	
-	         parent                         ;
-	         name        ;
-	block                         = null;
-	///private semicolon :boolean = false;
-	
-	constructor (parent                         , name        ) {
-		super();
-		this.parent = parent;
-		this.name = name;
-		return this;
-	}
-	
-	appendToken (            )                                                                                  {
-		switch ( type ) {
-			case whitespace:
-				this.length && ( this[this.length] = ' ' );
-				return this;
-			case function$:
-			case '(': {
-				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
-				this[this.length] = parenthesisBlock;
-				return parenthesisBlock;
+	[consume] (                     ) {
+		if ( type===comment ) { return this; }
+		if ( this._hold && type!==ident ) {
+			switch ( this._hold ) {
+				case ':':
+					if ( type===':' ) {
+						this._hold = '::';
+						return this;
+					}
+				case '::':
+					if ( type===function_ ) { break; }
+					return null;
+				case '.':
+					return null;
+				case '|':
+					if ( type==='*' ) { break; }
+					///if ( TOKEN.type==='|' && !( allowRelativeSelectorList!(this.pseudoLiteral) ? followCombinator : missingCompoundSelector )(this) ) { break; }
+					return null;
+				default:
+					if ( type==='*' ) { break; }
+					return null;
 			}
+		}
+		switch ( type ) {
+			case whitespace:
+				missingCompoundSelector(this) || ( this.newItem = ' ' );
+				return this;
 			case ident:
-			case string:
-			case url:
-			case ':':
+				switch ( this._hold ) {
+					case '':
+						const constructorOfLastItem = this.length && this.lastItem .constructor;
+						if ( constructorOfLastItem===TypeSelector || constructorOfLastItem===IdSelector ) { return null; }
+						this.newItem = new TypeSelector(literal, null);
+						break;
+					case '.':
+						this.newItem = new ClassSelector(literal);
+						break;
+					case ':':
+					case '::':
+						this.newItem = this._hold + literal;
+						break;
+					case '|':
+						const { lastItem } = this;
+						if ( lastItem && lastItem.constructor===TypeSelector ) {
+							if ( lastItem.namespaceLiteral!==null ) { return null; }
+							lastItem.namespaceLiteral = lastItem.elementNameLiteral;
+							lastItem.elementNameLiteral = literal;
+							break;
+						}
+					default:
+						this.newItem = new TypeSelector(literal, this._hold.slice(0, -1));
+						break;
+				}
+				this._hold = '';
+				return this;
 			case ',':
-				this[this.length] = literal;
-				return this;
-			case '{': {
-				if ( /*is.charset(this.name) || is.import(this.name) || */namespace(this.name) ) { break; }
-				const lastIndex = this.length-1;
-				if ( lastIndex>=0 ) {
-					const lastItem = this[lastIndex];
-					if ( lastItem===' ' || lastItem==='/**/' ) { this.length = lastIndex; }
+				if ( this.pseudoLiteral ) {
+					const { lastItem } = this;
+					if ( !lastItem || lastItem===',' ) { return null; }
+					this[lastItem===' ' ? this.lastIndex : this.length] = literal;
+					return this;
 				}
-				return this.block = new DeclarationList(this);
+				if ( missingCompoundSelector(this) ) { return null; }
+				if ( inNthChild(this) ) {
+					this[this.lastItem===' ' ? this.lastIndex : this.length] = literal;
+					return this;
+				}
+				this.lastItem===' ' && ( --this.length );
+				return this[parent];
+			case '>':
+			case '+':
+			case '~':
+				if ( ( has (this.pseudoLiteral) ? followCombinator : missingCompoundSelector )(this) ) { return null; }
+				this[this.lastItem===' ' ? this.lastIndex : this.length] = literal;
+				return this;
+			case ':':
+				this._hold = ':';
+				return this;
+			case '|':
+				if ( this._hold ) {
+					this[this.lastItem===' ' ? this.lastIndex : this.length] = '||';
+					this._hold = '';
+				}
+				else { this._hold = '|'; }
+				return this;
+			case '.':
+				this._hold = type;
+				return this;
+			case '*':
+				if ( this._hold ) {
+					this.newItem = new TypeSelector('*', this._hold.slice(0, -1));
+					this._hold = '';
+				}
+				else { this.newItem = new TypeSelector('*', null); }
+				return this;
+			case hash:
+				this.newItem = new IdSelector(literal.slice(1));
+				return this;
+			case '[':
+				return this.newItem = new AttributeSelector;
+			case function_:
+				const colons = this._hold;
+				if ( !colons || url_ (literal) ) { return null; }
+				this._hold = '';
+				const nameLiteral = literal.slice(0, -1);
+				return this.newItem = new ( notPseudo(nameLiteral) ? Parenthesis : isNthChild(nameLiteral) ? NthChild : ComplexSelector )(colons + nameLiteral);
+			case '{':
+				if ( this.pseudoLiteral ) { return null; }
+				if ( inNthChild(this) ) { return null; }
+				if ( missingCompoundSelector(this) ) { return null; }
+				this.lastItem===' ' && --this.length;
+				return ( this[parent][parent]              ).block;
+			case ')':
+				if ( this.pseudoLiteral ) {
+					if ( missingCompoundSelector(this) ) { return null; }///if ( this.lastItem===',' ) { return null; }
+					( this.lastItem===' ' ) && --this.length;
+					if ( !this.length ) { return null; }
+					return this[parent];
+				}
+				else {
+					if ( !inNthChild(this) ) { return null; }
+					if ( missingCompoundSelector(this) ) { return null; }
+					( this.lastItem===' ' ) && --this.length;
+					return this[parent][parent][parent];
+				}
+			//case TOKEN.number:
+			//case TOKEN.dimension:
+			//case TOKEN.comment:
+			//case '(':
+			//case '-':
+			//case TOKEN.url:
+			//case '!':
+			//case '$':
+			//case '/':
+			//case TOKEN.string:
+			//case TOKEN.percentage:
+			//case '?':
+		}
+		return null;
+	}
+	
+	[Symbol.toPrimitive] (                     ) {
+		return this.pseudoLiteral ? `${this.pseudoLiteral}(${this.join('')})` : this.join('');
+	}
+	
+	* [Symbol.iterator] (                     ) { throw TypeError$1(`beautify complexSelector`); }
+	
+	                                                       
+	
+	static default = protect(this);
+	
+}
+
+class SelectorList extends Layer                  {
+	
+	get [Symbol.toStringTag] () { return 'SelectorList'; }
+	
+	constructor (parent$1                      ) {
+		super();
+		this[parent] = parent$1;
+		return this;
+	}
+	
+	[consume] (                     ) {
+		stay();
+		return this.newItem = new ComplexSelector('');
+	}
+	
+	[Symbol.toPrimitive] (                  ) {
+		return this.join(',');
+	}
+	
+	* [Symbol.iterator] (                  ) { throw TypeError$1(`beautify selectorList`); }
+	
+	                                             
+	
+	static default = protect(this);
+	
+}
+
+class StyleRule extends Layer       {
+	
+	get [Symbol.toStringTag] () { return 'StyleRule'; }
+	
+	         selector = currentLayer ? collection_selector[collection_selector.length] = new SelectorList(this) : new SelectorList(this);
+	         block = new Properties(this);
+	
+	constructor () { return super()                   ; }
+	
+	[consume] (               ) {
+		stay();
+		return this.selector;
+	}
+	
+	[Symbol.toPrimitive] (               ) {
+		return this.block.length ? `${this.selector}{${( '' + this.block ).slice(0, -1)}}` : '';
+	}
+	
+	* [Symbol.iterator] (               )                                {
+		const { block, selector } = this;
+		const { length } = block;
+		if ( length && selector.length ) {
+			let index = 0;
+			let selectorText        ;
+			if ( newlineSelector ) {
+				const lastIndex = selector.length - 1;
+				let index = 0;
+				while ( index!==lastIndex ) {
+					yield selector[index++] + ',';
+				}
+				selectorText = '' + selector[lastIndex];
 			}
-			case ';': {
-				const { name } = this;
-				if ( media(name) || page(name) || font_face(name) || /*is.keyframes(name) || */supports(name) || document$1(name) ) { break; }
-				///this.semicolon = true;
-				return this.parent;
+			else { selectorText = selector.join(', '); }
+			if ( newlineProperty ) {
+				yield `${selectorText} {`;
+				while ( index!==length ) {
+					for ( const line of block[index++]  ) {
+						yield indent + line;
+					}
+				}
+				yield `}`;
 			}
-			case '}': {
-				const { name } = this;
-				if ( media(name) || page(name) || font_face(name) || /*is.keyframes(name) || */supports(name) || document$1(name) ) { break; }
-				return this.parent.appendToken()                           ;
+			else {
+				let cssText = ' ';
+				while ( index!==length ) {
+					for ( const line of block[index++]  ) {
+						cssText += line + ' ';
+					}
+				}
+				yield `${selectorText} {${cssText}}`;
 			}
+		}
+	}
+	
+	                                       
+	
+	static default = protect(this);
+	
+}
+
+const notFromOrTo = /*#__PURE__*/test.bind(/^(?!from$|to$)/i);
+
+class QualifiedRule extends Layer         {
+	
+	get [Symbol.toStringTag] () { return 'QualifiedRule'; }
+	
+	         block = new Properties(this);
+	        _empty = true;
+	
+	constructor () { return super()                   ; }
+	
+	[consume] (                   ) {
+		switch ( type ) {
+			case whitespace:
+				return this;
+			case ident:
+				if ( notFromOrTo(literal) ) { break; }
+			case percentage:// not style rule
+				if ( !this._empty ) { break; }
+				this._empty = false;
+				this.newItem = literal;
+				return this;
+			case ',':
+				if ( this._empty ) { break; }
+				this._empty = true;
+				return this;
+			case '{':
+				if ( this._empty ) { break; }
+				return this.block;
 			case comment:
-				this.length && ( this[this.length] = '/**/' );
 				return this;
 		}
 		return null;
 	}
 	
-	get cssText ()         {
-		let atText = '';
-		let index = this.length;
-		while ( index ) {
-			const child = this[--index];
-			atText = ( typeof child==='string' ? child : child.cssText )+atText;
-		}
+	[Symbol.toPrimitive] (                   ) {
+		return this.block.length ? `${this.join(',')}{${( '' + this.block ).slice(0, -1)}}` : '';
+	}
+	
+	* [Symbol.iterator] (                   )                                {
 		const { block } = this;
-		if ( block ) {
-			let blockText = '';
-			let index = block.length;
-			while ( index ) { blockText = block[--index].cssText+blockText; }
-			return `@${this.name}${atText ? ' ' : ''}${atText}{${blockText && blockText[blockText.length - 1]===';' ? blockText.slice(0, -1) : blockText}}`;
-		}
-		else {
-			return `@${this.name}${atText ? ' ' : ''}${atText};`;
+		const { length } = block;
+		if ( length ) {
+			let index = 0;
+			if ( newlineProperty ) {
+				yield `${this.join(', ')} {`;
+				while ( index!==length ) {
+					for ( const line of block[index++] ) {
+						yield indent + line;
+					}
+				}
+				yield `}`;
+			}
+			else {
+				let cssText = ' ';
+				while ( index!==length ) {
+					for ( const line of block[index++]  ) {
+						cssText += line + ' ';
+					}
+				}
+				yield `${this.join(', ')} {${cssText}}`;
+			}
 		}
 	}
 	
-	* beautify (              tab         = '\t')                                     {
-		let atText = '';
-		let index = this.length;
-		while ( index ) {
-			const child = this[--index];
-			atText = ( typeof child==='string' ? child : child.cssText )+atText;
+	                                      
+	
+	static default = protect(this);
+	
+}
+
+class KeyframesRule extends Layer                {
+	
+	get [Symbol.toStringTag] () { return 'KeyframesRule'; }
+	
+	                 keywordLiteral        ;
+	_nameLiteral         = '';
+	get nameLiteral () { return this._nameLiteral; }
+	set nameLiteral (value) {
+		if ( notKeyframes(value) ) { throw SyntaxError$1(`“${value}”无法作为 @keyframes 名`); }
+		this._nameLiteral = value;
+	}
+	        _blocking          = false;
+	get block () { return true; }
+	
+	constructor (keywordLiteral         ) {
+		super();
+		currentLayer && ( collection_keyframes[collection_keyframes.length] = this );
+		this.keywordLiteral = keywordLiteral || 'keyframes';
+		return this;
+	}
+	
+	[consume] (                   ) {
+		switch ( type ) {
+			case whitespace:
+			case comment:
+				return this;
+			case ident:
+				if ( this._blocking ) {
+					stay();
+					return this.newItem = new QualifiedRule;
+				}
+				else {
+					if ( this._nameLiteral ) { break; }
+					this.nameLiteral = literal;
+					return this;
+				}
+			case string:
+				if ( this._nameLiteral ) { break; }
+				this.nameLiteral = literal;
+				return this;
+			case '{':
+				if ( !this._nameLiteral || this._blocking ) { break; }
+				this._blocking = true;
+				return this;
+			case '}':
+				if ( !this._blocking ) { break; }
+				return this[parent];
+			case percentage:
+				if ( !this._blocking ) { break; }
+				stay();
+				return this.newItem = new QualifiedRule;
 		}
-		const { block } = this;
-		if ( block ) {
-			yield `@${this.name}${atText ? ' ' : ''}${atText} {`;
+		return null;
+	}
+	
+	[Symbol.toPrimitive] (                   ) {
+		const { _nameLiteral } = this;
+		return `@${this.keywordLiteral}${_nameLiteral[0]==='"' || _nameLiteral[0]==='\'' ? '' : ' '}${_nameLiteral}{${this.join('')}}`;
+	}
+	
+	* [Symbol.iterator] (                   )                                {
+		const { length } = this;
+		if ( length ) {
+			yield `@${this.keywordLiteral} ${this._nameLiteral} {`;
 			let index = 0;
-			const { length } = block;
 			while ( index!==length ) {
-				for ( const line of block[index++].beautify(tab) ) {
-					yield tab+line;
+				for ( const line of this[index++]  ) {
+					yield indent + line;
 				}
 			}
 			yield `}`;
 		}
-		else {
-			yield `@${this.name}${atText ? ' ' : ''}${atText};`;
-		}
+		else { yield `@${this.keywordLiteral} ${this._nameLiteral} { }`; }
 	}
+	
+	static default = protect(this);
 	
 }
-freeze(AtRule.prototype);
 
-class ImportRule extends Array$1                            {
+class DeclarationList extends Layer                                                  {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet.ImportRule'; }
+	get [Symbol.toStringTag] () { return 'AtRule.DeclarationList'; }
 	
-	         parent       ;
-	         name         = 'import';
-	get block () { return false         ; }
-	///private semicolon :boolean = false;
+	                 _noAt         ;
+	                 _canQualified         ;
+	                 _noDescriptor         ;
 	
-	constructor (parent       ) {
+	constructor (parent$1        , could                                                                           ) {
 		super();
-		this.parent = parent;
-		return this;
+		this[parent] = parent$1;
+		this._noAt = !could['@'];
+		this._canQualified = could['{}'];
+		this._noDescriptor = !could[':;'];
+		return parent$1.block = this;
 	}
 	
-	appendToken (                )                                               {
-		switch ( type ) {
-			case whitespace:
-				this.length && ( this[this.length] = ' ' );
-				return this;
-			case function$:
-			case '(':
-				const parenthesisBlock = new ParenthesisBlock(this, literal.slice(0, -1));
-				this[this.length] = parenthesisBlock;
-				return parenthesisBlock;
-			case ident:
-			case string:
-			case url:
-			case ':':
-			case ',':
-				this[this.length] = literal;
-				return this;
-			case ';': {
-				///this.semicolon = true;
-				return this.parent;
-			}
-			case comment:
-				this.length && ( this[this.length] = '/**/' );
-				return this;
-		}
-		return null;
-	}
-	
-	get cssText ()         {
-		let atText = '';
-		let index = this.length;
-		while ( index ) {
-			const child = this[--index];
-			atText = ( typeof child==='string' ? child : child.cssText )+atText;
-		}
-		return `@import ${atText};`;
-	}
-	
-	                                                                              
-	* beautify (                )                                     {
-		let atText = '';
-		let index = this.length;
-		while ( index ) {
-			const child = this[--index];
-			atText = ( typeof child==='string' ? child : child.cssText )+atText;
-		}
-		yield `@import ${atText};`;
-	}
-	
-}
-freeze(ImportRule.prototype);
-
-const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
-const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
-const NOT_CHANGES = /\\.|[^\\\x80-\x9F]+/gs;
-
-const checkScoped = (rules                                            , start        , __KEY__                                                              )       => {
-	const { length } = rules;
-	let index = start;
-	while ( index!==length ) {
-		const rule = rules[index++];
-		switch ( rule.constructor ) {
-			case QualifiedRule:
-				const { classSelectors } = rule                 ;
-				const { length } = classSelectors;
-				let index = 0;
-				do {
-					const classSelectorsPART = classSelectors[index];
-					const { length } = classSelectorsPART;
-					if ( length ) {
-						let index = 0;
-						do { if ( !__KEY__.test(classSelectorsPART[index].literal) ) { throw ReferenceError$1(`.${classSelectorsPART[index].literal} 将对全局生效`); } }
-						while ( ++index!==length );
-					}
-					else { throw ReferenceError$1(`${( rule                  ).selectorTextAt(index)} 将对全局生效`); }
-				}
-				while ( ++index!==length );
-				break;
-			case AtRule:
-				const { block } = rule          ;
-				block && checkScoped(block, 0, __KEY__);
-				break;
-			case KeyframesRule:
-				const { keyframesNameLiteral } = rule                 ;
-				if ( !__KEY__.test(keyframesNameLiteral[0]==='"' || keyframesNameLiteral[0]==='\'' ? keyframesNameLiteral.slice(1, -1) : keyframesNameLiteral) ) { throw ReferenceError$1(`@keyframes ${keyframesNameLiteral} 将对全局生效`); }
-				break;
-		}
-	}
-};
-
-class Sheet extends Array$1                                                      {
-	
-	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet'; }
-	
-	#imports_length         = 0;
-	#namespaces_length         = 0;
-	
-	constructor (inner        , abbr           ) {
-		super();
-		if ( !inner ) { return; }
-		if ( inner[0]==='\uFEFF' ) { throw SyntaxError$1(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
-		if ( NULL_SURROGATE.test(inner) ) { throw SyntaxError$1(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
-		if ( NON_PRINTABLE.test(inner) ) { throw SyntaxError$1(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
-		if ( inner.replace(NOT_CHANGES, '') ) { throw SyntaxError$1(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
-		try {
-			parse$1(this, inner);
-			if ( abbr ) {
-				const { length } = typeSelectors;
-				let index = 0;
-				while ( index!==length ) {
-					const typeSelector = typeSelectors[index++];
-					let { cssText } = typeSelector;
-					if ( STARTS_WITH_UPPER_CASE.test(cssText) ) {
-						typeSelector.cssText = typeSelector.ns_
-							? ( cssText = abbr(cssText) )[0]==='.'//!newRegExp('i')`^${TOKEN.ident_token_start}`.test(cssText = abbr(cssText))
-								? '*' + cssText
-								: cssText
-							: abbr(cssText);
-					}
-				}
-			}
-		}
-		finally { clear(); }
-		return this;
-	}
-	
-	checkScoped (__KEY__                                                              )       {
-		checkScoped(this, this.#imports_length + this.#namespaces_length, __KEY__);
-	}
-	
-	appendToken (           )                                                                                                        {
+	[consume] (                     ) {
 		switch ( type ) {
 			case whitespace:
 			case comment:
 				return this;
-			case at_keyword:
-				const name = literal.slice(1);
-				if ( charset(name) ) {
-					if ( this.length ) { break; }
-					throw SyntaxError$1(`用于 SFC 的 CSS 中不应用到 @charset`);// return new AtRule(this, name);
-				}
-				let atRule;
-				if ( IMPORT(name) ) {
-					if ( this.length!==this.#imports_length ) { break; }
-					++this.#imports_length;
-					atRule = new ImportRule(this);
-				}
-				else if ( namespace(name) ) {
-					if ( this.length!==this.#imports_length + this.#namespaces_length ) { break; }
-					++this.#namespaces_length;
-					atRule = new AtRule(this, name);
-				}
-				else { atRule = keyframes(name) ? new KeyframesRule(this, name) : new AtRule(this, name); }
-				return this[this.length] = atRule;
+			case atKeyword:
+				if ( this._noAt ) { break; }
+				const keywordLiteral = literal.slice(1);
+				if ( charset (keywordLiteral) || IMPORT (keywordLiteral) || namespace (keywordLiteral) ) { break; }
+				return this.newItem = new ( keyframes (keywordLiteral) ? KeyframesRule : AtRule )(keywordLiteral);
 			case ident:
+				if ( this._noDescriptor ) {
+					if ( this._canQualified ) {
+						stay();
+						return this.newItem = new StyleRule;// may not style rule
+					}
+					break;
+				}
+				if ( this._canQualified ) {
+					for ( let i = index; i!==length; ++i ) {
+						switch ( types[i] ) {
+							case '{':
+								stay();
+								return this.newItem = new StyleRule;// may not style rule
+							case ';':
+							case '}':
+								break;
+							default:
+								continue;
+						}
+						break;
+					}
+				}
+				return this.newItem = new Declaration(literal);
 			case '*':
 			case '.':
 			case ':':
 			case '[':
-			///case '|':
-			case '$':
+			case '|':
 			case hash:
-				const styleRule = new QualifiedRule(this);
-				this[this.length] = styleRule;
-				return styleRule.appendToken()                                    ;
+				if ( this._canQualified ) {
+					stay();
+					return this.newItem = new StyleRule;
+				}
+				break;
+			case '}':
+				return this[parent][parent];
 		}
 		return null;
 	}
 	
-	get cssText ()         {
-		let cssText = '';
-		let index = 0;
-		const { length } = this;
-		while ( index!==length ) { cssText += this[index++].cssText; }
-		return cssText && cssText[cssText.length - 1]===';' ? cssText.slice(0, -1) : cssText;
+	[Symbol.toPrimitive] (                     ) { return this.join(''); }
+	
+	* [Symbol.iterator] (                     ) { throw TypeError$1(`beautify declarationList`); }
+	
+	                               
+	
+	static default = protect(this);
+	
+}
+
+class AtRule extends Layer                                                 {
+	
+	get [Symbol.toStringTag] () { return 'AtRule'; }
+	
+	         keywordLiteral        ;
+	block                         = null;
+	
+	constructor (keywordLiteral        ) {
+		//if ( !keywordLiteral ) { throw SyntaxError(`At Rule 不能为 @`); }
+		super();
+		this.keywordLiteral = keywordLiteral;
+		if ( media (keywordLiteral) ) { new DeclarationList(this, { '@': true, '{}': true, ':;': false }); }
+		//else if ( is.keyframes(keywordLiteral) ) { new DeclarationList(this, { '@': false, '{}': true, ':;': false }); }
+		else if ( page (keywordLiteral) ) { new DeclarationList(this, { '@': true, '{}': false, ':;': true }); }
+		else if ( font_face (keywordLiteral) || counter_style (keywordLiteral) ) { new DeclarationList(this, { '@': false, '{}': false, ':;': true }); }
+		else if ( supports (keywordLiteral) || document (keywordLiteral) ) { new DeclarationList(this, { '@': true, '{}': true, ':;': false }); }///
+		else if ( viewport (keywordLiteral) ) { throw Error$1(`@${keywordLiteral} 已经废弃`); }
+		else if ( this[parent].constructor===DeclarationList && page (( this[parent][parent]           ).keywordLiteral) ) { new DeclarationList(this, { '@': false, '{}': false, ':;': true }); }
+		return this;
 	}
 	
-	* beautify (             tab         = '\t')                                     {
+	[consume] (            ) {
+		switch ( type ) {
+			case whitespace:
+				this.length && ( this.newItem = ' ' );
+				return this;
+			case function_:
+				return this.newItem = new ( url_ (literal) ? Url : Parenthesis )(literal.slice(0, -1));
+			case '(':
+				return this.newItem = new Parenthesis;
+			case ident:
+			case string:
+			case ':':
+			case ',':
+				this.newItem = literal;
+				return this;
+			case url:
+				if ( literal[3]==='(' || document (this.keywordLiteral) ) { return newUrl(this); }
+				break;
+			case '{': {
+				//if ( is.charset(this.keywordLiteral) || is.import(this.keywordLiteral) || is.namespace(this.keywordLiteral) ) { break; }
+				const { lastIndex } = this;
+				if ( lastIndex>=0 ) {
+					const lastItem = this[lastIndex];
+					if ( lastItem===' ' || lastItem==='/**/' ) { this.length = lastIndex; }
+				}
+				return this.block ?? ( this.block = new DeclarationList(this, { '@': true, '{}': true, ':;': true }) );
+			}
+			case ';':
+				if ( this.block ) { break; }
+				return this[parent];
+			case '}':
+				if ( this.block ) { break; }
+				stay();
+				return this[parent];
+			case comment:
+				this.length && ( this.newItem = '/**/' );
+				return this;
+		}
+		return null;
+	}
+	
+	[Symbol.toPrimitive] (            ) {
+		const { block } = this;
+		if ( block ) {
+			const blockText = '' + block;
+			return `@${this.keywordLiteral}${this.length ? ' ' : ''}${this.join('')}{${blockText && blockText[blockText.length - 1]===';' ? blockText.slice(0, -1) : blockText}}`;
+		}
+		else {
+			return `@${this.keywordLiteral}${this.length ? ' ' : ''}${this.join('')};`;
+		}
+	}
+	
+	* [Symbol.iterator] (            )                                {
+		const { block } = this;
+		if ( block ) {
+			const { length } = block;
+			if ( length ) {
+				yield `@${this.keywordLiteral}${this.length ? ' ' : ''}${this.join('')} {`;
+				let index = 0;
+				while ( index!==length ) {
+					for ( const line of block[index++]  ) {
+						yield indent + line;
+					}
+				}
+				yield `}`;
+			}
+			else { yield `@${this.keywordLiteral}${this.length ? ' ' : ''}${this.join('')} { }`; }
+		}
+		else {
+			yield `@${this.keywordLiteral}${this.length ? ' ' : ''}${this.join('')};`;
+		}
+	}
+	
+	                                                
+	
+	static default = protect(this);
+	
+}
+
+class ImportRule extends Layer                             {
+	
+	get [Symbol.toStringTag] () { return 'ImportRule'; }
+	
+	                 keywordLiteral        ;
+	urlLayer      ;
+	get block () { return !this.urlLayer; }
+	
+	constructor (keywordLiteral         ) {
+		super();
+		this.keywordLiteral = keywordLiteral || 'import';
+		return this;
+	}
+	
+	[consume] (                ) {
+		switch ( type ) {
+			case whitespace:
+				this.length && ( this.newItem = ' ' );
+				return this;
+			case string:
+				if ( this.urlLayer ) { break; }
+				( this.urlLayer = new Url(null) ).valueLiteral = literal;
+				return this;
+			case url:
+				if ( this.urlLayer ) { break; }
+				if ( literal[3]==='(' ) { return newUrl(this, 'urlLayer'); }
+				break;
+			case function_:
+				if ( url_ (literal) ) {
+					if ( this.urlLayer ) { break; }
+					return this.urlLayer = new Url(literal.slice(0, 3));
+				}
+			case '(':
+				if ( !this.urlLayer ) { break; }
+				return this.newItem = new Url(literal.slice(0, -1));
+			case ident:
+			case ':':
+			case ',':
+				if ( !this.urlLayer ) { break; }
+				this.newItem = literal;
+				return this;
+			case ';':
+				if ( !this.urlLayer ) { break; }
+				return this[parent];
+			case comment:
+				this.length && ( this.newItem = '/**/' );
+				return this;
+		}
+		return null;
+	}
+	
+	[Symbol.toPrimitive] (                ) {
+		const urlLiteral = '' + this.urlLayer;
+		return `@${this.keywordLiteral}${urlLiteral && ( urlLiteral[0]==='"' || urlLiteral==='\'' ) ? '' : ' '}${urlLiteral}${this.join('')};`;
+	}
+	
+	* [Symbol.iterator] (                )                                {
+		yield `@${this.keywordLiteral} ${this.urlLayer}${this.length ? ' ' + this.join('') : ''};`;
+	}
+	
+	static default = protect(this);
+	
+}
+
+class NamespaceRule extends Layer       {
+	
+	get [Symbol.toStringTag] () { return 'NamespaceRule'; }
+	
+	                 keywordLiteral        ;
+	        prefixLiteral         = '';
+	urlLayer      ;
+	get block () { return !this.urlLayer; }
+	
+	constructor (keywordLiteral         ) {
+		super();
+		this.keywordLiteral = keywordLiteral || 'namespace';
+		return this;
+	}
+	
+	[consume] (                   ) {
+		switch ( type ) {
+			case whitespace:
+				return this;
+			case string:
+				if ( this.urlLayer ) { break; }
+				( this.urlLayer = new Url(null) ).valueLiteral = literal;
+				return this;
+			case url:
+				if ( this.urlLayer ) { break; }
+				if ( literal[3]==='(' ) { return newUrl(this, 'urlLayer'); }
+				break;
+			case function_:
+				if ( url_ (literal) ) {
+					if ( this.urlLayer ) { break; }
+					return this.urlLayer = new Url(literal.slice(0, 3));
+				}
+				break;
+			case ident:
+				if ( this.prefixLiteral || this.urlLayer ) { break; }
+				this.prefixLiteral = literal;
+				return this;
+			case ';':
+				return this[parent];
+			case comment:
+				return this;
+		}
+		return null;
+	}
+	
+	[Symbol.toPrimitive] (                   ) {
+		const urlLiteral = '' + this.urlLayer;
+		return `@${this.keywordLiteral}${this.prefixLiteral && ' ' + this.prefixLiteral}${urlLiteral && ( urlLiteral[0]==='"' || urlLiteral==='\'' ) ? '' : ' '}${urlLiteral};`;
+	}
+	
+	* [Symbol.iterator] (                   )                                {
+		yield `@${this.keywordLiteral}${this.prefixLiteral && ' ' + this.prefixLiteral} ${this.urlLayer};`;
+	}
+	
+	static default = protect(this);
+	
+}
+
+const { merge } = KindMap.prototype;
+const KINDS                  = [ 'type', 'class', 'attribute', 'id', 'keyframes', 'animation!keyframes', 'url' ];
+function itemCallback (                                    item        , index        , items          ) {
+	this.set(items[index] = item.slice(1), []);
+}
+function CLASS_LAYER_CB (                                                              CLASS_LAYERS                 , item        ) {
+	this[this.length] = CLASS_LAYERS[CLASS_LAYERS.length] = new ClassSelector(item);
+}
+
+const REFS = Symbol('refs');
+let _imports_count = 0;
+let _namespaces_count = 0;
+
+class Sheet extends Layer                                                                  {
+	
+	get [Symbol.toStringTag] () { return 'Sheet'; }
+	
+	        [REFS]                    ;
+	
+	constructor (inner        ) {
+		super();
+		if ( !inner ) { return this; }
+		check(inner);
+		_imports_count = _namespaces_count = 0;
+		try { this[REFS] = parse$1(this, inner); }
+		finally { clear(); }
+		return this;
+	}
+	
+	[consume] (           ) {
+		switch ( type ) {
+			case whitespace:
+			case comment:
+				return this;
+			case atKeyword:
+				const keywordLiteral = literal.slice(1);
+				if ( charset (keywordLiteral) ) {
+					if ( this.length ) { break; }
+					throw SyntaxError$1(`@charset`);
+				}
+				if ( IMPORT (keywordLiteral) ) {
+					if ( this.length!==_imports_count ) { break; }
+					++_imports_count;
+					return this.newItem = new ImportRule(keywordLiteral);
+				}
+				if ( namespace (keywordLiteral) ) {
+					if ( this.length!==_imports_count + _namespaces_count ) { break; }
+					++_namespaces_count;
+					return this.newItem = new NamespaceRule(keywordLiteral);
+				}
+				return this.newItem = new ( keyframes (keywordLiteral) ? KeyframesRule : AtRule )(keywordLiteral);
+			case ident:
+			case '[':
+			case '.':
+			case '*':
+			case ':':
+			case '|':
+			case hash:
+				stay();
+				return this.newItem = new StyleRule;
+		}
+		return null;
+	}
+	
+	[Symbol.toPrimitive] (           ) {
+		if ( this.length ) {
+			const cssText = this.join('');
+			return cssText[cssText.length - 1]===';' ? cssText.slice(0, -1) : cssText;
+		}
+		return '';
+	}
+	
+	* [Symbol.iterator] (             options          )                                {
+		Options(options);
 		const { length } = this;
 		let index = 0;
-		while ( index!==length ) { yield * this[index++].beautify(tab); }
+		while ( index!==length ) { yield * this[index++] ; }
+	}
+	
+	                             
+	
+	static default = protect(this);
+	
+	//////treeShake (this :Sheet, selectorList :string) {}
+	
+	replace (             callback                                                                    , kinds                         = KINDS)       {
+		const refs = this[REFS];
+		if ( !refs ) { return; }
+		let typeMap                                     = null;
+		let classMap                                      = null;
+		let TYPE_LAYERS                ;
+		let CLASSES_LAYERS                              ;
+		if ( typeof kinds==='string' ) { kinds = [ kinds ]; }
+		let index = kinds.length;
+		while ( index ) {
+			const kind = kinds[--index] ;
+			switch ( kind ) {
+				case 'type':
+				case 'class':
+				case 'attribute': {
+					const ref = refs[kind];
+					if ( !ref ) { continue; }
+					for ( const { 0: literal, 1: layers } of ref ) {
+						let ret = callback(evaluate(literal), kind);
+						if ( ret===undefined$1 ) { continue; }
+						if ( !isCompoundSelector(ret) ) { throw Error$1(`${kind==='attribute' ? 'attributeSelector(“[' : kind==='class' ? 'classSelector(“.' : 'typeSelector(“'}${literal}${kind==='attribute' ? ']' : ''}”)只能替换为 typeSelector 和/或 classSelector，而非“${ret}”`); }
+						const items           = ret.match(SIMPLE_SELECTORS)                           ;
+						let namespace                = null;
+						let elementName         = '';
+						if ( items[0] [0]!=='.' ) {
+							if ( items[0] [0]==='|' ) {
+								namespace = '';
+								elementName = items.shift() .slice(1);
+							}
+							else if ( items.length===2 || items[1] [0]!=='|' ) { elementName = items.shift() ; }
+							else {
+								namespace = items.shift() ;
+								elementName = items.shift() .slice(1);
+							}
+						}
+						TYPE_LAYERS = [];
+						items.forEach(itemCallback, CLASSES_LAYERS = new KindMap);
+						const { length } = layers;
+						let index = 0;
+						do {
+							const selectors                                                         = elementName ? [ new TypeSelector(elementName, namespace) ] : [];
+							CLASSES_LAYERS.forEach(CLASS_LAYER_CB, selectors);
+							layers[index] .replaceWith(selectors);
+						}
+						while ( ++index!==length );
+						elementName && ( typeMap ?? ( typeMap = new KindMap ) ).merge(TYPE_LAYERS, namespace===null ? elementName : namespace + '|' + elementName);
+						items.length && CLASSES_LAYERS.forEach(merge, classMap ?? ( classMap = new KindMap ));
+						ref.delete(literal);
+					}
+					break;
+				}
+				case 'id': {
+					const { id } = refs;
+					if ( !id ) { continue; }
+					let { size } = id;
+					for ( const { 0: literal, 1: layers } of id ) {
+						let ret = callback(evaluate(literal), kind);
+						if ( ret===undefined$1 ) { continue; }
+						if ( !isIdSelector(ret) ) { throw Error$1(`idSelector(“#${literal}”)只能替换为 idSelector，而非“${ret}”`); }
+						id.set(ret = ret.slice(1), layers);
+						let index = layers.length;
+						while ( index ) { layers[--index] .valueLiteral = ret; }
+						id.delete(literal);
+						if ( !--size ) { break; }
+					}
+					break;
+				}
+				case 'keyframes':
+				case 'animation!keyframes': {
+					const { animationKeyframes } = refs;
+					if ( !animationKeyframes ) { continue; }
+					let { size } = animationKeyframes;
+					const keyframes = kind==='keyframes';
+					for ( const { 0: literal, 1: layers } of animationKeyframes ) {
+						if ( keyframes===!layers.rule ) { continue; }
+						const ret = callback(evaluate(literal), kind);
+						if ( ret===undefined$1 ) { continue; }
+						animationKeyframes.set(ret, layers);
+						let index = layers.length;
+						while ( index ) { layers[--index] .literal = ret; }
+						const { rule } = layers;
+						if ( rule ) {
+							let index = rule.length;
+							while ( index ) { rule[--index] .nameLiteral = ret; }
+						}
+						animationKeyframes.delete(literal);
+						if ( !--size ) { break; }
+					}
+					break;
+				}
+				case 'url': {
+					const { url } = refs;
+					if ( !url ) { continue; }
+					let { size } = url;
+					for ( const { 0: literal, 1: layers } of url ) {
+						const ret = callback(evaluate(literal), kind);
+						if ( ret===undefined$1 ) { continue; }
+						let index = layers.length;
+						if ( ( literal[0]==='"' || literal[0]==='\'' ) && ret[0]!=='"' && ret[0]!=='\'' ) {
+							while ( index ) {
+								const layer = layers[--index] ;
+								if ( !layer.nameLiteral ) { throw Error$1(`引号 url“${literal}”只能替换为引号 url，而非“${ret}”`); }
+								layer.valueLiteral = ret;
+							}
+						}
+						else {
+							while ( index ) { layers[--index] .valueLiteral = ret; }
+						}
+						url.set(ret, layers);
+						url.delete(literal);
+						if ( !--size ) { break; }
+					}
+					break;
+				}
+			}
+		}
+		if ( typeMap ) {
+			refs.type
+				? typeMap.forEach(merge, refs.type)
+				: refs.type = typeMap;
+		}
+		if ( classMap ) {
+			refs.class
+				? classMap.forEach(merge, refs.class)
+				: refs.class = classMap;
+		}
+	}
+	
+	forEach (             callback                                                           , kinds                         = KINDS)       {
+		this.replace(callback, kinds);
+	}
+	
+	findGlobal (           )                {
+		if ( this[REFS] && this[REFS] .selector ) {
+			const selectorLists = this[REFS] .selector ;
+			const { length } = selectorLists;
+			let index = 0;
+			do {
+				const selectorList = selectorLists[index] ;
+				const { length } = selectorList;
+				let i = 0;
+				do { if ( !selectorList[i] .containsScope() ) { return '' + selectorList[i] ; } }
+				while ( ++i!==length );
+			}
+			while ( ++index!==length );
+		}
 	}
 	
 }
-freeze(Sheet.prototype);
 
-const SELECTOR = newRegExp('u')`^
+const minify$1 = (css        ) => '' + new Sheet(css);
+
+/*¡ j-css */
+
+const type_attribute = [ 'type', 'attribute' ]         ;
+const class_id_keyframes = [ 'class', 'id', 'keyframes' ]         ;
+const attributeCallback = (evaluated        )                => {
+	if ( evaluated[0]==='_' ) { return '.' + NameAs__Key__(evaluated.slice(1)); }
+};
+
+class Sheet$1 extends Sheet {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet'; }
+	
+	constructor (inner        , abbr           ) {
+		super(inner);
+		abbr
+			? this.replace((evaluated, kind)                => {
+				switch ( kind ) {
+					case 'type':
+						if ( STARTS_WITH_UPPER_CASE.test(evaluated) ) { return abbr(evaluated); }
+						break;
+					case 'attribute':
+						return attributeCallback(evaluated);
+				}
+			}, type_attribute)
+			: this.replace(attributeCallback, 'attribute');
+		return this;
+	}
+	
+	checkScoped (             __KEY__                                                              ) {
+		this.forEach((evaluated, kind) => {
+			if ( !__KEY__.test(evaluated) ) {
+				switch ( kind ) {
+					case 'class':
+						throw ReferenceError$1(`.${evaluated} 将对全局生效`);
+					case 'id':
+						throw ReferenceError$1(`#${evaluated} 将对全局生效`);
+					case 'keyframes':
+						throw ReferenceError$1(`@keyframes ${evaluated} 将对全局生效`);
+				}
+			}
+		}, class_id_keyframes);
+		const selector = this.findGlobal();
+		if ( selector ) { throw ReferenceError$1(`“${selector}” 将对全局生效`); }
+	}
+	
+}
+freeze(freeze(Sheet).prototype);
+
+const isSelector = newRegExp.u `^
 	${ASCII_WHITESPACE}*(?:
 		${AliasName}${ASCII_WHITESPACE}*
 		(?:=${ASCII_WHITESPACE}*
@@ -4960,13 +5852,13 @@ const SELECTOR = newRegExp('u')`^
 			(?:\.${className})*
 		${ASCII_WHITESPACE}*)?;
 	${ASCII_WHITESPACE}*)*
-$`;
+$`.test;
 
-const STYLE_END_TAG = newRegExp('i')`</style${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG = newRegExp.i `</style${TAG_EMIT_CHAR}`;
 
-const CSS = newRegExp('i')`^${ASCII_WHITESPACE}*(?:text\/)?CSS${ASCII_WHITESPACE}*$`;
+const CSS = newRegExp.i `^${ASCII_WHITESPACE}*(?:text\/)?CSS${ASCII_WHITESPACE}*$`;
 
-const defaultSelector = (Name        )         => `.${NameAs__Key__(Name)}`;
+const defaultSelector = (Name        ) => `.${NameAs__Key__(Name)}`;
 
 class Style extends Block          {
 	
@@ -4988,20 +5880,20 @@ class Style extends Block          {
 			const literal = attributes['.abbr'];
 			if ( literal===EMPTY ) { _this.abbr = defaultSelector; }
 			else {
-				if ( !SELECTOR.test(literal) ) { throw SyntaxError$1(`style 块的“.abbr”属性语法错误：\n${literal}`); }
+				if ( !isSelector(literal) ) { throw SyntaxError$1(`style 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create$1(NULL)            ;
 				const pairs = literal.split(';');
 				const { length } = pairs;
 				let index = 0;
 				while ( index!==length ) {
-					const tokens = pairs[index++].match(TOKENS);
+					const tokens = pairs[index++] .match(TOKENS);
 					if ( tokens ) {
-						const componentName         = tokens[0];
-						abbr[componentName] = tokens.length>1 ? tokens[1] : defaultSelector(componentName);
+						const componentName         = tokens[0] ;
+						abbr[componentName] = tokens.length>1 ? tokens[1]  : defaultSelector(componentName);
 					}
 				}
 				_this.abbr = (componentName        )         => {
-					if ( componentName in abbr ) { return abbr[componentName]; }
+					if ( componentName in abbr ) { return abbr[componentName] ; }
 					throw Error$1(`style 块中存在被遗漏的伪标签名 ${componentName} 选择器`);
 				};
 			}
@@ -5026,26 +5918,24 @@ class Style extends Block          {
 			if ( lang && !CSS.test(lang) ) { throw Error$1(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
 		}
 		if ( _this.sheet && _this.cache===inner ) { return _this.sheet; }
-		const sheet = new Sheet(inner, _this.abbr);
+		const sheet = new Sheet$1(inner, _this.abbr);
 		_this.sheet = sheet;
 		_this.cache = inner;
 		return sheet;
 	}
 	
-	get innerCSS ()         {
-		return this.sheet.cssText;
+	get innerCSS () {
+		return '' + this.sheet;
 	}
-	set innerCSS (value        ) {
+	set innerCSS (value) {
 		if ( typeof ( value            )!=='string' ) { throw TypeError$1(`innerCSS 只能被赋值字符串`); }
 		_(this).innerCSS = value;
 	}
 	
 }
-freeze(Style.prototype);
+freeze(freeze(Style).prototype);
 
-const Map$1 = Map;
-
-const parserOptions = Null({
+const parserOptions = Null$1({
 	ecmaVersion: 2014,
 	sourceType: 'module',// use strict mode
 	allowReserved: true,
@@ -5060,7 +5950,7 @@ const Pattern = (node         )       => {
 			if ( name[0]==='_' || name[0]==='$' ) { NAMES[NAMES.length] = name; }
 			break;
 		case 'ObjectPattern':// { Pattern }
-			let propertyIndex         = 0;
+			let propertyIndex = 0;
 			for ( const { properties } = node, { length } = properties; propertyIndex!==length; ) {
 				const property = properties[propertyIndex++];
 				switch ( property.type ) {
@@ -5096,7 +5986,7 @@ const Params = (parameters        , min        , max        , attribute        )
 	let program         ;
 	try { program = parse(`(${parameters})=>{}`, parserOptions)       ; }
 	catch (error) {
-		const index         = error.pos-1;
+		const index = error.pos-1;
 		throw SyntaxError$1(`${attribute}的内容“${parameters.slice(0, index)}”✗“${parameters.slice(index)}”解析失败`);
 	}
 	const { body } = program;
@@ -5117,44 +6007,43 @@ const Params = (parameters        , min        , max        , attribute        )
 	if ( NAMES.length ) { throw ReferenceError$1(`${attribute}创建了以“_”或“$”开头的局部变量“${NAMES.join('”“')}”，这可能使得内层 Vue 模板编译结果以错误的方式运行`); }
 };
 
-const VOID                             = Null({ value: 0, writable: false, enumerable: false, configurable: false });
-
-class Node extends NodeList       {
+class Node {
 	
-	          constructor () { return super()                   ; }
+	          constructor () { return this; }
 	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Node'; }
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.*.Node'; }
 	
-	parentNode              = null;
-	
-	          void () { defineProperty(this, 'length', VOID); }
-	
-	//get childNodes () :NodeList<Element | Text> { return this; }
-	get firstChild ()              { return this.length ? this[0]  : null; }
-	get lastChild ()              { return this.length ? this[this.length-1]  : null; }
-	
-	appendChild                 (            node   )    {
-		node.parentNode?.splice(node.parentNode.indexOf(node), 1);
-		node.parentNode = this;
-		this[this.length] = node;
-		return node;
+	         firstChild                        = null;
+	         nextSibling                        = null;
+	afterInsert (                         refChild                       , newChild                ) {
+		return refChild
+			? ( refChild        ).nextSibling = newChild
+			: ( this        ).firstChild = newChild;
 	}
 	
-	                                  
-	                                                                                 
+	                                                                       
+	                                                                     
 	
 }
-freeze(Node.prototype);
+freeze(freeze(Node).prototype);
+
+const tag_attrs = ({ localName: literal, attributes }         ) => {
+	for ( const name in attributes ) {
+		const value = attributes[name];
+		literal += value===EMPTY ? ` ${name}` : ` ${name}="${escapeAttributeValue(value)}"`;
+	}
+	return literal;
+};
 
 class Element extends Node {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.*.Element'; }
 	
 	constructor (localName        , attributes            , __class__                    , shadowRoot                                                             ) {
 		super();
 		if ( __class__ ) {
 			attributes['class'] = attributes['class']
-				? __class__+' '+attributes['class']
+				? __class__ + ' ' + attributes['class']
 				: __class__;
 		}
 		this.localName = localName;
@@ -5167,129 +6056,136 @@ class Element extends Node {
 	         attributes            ;
 	         #shadowRoot                                                             ;
 	
-	get outerHTML () {
+	[Symbol.toPrimitive] (             ) {
 		let innerHTML         = '';
-		let index = this.length;
-		while ( index ) { innerHTML = this[--index] .outerHTML+innerHTML; }
+		let child = this.firstChild;
+		while ( child ) {
+			innerHTML += child;
+			child = child.nextSibling;
+		}
 		if ( this.#shadowRoot ) {
 			innerHTML = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">${innerHTML}</teleport>`;
 			return this.#shadowRoot.inside
-				? `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">${innerHTML}</${this.localName}>`
-				: `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />${innerHTML}`;
+				? `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set">${innerHTML}</${this.localName}>`
+				: `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set" />${innerHTML}`;
 		}
 		else {
 			return innerHTML
-				? `<${this.localName}${this.attributes}>${innerHTML}</${this.localName}>`
-				: `<${this.localName}${this.attributes} />`;
+				? `<${tag_attrs(this)}>${innerHTML}</${this.localName}>`
+				: `<${tag_attrs(this)} />`;
 		}
 	}
 	
-	* beautify (               tab         = '\t')                                     {
+	* beautify (tab         = '\t')                                     {
 		if ( this.#shadowRoot ) {
 			const teleport = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">`;
 			if ( this.#shadowRoot.inside ) {
-				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">`;
+				yield `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set">`;
 				yield tab + teleport;
-				const { length } = this;
-				let index = 0;
-				while ( index!==length ) {
-					for ( const line of this[index++] .beautify(tab) ) {
+				let child = this.firstChild;
+				while ( child ) {
+					for ( const line of child.beautify(tab) ) {
 						yield `${tab}${tab}${line}`;
 					}
+					child = child.nextSibling;
 				}
 				yield `${tab}</teleport>`;
 				yield `</${this.localName}>`;
 			}
 			else {
-				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />`;
+				yield `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set" />`;
 				yield teleport;
-				const { length } = this;
-				let index = 0;
-				while ( index!==length ) {
-					for ( const line of this[index++] .beautify(tab) ) {
+				let child = this.firstChild;
+				while ( child ) {
+					for ( const line of child.beautify(tab) ) {
 						yield `${tab}${line}`;
 					}
+					child = child.nextSibling;
 				}
 				yield `</teleport>`;
 			}
 		}
 		else {
-			if ( this.length ) {
-				yield `<${this.localName}${this.attributes}>`;
-				const { length } = this;
-				let index = 0;
-				while ( index!==length ) {
-					for ( const line of this[index++] .beautify(tab) ) {
+			let child = this.firstChild;
+			if ( child ) {
+				yield `<${tag_attrs(this)}>`;
+				do {
+					for ( const line of child.beautify(tab) ) {
 						yield `${tab}${line}`;
 					}
 				}
+				while ( ( child = child.nextSibling ) );
 				yield `</${this.localName}>`;
 			}
 			else {
-				yield `<${this.localName}${this.attributes} />`;
+				yield `<${tag_attrs(this)} />`;
 			}
 		}
 	}
 	
 }
-freeze(Element.prototype);
+freeze(freeze(Element).prototype);
 
-class CharacterData extends Node {
+class RawTextElement extends Element {
 	
-	          constructor (data        ) {
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.RawTextElement'; }
+	
+	constructor (localName        , attributes            , __class__                    ) { return super(localName, attributes, __class__, null)                   ; }
+	
+	textContent         = '';
+	
+	[Symbol.toPrimitive] (                    ) {
+		return this.textContent
+			? `<${tag_attrs(this)}>${this.textContent}</${this.localName}>`
+			: `<${tag_attrs(this)} />`;
+	}
+	
+	* beautify (                      tab = '\t')                                     {
+		if ( this.textContent ) {
+			yield `<${tag_attrs(this)}>`;
+			for ( const line of this.textContent.split('\n') ) {
+				yield `${tab}${line}`;
+			}
+			yield `</${this.localName}>`;
+		}
+		else {
+			yield `<${tag_attrs(this)} />`;
+		}
+	}
+	
+}
+
+freeze(freeze(RawTextElement).prototype);
+
+class TextCharacterData extends Node {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.*.Text'; }
+	
+	constructor (data         = '') {
 		super();
-		this.void();
 		this.data = data;
 		return this;
 	}
 	
-	                                                    
-	
 	         data        ;
-	
-}
-
-freeze(CharacterData.prototype);
-
-class Text extends CharacterData {
-	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Text'; }
-	
-	constructor (data         = '') { return super(data)                   ; }
 	
 	//get wholeText () :string { return this.data; }
 	
-	get outerHTML () {
+	//get length () { return this.data.length; }
+	
+	[Symbol.toPrimitive] (                       ) {
 		return escapeInnerText(this.data);
 	}
 	
-	* beautify (          )                                     {
-		yield * this.outerHTML.split('&#10;');
+	* beautify ()                                     {
+		yield * ( '' + this ).split('&#10;');
 	}
 	
 }
-freeze(Text.prototype);
+freeze(freeze(TextCharacterData).prototype);
 
-class RawText extends Text {
-	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.RawText'; }
-	
-	constructor (data        ) { return super(data)                   ; }
-	
-	get outerHTML () {
-		return this.data;
-	}
-	
-	* beautify (          )                                     {
-		yield * this.outerHTML.split('\n');
-	}
-	
-}
-
-freeze(RawText.prototype);
-
-const NT$1 = /\n\t+|\f\t*|\r\n?\t*/g;
-const N = /^\n|\n$/g;
+const TNR = /^[\t\n\r]+|[\t\n\r]+$/g;
+const NT$2 = /(?:\n\t|\r\n?)\t*/g;
 
 const OPEN_LIKE = /{(?:{+|$)/g;
 const escapeOpenLike = ($$        ) => `{{'${$$}'}}`;
@@ -5297,7 +6193,7 @@ const escapeOpenLike = ($$        ) => `{{'${$$}'}}`;
 const trimTab = (raw        )         => {
 	//Entities.test(raw);// 以后如果要完全剔除“\n”，则需要要先检查解码的正确性，防止“&l”“t;”连起来
 	//return raw.replace(/\n\t*/g, '');
-	return raw.replace(NT$1, '\n').replace(N, '');
+	return raw.replace(NT$2, '\n');
 };
 
 const DELIMITERS_0 = '{{';
@@ -5313,15 +6209,16 @@ class Mustache extends Array$1         {
 		// Vue 会优先解析 <tag>，而且还看 tagName，然后才是 {{}}，这和流式解析矛盾，因此要求避免任何潜在的视觉歧义
 		// 如果未来发现不会导致解析报错终止的歧义，则要更严格地，在解码前检查确保连“<”都不存在
 		super();
+		raw = raw.replace(TNR, '');
 		if ( v_pre ) {
 			this.#pre = true;
 			this[this.length] = unescape(trimTab(raw));
-			return;
+			return this;
 		}
-		let index         = 0;
+		let index = 0;
 		for ( ; ; ) {
 			
-			const insStart         = raw.indexOf(delimiters_0, index);
+			const insStart = raw.indexOf(delimiters_0, index);
 			
 			if ( insStart<0 ) {
 				const data         = unescape(trimTab(raw.slice(index)));
@@ -5333,15 +6230,15 @@ class Mustache extends Array$1         {
 			data.includes(delimiters_0) && throwSyntaxError(`对“${delimiters_0}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码，jVue 将此视为一种歧义`);
 			this[this.length] = data;
 			
-			const insEnd         = raw.indexOf(delimiters_1, insStart+2);
+			const insEnd = raw.indexOf(delimiters_1, insStart + 2);
 			insEnd<0 && throwSyntaxError(`template 块中存在未关闭的插值模板标记“${delimiters_0}”，虽然 Vue 会将其作为普通文字处理，但这种情况本身极有可能是误以为插值语法可以包含标签造成的`);
-			index = insStart+2;
+			index = insStart + 2;
 			index===insEnd && throwSyntaxError(`插值为空可能导致 Vue 尝试匹配更长的结果而造成错误`);
-			data = unescape(raw.slice(index, insEnd));
+			data = unescape(raw.slice(index, insEnd)).trim();
 			BAD_INS.test(data) && throwSyntaxError(`插值中存在 CR（后无 LF）、LS（U+2028）、PS（U+2029）会导致 Vue 无法按预期解析`);
 			data.includes(delimiters_1) && throwSyntaxError(`对“${delimiters_1}”进行 HTML 实体转义是无效的，因为 Vue 会在解析前解码，jVue 将此视为一种歧义`);
 			this[this.length] = data;
-			index = insEnd+2;
+			index = insEnd + 2;
 		}
 		return this;
 	}
@@ -5357,46 +6254,41 @@ class Mustache extends Array$1         {
 			each && ( expression[expression_length++] = isTemplate ? StringLiteral(each) : `(${each})` );
 			isTemplate = !isTemplate;
 		}
-		while ( index!==length )
+		while ( index!==length );
 		return expression.join('+');
 	}
 	
 	toData (              )         {
-		if ( this.#pre ) { return this[0]; }
+		if ( this.#pre ) { return this[0] ; }
 		let data         = '';
 		let isTemplate          = true;
 		let index = 0;
 		const { length } = this;
 		do {
-			const each = this[index++];
+			const each = this[index++] ;
 			if ( isTemplate ) {
 				data += each.replace(OPEN_LIKE, escapeOpenLike);
 				isTemplate = false;
 			}
 			else {
 				data.includes('}}') && throwSyntaxError(`插值中不能存在原生结束标记“}}”，因为可能出现“{{ {'}}':{ }} }}”的情况，没有简单的方式进行统一转义`);
-				data += `{{${each && each[each.length - 1]==='}' ? each+' ' : each}}}`;
+				data += `{{${each && each[each.length - 1]==='}' ? each + ' ' : each}}}`;
 				isTemplate = true;
 			}
 		}
-		while ( index!==length )
+		while ( index!==length );
 		return data;
 	}
 	
 }
 
-const CSS$1 = (css        ) => new Sheet(css).cssText;
-
 const TRIM = /^\s*\(?|\)?\s*$/g;
 const void_elements = RegExp$1(VOID_ELEMENTS, '');
 const foreign_elements = RegExp$1(FOREIGN_ELEMENTS, '');
-const TEXTAREA_END_TAG = newRegExp('i')`</textarea${TAG_EMIT_CHAR}`;
-const STYLE_END_TAG$1 = newRegExp('i')`</style${TAG_EMIT_CHAR}`;
-//const TITLE_END_TAG = newRegExp('i')`</title${TAG_EMIT_CHAR}`;
+const TEXTAREA_END_TAG = newRegExp.i `</textarea${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG$1 = newRegExp.i `</style${TAG_EMIT_CHAR}`;
+//const TITLE_END_TAG = newRegExp.i!`</title${TAG_EMIT_CHAR}`;
 const TEXTAREA = /^textarea$/i;
-const TNS = /^[\t\n\f\r ]+$/;
-const SOF_TNS_LT = /^[\t\n\f\r ]+</;
-const GT_TNS_EOF = />[\t\n\f\r ]+$/;
 const NATIVE_D = /\.(?:native|\d+)(?:$|\.)/;
 const V_MODEL_ = /^v-model(?::|(?=\.)(?!(?:\.(?:lazy|number|trim))+$))/;
 const STARTS_WITH_LOWERCASE_AND_NOT = /^(?:[abd-z]|c(?!omponent$))/;
@@ -5404,8 +6296,6 @@ const STARTS_WITH_LOWERCASE_AND_NOT_NOR = /^(?:[abd-rt-z]|c(?!omponent$)|s(?!usp
 const VNODE = /^@-?[vV]node/;
 const VNODE_EVENT = /^@[vV]node(?:(?:-b|B)efore)?(?:-[a-z]|[A-Z])[a-z]*$/;
 const ON_MODIFIER = /^[^.]*(?:capture|once|passive)(?:\.|$)/i;
-const ATTR_ON = /^:?on/;
-const ATTR_ = /^:?_/;
 const HTML5 = `
 	body
 	blockquote
@@ -5416,8 +6306,8 @@ const HTML5 = `
 	div
 	span
 `.match(/\S+/g) ;
-const HTML_5 = newRegExp('i')`^${groupify(HTML5)}$`;
-const SVG_MathML = newRegExp('i')`^${groupify(`
+const HTML_5 = newRegExp.i `^${groupify(HTML5)}$`;
+const SVG_MathML = newRegExp.i `^${groupify(`
 	annotation-xml
 	color-profile
 	font-face
@@ -5429,7 +6319,7 @@ const SVG_MathML = newRegExp('i')`^${groupify(`
 `.match(/\S+/g) )}$`;
 const NON_HTML = /[^\dA-Za-z]/;
 const STARTS_WITH_LETTER = /^[A-Za-z]/;
-const NS3 = /:(?:(?![A-Z_a-z])|.*?:)/s;
+const INSIDE = /^(?:keep-alive|transition(?:-group)?|base-transition)$/;
 
 const checkNameBeing = (xName        , attributes            , is         )       => {
 	if ( 'v-html' in attributes && ( xName==='xmp' || xName==='plaintext' || xName==='listing' ) ) {
@@ -5448,7 +6338,9 @@ const checkNameBeing = (xName        , attributes            , is         )     
 };
 
 let html         = '';
-let index         = 0;
+let index$1 = 0;
+
+let keys                                 = null;
 
 let partial                 = null;
 let partial_with_tagName         = '';
@@ -5483,7 +6375,7 @@ const Shadow = ($name_names$        ) => {
 		( shadow_hasNames = !!hasNames ) && shadow_names.add(names);
 	}
 	else {
-		shadow_name = name;
+		shadow_name = name ;
 		if ( !hasNames===shadow_hasNames ) { throw Error$1(`不能既访问子命名 shadow，又访问简单 shadow`); }
 		if ( shadow_hasNames && shadow_names.size===shadow_names.add(names).size ) { throw Error$1(`出现了重复的 shadow“${$name_names$}”`); }
 	}
@@ -5494,53 +6386,51 @@ const Shadow = ($name_names$        ) => {
 	return name + hasNames + names;
 };
 
-const hasSingleElementChild = (childNodes                   ) => {
-	const { length } = childNodes;
-	if ( !length ) { return false; }//throw Error(`从 Vue 2 开始，组件的根节点不得为空`);
-	let index = 0;
+const isSingleElementChild = (firstChild                ) => {// | null throw Error(`从 Vue 2 开始，组件的根节点不得为空`);
+	let child              = firstChild;
 	do {
-		const child = childNodes[index];
 		if ( !( child instanceof Element ) ) { return false; }//throw Error(`Vue 2 要求组件的根节点必须是元素节点`);
 		if ( !( 'v-pre' in child.attributes ) ) {
 			if ( child.localName==='template' || child.localName==='slot' ) { return false; }//throw Error(`Vue 2 不允许组件的根节点为 template 或 slot 元素`);
 		}
 	}
-	while ( ++index!==length );
-	let { attributes } = childNodes[0]           ;
-	if ( length===1 ) {
-		if ( 'v-for' in attributes && !( 'v-pre' in attributes ) ) { return false; }//throw Error(`Vue 2 不允许组件的根节点是 v-for 节点`);
+	while ( ( child = child.nextSibling ) );
+	let { attributes } = firstChild           ;
+	child = firstChild.nextSibling;
+	if ( child ) {
+		if ( !( 'v-if' in attributes ) || 'v-pre' in attributes || 'v-for' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
+		while ( child.nextSibling ) {
+			( { attributes } = child            );
+			if ( !( 'v-else-if' in attributes ) || 'v-pre' in attributes || 'v-for' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
+			child = child.nextSibling;
+		}
+		( { attributes } = child            );
+		if ( !( 'v-else-if' in attributes ) && !( 'v-else' in attributes ) || 'v-pre' in attributes || 'v-for' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
 	}
 	else {
-		if ( !( 'v-if' in attributes ) || 'v-pre' in attributes || 'v-for' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
-		const lastIndex = length - 1;
-		index = 1;
-		while ( index!==lastIndex ) {
-			( { attributes } = childNodes[index++]            );
-			if ( !( 'v-else-if' in attributes ) || 'v-pre' in attributes || 'v-for' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
-		}
-		( { attributes } = childNodes[lastIndex]            );
-		if ( !( 'v-else-if' in attributes ) && !( 'v-else' in attributes ) || 'v-pre' in attributes || 'v-for' in attributes ) { return false; }//throw Error(`Vue 2 只允许组件存在一个根节点`);
+		if ( 'v-for' in attributes && !( 'v-pre' in attributes ) ) { return false; }//throw Error(`Vue 2 不允许组件的根节点是 v-for 节点`);
 	}
 	return true;
 };
 
-const parseAppend = (parentNode_XName        , parentNode                   , V_PRE         , FOREIGN         , V_FOR         , requireKey         )       => {
+const parseAppend = (parentNode_XName        , parentNode                   , V_PRE         , FOREIGN         , V_FOR         , requireKey         ) => {
+	let lastChild                        = null;
 	for ( ; ; ) {
-		const tag = Tag(html, index, FOREIGN, !V_PRE);
+		const tag = Tag(html, index$1, FOREIGN, !V_PRE);
 		const { type } = tag;
 		if ( type===EOF ) {
 			if ( parentNode_XName ) { throw SyntaxError$1(`template 块中存在未关闭的 ${parentNode_XName} 标签`); }
-			index = tag.end;
+			index$1 = tag.end;
 			break;
 		}
 		if ( type===TEXT ) {
 			const data         = new Mustache(tag.raw , V_PRE, delimiters_0, delimiters_1).toData();
-			data && parentNode.appendChild(new Text(data));
-			index = tag.end;
+			data && parentNode.afterInsert(lastChild, lastChild = new TextCharacterData(data));
+			index$1 = tag.end;
 			continue;
 		}
 		if ( type===COMMENT ) {
-			index = tag.end;
+			index$1 = tag.end;
 			continue;
 		}
 		const XName = tag.xName ;
@@ -5551,23 +6441,32 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					: `template 块中凭空出现了“</${XName}>”结束标签`
 				);
 			}
-			index = tag.end;
+			index$1 = tag.end;
 			if ( V_PRE ) { break; }
 			const { localName } = parentNode           ;
 			if ( localName==='keep-alive' ) {
-				if ( parentNode.length===1 && parentNode[0] instanceof Element && parentNode[0].localName==='transition' ) {
-					throw SyntaxError$1(`根据官方示例，transition 应当套在 keep-alive 外面，而不是里面`);
+				const { firstChild } = parentNode;
+				if ( firstChild ) {
+					if ( !firstChild.nextSibling && 'localName' in firstChild && firstChild.localName==='transition' ) {
+						throw SyntaxError$1(`根据官方示例，transition 应当套在 keep-alive 外面，而不是里面`);
+					}
+					if ( isSingleElementChild(firstChild) ) { break; }
 				}
 			}
-			else if ( localName!=='transition' && localName!=='base-transition' ) { break; }
-			if ( hasSingleElementChild(parentNode           ) ) { break; }
+			else if ( localName==='transition' || localName==='base-transition' ) {
+				const { firstChild } = parentNode;
+				if ( firstChild && isSingleElementChild(firstChild) ) { break; }
+			}
+			else { break; }
 			throw SyntaxError$1(`${localName} 只能包含一个元素子节点`);
 		}
 		let xName         = XName;
 		let __class__                    ;
+		const attributes             = tag.attributes ;
+		const v_pre          = V_PRE || 'v-pre' in attributes;
 		if ( partial ) {
 			let alias = XName;
-			let addOn = '';
+			///let addOn = '';
 			///if ( XName.includes('.') ) {
 			///	const _ = XName.split('.');
 			///	alias = _[0];
@@ -5575,18 +6474,44 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			///}
 			if ( STARTS_WITH_UPPER_CASE.test(alias) ) {
 				if ( alias in partial ) {
-					const _ = partial[alias];
+					const _ = partial[alias] ;
 					xName = _.tagName==='_' ? alias + '_' : _.tagName || alias;
-					__class__ = _.class + addOn;
+					__class__ = _.class;/// + addOn;
+					const { attrs } = _;
+					for ( let name in attrs ) {
+						if ( name[0]==='$' ) {
+							name = name.slice(1);
+							if ( name in attributes ) {
+								const add = attrs['$' + name];
+								const old = attributes[name];
+								attributes[name] = add
+									? old
+										? add + ' ' + old
+										: add
+									: old
+										? old
+										: add ?? old;
+							}
+							else {
+								if ( !v_pre && ':' + name in attributes ) { throw Error$1(`标签已存在属性“:${name}”`); }
+								attributes[name] = attrs['$' + name];
+							}
+						}
+						else {
+							if ( name in attributes ) { throw Error$1(`标签已存在属性“${name}”`); }
+							if ( !v_pre && ':' + name in attributes ) { throw Error$1(`标签已存在属性“:${name}”`); }
+							attributes[name] = attrs[name];
+						}
+					}
 				}
 				else if ( partial_with_tagName!==' ' && NameIs__Key__(alias) ) {
 					xName = partial_with_tagName==='_' ? alias + '_' : partial_with_tagName || alias;
-					__class__ = `__${alias}__` + addOn;
+					__class__ = `__${alias}__`;/// + addOn;
 				}
 			}
 		}
 		
-		if ( compatible_render && NS3.test(xName) ) { compatible_render = false; }
+		if ( compatible_template && NS3.test(xName) ) { compatible_template = false; }
 		
 		const notComponent = STARTS_WITH_LOWERCASE_AND_NOT.test(xName);
 		let afterColon = xName;
@@ -5607,8 +6532,6 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			}
 		}
 		if ( xName==='script' ) { throw SyntaxError$1(`Vue 不允许 template 中存在 script 标签`); }
-		const attributes             = tag.attributes ;
-		const v_pre          = V_PRE || 'v-pre' in attributes;
 		const v_for          = !v_pre && ( V_FOR || 'v-for' in attributes );
 		const lackKey          = !v_pre && !( 'key' in attributes ) && !( ':key' in attributes );
 		const v_if          = 'v-if' in attributes || 'v-else' in attributes || 'v-else-if' in attributes;
@@ -5616,13 +6539,18 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 		let sheetRef                                                         = null;
 		let shadowRoot                                                           = null;
 		if ( v_pre ) {
+			_asClass (attributes, keys, true);
 			if ( !V_PRE ) {
 				if ( isTemplate ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
 				if ( 'v-for' in attributes ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令的 v-for 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
 				if ( 'v-else-if' in attributes || 'v-else' in attributes ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令且具有 v-else-if/v-else 属性的元素在 Vue 3 中会带上 v-pre 属性，且这没有意义，请避免使用`); }
 			}
-			if ( xName==='slot' ) { throw SyntaxError$1(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
-			else if ( xName==='component' && 'is' in attributes ) { throw SyntaxError$1(`v-pre 模式下的 component 元素的 is 属性在 Vue 3 中会被忽略（实际上 component 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
+			if ( xName==='slot' ) { throw SyntaxError$1(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，而且无论哪种都没有实际使用意义，请避免使用`); }
+			else {
+				 if ( xName==='component' && 'is' in attributes ) { throw SyntaxError$1(`v-pre 模式下的 component 元素的 is 属性在 Vue 3 中会被忽略（实际上 component 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
+			}
+			 if ( compatible_template ) { for ( const name in attributes ) { if ( name.includes('\\') ) { compatible_template = false; } } }
+			//for ( const name in attributes ) { if ( name[0]==='_' ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); } }
 		}
 		else {
 			if ( compatible_render && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render = false; }
@@ -5660,6 +6588,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					if ( BAD_SLOT_NAME.test(attributes['name']) ) { throw ReferenceError$1(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
 				}
 				for ( let name in attributes ) {
+					 if ( compatible_template && name.includes('\\') ) { compatible_template = false; }
 					const bind = name[0]===':';
 					if ( bind ) {
 						if ( name.includes('.') ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符，而单文件组件模板中又没有使用 .camel 的必要，因此请不要包含“.”修饰符内容`); }
@@ -5673,6 +6602,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 				}
 			}
 			else {
+				_asClass (attributes, keys, false);
 				if ( compatible_template ) {
 					 if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
 					else if (
@@ -5693,41 +6623,28 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					if ( 'scope' in attributes && isTemplate ) { throw SyntaxError$1(`template scope 已被 v-slot 取代`); }
 				}
 				let already = '';
-				for ( const name in attributes ) {
-					if ( name[0]==='@' ) {
-						if ( name[1]==='_' ) { throw ReferenceError$1(`“_”开头的 listener 可能无法按预期工作`); }
-						 {
-							if ( NATIVE_D.test(name) ) { throw Error$1(`Vue 3 中 v-on 已不再支持 .native、键位数字修饰符`); }
-							if ( VNODE.test(name) ) {
-								if ( !VNODE_EVENT.test(name) ) { throw Error$1(`以 vnode 起始的“${name}”可能是 Vue 3 中新增的内置事件，它需要通过大写或连字符正确断词`); }
+				for ( let name in attributes ) {
+					 if ( compatible_template && name.includes('\\') ) { compatible_template = false; }
+					switch ( name[0] ) {
+						case '@':
+							if ( name[1]==='_' ) { throw ReferenceError$1(`“_”开头的 listener 可能无法按预期工作`); }
+							 {
+								if ( NATIVE_D.test(name) ) { throw Error$1(`Vue 3 中 v-on 已不再支持 .native、键位数字修饰符`); }
+								if ( VNODE.test(name) ) {
+									if ( !VNODE_EVENT.test(name) ) { throw Error$1(`以 vnode 起始的“${name}”可能是 Vue 3 中新增的内置事件，它需要通过大写或连字符正确断词`); }
+								}
+								else {
+									if ( ON_MODIFIER.test('on' + name.slice(1)) ) { throw Error$1(`Vue 3 中事件名不应以 capture、once、passive 结尾以免与 .capture、.once、.passive 修饰符编译的结果混淆`); }
+								}
 							}
-							else {
-								if ( ON_MODIFIER.test('on' + name.slice(1)) ) { throw Error$1(`Vue 3 中事件名不应以 capture、once、passive 结尾以免与 .capture、.once、.passive 修饰符编译的结果混淆`); }
+							if ( compatible_template ) {
+								const value = attributes[name];
+								if ( value!==EMPTY && NON_ASCII_SIMPLE_PATH.test(value) ) { compatible_template = false; }
 							}
-						}
-						if ( compatible_template ) {
-							const value = attributes[name];
-							if ( value!==EMPTY && NON_ASCII_SIMPLE_PATH.test(value) ) { compatible_template = false; }
-						}
-					}
-					else {
-						if ( ATTR_.test(name) ) { throw ReferenceError$1(`“_”开头的 attr 可能无法按预期工作`); }
-						 {
-							if ( ATTR_ON.test(name) ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
-						}
-						if ( name[0]===':' && name.includes('.') ) {
-							if ( name!==':slot.camel' ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符，而单文件组件模板中又没有使用 .camel 的必要，因此请不要包含“.”修饰符内容`); }
-						}
-						if ( notComponent ) {
-							if ( V_MODEL_.test(name) ) { throw SyntaxError$1(`只有组件上的 v-model 才能附带 :arg 参数或自定义修饰符`); }
-						}
-						else {
-							 if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
-						}
-						if ( slotRE.test(name) ) {
+							break;
+						case '#':
 							if ( already ) { throw SyntaxError$1(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
-							already = name;
-							if ( name[0]==='#' && name[name.length - 1]==='#' && name.length>1 ) {
+							if ( name[name.length - 1]==='#' ) {
 								if ( BUILT_IN.has(xName) ) { throw Error$1(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在 ${xName} 标签上`); }
 								if ( !notComponent ) { throw Error$1(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` component 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
 								if ( xName.includes('-') ? SVG_MathML.test(xName) : !HTML_5.test(xName) && xName!=='style' ) { throw Error$1(`HTML 原生标签中，只有 ${HTML5.join('、')} 支持 Shadow DOM，其中不包括“${xName}”，而同步样式表功能也只支持 style 标签`); }
@@ -5751,7 +6668,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 								}
 								else {
 									if ( notComponent && xName!=='suspense' ) { throw Error$1(`插槽只能出现在 template 或组件上` + ( BUILT_IN.has(xName) ? `` : `（如果 ${xName} 是组件，则请避免使用小写字母开头）` )); }
-									if ( name!=='v-slot' && name!=='#default' ) { throw SyntaxError$1(`具名插槽只能出现在 template 上`); }
+									if ( name!=='#default' ) { throw SyntaxError$1(`具名插槽只能出现在 template 上`); }
 									if ( value===EMPTY ) { throw Error$1(`无值的默认插槽 v-slot 指令没有必要显式地写在组件上`); }
 								}
 								if ( value===emptySlotScopeToken ) { throw ReferenceError$1(`“${emptySlotScopeToken}”是保留字，编译结果相当于留空`); }
@@ -5759,7 +6676,23 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 								Params(value, 0, 1, `${name}="${value}"中`);
 								if ( BAD_V_SLOT_NAME.test(name) ) { throw ReferenceError$1(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
 							}
-						}
+							already = name;
+							break;
+						case ':':
+							if ( name.includes('.') && name!==':slot.camel' ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符，而单文件组件模板中又没有使用 .camel 的必要，因此请不要包含“.”修饰符内容`); }
+							if ( name[1]==='_' ) { throw ReferenceError$1(`“_”开头的 attr 可能无法按预期工作`); }
+							 if ( name.startsWith(':on') ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
+							break;
+						default:
+							//if ( name[0]==='_' ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); }
+							 if ( name.startsWith('on') ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
+							if ( notComponent ) {
+								if ( V_MODEL_.test(name) ) { throw SyntaxError$1(`只有组件上的 v-model 才能附带 :arg 参数或自定义修饰符`); }
+							}
+							else {
+								 if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
+							}
+							break;
 					}
 				}
 				if ( isTemplate && !v_if && !already && !( 'v-for' in attributes ) ) {
@@ -5784,22 +6717,27 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			}
 		}
 		if ( compatible_template && xName==='style' && !STYLE_BY_COMPONENT_IS ) { compatible_template = false; }
-		const element          = parentNode.appendChild(new Element(
-			 xName,
-			attributes,
-			__class__,
-			shadowRoot
-				? {
+		parentNode.afterInsert(lastChild, lastChild = xName==='style'
+			? new RawTextElement(
+				 'style',
+				attributes,
+				__class__,
+			)
+			: new Element(
+				xName,
+				attributes,
+				__class__,
+				shadowRoot && {
 					along: shadowRoot.along,
-					inside: !parentNode_XName || /^(?:keep-alive|transition(?:-group)?|base-transition)$/.test(( parentNode            ).localName),
-				}
-				: null,
-		));
-		index = tag.end;
+					inside: !parentNode_XName || INSIDE.test(( parentNode            ).localName),
+				},
+			)
+		);
+		index$1 = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING ) { continue; }
 		if ( void_elements.test(xName) ) { throw SyntaxError$1(`template 文件中如果出现 HTML void 元素（小写；即便已经过时、废弃或是非标准），宜添加自闭合斜线以避免歧义`); }
 		const foreign          = FOREIGN || xName==='svg' || xName==='math';
-		if ( !html.startsWith('</', index) ) {
+		if ( !html.startsWith('</', index$1) ) {
 			if ( LISTING.test(xName) ) {
 				throw SyntaxError$1(xName==='listing'
 					? `已过时的 listing 标签内容处理方式不定，除非自闭合或内容为空，否则不应用于 .vue 文件（真需要时，考虑使用“<${xName} v-text="\`...\`" />”）`
@@ -5835,20 +6773,17 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			if (
 				xName==='textarea' || xName==='style'// || xName==='title'
 			) {
-				let endTagStart         = html.slice(index).search(
+				let endTagStart = html.slice(index$1).search(
 					xName==='textarea' ? TEXTAREA_END_TAG :
 						xName==='style' ? STYLE_END_TAG$1 :
 							//xName==='title' ? TITLE_END_TAG :
 							null         
 				);
 				if ( endTagStart<0 ) { throw SyntaxError$1(`template 块中存在未关闭的 ${XName} 标签`); }
-				endTagStart += index;
-				const inner = html.slice(index, endTagStart);
+				endTagStart += index$1;
+				const inner = html.slice(index$1, endTagStart);
 				if ( xName==='style' ) {
-					if ( v_pre ) {
-						const css = CSS$1(inner);
-						css && element.appendChild(new RawText(css));
-					}
+					if ( v_pre ) { ( lastChild                   ).textContent = minify$1(inner); }
 					else {
 						const expression         = new Mustache(inner, v_pre, delimiters_0, delimiters_1).toExpression();
 						if ( expression ) {
@@ -5863,17 +6798,17 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					if ( mustache.length!==1 && xName==='textarea' ) { throw Error$1(`有插值的 textarea 标签这种用例没有意义`); }
 					if ( mustache[0] ) {
 						v_pre
-							? element.appendChild(new Text(( xName==='textarea' ? '\n' : '' ) + mustache[0]))
+							? lastChild.afterInsert(null, new TextCharacterData(( xName==='textarea' ? '\n' : '' ) + mustache[0]))
 							: attributes['v-text'] = mustache.toExpression();
 					}
 				}
-				const tag = Tag(html, index = endTagStart, foreign);
+				const tag = Tag(html, index$1 = endTagStart, foreign);
 				if ( tag.xName!==XName ) { throw SyntaxError$1(`${XName} 的结束标记 ${html.slice(endTagStart, tag.end)} 不符合严谨性预期`); }
-				index = tag.end;
+				index$1 = tag.end;
 				continue;
 			}
 		}
-		parseAppend(XName, element, v_pre, foreign, v_for, compatible_render && lackKey && notComponent && xName!=='slot' && ( requireKey || 'v-for' in attributes || v_if ));// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
+		parseAppend(XName, lastChild, v_pre, foreign, v_for, compatible_render && lackKey && notComponent && xName!=='slot' && ( requireKey || 'v-for' in attributes || v_if ));// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
 	}
 };
 
@@ -5888,10 +6823,14 @@ class Content extends Node {
 		if ( CONTROL_CHARACTER.test(inner) ) { throw Error$1(`HTML 字符流中禁止出现除 NUL 空（U+00）、TAB 水平制表（U+09）、LF 换行（U+0A）、FF 换页（U+0C）、CR 回车（U+0D）之外的控制字符（U+00〜U+1F、U+7F〜U+9F）`); }
 		delimiters_0 = _.delimiters_0;
 		delimiters_1 = _.delimiters_1;
+		if ( _.keys ) {
+			keys = create$1(NULL)                           ;
+			for ( const key of _.keys ) { keys[key] = null; }
+		}
 		partial = _.abbr ?? null;
-		partial_with_tagName = partial?.['']?.tagName ?? ' ';
+		partial_with_tagName = partial && '' in partial ? partial[''] .tagName : ' ';
 		html = inner;
-		index = 0;
+		index$1 = 0;
 		compatible_template = true;
 		compatible_render = true;
 		super();
@@ -5910,11 +6849,11 @@ class Content extends Node {
 		}
 		catch (error) {
 			sheet = new Map$1;
-			error.message = `${error.message}：\n${Snippet(inner, index)}`;
+			error.message = `${error.message}：\n${Snippet(inner, index$1)}`;
 			throw error;
 		}
 		finally {
-			partial = null;
+			keys = partial = null;
 			html = '';
 			if ( shadow_name ) {
 				shadow_name = '';
@@ -5923,56 +6862,73 @@ class Content extends Node {
 		}
 		if ( !compatible_template ) { this.#compatible_template = false; }
 		if ( !compatible_render ) { this.#compatible_render = false; }
-		this.firstChild instanceof Text && TNS.test(this.firstChild.data) && SOF_TNS_LT.test(inner) && this.shift();
-		this.lastChild instanceof Text && TNS.test(this.lastChild.data) && GT_TNS_EOF.test(inner) && --this.length;
 		return this;
 	}
 	
 	         #compatible_template          = true;
 	         #compatible_render          = true;
 	
-	get outerHTML () {
-		const { length } = this;
-		if ( length ) {
-			let { outerHTML } = this[0] ;
+	[Symbol.toPrimitive] (             ) {
+		let child = this.firstChild;
+		let outerHTML = '';
+		if ( child ) {
+			outerHTML += child;
 			if ( outerHTML[0]==='#' ) { outerHTML = '&#35;' + outerHTML.slice(1); }
-			let index = 1;
-			while ( index!==length ) { outerHTML += this[index++] .outerHTML; }
-			compatible_template = this.#compatible_template;
-			compatible_render = this.#compatible_render;
-			return outerHTML;
+			while ( ( child = child.nextSibling ) ) { outerHTML += child; }
 		}
 		compatible_template = this.#compatible_template;
 		compatible_render = this.#compatible_render;
-		return '';
+		return outerHTML;
 	}
 	
-	* beautify (               tab         = '\t')                                     {
-		const { length } = this;
-		let index = 0;
-		while ( index!==length ) { yield * this[index++] .beautify(tab); }
+	* beautify (tab         = '\t')                                     {
+		let child = this.firstChild;
+		while ( child ) {
+			yield * child.beautify(tab);
+			child = child.nextSibling;
+		}
 	}
 	
 }
 
-const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
+const TEMPLATE_END_TAG = newRegExp.i `</template${TAG_EMIT_CHAR}`;
 
-const PARTIAL = newRegExp('u')`^
-	${ASCII_WHITESPACE}*(?:
-		${AliasName}${ASCII_WHITESPACE}*
-		=${ASCII_WHITESPACE}*
-			${localOrComponentNameWithoutDot}
-			(?:(?:\.${className})*|\.?)
-		${ASCII_WHITESPACE}*;
-	${ASCII_WHITESPACE}*)*
+const ATTR = /\[ *\w[\w-]* *(?:~?= *(?:\w[\w-]*|'[^']*'|"[^"]*") *)?\]/u;
+const PARTS = newRegExp.gu `
+	${AliasName}
+	|
+	${localOrComponentNameWithoutDot}
+	|
+	\.(?:${className})?
+	|
+	${ATTR}
+`;
+const PARTIALS = newRegExp.gu `
+	${AliasName}${ASCII_WHITESPACE}*
+	=${ASCII_WHITESPACE}*
+		${localOrComponentNameWithoutDot}${ASCII_WHITESPACE}*
+		(?:
+			(?:
+				\.(?:${className})?
+			|
+				${ATTR}
+			)
+			${ASCII_WHITESPACE}*
+		)*
+`;
+const PARTIAL = newRegExp.u `^
+	${ASCII_WHITESPACE}*
+	(?:
+		${PARTIALS};${ASCII_WHITESPACE}*
+	)*
 $`;
-const PARTIAL_WITH_TAG = newRegExp('u')`^
+const PARTIAL_WITH_TAG = newRegExp.u `^
 	${ASCII_WHITESPACE}*(?:
 		${AliasName}${ASCII_WHITESPACE}*;
 	${ASCII_WHITESPACE}*)*
 $`;
 
-const HTML = newRegExp('i')`^(?:HTML|${ASCII_WHITESPACE}*text/html${ASCII_WHITESPACE}*)$`;
+const HTML = newRegExp.i `^(?:HTML|${ASCII_WHITESPACE}*text/html${ASCII_WHITESPACE}*)$`;
 
 let compatible_render$1          = true;
 
@@ -6011,21 +6967,53 @@ class Template extends Block {
 			if ( literal===EMPTY ) { throw SyntaxError$1(`template 功能块的“.abbr”属性必须具有值`); }
 			if ( !PARTIAL.test(literal) ) { throw SyntaxError$1(`template 功能块的“.abbr”属性语法错误：\n${literal}`); }
 			const abbr = _this.abbr = create$1(NULL)           ;
-			const pairs = literal.split(';');
-			let index = pairs.length;
-			while ( index ) {
-				const tokens = pairs[--index].match(TOKENS);
-				if ( tokens ) {
-					const xName         = tokens[0];
+			const pairs = literal.match(PARTIALS);
+			if ( pairs ) {
+				let index = pairs.length;
+				do {
+					const x_selectors = pairs[--index].match(PARTS) ;
+					const xName         = x_selectors[0];
 					if ( xName in abbr ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中存在重复的条目“${xName}”`); }
-					const localName_class = tokens[1].split('.');
+					let className         = '';
+					let attrs                      = null;
+					let i = 2;
+					while ( i!==x_selectors.length ) {
+						const selector = x_selectors[i++];
+						if ( selector[0]==='.' ) {
+							className += selector==='.'
+								? ' ' + NameAs__Key__(xName)
+								: ' ' + selector.slice(1);
+						}
+						else {
+							const i = selector.indexOf('=');
+							let n = selector.slice(1, i).trim();
+							if ( n.startsWith('v-') || n==='class' || n==='style' ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中不能添加“v-”开头的属性或“class”“style”`); }
+							attrs || ( attrs = create$1(NULL)                 );
+							let v                ;
+							if ( i>0 ) {
+								if ( selector[i - 1]==='~' ) {
+									n = n.slice(0, -1).trim();
+									if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n}”`); }
+									n = '$' + n;
+								}
+								v = selector.slice(i + 1, -1).trim();
+								if ( v[0]=='"' || v[0]==='\'' ) { v = v.slice(1, -1); }
+							}
+							else {
+								if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n}”`); }
+								n = '$' + n;
+							}
+							if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n[0]==='~' ? n.slice(1) : n}”`); }
+							attrs[n] = v;
+						}
+					}
 					abbr[xName] = {
-						tagName: localName_class.shift() ,
-						class: localName_class.length
-							? localName_class.join(' ') || NameAs__Key__(xName)
-							: '',
+						tagName: x_selectors[1],
+						class: className.slice(1),
+						attrs,
 					};
 				}
+				while ( index );
 			}
 		}
 		for ( const name in attributes ) {
@@ -6036,7 +7024,7 @@ class Template extends Block {
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError$1(`template 功能块的无值“.abbr:*”属性只能有一个`); }
-					abbr[''] = { tagName, class: '' };
+					abbr[''] = { tagName, class: '', attrs: null };
 				}
 				else {
 					if ( !PARTIAL_WITH_TAG.test(literal) ) { throw SyntaxError$1(`template 功能块的“${name}”属性语法错误：\n${literal}`); }
@@ -6047,7 +7035,7 @@ class Template extends Block {
 						if ( tokens ) {
 							const xName         = tokens[0];
 							if ( xName in abbr ) { throw SyntaxError$1(`template 功能块的“${name}”属性值中存在重复的条目“${xName}”`); }
-							abbr[xName] = { tagName, class: NameAs__Key__(xName) };
+							abbr[xName] = { tagName, class: NameAs__Key__(xName), attrs: null };
 						}
 					}
 				}
@@ -6094,8 +7082,8 @@ class Template extends Block {
 	
 	get innerHTML ()         {
 		const { content } = this;
-		 compatible_render$1 = compatible_render && hasSingleElementChild(content);
-		return content.outerHTML;
+		 compatible_render$1 = compatible_render && !!content.firstChild && isSingleElementChild(content.firstChild);
+		return '' + content;
 	}
 	set innerHTML (value        ) {
 		if ( typeof ( value            )!=='string' ) { throw TypeError$1(`innerHTML 只能被赋值字符串`); }
@@ -6103,7 +7091,7 @@ class Template extends Block {
 	}
 	
 }
-freeze(Template.prototype);
+freeze(freeze(Template).prototype);
 
 class CustomBlock extends Block {
 	
@@ -6121,7 +7109,7 @@ class CustomBlock extends Block {
 	}
 	
 }
-freeze(CustomBlock.prototype);
+freeze(freeze(CustomBlock).prototype);
 
 const SCRIPT_STYLE_TEMPLATE = /^(?:script|style|template)$/i;
 const NON_EOL = /[^\n\r\u2028\u2029]+/g;
@@ -6238,23 +7226,23 @@ const parseComponent = (sfc     , vue        )       => {
 
 const WeakSet$1 = WeakSet;
 
-const byReversedStart = (a            , b            )         => b.start - a.start;
+const byReversedStart = (a            , b            ) => b.start - a.start;
 
 let shorthandValues                     ;
 //const __Proto__ :String = Object('__proto__');
 let _$        ;
 let _vm         ;
 let _this         ;
-const visitors = Null({
+const visitors = Null$1({
 	ObjectExpression ({ properties }                  )       {
-		let index         = properties.length;
+		let index = properties.length;
 		while ( index ) {
 			const property = properties[--index];
 			if ( property.shorthand ) { shorthandValues.add(property.value); }
 		}
 	},
 	ObjectPattern ({ properties }               )       {
-		let index         = properties.length;
+		let index = properties.length;
 		while ( index ) {
 			const property = properties[--index];
 			if ( property.shorthand ) {
@@ -6284,19 +7272,19 @@ const visitors = Null({
 	},
 });
 
-const parserOptions$1 = Null({
+const parserOptions$1 = Null$1({
 	ecmaVersion: 5            ,
 	sourceType: 'module'         ,// use strict mode
 	allowReserved: true         ,
 	///preserveParens: true,
 });
 let ecma           = 5;
-const MinifyOptionsBODY = () => Null({
+const MinifyOptionsBODY = () => Null$1({
 	warnings: 'verbose',
-	parse: Null({
+	parse: Null$1({
 		html5_comments: false,
 	}         ),
-	compress: Null({
+	compress: Null$1({
 		warnings: true,
 		//collapse_vars: false,
 		pure_getters: true,
@@ -6309,7 +7297,7 @@ const MinifyOptionsBODY = () => Null({
 		unsafe_arrows: true,
 		unsafe_methods: true,
 	}         ),
-	output: Null({
+	output: Null$1({
 		inline_script: false,
 		beautify: false,
 	}         ),
@@ -6341,11 +7329,13 @@ const MinifyOptionsBODY = () => Null({
 		} as const),
 	} as const);
 };*/
+const $event = /^Dropping unused function argument \$event \[\d+:\d+,\d+]$/;
+const not$event = (warning        ) => !$event.test(warning);
 const MinifyBODY = (files        ) => {
 	const { error, warnings, code } = minify(files, MinifyOptionsBODY());
 	if ( error ) { throw error; }
 	if ( warnings ) {
-		const filtered = warnings.filter((warning        ) => !/^Dropping unused function argument \$event \[\d+:\d+,\d+]$/.test(warning));
+		const filtered = warnings.filter(not$event);
 		if ( filtered.length ) { throw Error$1(`Terser 压缩警告：\n${filtered.join('\n')}`); }
 	}
 	return code ;
@@ -6363,7 +7353,7 @@ const mode_ = {
 }         ;
 
 let MODE                         ;
-let LITERAL                                     ;
+let LITERAL                                                       ;
 
 const Sheets = (sheet                     ) => {
 	let literal = '{';
@@ -6376,7 +7366,7 @@ const Sheets = (sheet                     ) => {
 };
 const NecessaryStringLiteral = (body        , name               )         => {
 	if ( !body.startsWith(with_this__return_) ) { throw Error$1(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
-	const func         = `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`;
+	const func = `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`;
 	const AST = parse(func, parserOptions$1);
 	const globals = findGlobals(AST);
 	_$ = 1 + _$s.length;
@@ -6384,12 +7374,12 @@ const NecessaryStringLiteral = (body        , name               )         => {
 	shorthandValues = new WeakSet$1;
 	simple(AST, visitors);
 	let _vm_func         = '';
-	let index         = 0;
+	let index = 0;
 	const identifiers = ( globals.nodes()                 ).sort(byReversedStart);
 	let i = identifiers.length;
 	while ( i ) {
 		const identifier = identifiers[--i];
-		let name         = identifier.name          ;
+		let name = identifier.name          ;
 		const { start } = identifier;
 		if ( start!==index ) { _vm_func += func.slice(index, start); }
 		name = func.slice(start, index = identifier.end);
@@ -6424,7 +7414,7 @@ const Render3 = (innerHTML        , mode                 , literal              
 		hoistStatic: true,
 	});
 	const { 1: params, 2: rest } = CONST_RETURN.exec(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
-	let Render         = `"use strict";(${params})=>{${rest}};`;
+	let Render = `"use strict";(${params})=>{${rest}};`;
 	ecma = parserOptions$1.ecmaVersion = 2014;
 	const globals = findGlobals(parse(Render, parserOptions$1));
 	globals.size && throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回的内容与预期不符（存在变量泄漏：“${globals.names().join('”“')}”）`);
@@ -6437,7 +7427,7 @@ const Render3 = (innerHTML        , mode                 , literal              
 		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${Sheets(sheet)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
 };
 
-const Render2 = (innerHTML        , mode                         , literal                                     )                                                                           => {
+const Render2 = (innerHTML        , mode                         , literal                                                       )                                                                           => {
 	const { errors, tips, render, staticRenderFns } = compile2[mode](innerHTML);
 	if ( errors.length ) { throw Error$1(`.vue template 官方编译未通过：\n       ${errors.join('\n       ')}`); }
 	if ( tips.length ) { throw Error$1(`.vue template 官方编译建议：\n       ${tips.join('\n       ')}`); }
@@ -6463,13 +7453,15 @@ const __KEY__ = newRegExp`^__${KEYS}__$`;
 
 function * From (tab        , mode                         , styles         , template                 , from               , eol        ) {
 	
+	const options = { indent: tab, newline: eol, newlineSelector: false, newlineProperty: false };
+	
 	if ( from===null ) {
 		const { length } = styles;
 		if ( length ) {
-			const style = styles[0];
+			const style = styles[0] ;
 			if ( _(style).media!==undefined$1 ) { throw Error$1(`当前模式下，style 标签上的 media 属性无法被保留`); }
 			yield `export ${mode} style = ${StringLiteral(style.innerCSS)};${eol}`;
-			for ( const line of style.sheet.beautify(tab) ) {
+			for ( const line of style.sheet[Symbol.iterator](options) ) {
 				yield `//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
 			}
 			yield eol;
@@ -6480,10 +7472,10 @@ function * From (tab        , mode                         , styles         , te
 				yield `export ${mode} styles = [ style,${eol}`;
 				let index = 1;
 				while ( index!==length ) {
-					const style = styles[index++];
+					const style = styles[index++] ;
 					if ( _(style).media!==undefined$1 ) { throw Error$1(`当前模式下，style 标签上的 media 属性无法被保留`); }
 					yield `${tab}${StringLiteral(style.innerCSS)},${eol}`;
-					for ( const line of style.sheet.beautify(tab) ) {
+					for ( const line of style.sheet[Symbol.iterator](options) ) {
 						yield `${tab}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
 					}
 				}
@@ -6533,11 +7525,11 @@ function * From (tab        , mode                         , styles         , te
 		const checkScoped = scopeKeys ? RegExp$1(`^__${groupify(scopeKeys)}__$`) : __KEY__;
 		let index = 0;
 		while ( index!==length ) {
-			const style = styles[index++];
+			const style = styles[index++] ;
 			const { sheet } = style;
 			const { allowGlobal, media } = _(style);
 			allowGlobal || sheet.checkScoped(checkScoped);
-			for ( const line of sheet.beautify(tab) ) {
+			for ( const line of sheet[Symbol.iterator](options) ) {
 				yield `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
 			}
 			yield media===undefined$1
@@ -6589,15 +7581,15 @@ const rollupOptions = {
 	context: 'this',
 }         ;
 
-const TRUE = Null({
+const TRUE = Null$1({
 	format: 'es',
 	sourcemap: true,
 }         );
-const FALSE = Null({
+const FALSE = Null$1({
 	format: 'es',
 	sourcemap: false,
 }         );
-const INLINE = Null({
+const INLINE = Null$1({
 	format: 'es',
 	sourcemap: 'inline',
 }         );
@@ -6614,9 +7606,9 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner ); }
 	}
 	const main         = sfc.export('default', x_from)          ;
-	let round         = 1;
+	let round = 1;
 	const bundle = await rollup(assign(create$1(NULL), rollupOptions, {
-		acorn: Null({
+		acorn: Null$1({
 			ecmaVersion: x_var==='var' ? 5 : 2014,
 			allowReserved: true,
 			sourceType: 'module',
@@ -6626,7 +7618,7 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 		input: '/'+'_'.repeat(main.length),
 		external: (path        )          => path!==x_from,
 		plugins: [
-			Null({
+			Null$1({
 				resolveId (path        )         {
 					if ( round===1 || path===x_from ) { return path; }
 					throw URIError$1(path);
@@ -6668,7 +7660,7 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 	return map===true ? { code: only.code, map: only.map } : only.code;
 };
 
-const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true }         ;
+const OPTIONS$1 = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true }         ;
 const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
 
 const ES_EOL = /\r\n?|[\n\u2028\u2029]/g;
@@ -6685,7 +7677,7 @@ class SFC {
 		
 		if ( isBuffer(vue) ) {
 			try {
-				const { BOM, string } = buffer2object(vue, OPTIONS);
+				const { BOM, string } = buffer2object(vue, OPTIONS$1);
 				this.bom = BOM;
 				vue = string;
 			}
@@ -6748,20 +7740,19 @@ class SFC {
 	}
 	
 }
-freeze(SFC.prototype);
+freeze(freeze(SFC).prototype);
 
-const _tsd = 'declare module \'*?j-vue=\' {\n	export const style :string;\n	export const styles :string[];\n	export const template :string;\n	export const Render :jVue.Render3Constructor;\n	export const render :jVue.Render2;\n	export const staticRenderFns :jVue.Render2[];\n	\n	import type * as jVue from \'j-vue\';\n}\n\ndeclare module \'*?j-vue\' {\n	export { Identifier, Scope, Style, remove, Component, mixin, prop } from \'j-vue\';\n	\n	export const scopeFunction :jVue.Scope<void>;\n	export const scopeObject :jVue.Scope<string>;\n	export const template :string;\n	export const Render :jVue.Render3Constructor;\n	export const render :jVue.Render2;\n	export const staticRenderFns :jVue.Render2[];\n	\n	import type * as jVue from \'j-vue\';\n}\n\ndeclare module \'j-vue\' {\n	export type _Vue = Vue$;\n	export type {\n		SubComponent as _Component,\n		ObjectAPI as _ObjectAPI,\n	};\n	\n	export const version :string;\n	\n	export function Identifier () :string;\n	\n	export const Scope :{\n		<Keys extends string> (this :void | Scope<string | void> | readonly Scope<string | void>[], keys :string) :Scope<Keys>;\n		                      (this :void | Scope<string | void> | readonly Scope<string | void>[]              ) :Scope<void>;\n		readonly prototype :null;\n	};\n	export type Scope<Keys extends string | void> = (\n		Keys extends string ? { readonly [Key in Keys] :string } :\n		Keys extends void ? { (...args :any) :string; readonly prototype? :{ readonly [key :string] :string }; } :\n	never ) & {\n		readonly $ :<T extends Scope<string | void>> (this :T, css? :string, media? :string) => T;\n		readonly [_]? :(string :string) => string;\n		readonly _? :(string :string) => string;\n	};\n	const _ :unique symbol;\n	\n	export function Template (html :string, scope :Scope<string | void>) :string;\n	export function Render (code :string, scope? :Scope<string | void>) :Render2 | Render3Constructor;\n	export function StaticRenderFns (codes :readonly string[], scope? :Scope<string | void>) :Render2[];\n	export type Render3Constructor = {\n		new (Vue3 :Vue3) :Render3;\n		readonly shadow? :string;\n		readonly sheet? :{ readonly [Ref in string] :(this :Vue, self :Vue) => string };\n	};\n	export type Render3 = { (this :Vue) :VNode | ( VNode | string )[] };\n	export type Render2 = { (this :Vue, h :$createElement) :VNode, _withStripped? :unknown };\n	type $createElement = {\n		(this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[]) :VNode;\n		(this :void, type :string | NonArray,                          children  :( VNode | string )[]) :VNode;\n	};\n	type VNode = NonArray;\n	type NonArray<T extends object = { [name :string] :unknown }> = { readonly [index :number] :never } & T;\n	\n	export function Style (css? :string, scope? :Scope<string | void>) :HTMLStyleElement;\n	export function remove (style :HTMLStyleElement) :typeof remove;\n	\n	export abstract class Component<Sub extends SubComponent<Sub>> extends SubComponent<Sub> { protected constructor () }\n	export function mixin<Mixins extends object = object> (...mixins :( ClassAPI | ObjectAPI )[]) :\n		{ [Name in keyof typeof Component] :typeof Component[Name] } &\n		{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &\n		{ new<Sub extends Component<Sub>> () :\n			Component<Sub> &\n			{ [Name in OwnKeys<Mixins>] :Mixins[Name] }\n		};\n	const _mixins :unique symbol;\n	\n	export const prop :Readonly<{\n		beforeMount (el :Element, binding :{ arg? :any, value? :any }) :void,\n		bind (el :Element, binding :{ arg? :any, value? :any }) :void,\n		\n		updated (el :Element, binding :{ arg? :any, value? :any }) :void,\n		componentUpdated (el :Element, binding :{ arg? :any, value? :any }) :void,\n	}>;\n	\n	export { exports as default };\n	const exports :Readonly<{\n		version :typeof version,\n		Identifier :typeof Identifier,\n		Scope :typeof Scope,\n		Template :typeof Template,\n		Render :typeof Render,\n		StaticRenderFns :typeof StaticRenderFns,\n		Style :typeof Style,\n		remove :typeof remove,\n		Component :typeof Component,\n		mixin :typeof mixin,\n		prop :typeof prop,\n		default :typeof exports,\n	}>;\n	\n	type ClassAPI = typeof AnyComponent;\n	abstract class AnyComponent<Sub extends SubComponent<Sub>> extends SubComponent<Sub> {\n		protected constructor ();\n		get _data () :any;\n		get _inject () :any;\n		get _props () :any;\n		get _directives () :any;\n	}\n	abstract class SubComponent<Sub extends Vue> extends Vue {\n		\n		protected _beforeCreated? () :void | Promise<void>;\n		protected _created? () :void | Promise<void>;\n		protected _beforeMount? () :void | Promise<void>;\n		protected _mounted? () :void | Promise<void>;\n		protected _beforeUpdate? () :void | Promise<void>;\n		protected _updated? () :void | Promise<void>;\n		protected _activated? () :void | Promise<void>;\n		protected _deactivated? () :void | Promise<void>;\n		protected _beforeUnmount? () :void | Promise<void>;\n		protected _unmounted? () :void | Promise<void>;\n		/**@deprecated*/\n		protected _beforeDestroy? () :void | Promise<void>;\n		/**@deprecated*/\n		protected _destroyed? () :void | Promise<void>;\n		\n		protected _render? () :VNode | ( VNode | string )[];\n		protected _provide? () :{ [key :string] :unknown };\n		\n		get _data () :void | readonly OwnNames<Sub>[];\n		get _inject () :void | Inject<Sub>;\n		get _props () :void | Props<Sub>;\n		get _directives () :void | Directives<Sub>;\n		\n		static readonly data :void;\n		static readonly directives :void | Directives<Vue>;\n		static readonly provide :void | { [key :string] :unknown };\n		\n		static render :void | Render2 | Render3;\n		\n		static readonly Render :void | Render3Constructor;\n		static readonly staticRenderFns :void | readonly Render2[];\n		static readonly template :void | string;\n		static readonly inheritAttrs :void | boolean;\n		static readonly components :void | { readonly [name :string] :ClassAPI | ObjectAPI };\n		static readonly emits :void | Emits;\n		\n		static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{\n			readonly [Error in\n				| \'proto\'\n				| \'compile_name\'\n				| \'compile_props\'\n				| \'compile_emits\'\n				| \'compile_is\'\n				| \'compile_layout\'\n				| \'compile_reserved\'\n				| \'compile_redefined\'\n				| \'compile_overwrite\'\n				| \'compile_type\'\n				| \'compile_symbol\'\n				| \'compile_shadow\'\n				| \'runtime_shadow\'\n				| \'runtime_redefined\'\n				| \'runtime_symbol\'\n				| \'runtime_reserved\'\n				| \'runtime_enumerable\'\n				| \'runtime_data\'\n			]? :string\n		}) => ObjectAPI;\n		protected constructor (Vue3? :Vue3);\n		\n		private _Render :void;\n		\n		private _staticRenderFns :void;\n		private _template :void;\n		private _inheritAttrs :void;\n		private _components :void;\n		private _emits :void;\n		\n		private _mixins :void;\n		private _extends :void;\n		private _watch :void;\n		private _methods :void;\n		private _computed :void;\n		private _setup :void;\n		\n		private _delimiters :void;\n		\n		/**@deprecated*/\n		private _filters :void;\n		/**@deprecated*/\n		private _comments :void;\n		/**@deprecated*/\n		private _functional :void;\n		/**@deprecated*/\n		private _propsData :void;\n		/**@deprecated*/\n		private _model :void;\n		\n		private static readonly beforeCreated :void;\n		private static readonly created :void;\n		private static readonly beforeMount :void;\n		private static readonly mounted :void;\n		private static readonly beforeUpdate :void;\n		private static readonly updated :void;\n		private static readonly activated :void;\n		private static readonly deactivated :void;\n		private static readonly beforeUnmount :void;\n		private static readonly unmounted :void;\n		/**@deprecated*/\n		private static readonly beforeDestroy :void;\n		/**@deprecated*/\n		private static readonly destroyed :void;\n		\n		private static readonly inject :void;\n		private static readonly props :void;\n		\n		private static readonly mixins :void;\n		private static readonly extends :void;\n		private static readonly watch :void;\n		private static readonly methods :void;\n		private static readonly computed :void;\n		private static readonly setup :void;\n		\n		private static readonly delimiters :void;\n		\n		/**@deprecated*/\n		private static readonly filters :void;\n		/**@deprecated*/\n		private static readonly comments :void;\n		/**@deprecated*/\n		private static readonly functional :void;\n		/**@deprecated*/\n		private static readonly propsData :void;\n		/**@deprecated*/\n		private static readonly model :void;\n		\n	}\n	\n	type OwnNames<T> = Extract<OwnKeys<T>, string>;\n	type OwnKeys<T> = Exclude<keyof T,\n		\'_beforeCreated\' | \'_created\' | \'_beforeMount\' | \'_mounted\' | \'_beforeUpdate\' | \'_updated\' | \'_activated\' | \'_deactivated\' | \'_beforeUnmount\' | \'_unmounted\' | \'_beforeDestroy\' | \'_destroyed\' |\n		\'_render\' | \'_provide\' |\n		\'_inject\' | \'_props\' | \'_directives\' |\n		\'_Render\' |\n		\'_staticRenderFns\' | \'_template\' | \'_inheritAttrs\' | \'_components\' | \'_emits\' | \'_mixins\' |\n		\'_extends\' | \'_data\' | \'_watch\' | \'_methods\' | \'_computed\' | \'_setup\' |\n		\'_delimiters\' |\n		\'_filters\' | \'_comments\' | \'_functional\' | \'_propsData\' | \'_model\' |\n		\'_\' |\n		\'$emit\' |\n		\'$watch\' |\n		\'$nextTick\' |\n		\'$forceUpdate\' |\n		\'$scopedSlots\' | \'$options\' | \'$parent\' | \'$slots\' | \'$attrs\' | \'$refs\' | \'$root\' |\n		\'$el\' |\n		\'$data\' | \'$props\' |\n		\'$createElement\' |\n		\'$children\' | \'$listeners\' | \'$destroy\' | \'$delete\' | \'$mount\' | \'$once\' | \'$set\' | \'$off\' | \'$on\' |\n		\'$\'\n		>;\n	\n	const Vue :{ new () :Vue };\n	type Vue = Readonly<Vue_>;\n	abstract class Vue_ extends Vue$ { private _? :never }\n	abstract class Vue$ {\n		\n		$emit (this :this, event :string, ...args :unknown[]) :this;\n		\n		$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		\n		$nextTick (this :this, callback :(this :this) => void | Promise<void>) :void;\n		$nextTick () :Promise<void>;\n		\n		$forceUpdate (this :this) :void;\n		\n		$options :Readonly<ObjectAPI>;\n		$scopedSlots? :ScopedSlots;\n		$slots? :ScopedSlots;\n		$parent? :Vue;\n		$root :Vue;\n		$attrs :{ readonly [name :string] :unknown };\n		$refs :{ readonly [name :string] :unknown };\n		$el? :null | Element | Comment | Text;\n		\n		/**@deprecated*/\n		$createElement? :$createElement;\n		\n		/**@deprecated*/\n		private $isServer? :never;\n		/**@deprecated*/\n		private $children? :never;\n		/**@deprecated*/\n		private $listeners? :never;\n		/**@deprecated*/\n		private $destroy? :never;\n		/**@deprecated*/\n		private $delete? :never;\n		/**@deprecated*/\n		private $mount? :never;\n		/**@deprecated*/\n		private $once? :never;\n		/**@deprecated*/\n		private $set? :never;\n		/**@deprecated*/\n		private $off? :never;\n		/**@deprecated*/\n		private $on? :never;\n		\n		private $props? :never;\n		private $data? :never;\n		private $? :never;\n		\n	}\n	\n	type Props<This extends Vue> =\n		readonly Exclude<OwnNames<This>, \'key\' | \'ref\'>[] |\n		NonArray<{\n			[Key in Exclude<OwnNames<This>, \'key\' | \'ref\'>]? :\n			ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |\n			NonArray<{\n				type? :ConstructorType<This[Key]> | ConstructorType<This[Key]>[],\n				validator? (value :unknown) :value is This[Key],\n			} & ( {\n				default? :This[Key] extends object ? { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] } : This[Key] | { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] },\n				required? :false,\n			} | {\n				default? :never,\n				required? :boolean,\n			})>\n		}>;\n	type ConstructorType<T> = {\n		new (...args :any) :\n			T extends boolean ? Boolean :\n			T extends number ? Number :\n			T extends string ? String :\n			T extends symbol ? Symbol :\n			T extends bigint ? BigInt :\n			T\n	};\n	\n	type Inject<This extends Vue> =\n		readonly OwnNames<This>[] |\n		NonArray<{\n			[Key in OwnKeys<This>]? :\n			string | symbol |\n			{\n				from? :string | symbol,\n				default? :This[Key] extends object ? { (this :void) :This[Key] } : This[Key] | { (this :void) :This[Key] },\n			}\n		}>;\n	\n	type Emits =\n		readonly string[] |\n		NonArray<{ [event :string] :null | { (this :void, ...args :readonly unknown[]) :boolean } }>;\n	\n	type Directives<This extends Vue> = { [name :string] :Directive<This> };\n	type Directive<This extends Vue> =\n		{\n			(\n				this :void,\n				el :Element,\n				binding :{\n					/**@deprecated*/\n					readonly expression? :undefined,\n					/**@deprecated*/\n					readonly name? :undefined,\n					readonly instance :This,\n					readonly value? :unknown,\n					readonly oldValue? :unknown,\n					readonly arg? :unknown,\n					readonly modifiers :{ readonly [Modifier in string]? :true },\n					readonly dir :Directive<This>,\n				} | {\n					/**@deprecated*/\n					readonly expression? :string,\n					/**@deprecated*/\n					readonly name :string,\n					readonly instance? :undefined,\n					readonly value? :unknown,\n					readonly oldValue? :unknown,\n					readonly arg? :unknown,\n					readonly modifiers :{ readonly [Modifier in string]? :true },\n					readonly dir? :undefined,\n				},\n				vNode :VNode & { /**@deprecated*/ readonly context? :This },\n				previousVNode? :VNode & { /**@deprecated*/ readonly context? :This },\n			) :void | Promise<void>\n		} | {\n			[Hook in \'beforeMount\' | \'mounted\'  | \'beforeUpdate\' | \'updated\'                     | \'beforeUnmount\' | \'unmounted\']? :{\n				(\n					this :void,\n					el :Element,\n					binding :{\n						/**@deprecated*/\n						readonly expression? :void,\n						/**@deprecated*/\n						readonly name? :void,\n						readonly instance :This,\n						readonly value? :unknown,\n						readonly oldValue? :Hook extends \'beforeUpdate\' | \'updated\' ? unknown : void,\n						readonly arg? :unknown,\n						readonly modifiers :{ readonly [Modifier in string]? :true },\n						readonly dir :Directive<This>,\n					},\n					vNode :VNode & { /**@deprecated*/ readonly context? :void },\n					previousVNode :Hook extends \'beforeUpdate\' | \'updated\' ? VNode & { /**@deprecated*/ readonly context? :void } : void,\n				) :void | Promise<void>\n			}\n		} & {\n			/**@deprecated*/\n			[Hook in \'bind\'        | \'inserted\'                  | \'update\'  | \'componentUpdated\'                  | \'unbind\'   ]? :{\n				(\n					this :void,\n					el :Element,\n					binding :{\n						/**@deprecated*/\n						readonly expression? :string,\n						/**@deprecated*/\n						readonly name :string,\n						readonly instance? :void,\n						readonly value? :unknown,\n						readonly oldValue? :Hook extends \'update\' | \'componentUpdated\' ? unknown : void,\n						readonly arg? :unknown,\n						readonly modifiers :{ readonly [Modifier in string]? :true },\n						readonly dir? :void,\n					},\n					vNode :VNode & { /**@deprecated*/ readonly context :This },\n					previousVNode :Hook extends \'update\' | \'componentUpdated\' ? VNode & { /**@deprecated*/ readonly context :This } : void,\n				) :void | Promise<void>\n			}\n		};\n	\n	type ScopedSlots = {\n		readonly [Name in string]? :(this :void, arg :unknown) => readonly VNode[] | undefined\n	};\n	\n	interface ObjectAPI {\n		\n		inheritAttrs? :boolean,\n		template? :string,\n		render? :Render2 | Render3,\n		staticRenderFns? :Render2[],\n		directives? :Directives<Vue>,\n		components? :{ [name :string] :ObjectAPI },\n		provide? :\n			{ [key :string] :unknown } |\n			{ (this :Vue) :{ [key :string] :unknown } },\n		emits? :Emits,\n		\n		inject? :Inject<Vue>,\n		props? :Props<Vue>,\n		\n		/**@deprecated*/\n		filters? :void,\n		/**@deprecated*/\n		comments? :void,\n		/**@deprecated*/\n		functional? :void,\n		/**@deprecated*/\n		propsData? :void,\n		/**@deprecated*/\n		model? :void,\n		\n		beforeCreated? (this :Vue) :void | Promise<void>,\n		created? (this :Vue) :void | Promise<void>,\n		beforeMount? (this :Vue) :void | Promise<void>,\n		mounted? (this :Vue) :void | Promise<void>,\n		beforeUpdate? (this :Vue) :void | Promise<void>,\n		updated? (this :Vue) :void | Promise<void>,\n		activated? (this :Vue) :void | Promise<void>,\n		deactivated? (this :Vue) :void | Promise<void>,\n		beforeUnmount? (this :Vue) :void | Promise<void>,\n		unmounted? (this :Vue) :void | Promise<void>,\n		/**@deprecated*/\n		beforeDestroy? (this :Vue) :void | Promise<void>,\n		/**@deprecated*/\n		destroyed? (this :Vue) :void | Promise<void>,\n		\n		delimiters? :[ string, string ],\n		\n		extends? :ObjectAPI,\n		data? (this :Vue, self :Vue) :{ [name :string] :unknown },\n		watch? :{\n			[exp :string] :\n				{ <Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void> } |\n				{\n					handler<Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void>,\n					deep? :boolean,\n					immediate? :boolean,\n					flush? :\'pre\' | \'post\' | \'sync\',\n				}\n		},\n		methods? :{ [name :string] :{ (this :Vue, ...args :unknown[]) :any } },\n		computed? :{\n			[name :string] :\n				{ (this :Vue, self :Vue) :unknown } |\n				{\n					get? (this :Vue, self :Vue) :unknown,\n					set? (this :Vue, value :unknown) :void | Promise<void>,\n				}\n		},\n		setup? (\n			this :void,\n			props :{ readonly [name :string] :unknown },\n			{} :{\n				readonly attrs :{ readonly [name :string] :unknown },\n				readonly slots :ScopedSlots,\n				readonly emit :(this :void, event :string, ...args :unknown[]) => void,\n			},\n		) :{ [name :string] :unknown } | Render3,\n		\n		mixins? :ObjectAPI[],\n		\n	}\n	\n	export type Vue3 = Readonly<{\n		h (this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined } | { [name :string] :{ (this :void, arg :unknown) :VNode[] | undefined } }) :VNode;\n		h (this :void, type :string | NonArray,                          children  :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined }                                                                          ) :VNode;\n	} & { [API in\n		| \'BaseTransition\'\n		| \'Comment\'\n		| \'Fragment\'\n		| \'KeepAlive\'\n		| \'Static\'\n		| \'Suspense\'\n		| \'Teleport\'\n		| \'Text\'\n		| \'Transition\'\n		| \'TransitionGroup\'\n		| \'callWithAsyncErrorHandling\'\n		| \'callWithErrorHandling\'\n		| \'camelize\'\n		| \'capitalize\'\n		| \'cloneVNode\'\n		| \'compile\'\n		| \'computed\'\n		| \'createApp\'\n		| \'createBlock\'\n		| \'createCommentVNode\'\n		| \'createHydrationRenderer\'\n		| \'createRenderer\'\n		| \'createSSRApp\'\n		| \'createSlots\'\n		| \'createStaticVNode\'\n		| \'createTextVNode\'\n		| \'createVNode\'\n		| \'customRef\'\n		| \'defineAsyncComponent\'\n		| \'defineComponent\'\n		| \'getCurrentInstance\'\n		| \'getTransitionRawChildren\'\n		| \'handleError\'\n		| \'hydrate\'\n		| \'initCustomFormatter\'\n		| \'inject\'\n		| \'isProxy\'\n		| \'isReactive\'\n		| \'isReadonly\'\n		| \'isRef\'\n		| \'isVNode\'\n		| \'markRaw\'\n		| \'mergeProps\'\n		| \'nextTick\'\n		| \'onActivated\'\n		| \'onBeforeMount\'\n		| \'onBeforeUnmount\'\n		| \'onBeforeUpdate\'\n		| \'onDeactivated\'\n		| \'onErrorCaptured\'\n		| \'onMounted\'\n		| \'onRenderTracked\'\n		| \'onRenderTriggered\'\n		| \'onUnmounted\'\n		| \'onUpdated\'\n		| \'openBlock\'\n		| \'popScopeId\'\n		| \'provide\'\n		| \'proxyRefs\'\n		| \'pushScopeId\'\n		| \'queuePostFlushCb\'\n		| \'reactive\'\n		| \'readonly\'\n		| \'ref\'\n		| \'registerRuntimeCompiler\'\n		| \'render\'\n		| \'renderList\'\n		| \'renderSlot\'\n		| \'resolveComponent\'\n		| \'resolveDirective\'\n		| \'resolveDynamicComponent\'\n		| \'resolveTransitionHooks\'\n		| \'setBlockTracking\'\n		| \'setDevtoolsHook\'\n		| \'setTransitionHooks\'\n		| \'shallowReactive\'\n		| \'shallowReadonly\'\n		| \'shallowRef\'\n		| \'ssrContextKey\'\n		| \'ssrUtils\'\n		| \'toDisplayString\'\n		| \'toHandlers\'\n		| \'toRaw\'\n		| \'toRef\'\n		| \'toRefs\'\n		| \'transformVNodeArgs\'\n		| \'triggerRef\'\n		| \'unref\'\n		| \'useCssModule\'\n		| \'useCssVars\'\n		| \'useSSRContext\'\n		| \'useTransitionState\'\n		| \'vModelCheckbox\'\n		| \'vModelDynamic\'\n		| \'vModelRadio\'\n		| \'vModelSelect\'\n		| \'vModelText\'\n		| \'vShow\'\n		| \'version\'\n		| \'warn\'\n		| \'watch\'\n		| \'watchEffect\'\n		| \'withCtx\'\n		| \'withDirectives\'\n		| \'withKeys\'\n		| \'withModifiers\'\n		| \'withScopeId\'\n	] :any }>;\n	\n}\n';
+const _tsd = 'declare module \'*?j-vue=\' {\n	export const style :string;\n	export const styles :string[];\n	export const template :string;\n	export const Render :jVue.Render3Constructor;\n	export const render :jVue.Render2;\n	export const staticRenderFns :jVue.Render2[];\n	\n	import type * as jVue from \'j-vue\';\n}\n\ndeclare module \'*?j-vue\' {\n	export { Identifier, Scope, Style, remove, Component, mixin, prop } from \'j-vue\';\n	\n	export const scopeFunction :jVue.Scope<void>;\n	export const scopeObject :jVue.Scope<string>;\n	export const template :string;\n	export const Render :jVue.Render3Constructor;\n	export const render :jVue.Render2;\n	export const staticRenderFns :jVue.Render2[];\n	\n	import type * as jVue from \'j-vue\';\n}\n\ndeclare module \'j-vue\' {\n	export type _Vue = Vue$;\n	export type {\n		SubComponent as _Component,\n		ObjectAPI as _ObjectAPI,\n	};\n	\n	export const version :string;\n	\n	export function Identifier () :string;\n	\n	export const Scope :{\n		<Keys extends string> (this :void | Scope<string | void> | readonly Scope<string | void>[], keys :string) :Scope<Keys>;\n		                      (this :void | Scope<string | void> | readonly Scope<string | void>[]              ) :Scope<void>;\n		readonly prototype :null;\n	};\n	export type Scope<Keys extends string | void> = (\n		Keys extends string ? { readonly [Key in Keys] :string } :\n		Keys extends void ? { (...args :any) :string; readonly prototype? :{ readonly [key :string] :string }; } :\n	never ) & {\n		readonly $ :<T extends Scope<string | void>> (this :T, css? :string, media? :string) => T;\n		readonly [_]? :(string :string) => string;\n		readonly _? :(string :string) => string;\n	};\n	const _ :unique symbol;\n	\n	export function Template (html :string, scope :Scope<string | void>) :string;\n	export function Render (code :string, scope? :Scope<string | void>) :Render2 | Render3Constructor;\n	export function StaticRenderFns (codes :readonly string[], scope? :Scope<string | void>) :Render2[];\n	export type Render3Constructor = {\n		new (Vue3 :Vue3) :Render3;\n		readonly shadow? :string;\n		readonly sheet? :{ readonly [Ref in string] :(this :Vue, self :Vue) => string };\n	};\n	export type Render3 = { (this :Vue) :VNode | ( VNode | string )[] };\n	export type Render2 = { (this :Vue, h :$createElement) :VNode, _withStripped? :unknown };\n	type $createElement = {\n		(this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[]) :VNode;\n		(this :void, type :string | NonArray,                          children  :( VNode | string )[]) :VNode;\n	};\n	type VNode = NonArray;\n	type NonArray<T extends object = { [name :string] :unknown }> = { readonly [index :number] :never } & T;\n	\n	export function Style (css? :string, scope? :Scope<string | void>) :HTMLStyleElement;\n	export function remove (style :HTMLStyleElement) :typeof remove;\n	\n	export abstract class Component<Sub extends SubComponent<Sub>> extends SubComponent<Sub> { protected constructor () }\n	export function mixin<Mixins extends object = object> (...mixins :( ClassAPI | ObjectAPI )[]) :\n		{ [Name in keyof typeof Component] :typeof Component[Name] } &\n		{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &\n		{ new<Sub extends Component<Sub>> () :\n			Component<Sub> &\n			{ [Name in OwnKeys<Mixins>] :Mixins[Name] }\n		};\n	const _mixins :unique symbol;\n	\n	export const prop :Readonly<{\n		beforeMount (el :Element, binding :{ arg? :any, value? :any }) :void,\n		bind (el :Element, binding :{ arg? :any, value? :any }) :void,\n		\n		updated (el :Element, binding :{ arg? :any, value? :any }) :void,\n		componentUpdated (el :Element, binding :{ arg? :any, value? :any }) :void,\n	}>;\n	\n	export { exports as default };\n	const exports :Readonly<{\n		version :typeof version,\n		Identifier :typeof Identifier,\n		Scope :typeof Scope,\n		Template :typeof Template,\n		Render :typeof Render,\n		StaticRenderFns :typeof StaticRenderFns,\n		Style :typeof Style,\n		remove :typeof remove,\n		Component :typeof Component,\n		mixin :typeof mixin,\n		prop :typeof prop,\n		default :typeof exports,\n	}>;\n	\n	type ClassAPI = typeof AnyComponent;\n	abstract class AnyComponent<Sub extends SubComponent<Sub>> extends SubComponent<Sub> {\n		protected constructor ();\n		get _data () :any;\n		get _inject () :any;\n		get _props () :any;\n		get _directives () :any;\n	}\n	abstract class SubComponent<Sub extends Vue> extends Vue {\n		\n		protected _beforeCreated? () :void | Promise<void>;\n		protected _created? () :void | Promise<void>;\n		protected _beforeMount? () :void | Promise<void>;\n		protected _mounted? () :void | Promise<void>;\n		protected _beforeUpdate? () :void | Promise<void>;\n		protected _updated? () :void | Promise<void>;\n		protected _activated? () :void | Promise<void>;\n		protected _deactivated? () :void | Promise<void>;\n		protected _beforeUnmount? () :void | Promise<void>;\n		protected _unmounted? () :void | Promise<void>;\n		/**@deprecated*/\n		protected _beforeDestroy? () :void | Promise<void>;\n		/**@deprecated*/\n		protected _destroyed? () :void | Promise<void>;\n		\n		protected _render? () :VNode | ( VNode | string )[];\n		protected _provide? () :{ [key :string] :unknown };\n		\n		get _data () :void | readonly OwnNames<Sub>[];\n		get _inject () :void | Inject<Sub>;\n		get _props () :void | Props<Sub>;\n		get _directives () :void | Directives<Sub>;\n		\n		static readonly data :void;\n		static readonly directives :void | Directives<Vue>;\n		static readonly provide :void | { [key :string] :unknown };\n		\n		static render :void | Render2 | Render3;\n		\n		static readonly Render :void | Render3Constructor;\n		static readonly staticRenderFns :void | readonly Render2[];\n		static readonly template :void | string;\n		static readonly inheritAttrs :void | boolean;\n		static readonly components :void | { readonly [name :string] :ClassAPI | ObjectAPI };\n		static readonly emits :void | Emits;\n		\n		static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{\n			readonly [Error in\n				| \'proto\'\n				| \'compile_name\'\n				| \'compile_props\'\n				| \'compile_emits\'\n				| \'compile_is\'\n				| \'compile_layer\'\n				| \'compile_reserved\'\n				| \'compile_redefined\'\n				| \'compile_overwrite\'\n				| \'compile_type\'\n				| \'compile_symbol\'\n				| \'compile_shadow\'\n				| \'runtime_shadow\'\n				| \'runtime_redefined\'\n				| \'runtime_symbol\'\n				| \'runtime_reserved\'\n				| \'runtime_enumerable\'\n				| \'runtime_data\'\n			]? :string\n		}) => ObjectAPI;\n		protected constructor (Vue3? :Vue3);\n		\n		private _Render :void;\n		\n		private _staticRenderFns :void;\n		private _template :void;\n		private _inheritAttrs :void;\n		private _components :void;\n		private _emits :void;\n		\n		private _mixins :void;\n		private _extends :void;\n		private _watch :void;\n		private _methods :void;\n		private _computed :void;\n		private _setup :void;\n		\n		private _delimiters :void;\n		\n		/**@deprecated*/\n		private _filters :void;\n		/**@deprecated*/\n		private _comments :void;\n		/**@deprecated*/\n		private _functional :void;\n		/**@deprecated*/\n		private _propsData :void;\n		/**@deprecated*/\n		private _model :void;\n		\n		private static readonly beforeCreated :void;\n		private static readonly created :void;\n		private static readonly beforeMount :void;\n		private static readonly mounted :void;\n		private static readonly beforeUpdate :void;\n		private static readonly updated :void;\n		private static readonly activated :void;\n		private static readonly deactivated :void;\n		private static readonly beforeUnmount :void;\n		private static readonly unmounted :void;\n		/**@deprecated*/\n		private static readonly beforeDestroy :void;\n		/**@deprecated*/\n		private static readonly destroyed :void;\n		\n		private static readonly inject :void;\n		private static readonly props :void;\n		\n		private static readonly mixins :void;\n		private static readonly extends :void;\n		private static readonly watch :void;\n		private static readonly methods :void;\n		private static readonly computed :void;\n		private static readonly setup :void;\n		\n		private static readonly delimiters :void;\n		\n		/**@deprecated*/\n		private static readonly filters :void;\n		/**@deprecated*/\n		private static readonly comments :void;\n		/**@deprecated*/\n		private static readonly functional :void;\n		/**@deprecated*/\n		private static readonly propsData :void;\n		/**@deprecated*/\n		private static readonly model :void;\n		\n	}\n	\n	type OwnNames<T> = Extract<OwnKeys<T>, string>;\n	type OwnKeys<T> = Exclude<keyof T,\n		\'_beforeCreated\' | \'_created\' | \'_beforeMount\' | \'_mounted\' | \'_beforeUpdate\' | \'_updated\' | \'_activated\' | \'_deactivated\' | \'_beforeUnmount\' | \'_unmounted\' | \'_beforeDestroy\' | \'_destroyed\' |\n		\'_render\' | \'_provide\' |\n		\'_inject\' | \'_props\' | \'_directives\' |\n		\'_Render\' |\n		\'_staticRenderFns\' | \'_template\' | \'_inheritAttrs\' | \'_components\' | \'_emits\' | \'_mixins\' |\n		\'_extends\' | \'_data\' | \'_watch\' | \'_methods\' | \'_computed\' | \'_setup\' |\n		\'_delimiters\' |\n		\'_filters\' | \'_comments\' | \'_functional\' | \'_propsData\' | \'_model\' |\n		\'_\' |\n		\'$emit\' |\n		\'$watch\' |\n		\'$nextTick\' |\n		\'$forceUpdate\' |\n		\'$scopedSlots\' | \'$options\' | \'$parent\' | \'$slots\' | \'$attrs\' | \'$refs\' | \'$root\' |\n		\'$el\' |\n		\'$data\' | \'$props\' |\n		\'$createElement\' |\n		\'$children\' | \'$listeners\' | \'$destroy\' | \'$delete\' | \'$mount\' | \'$once\' | \'$set\' | \'$off\' | \'$on\' |\n		\'$\'\n		>;\n	\n	const Vue :{ new () :Vue };\n	type Vue = Readonly<Vue_>;\n	abstract class Vue_ extends Vue$ { private _? :never }\n	abstract class Vue$ {\n		\n		$emit (this :this, event :string, ...args :unknown[]) :this;\n		\n		$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :\'pre\' | \'post\' | \'sync\' }) :{ () :void };\n		\n		$nextTick (this :this, callback :(this :this) => void | Promise<void>) :void;\n		$nextTick () :Promise<void>;\n		\n		$forceUpdate (this :this) :void;\n		\n		$options :Readonly<ObjectAPI>;\n		$scopedSlots? :ScopedSlots;\n		$slots? :ScopedSlots;\n		$parent? :Vue;\n		$root :Vue;\n		$attrs :{ readonly [name :string] :unknown };\n		$refs :{ readonly [name :string] :unknown };\n		$el? :null | Element | Comment | Text;\n		\n		/**@deprecated*/\n		$createElement? :$createElement;\n		\n		/**@deprecated*/\n		private $isServer? :never;\n		/**@deprecated*/\n		private $children? :never;\n		/**@deprecated*/\n		private $listeners? :never;\n		/**@deprecated*/\n		private $destroy? :never;\n		/**@deprecated*/\n		private $delete? :never;\n		/**@deprecated*/\n		private $mount? :never;\n		/**@deprecated*/\n		private $once? :never;\n		/**@deprecated*/\n		private $set? :never;\n		/**@deprecated*/\n		private $off? :never;\n		/**@deprecated*/\n		private $on? :never;\n		\n		private $props? :never;\n		private $data? :never;\n		private $? :never;\n		\n	}\n	\n	type Props<This extends Vue> =\n		readonly Exclude<OwnNames<This>, \'key\' | \'ref\'>[] |\n		NonArray<{\n			[Key in Exclude<OwnNames<This>, \'key\' | \'ref\'>]? :\n			ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |\n			NonArray<{\n				type? :ConstructorType<This[Key]> | ConstructorType<This[Key]>[],\n				validator? (value :unknown) :value is This[Key],\n			} & ( {\n				default? :This[Key] extends object ? { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] } : This[Key] | { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] },\n				required? :false,\n			} | {\n				default? :never,\n				required? :boolean,\n			})>\n		}>;\n	type ConstructorType<T> = {\n		new (...args :any) :\n			T extends boolean ? Boolean :\n			T extends number ? Number :\n			T extends string ? String :\n			T extends symbol ? Symbol :\n			T extends bigint ? BigInt :\n			T\n	};\n	\n	type Inject<This extends Vue> =\n		readonly OwnNames<This>[] |\n		NonArray<{\n			[Key in OwnKeys<This>]? :\n			string | symbol |\n			{\n				from? :string | symbol,\n				default? :This[Key] extends object ? { (this :void) :This[Key] } : This[Key] | { (this :void) :This[Key] },\n			}\n		}>;\n	\n	type Emits =\n		readonly string[] |\n		NonArray<{ [event :string] :null | { (this :void, ...args :readonly unknown[]) :boolean } }>;\n	\n	type Directives<This extends Vue> = { [name :string] :Directive<This> };\n	type Directive<This extends Vue> =\n		{\n			(\n				this :void,\n				el :Element,\n				binding :{\n					/**@deprecated*/\n					readonly expression? :undefined,\n					/**@deprecated*/\n					readonly name? :undefined,\n					readonly instance :This,\n					readonly value? :unknown,\n					readonly oldValue? :unknown,\n					readonly arg? :unknown,\n					readonly modifiers :{ readonly [Modifier in string]? :true },\n					readonly dir :Directive<This>,\n				} | {\n					/**@deprecated*/\n					readonly expression? :string,\n					/**@deprecated*/\n					readonly name :string,\n					readonly instance? :undefined,\n					readonly value? :unknown,\n					readonly oldValue? :unknown,\n					readonly arg? :unknown,\n					readonly modifiers :{ readonly [Modifier in string]? :true },\n					readonly dir? :undefined,\n				},\n				vNode :VNode & { /**@deprecated*/ readonly context? :This },\n				previousVNode? :VNode & { /**@deprecated*/ readonly context? :This },\n			) :void | Promise<void>\n		} | {\n			[Hook in \'beforeMount\' | \'mounted\'  | \'beforeUpdate\' | \'updated\'                     | \'beforeUnmount\' | \'unmounted\']? :{\n				(\n					this :void,\n					el :Element,\n					binding :{\n						/**@deprecated*/\n						readonly expression? :void,\n						/**@deprecated*/\n						readonly name? :void,\n						readonly instance :This,\n						readonly value? :unknown,\n						readonly oldValue? :Hook extends \'beforeUpdate\' | \'updated\' ? unknown : void,\n						readonly arg? :unknown,\n						readonly modifiers :{ readonly [Modifier in string]? :true },\n						readonly dir :Directive<This>,\n					},\n					vNode :VNode & { /**@deprecated*/ readonly context? :void },\n					previousVNode :Hook extends \'beforeUpdate\' | \'updated\' ? VNode & { /**@deprecated*/ readonly context? :void } : void,\n				) :void | Promise<void>\n			}\n		} & {\n			/**@deprecated*/\n			[Hook in \'bind\'        | \'inserted\'                  | \'update\'  | \'componentUpdated\'                  | \'unbind\'   ]? :{\n				(\n					this :void,\n					el :Element,\n					binding :{\n						/**@deprecated*/\n						readonly expression? :string,\n						/**@deprecated*/\n						readonly name :string,\n						readonly instance? :void,\n						readonly value? :unknown,\n						readonly oldValue? :Hook extends \'update\' | \'componentUpdated\' ? unknown : void,\n						readonly arg? :unknown,\n						readonly modifiers :{ readonly [Modifier in string]? :true },\n						readonly dir? :void,\n					},\n					vNode :VNode & { /**@deprecated*/ readonly context :This },\n					previousVNode :Hook extends \'update\' | \'componentUpdated\' ? VNode & { /**@deprecated*/ readonly context :This } : void,\n				) :void | Promise<void>\n			}\n		};\n	\n	type ScopedSlots = {\n		readonly [Name in string]? :(this :void, arg :unknown) => readonly VNode[] | undefined\n	};\n	\n	interface ObjectAPI {\n		\n		inheritAttrs? :boolean,\n		template? :string,\n		render? :Render2 | Render3,\n		staticRenderFns? :Render2[],\n		directives? :Directives<Vue>,\n		components? :{ [name :string] :ObjectAPI },\n		provide? :\n			{ [key :string] :unknown } |\n			{ (this :Vue) :{ [key :string] :unknown } },\n		emits? :Emits,\n		\n		inject? :Inject<Vue>,\n		props? :Props<Vue>,\n		\n		/**@deprecated*/\n		filters? :void,\n		/**@deprecated*/\n		comments? :void,\n		/**@deprecated*/\n		functional? :void,\n		/**@deprecated*/\n		propsData? :void,\n		/**@deprecated*/\n		model? :void,\n		\n		beforeCreated? (this :Vue) :void | Promise<void>,\n		created? (this :Vue) :void | Promise<void>,\n		beforeMount? (this :Vue) :void | Promise<void>,\n		mounted? (this :Vue) :void | Promise<void>,\n		beforeUpdate? (this :Vue) :void | Promise<void>,\n		updated? (this :Vue) :void | Promise<void>,\n		activated? (this :Vue) :void | Promise<void>,\n		deactivated? (this :Vue) :void | Promise<void>,\n		beforeUnmount? (this :Vue) :void | Promise<void>,\n		unmounted? (this :Vue) :void | Promise<void>,\n		/**@deprecated*/\n		beforeDestroy? (this :Vue) :void | Promise<void>,\n		/**@deprecated*/\n		destroyed? (this :Vue) :void | Promise<void>,\n		\n		delimiters? :[ string, string ],\n		\n		extends? :ObjectAPI,\n		data? (this :Vue, self :Vue) :{ [name :string] :unknown },\n		watch? :{\n			[exp :string] :\n				{ <Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void> } |\n				{\n					handler<Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void>,\n					deep? :boolean,\n					immediate? :boolean,\n					flush? :\'pre\' | \'post\' | \'sync\',\n				}\n		},\n		methods? :{ [name :string] :{ (this :Vue, ...args :unknown[]) :any } },\n		computed? :{\n			[name :string] :\n				{ (this :Vue, self :Vue) :unknown } |\n				{\n					get? (this :Vue, self :Vue) :unknown,\n					set? (this :Vue, value :unknown) :void | Promise<void>,\n				}\n		},\n		setup? (\n			this :void,\n			props :{ readonly [name :string] :unknown },\n			{} :{\n				readonly attrs :{ readonly [name :string] :unknown },\n				readonly slots :ScopedSlots,\n				readonly emit :(this :void, event :string, ...args :unknown[]) => void,\n			},\n		) :{ [name :string] :unknown } | Render3,\n		\n		mixins? :ObjectAPI[],\n		\n	}\n	\n	export type Vue3 = Readonly<{\n		h (this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined } | { [name :string] :{ (this :void, arg :unknown) :VNode[] | undefined } }) :VNode;\n		h (this :void, type :string | NonArray,                          children  :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined }                                                                          ) :VNode;\n	} & { [API in\n		| \'BaseTransition\'\n		| \'Comment\'\n		| \'Fragment\'\n		| \'KeepAlive\'\n		| \'Static\'\n		| \'Suspense\'\n		| \'Teleport\'\n		| \'Text\'\n		| \'Transition\'\n		| \'TransitionGroup\'\n		| \'callWithAsyncErrorHandling\'\n		| \'callWithErrorHandling\'\n		| \'camelize\'\n		| \'capitalize\'\n		| \'cloneVNode\'\n		| \'compile\'\n		| \'computed\'\n		| \'createApp\'\n		| \'createBlock\'\n		| \'createCommentVNode\'\n		| \'createHydrationRenderer\'\n		| \'createRenderer\'\n		| \'createSSRApp\'\n		| \'createSlots\'\n		| \'createStaticVNode\'\n		| \'createTextVNode\'\n		| \'createVNode\'\n		| \'customRef\'\n		| \'defineAsyncComponent\'\n		| \'defineComponent\'\n		| \'getCurrentInstance\'\n		| \'getTransitionRawChildren\'\n		| \'handleError\'\n		| \'hydrate\'\n		| \'initCustomFormatter\'\n		| \'inject\'\n		| \'isProxy\'\n		| \'isReactive\'\n		| \'isReadonly\'\n		| \'isRef\'\n		| \'isVNode\'\n		| \'markRaw\'\n		| \'mergeProps\'\n		| \'nextTick\'\n		| \'onActivated\'\n		| \'onBeforeMount\'\n		| \'onBeforeUnmount\'\n		| \'onBeforeUpdate\'\n		| \'onDeactivated\'\n		| \'onErrorCaptured\'\n		| \'onMounted\'\n		| \'onRenderTracked\'\n		| \'onRenderTriggered\'\n		| \'onUnmounted\'\n		| \'onUpdated\'\n		| \'openBlock\'\n		| \'popScopeId\'\n		| \'provide\'\n		| \'proxyRefs\'\n		| \'pushScopeId\'\n		| \'queuePostFlushCb\'\n		| \'reactive\'\n		| \'readonly\'\n		| \'ref\'\n		| \'registerRuntimeCompiler\'\n		| \'render\'\n		| \'renderList\'\n		| \'renderSlot\'\n		| \'resolveComponent\'\n		| \'resolveDirective\'\n		| \'resolveDynamicComponent\'\n		| \'resolveTransitionHooks\'\n		| \'setBlockTracking\'\n		| \'setDevtoolsHook\'\n		| \'setTransitionHooks\'\n		| \'shallowReactive\'\n		| \'shallowReadonly\'\n		| \'shallowRef\'\n		| \'ssrContextKey\'\n		| \'ssrUtils\'\n		| \'toDisplayString\'\n		| \'toHandlers\'\n		| \'toRaw\'\n		| \'toRef\'\n		| \'toRefs\'\n		| \'transformVNodeArgs\'\n		| \'triggerRef\'\n		| \'unref\'\n		| \'useCssModule\'\n		| \'useCssVars\'\n		| \'useSSRContext\'\n		| \'useTransitionState\'\n		| \'vModelCheckbox\'\n		| \'vModelDynamic\'\n		| \'vModelRadio\'\n		| \'vModelSelect\'\n		| \'vModelText\'\n		| \'vShow\'\n		| \'version\'\n		| \'warn\'\n		| \'watch\'\n		| \'watchEffect\'\n		| \'withCtx\'\n		| \'withDirectives\'\n		| \'withKeys\'\n		| \'withModifiers\'\n		| \'withScopeId\'\n	] :any }>;\n	\n}\n';
 
 const _ID_ = /'(\*?\??j-vue=?)'/g;
 
 const tsd = _tsd.replace(/(?:\r?\n\texport type [_{][^;]*;)+/, '');
 
-const TSD = (ids                                 ) => tsd.replace(_ID_, (_id_        , id    ) => StringLiteral(ids?.[id] ?? id));
+const TSD = (ids                                 ) => tsd.replace(_ID_, (_id_        , id    ) => StringLiteral(( ids && ids[id] ) ?? id));
 
 const _default = Default({
 	version,
 	SFC,
-	CSS: CSS$1,
 	TSD,
 });
 

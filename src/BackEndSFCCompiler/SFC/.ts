@@ -97,7 +97,7 @@ export default class SFC {
 	
 };
 
-freeze(SFC.prototype);
+freeze(freeze(SFC).prototype);
 
 import type Script from './Script/';
 import type Style from './Style/';

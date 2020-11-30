@@ -38,6 +38,6 @@ export default abstract class Block<BlockName extends string = string> {
 	
 };
 
-freeze(Block.prototype);
+freeze(freeze(Block).prototype);
 
 import type Attributes from './Attributes';

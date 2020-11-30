@@ -1,7 +1,7 @@
 import Error from '.Error';
 import Set from '.Set';
 import RegExp from '.RegExp';
-import keys from '.Object.keys';
+import Keys from '.Object.keys';
 import process from '.process';
 import NaN from '.NaN';
 import Null from '.null';
@@ -11,7 +11,6 @@ import { newRegExp } from '@ltd/j-regexp';
 import gen from './dependencies.gen';
 
 export const forAliasRE = /\s(?:in|of)\s/s;
-export const slotRE = /^(?:#|v-slot$)/;// /^(?:#|v-slot(?::|$))/;
 export const emptySlotScopeToken = '_empty_';
 export const SLOT_DIRECTIVE = /^v-(?:once|for|if|else(?:-if)?|bind)$/;
 export const BAD_SLOT_NAME = /^[$_]/;// Vue2: $hasNormal $key $stable _normalized __proto__ // Vue3: $stable _*
@@ -20,6 +19,7 @@ export const BAD_SCOPE = '__proto__';
 export const BAD_KEY = '__proto__';
 export const BAD_REF = '__proto__';
 export const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
+export const NS3 = /:(?:(?![A-Z_a-z])|.*?:)/s;
 const NON = /[^\x00-#%-/:-@[-^`{-\x7F\s]/.source;
 export const NON_ASCII_SIMPLE_PATH = newRegExp`
 	^\s*
@@ -72,15 +72,17 @@ export const { 3: compile3, 2: compile2 } :{
 	);
 	
 	const Var2 = Replacer(
+		[ /var qnameCapture = "\(.*?\)";/, `var qnameCapture = "([a-zA-Z][^\\\\x00\\\\t\\\\n\\\\f\\\\r />]*)";` ],
+		[ `+ (prop.name)`, `+ (prop.name).replace(/\\\\/g, '\\\\\\\\')` ],
 		[ /(?<! in ){}(?=[);,])(?!\)\.)/g, `Object.create(null)`, 23 ],
 		[ `el.attrsMap.hasOwnProperty('v-for')`, `hasOwn(el.attrsMap, 'v-for')` ],
 		[ `el.tag === 'style' ||` ],
 		[ /(?<=^var simplePathRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ],
-		[ RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].var, 2 ],
+		[ RegExp(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].var, 2 ],
 		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],
 	);
 	const Const2 = Replacer(
-		[ RegExp(`function gen(${keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].const, 2 ],
+		[ RegExp(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].const, 2 ],
 		[ /function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match :string, p1 :string) :string => `(${p1})=>{`, 7 ],
 	);
 	const Let2 = Replacer(
@@ -130,17 +132,26 @@ export const { 3: compile3, 2: compile2 } :{
 		},
 	};
 	
-	function Replacer (...replacers :(
+	function Replacer (...replacers :Array<
 		[ search :string, replacer? :string | { (...args :string[]) :string } ] |
-		[ search :RegExp, replacer? :string | { (...args :string[]) :string }, count? :number ] )[]
-	) {
+		[ search :RegExp, replacer? :string | { (...args :string[]) :string }, count? :number ]
+	>) {
 		return function replacer (this :void, content :string) {
 			for ( let [ search, replacer = '', count = 1 ] of replacers ) {
-				if ( search instanceof RegExp && search.global===( count===1 ) ) { throw Error(`jVue 内部错误`); }
-				content = content.replace(search, (...args :string[]) => {
-					--count;
-					return typeof replacer==='function' ? replacer(...args) : replacer;
-				});
+				if ( typeof search!=='string' && search.global===( count===1 ) ) { throw Error(`jVue 内部错误`); }
+				if ( typeof replacer==='string' ) {
+					if ( replacer.includes('$') ) { throw Error(`jVue 内部错误`); }
+					content = content.replace(search, () => {
+						--count;
+						return replacer as string;
+					});
+				}
+				else {
+					content = content.replace(search, (...args :string[]) => {
+						--count;
+						return ( replacer as (...args :string[]) => string )(...args);
+					});
+				}
 				if ( count ) { throw Error(`jVue 内部版本依赖错误：${typeof search==='string' ? '`' + search + '`' : search} 剩下了 ${count} 处`); }
 			}
 			return content;

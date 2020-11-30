@@ -4,6 +4,7 @@ declare module '.Array.isArray?=' { export default isArray;
 	function isArray (value :any) :value is readonly any[];
 }
 declare module '.Array.prototype' { export default Array.prototype; }
+declare module '.Array.prototype.push' { export default Array.prototype.push; }
 
 declare module '.Buffer.from?' { export default Buffer.from; }
 declare module '.Buffer.isBuffer' { export default Buffer.isBuffer; }
@@ -68,22 +69,31 @@ declare module '.Object.getOwnPropertyDescriptor' { export default getOwnPropert
 declare module '.Object.getOwnPropertySymbols?' { export default getOwnPropertySymbols;
 	function getOwnPropertySymbols<T extends {}> (nonNullable :T) :Extract<keyof T, symbol>[];
 }
+declare module '.Object.getPrototypeOf' { export default getPrototypeOf;
+	function getPrototypeOf<T extends {}> (nonNullable :T) :T & { [K in keyof T]? :T[K] };
+}
 declare module '.Object.is' { export default Object.is; }
 declare module '.Object.keys' { export default keys;
 	function keys<T extends {}> (nonNullable :T) :Extract<keyof T, string>[];
 }
+declare module '.Object.preventExtensions' { export default Object.preventExtensions; }
 declare module '.Object.prototype' { export default Object.prototype; }
 declare module '.Object.prototype.hasOwnProperty' { export default Object.prototype.hasOwnProperty; }
+declare module '.Object.prototype.propertyIsEnumerable' { export default Object.prototype.propertyIsEnumerable; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
 declare module '.Object.setPrototypeOf' { export default Object.setPrototypeOf; }
 
 declare module '.Proxy' { export default Proxy; }
+declare module '.Proxy?' { export default Proxy; }
 
 declare module '.RangeError' { export default RangeError; }
 
 declare module '.ReferenceError' { export default ReferenceError; }
 
 declare module '.Reflect.apply' { export default apply;
+	function apply<This, Args extends readonly any[], Target extends (this :This, ...args :Args) => any> (target :Target, thisArg :This, args :Args) :Target extends (this :This, ...args :Args) => infer R ? R : never;
+}
+declare module '.Reflect.apply?' { export default apply;
 	function apply<This, Args extends readonly any[], Target extends (this :This, ...args :Args) => any> (target :Target, thisArg :This, args :Args) :Target extends (this :This, ...args :Args) => infer R ? R : never;
 }
 declare module '.Reflect.apply?=' { export default apply;
@@ -112,6 +122,7 @@ declare module '.String.fromCharCode' { export default String.fromCharCode; }
 declare module '.String.fromCodePoint' { export default String.fromCodePoint; }
 
 declare module '.Symbol.species?' { export default Symbol.species; }
+declare module '.Symbol.toStringTag' { export default Symbol.toStringTag; }
 declare module '.Symbol.toStringTag?' { export default Symbol.toStringTag; }
 
 declare module '.SyntaxError' { export default SyntaxError; }
@@ -170,8 +181,6 @@ declare module '.null' { export default Null;
 	abstract class Null<ValueType = unknown> {
 		protected constructor (arg? :undefined);
 		static readonly prototype :null;
-	}
-	interface Null<ValueType = unknown> {
 		[name :string] :undefined | ValueType
 		toString? :ValueType
 		toLocaleString? :ValueType
@@ -184,7 +193,7 @@ declare module '.null' { export default Null;
 		__lookupGetter__? :ValueType
 		__lookupSetter__? :ValueType
 		__proto__? :ValueType
-		constructor? :ValueType
+		['constructor']? :ValueType
 	}
 }
 declare module '.null.getOwnPropertyDescriptor' { export default getOwnPropertyDescriptor;
@@ -227,9 +236,9 @@ declare module '.void.splice' { export default Array;
 		new<T = any> () :Array<T>
 		readonly isArray :(arg :any) => arg is readonly any[]
 		readonly from :{
-			<T            > (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>                                                                ) => Array<T>
-			<T, U         > (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>, mapfn: (this :void   , v: T, k: number) => U                  ) => Array<U>
-			<T, U, ThisArg> (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>, mapfn: (this :ThisArg, v: T, k: number) => U, thisArg: ThisArg) => Array<U>
+			<T            > (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>                                                                ) :Array<T>
+			<T, U         > (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>, mapfn: (this :void   , v: T, k: number) => U                  ) :Array<U>
+			<T, U, ThisArg> (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>, mapfn: (this :ThisArg, v: T, k: number) => U, thisArg: ThisArg) :Array<U>
 		}
 		readonly of :<T> (this :ArrayConstructor, ...items :T[]) => Array<T>
 	};
@@ -237,7 +246,7 @@ declare module '.void.splice' { export default Array;
 		readonly [Key in 'copyWithin' | 'fill' | 'lastIndexOf' | 'pop' | 'push' | 'reverse' | 'shift' | 'unshift' | 'sort' | 'includes' | 'indexOf' | 'join' | 'keys' | 'entries' | 'values' | 'toLocaleString' | 'toString'] :T[][Key]// Exclude<keyof T[], 'slice' | 'concat' | 'map' | 'filter' | 'flat' | 'flatMap' | number | 'length' | 'splice' | 'forEach' | 'every' | 'some' | 'reduce' | 'reduceRight' | 'find' | 'findIndex'>
 	} & {
 		readonly constructor :ArrayConstructor
-		[index :number] :T | undefined
+		[index :number] :T
 		length :number
 		readonly splice :{
 			(this :Array<T>, start :number, deleteCount? :number               ) :void
@@ -273,6 +282,8 @@ declare module '.void.splice' { export default Array;
 			          (predicate :(this :void   , value :T, index :number, array :Array<T>) => boolean                  ) :number
 			<ThisArg> (predicate :(this :ThisArg, value :T, index :number, array :Array<T>) => boolean, thisArg :ThisArg) :number
 		}
-		readonly [Symbol.iterator] () :IterableIterator<T>
+		readonly [Symbol.iterator] :{
+			() :IterableIterator<T>
+		}
 	};
 }

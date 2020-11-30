@@ -1,7 +1,7 @@
 export = exports;
 declare namespace exports {
 	
-	export const version :'19.2.0';
+	export const version :'19.2.1';
 	
 	export class SFC {
 		
@@ -74,8 +74,6 @@ declare namespace exports {
 		}) :Promise<object & { code :string, map :any }>;
 		
 	}
-	
-	export function CSS (this :void, css :string) :string;
 	
 	export function TSD (this :void, {}? :{ readonly [ID in
 		  'j-vue' |

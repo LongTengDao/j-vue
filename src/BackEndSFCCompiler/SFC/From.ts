@@ -25,13 +25,15 @@ const __KEY__ = newRegExp`^__${KEYS}__$`;
 
 export default function * From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string) {
 	
+	const options = { indent: tab, newline: eol, newlineSelector: false, newlineProperty: false };
+	
 	if ( from===null ) {
 		const { length } = styles;
 		if ( length ) {
-			const style = styles[0];
+			const style = styles[0]!;
 			if ( _(style).media!==undefined ) { throw Error(`当前模式下，style 标签上的 media 属性无法被保留`); }
 			yield `export ${mode} style = ${StringLiteral(style.innerCSS)};${eol}`;
-			for ( const line of style.sheet.beautify(tab) ) {
+			for ( const line of style.sheet[Symbol.iterator](options) ) {
 				yield `//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
 			}
 			yield eol;
@@ -42,10 +44,10 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 				yield `export ${mode} styles = [ style,${eol}`;
 				let index = 1;
 				while ( index!==length ) {
-					const style = styles[index++];
+					const style = styles[index++]!;
 					if ( _(style).media!==undefined ) { throw Error(`当前模式下，style 标签上的 media 属性无法被保留`); }
 					yield `${tab}${StringLiteral(style.innerCSS)},${eol}`;
-					for ( const line of style.sheet.beautify(tab) ) {
+					for ( const line of style.sheet[Symbol.iterator](options) ) {
 						yield `${tab}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
 					}
 				}
@@ -95,11 +97,11 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 		const checkScoped = scopeKeys ? RegExp(`^__${groupify(scopeKeys)}__$`) : __KEY__;
 		let index = 0;
 		while ( index!==length ) {
-			const style = styles[index++];
+			const style = styles[index++]!;
 			const { sheet } = style;
 			const { allowGlobal, media } = _(style);
 			allowGlobal || sheet.checkScoped(checkScoped);
-			for ( const line of sheet.beautify(tab) ) {
+			for ( const line of sheet[Symbol.iterator](options) ) {
 				yield `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
 			}
 			yield media===undefined

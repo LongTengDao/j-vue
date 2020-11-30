@@ -9,7 +9,7 @@ import { StringLiteral } from '@ltd/j-es';
 
 import { compile2, compile3, parse, findGlobals, simple, minify } from '../dependencies';
 
-const byReversedStart = (a :Identifier, b :Identifier) :number => b.start - a.start;
+const byReversedStart = (a :Identifier, b :Identifier) => b.start - a.start;
 
 let shorthandValues :WeakSet<Identifier>;
 //const __Proto__ :String = Object('__proto__');
@@ -18,14 +18,14 @@ let _vm :boolean;
 let _this :boolean;
 const visitors = Null({
 	ObjectExpression ({ properties } :ObjectExpression) :void {
-		let index :number = properties.length;
+		let index = properties.length;
 		while ( index ) {
 			const property = properties[--index];
 			if ( property.shorthand ) { shorthandValues.add(property.value); }
 		}
 	},
 	ObjectPattern ({ properties } :ObjectPattern) :void {
-		let index :number = properties.length;
+		let index = properties.length;
 		while ( index ) {
 			const property = properties[--index];
 			if ( property.shorthand ) {
@@ -112,11 +112,13 @@ const MinifyOptionsBODY = () => Null({
 		} as const),
 	} as const);
 };*/
+const $event = /^Dropping unused function argument \$event \[\d+:\d+,\d+]$/;
+const not$event = (warning :string) => !$event.test(warning);
 const MinifyBODY = (files :string) => {
 	const { error, warnings, code } = minify(files, MinifyOptionsBODY());
 	if ( error ) { throw error; }
 	if ( warnings ) {
-		const filtered = warnings.filter((warning :string) => !/^Dropping unused function argument \$event \[\d+:\d+,\d+]$/.test(warning));
+		const filtered = warnings.filter(not$event);
 		if ( filtered.length ) { throw Error(`Terser 压缩警告：\n${filtered.join('\n')}`); }
 	}
 	return code!;
@@ -134,7 +136,7 @@ const mode_ = {
 } as const;
 
 let MODE :'var' | 'let' | 'const';
-let LITERAL :{ eol :string, tab :string } | null;
+let LITERAL :{ readonly eol :string, readonly tab :string } | null;
 
 const Sheets = (sheet :Map<string, string>) => {
 	let literal = '{';
@@ -147,7 +149,7 @@ const Sheets = (sheet :Map<string, string>) => {
 };
 const NecessaryStringLiteral = (body :string, name :null | number) :string => {
 	if ( !body.startsWith(with_this__return_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
-	const func :string = `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`;
+	const func = `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`;
 	const AST = parse(func, parserOptions);
 	const globals = findGlobals(AST);
 	_$ = 1 + _$s.length;
@@ -155,12 +157,12 @@ const NecessaryStringLiteral = (body :string, name :null | number) :string => {
 	shorthandValues = new WeakSet;
 	simple(AST, visitors);
 	let _vm_func :string = '';
-	let index :number = 0;
+	let index = 0;
 	const identifiers = ( globals.nodes() as Identifier[] ).sort(byReversedStart);
 	let i = identifiers.length;
 	while ( i ) {
 		const identifier = identifiers[--i];
-		let name :string = identifier.name as string;
+		let name = identifier.name as string;
 		const { start } = identifier;
 		if ( start!==index ) { _vm_func += func.slice(index, start); }
 		name = func.slice(start, index = identifier.end);
@@ -195,7 +197,7 @@ export const Render3 = (innerHTML :string, mode :'let' | 'const', literal :{ eol
 		hoistStatic: true,
 	});
 	const { 1: params, 2: rest } = CONST_RETURN.exec(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
-	let Render :string = `"use strict";(${params})=>{${rest}};`;
+	let Render = `"use strict";(${params})=>{${rest}};`;
 	ecma = parserOptions.ecmaVersion = 2014;
 	const globals = findGlobals(parse(Render, parserOptions));
 	globals.size && throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回的内容与预期不符（存在变量泄漏：“${globals.names().join('”“')}”）`);
@@ -208,7 +210,7 @@ export const Render3 = (innerHTML :string, mode :'let' | 'const', literal :{ eol
 		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${Sheets(sheet)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
 };
 
-export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', literal :{ eol :string, tab :string } | null) :{ readonly render :string, readonly staticRenderFns :readonly string[] } => {
+export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', literal :{ readonly eol :string, readonly tab :string } | null) :{ readonly render :string, readonly staticRenderFns :readonly string[] } => {
 	const { errors, tips, render, staticRenderFns } = compile2[mode](innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n       ${errors.join('\n       ')}`); }
 	if ( tips.length ) { throw Error(`.vue template 官方编译建议：\n       ${tips.join('\n       ')}`); }
@@ -222,27 +224,27 @@ export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', litera
 };
 
 type Identifier = {
-	type :'Identifier',
-	start :number,
-	end :number,
-	name :String,
+	readonly type :'Identifier',
+	readonly start :number,
+	readonly end :number,
+	readonly name :String,
 };
 type ObjectExpression = {
-	properties :Array<{
-		shorthand :false,
+	readonly properties :ReadonlyArray<{
+		readonly shorthand :false,
 	} | {
-		shorthand :true,
-		value :Identifier,
+		readonly shorthand :true,
+		readonly value :Identifier,
 	}>,
 };
 type ObjectPattern = {
-	properties :Array<{
-		shorthand :false,
+	readonly properties :ReadonlyArray<{
+		readonly shorthand :false,
 	} | {
-		shorthand :true,
-		value :Identifier | {
-			type :'AssignmentPattern',
-			left :Identifier,
+		readonly shorthand :true,
+		readonly value :Identifier | {
+			readonly type :'AssignmentPattern',
+			readonly left :Identifier,
 		},
 	}>,
 };

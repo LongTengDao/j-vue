@@ -23,7 +23,6 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 		],
 		locate: {
 			'@ltd/j-regexp': ful('../../LongTengDao/j-regexp/dist/ESM/.j-regexp.js'),
-			'lib:css-keywords': ful('lib/css-keywords/dist.js'),
 		},
 	});
 	
@@ -56,6 +55,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 			'@ltd/j-utf': ful('../../LongTengDao/j-utf/dist/ESM/.j-utf.js'),
 			'@ltd/j-eol': ful('../../LongTengDao/j-eol/dist/ESM/.j-eol.js'),
 			'@ltd/j-es': ful('../../LongTengDao/j-es/dist/ESM/.j-es.js'),
+			'@ltd/j-css': ful('../../LongTengDao/j-css/dist/ESM/.j-css.js'),
 			'lib:entities': ful('lib/entities/dist.js'),
 			'lib:elements': ful('lib/elements/dist.js'),
 		},

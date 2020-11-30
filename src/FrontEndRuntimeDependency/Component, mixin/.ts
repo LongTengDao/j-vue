@@ -153,7 +153,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		}
 		else if ( staticName==='data' ) {
 			if ( __dev__ ) {
-				if ( constructor[staticName]!==undefined ) { throw Error(isArray(constructor[staticName]) ? __dev__.compile_layout : __dev__.compile_type); }
+				if ( constructor[staticName]!==undefined ) { throw Error(isArray(constructor[staticName]) ? __dev__.compile_layer : __dev__.compile_type); }
 			}
 			skipConstructor = true;
 		}
@@ -167,7 +167,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 					staticName==='beforeCreated' || staticName==='created' || staticName==='beforeMount' || staticName==='mounted' || staticName==='beforeUpdate' || staticName==='updated' || staticName==='activated' || staticName==='deactivated' || staticName==='beforeUnmount' || staticName==='unmounted' || staticName==='beforeDestroy' || staticName==='destroyed' ||
 					//@ts-ignore
 					staticName==='inject' || staticName==='props'
-				) { throw Error(__dev__.compile_layout); }
+				) { throw Error(__dev__.compile_layer); }
 			}
 			//@ts-ignore
 			set(options, staticName, constructor[staticName]);
@@ -227,7 +227,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 					protoName1==='Render' ||
 					protoName1==='delimiters' ||
 					protoName1==='filters' || protoName1==='comments' || protoName1==='functional' || protoName1==='propsData' || protoName1==='model'
-				) { throw Error(__dev__.compile_layout); }
+				) { throw Error(__dev__.compile_layer); }
 			}
 			set(options, protoName.slice(1), get(prototype, protoName, undefined));
 		}
@@ -641,7 +641,7 @@ var DEV = [
 	'compile_props',
 	'compile_emits',
 	'compile_is',
-	'compile_layout',
+	'compile_layer',
 	'compile_reserved',
 	'compile_redefined',
 	'compile_overwrite',

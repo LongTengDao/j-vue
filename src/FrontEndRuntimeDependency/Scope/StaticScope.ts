@@ -36,17 +36,20 @@ var SCOPE :StaticScope = StaticScope.prototype = /*#__PURE__*/freeze(create(null
 	$: { value: $, writable: false, enumerable: false, configurable: false },
 }) as StaticScope);
 
-var InheritedStaticScope = function InheritedStaticScope (this :StaticScope, keys :string[], proto :StaticScope) :void {
-	prepare_ && prepare_(this);
-	this[_] = function _ (string :string) { return string.replace(_search, _replacer); };
-	for ( var index :number = keys.length; index; ) { this[keys[--index]] = Identifier(); }
-	for ( var key in proto ) { /*key==='_' || key==='$' || ( */
-		keys[keys.length] = key/* )*/;
+var InheritedStaticScope = /*#__PURE__*/function () {
+	function InheritedStaticScope (this :StaticScope, keys :string[], proto :StaticScope) :void {
+		prepare_ && prepare_(this);
+		this[_] = function _ (string :string) { return string.replace(_search, _replacer); };
+		for ( var index :number = keys.length; index; ) { this[keys[--index]] = Identifier(); }
+		for ( var key in proto ) { /*key==='_' || key==='$' || ( */
+			keys[keys.length] = key/* )*/;
+		}
+		var _search = Search(keys);
+		var _replacer = Replacer(this);
 	}
-	var _search = Search(keys);
-	var _replacer = Replacer(this);
 	InheritedStaticScope.prototype = SCOPE;
-} as unknown as {
+	return InheritedStaticScope;
+}() as unknown as {
 	new (keys :string[], proto :StaticScope) :StaticScope;
 	prototype :StaticScope;
 };

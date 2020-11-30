@@ -12,29 +12,49 @@ import KEYS from '../../../FrontEndRuntimeDependency/Scope/KEYS';
 
 import _ from '../private';
 import Block from '../Block';
-import Content, { compatible_render as _compatible_render, hasSingleElementChild as isVue2Compatible } from './Content/';
+import Content, { compatible_render as _compatible_render, isSingleElementChild as isVue2Compatible } from './Content/';
 import { ASCII_WHITESPACE as s, TOKENS, AliasName, localOrComponentNameWithoutDot, className, TAG_EMIT_CHAR, TAG_LIKE, isLocalOrComponentNameDotable, NameAs__Key__ } from '../RE';
 import { EMPTY } from '../Attributes';
 import { DELIMITERS_0, DELIMITERS_1 } from '../Mustache';
 
-const TEMPLATE_END_TAG = newRegExp('i')`</template${TAG_EMIT_CHAR}`;
+const TEMPLATE_END_TAG = newRegExp.i!`</template${TAG_EMIT_CHAR}`;
 
-const PARTIAL = newRegExp('u')`^
-	${s}*(?:
-		${AliasName}${s}*
-		=${s}*
-			${localOrComponentNameWithoutDot}
-			(?:(?:\.${className})*|\.?)
-		${s}*;
-	${s}*)*
+const ATTR = /\[ *\w[\w-]* *(?:~?= *(?:\w[\w-]*|'[^']*'|"[^"]*") *)?\]/u;
+const PARTS = newRegExp.gu!`
+	${AliasName}
+	|
+	${localOrComponentNameWithoutDot}
+	|
+	\.(?:${className})?
+	|
+	${ATTR}
+`;
+const PARTIALS = newRegExp.gu!`
+	${AliasName}${s}*
+	=${s}*
+		${localOrComponentNameWithoutDot}${s}*
+		(?:
+			(?:
+				\.(?:${className})?
+			|
+				${ATTR}
+			)
+			${s}*
+		)*
+`;
+const PARTIAL = newRegExp.u!`^
+	${s}*
+	(?:
+		${PARTIALS};${s}*
+	)*
 $`;
-const PARTIAL_WITH_TAG = newRegExp('u')`^
+const PARTIAL_WITH_TAG = newRegExp.u!`^
 	${s}*(?:
 		${AliasName}${s}*;
 	${s}*)*
 $`;
 
-const HTML = newRegExp('i')`^(?:HTML|${s}*text/html${s}*)$`;
+const HTML = newRegExp.i!`^(?:HTML|${s}*text/html${s}*)$`;
 
 export let compatible_render :boolean = true;
 
@@ -73,21 +93,53 @@ export default class Template extends Block {
 			if ( literal===EMPTY ) { throw SyntaxError(`template 功能块的“.abbr”属性必须具有值`); }
 			if ( !PARTIAL.test(literal) ) { throw SyntaxError(`template 功能块的“.abbr”属性语法错误：\n${literal}`); }
 			const abbr = _this.abbr = create(NULL) as Partial;
-			const pairs = literal.split(';');
-			let index = pairs.length;
-			while ( index ) {
-				const tokens = pairs[--index].match(TOKENS);
-				if ( tokens ) {
-					const xName :string = tokens[0];
+			const pairs = literal.match(PARTIALS);
+			if ( pairs ) {
+				let index = pairs.length;
+				do {
+					const x_selectors = pairs[--index].match(PARTS)!;
+					const xName :string = x_selectors[0];
 					if ( xName in abbr ) { throw SyntaxError(`template 功能块的“.abbr”属性值中存在重复的条目“${xName}”`); }
-					const localName_class = tokens[1].split('.');
+					let className :string = '';
+					let attrs :Null<string> | null = null;
+					let i = 2;
+					while ( i!==x_selectors.length ) {
+						const selector = x_selectors[i++];
+						if ( selector[0]==='.' ) {
+							className += selector==='.'
+								? ' ' + NameAs__Key__(xName)
+								: ' ' + selector.slice(1);
+						}
+						else {
+							const i = selector.indexOf('=');
+							let n = selector.slice(1, i).trim();
+							if ( n.startsWith('v-') || n==='class' || n==='style' ) { throw SyntaxError(`template 功能块的“.abbr”属性值中不能添加“v-”开头的属性或“class”“style”`); }
+							attrs || ( attrs = create(NULL) as Null<string> );
+							let v :string | EMPTY;
+							if ( i>0 ) {
+								if ( selector[i - 1]==='~' ) {
+									n = n.slice(0, -1).trim();
+									if ( n in attrs ) { throw SyntaxError(`template 功能块的“.abbr”属性值中出现了重复的属性“${n}”`); }
+									n = '$' + n;
+								}
+								v = selector.slice(i + 1, -1).trim();
+								if ( v[0]=='"' || v[0]==='\'' ) { v = v.slice(1, -1); }
+							}
+							else {
+								if ( n in attrs ) { throw SyntaxError(`template 功能块的“.abbr”属性值中出现了重复的属性“${n}”`); }
+								n = '$' + n;
+							}
+							if ( n in attrs ) { throw SyntaxError(`template 功能块的“.abbr”属性值中出现了重复的属性“${n[0]==='~' ? n.slice(1) : n}”`); }
+							attrs[n] = v;
+						}
+					}
 					abbr[xName] = {
-						tagName: localName_class.shift()!,
-						class: localName_class.length
-							? localName_class.join(' ') || NameAs__Key__(xName)
-							: '',
+						tagName: x_selectors[1],
+						class: className.slice(1),
+						attrs,
 					};
 				}
+				while ( index );
 			}
 		}
 		for ( const name in attributes ) {
@@ -98,7 +150,7 @@ export default class Template extends Block {
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError(`template 功能块的无值“.abbr:*”属性只能有一个`); }
-					abbr[''] = { tagName, class: '' };
+					abbr[''] = { tagName, class: '', attrs: null };
 				}
 				else {
 					if ( !PARTIAL_WITH_TAG.test(literal) ) { throw SyntaxError(`template 功能块的“${name}”属性语法错误：\n${literal}`); }
@@ -109,7 +161,7 @@ export default class Template extends Block {
 						if ( tokens ) {
 							const xName :string = tokens[0];
 							if ( xName in abbr ) { throw SyntaxError(`template 功能块的“${name}”属性值中存在重复的条目“${xName}”`); }
-							abbr[xName] = { tagName, class: NameAs__Key__(xName) };
+							abbr[xName] = { tagName, class: NameAs__Key__(xName), attrs: null };
 						}
 					}
 				}
@@ -156,8 +208,8 @@ export default class Template extends Block {
 	
 	get innerHTML () :string {
 		const { content } = this;
-		Vue2: compatible_render = _compatible_render && isVue2Compatible(content);
-		return content.outerHTML;
+		Vue2: compatible_render = _compatible_render && !!content.firstChild && isVue2Compatible(content.firstChild);
+		return '' + content;
 	}
 	set innerHTML (value :string) {
 		if ( typeof ( value as unknown )!=='string' ) { throw TypeError(`innerHTML 只能被赋值字符串`); }
@@ -166,13 +218,13 @@ export default class Template extends Block {
 	
 };
 
-freeze(Template.prototype);
+freeze(freeze(Template).prototype);
 
 export type Private = object & {
 	sheet? :Map<string, string>
 	shadow? :string
 	abbr? :Partial
-	keys? :string[]
+	keys? :readonly string[]
 	//functional? :boolean
 	cache? :string
 	content? :Content
@@ -180,6 +232,7 @@ export type Private = object & {
 	delimiters_0 :string
 	delimiters_1 :string
 };
-export type Partial = { [xName :string] :{ readonly tagName :string, readonly class :string } };
+export type Partial = { [xName :string] :{ readonly tagName :string, readonly class :string, readonly attrs :Null<string> | null } };
 
 import type Attributes from '../Attributes';
+import type Null from '.null';

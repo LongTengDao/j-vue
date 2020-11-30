@@ -127,7 +127,7 @@ declare namespace exports {
 				| 'compile_props'
 				| 'compile_emits'
 				| 'compile_is'
-				| 'compile_layout'
+				| 'compile_layer'
 				| 'compile_reserved'
 				| 'compile_redefined'
 				| 'compile_overwrite'

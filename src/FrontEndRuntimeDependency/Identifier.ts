@@ -1,55 +1,46 @@
-import CSS_KEYWORDS from 'lib:css-keywords';
+import test from '.RegExp.prototype.test';
+import join from '.Array.prototype.join';
+import unshift from '.Array.prototype.unshift';
 
-var increaseDictionary :{ readonly [character in '0' | Character] :Character | 'z' } = {
-	0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: 'a',
+var object = {
+	'0': '1', '1': '2', '2': '3', '3': '4', '4': '5', '5': '6', '6': '7', '7': '8', '8': '9', '9': 'a',
 	a: 'b', b: 'c', c: 'd', d: 'e', e: 'f', f: 'g', g: 'h',
 	h: 'i', i: 'j', j: 'k', k: 'l', l: 'm', m: 'n', n: 'o',
 	o: 'p', p: 'q', q: 'r', r: 's', s: 't', t: 'u',
 	u: 'v', v: 'w', w: 'x', x: 'y', y: 'z'
-};
-var latestIdentifier :( '0' | Character | 'z' )[] = [ '9' ];
-var lastCharacter :'0' | Character | 'z' = '9';
-var lastIndex :number = 0;
+} as const;
 
-var css_keyword :string | null = /*#__PURE__*/function () {
-	latestIdentifier.join = latestIdentifier.join;
-	latestIdentifier.unshift = latestIdentifier.unshift;
-	CSS_KEYWORDS.shift = CSS_KEYWORDS.shift;
-	return CSS_KEYWORDS.shift()!;
-}();
+var lastItem :Item = 'z';
+var array :Item[] = [ lastItem ];
+var lastIndex :number = array.length - 1;
+
+var notKeyword :{ (this :void, string :string) :boolean } = /*#__PURE__*/test.bind(/\d/);
+var toString :{ (this :void) :string } = /*#__PURE__*/join.bind(array, '');
+var prependA :{ (this :void) :number } = /*#__PURE__*/unshift.bind(array, 'a');
 
 export default function Identifier () :string {
-	
-	if ( lastCharacter==='z' ) {
-		lastCharacter = latestIdentifier[lastIndex] = '0';
-		for ( var characterIndex :number = lastIndex; ; ) {
-			if ( characterIndex ) {
-				var character :'0' | Character | 'z' = latestIdentifier[--characterIndex];
-				if ( character==='z' ) { latestIdentifier[characterIndex] = '0'; }
-				else {
-					latestIdentifier[characterIndex] = increaseDictionary[character];
-					break;
-				}
-			}
-			else {
-				latestIdentifier.unshift('a');
-				++lastIndex;
-				break;
-			}
+	if ( lastItem==='9' ) {
+		array[lastIndex] = 'a';
+		var string :string;
+		if ( notKeyword(string = toString()) ) {
+			lastItem = 'a';
+			return string;
 		}
 	}
-	else {
-		lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter];
+	else if ( lastItem!=='z' ) {
+		lastItem = array[lastIndex] = object[lastItem];
+		return toString();
 	}
-	
-	var identifier :string = latestIdentifier.join('');
-	if ( identifier===css_keyword ) {
-		lastCharacter = latestIdentifier[lastIndex] = increaseDictionary[lastCharacter as Character];
-		identifier = latestIdentifier.join('');
-		css_keyword = CSS_KEYWORDS.shift() || null;
+	lastItem = array[lastIndex] = '0';
+	for ( var index :number = lastIndex; index; array[index] = '0' ) {
+		var item :Item = array[--index]!;
+		if ( item!=='z' ) {
+			array[index] = object[item];
+			return toString();
+		}
 	}
-	return identifier;
-	
+	lastIndex = prependA() - 1;
+	return toString();
 };
 
-type Character = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y';
+type Item = keyof typeof object | 'z';

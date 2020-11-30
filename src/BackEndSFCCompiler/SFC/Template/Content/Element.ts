@@ -1,16 +1,26 @@
 import freeze from '.Object.freeze';
 
+import * as Entities from '../../Entities';
+import { EMPTY } from '../../Attributes';
 import Node from './Node';
+
+const tag_attrs = ({ localName: literal, attributes } :Element) => {
+	for ( const name in attributes ) {
+		const value = attributes[name];
+		literal += value===EMPTY ? ` ${name}` : ` ${name}="${Entities.escapeAttributeValue(value)}"`;
+	}
+	return literal;
+};
 
 export default class Element extends Node {
 	
-	get [Symbol.toStringTag] () { return 'SFC.Template.Content.Element'; }
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.*.Element'; }
 	
 	constructor (localName :string, attributes :Attributes, __class__ :string | undefined, shadowRoot :{ readonly along :string, readonly inside :boolean } | null) {
 		super();
 		if ( __class__ ) {
 			attributes['class'] = attributes['class']
-				? __class__+' '+attributes['class']
+				? __class__ + ' ' + attributes['class']
 				: __class__;
 		}
 		this.localName = localName;
@@ -23,72 +33,106 @@ export default class Element extends Node {
 	readonly attributes :Attributes;
 	readonly #shadowRoot :{ readonly along :string, readonly inside :boolean } | null;
 	
-	get outerHTML () {
+	[Symbol.toPrimitive] (this :Element) {
 		let innerHTML :string = '';
-		let index = this.length;
-		while ( index ) { innerHTML = this[--index]!.outerHTML+innerHTML; }
+		let child = this.firstChild;
+		while ( child ) {
+			innerHTML += child;
+			child = child.nextSibling;
+		}
 		if ( this.#shadowRoot ) {
 			innerHTML = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">${innerHTML}</teleport>`;
 			return this.#shadowRoot.inside
-				? `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">${innerHTML}</${this.localName}>`
-				: `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />${innerHTML}`;
+				? `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set">${innerHTML}</${this.localName}>`
+				: `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set" />${innerHTML}`;
 		}
 		else {
 			return innerHTML
-				? `<${this.localName}${this.attributes}>${innerHTML}</${this.localName}>`
-				: `<${this.localName}${this.attributes} />`;
+				? `<${tag_attrs(this)}>${innerHTML}</${this.localName}>`
+				: `<${tag_attrs(this)} />`;
 		}
 	}
 	
-	* beautify (this :Element, tab :string = '\t') :Generator<string, void, undefined> {
+	* beautify (tab :string = '\t') :Generator<string, void, undefined> {
 		if ( this.#shadowRoot ) {
 			const teleport = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">`;
 			if ( this.#shadowRoot.inside ) {
-				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set">`;
+				yield `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set">`;
 				yield tab + teleport;
-				const { length } = this;
-				let index = 0;
-				while ( index!==length ) {
-					for ( const line of this[index++]!.beautify(tab) ) {
+				let child = this.firstChild;
+				while ( child ) {
+					for ( const line of child.beautify(tab) ) {
 						yield `${tab}${tab}${line}`;
 					}
+					child = child.nextSibling;
 				}
 				yield `${tab}</teleport>`;
 				yield `</${this.localName}>`;
 			}
 			else {
-				yield `<${this.localName}${this.attributes} :ref="${this.#shadowRoot.along}$set" />`;
+				yield `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set" />`;
 				yield teleport;
-				const { length } = this;
-				let index = 0;
-				while ( index!==length ) {
-					for ( const line of this[index++]!.beautify(tab) ) {
+				let child = this.firstChild;
+				while ( child ) {
+					for ( const line of child.beautify(tab) ) {
 						yield `${tab}${line}`;
 					}
+					child = child.nextSibling;
 				}
 				yield `</teleport>`;
 			}
 		}
 		else {
-			if ( this.length ) {
-				yield `<${this.localName}${this.attributes}>`;
-				const { length } = this;
-				let index = 0;
-				while ( index!==length ) {
-					for ( const line of this[index++]!.beautify(tab) ) {
+			let child = this.firstChild;
+			if ( child ) {
+				yield `<${tag_attrs(this)}>`;
+				do {
+					for ( const line of child.beautify(tab) ) {
 						yield `${tab}${line}`;
 					}
 				}
+				while ( ( child = child.nextSibling ) );
 				yield `</${this.localName}>`;
 			}
 			else {
-				yield `<${this.localName}${this.attributes} />`;
+				yield `<${tag_attrs(this)} />`;
 			}
 		}
 	}
 	
 };
 
-freeze(Element.prototype);
+freeze(freeze(Element).prototype);
+
+export class RawTextElement extends Element {
+	
+	get [Symbol.toStringTag] () { return 'SFC.Template.Content.RawTextElement'; }
+	
+	constructor (localName :string, attributes :Attributes, __class__ :string | undefined) { return super(localName, attributes, __class__, null) as unknown as this; }
+	
+	textContent :string = '';
+	
+	[Symbol.toPrimitive] (this :RawTextElement) {
+		return this.textContent
+			? `<${tag_attrs(this)}>${this.textContent}</${this.localName}>`
+			: `<${tag_attrs(this)} />`;
+	}
+	
+	* beautify (this :RawTextElement, tab = '\t') :Generator<string, void, undefined> {
+		if ( this.textContent ) {
+			yield `<${tag_attrs(this)}>`;
+			for ( const line of this.textContent.split('\n') ) {
+				yield `${tab}${line}`;
+			}
+			yield `</${this.localName}>`;
+		}
+		else {
+			yield `<${tag_attrs(this)} />`;
+		}
+	}
+	
+}
+
+freeze(freeze(RawTextElement).prototype);
 
 import type Attributes from '../../Attributes';

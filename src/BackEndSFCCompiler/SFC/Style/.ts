@@ -13,9 +13,9 @@ import { ASCII_WHITESPACE as s, TOKENS, AliasName, localNameWithoutDot, classNam
 import Block from '../Block';
 import _ from '../private';
 import { EMPTY } from '../Attributes';
-import Sheet from './Sheet/';
+import Sheet from './Sheet';
 
-const SELECTOR = newRegExp('u')`^
+const isSelector = newRegExp.u!`^
 	${s}*(?:
 		${AliasName}${s}*
 		(?:=${s}*
@@ -23,13 +23,13 @@ const SELECTOR = newRegExp('u')`^
 			(?:\.${className})*
 		${s}*)?;
 	${s}*)*
-$`;
+$`.test;
 
-const STYLE_END_TAG = newRegExp('i')`</style${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG = newRegExp.i!`</style${TAG_EMIT_CHAR}`;
 
-const CSS = newRegExp('i')`^${s}*(?:text\/)?CSS${s}*$`;
+const CSS = newRegExp.i!`^${s}*(?:text\/)?CSS${s}*$`;
 
-const defaultSelector = (Name :string) :string => `.${NameAs__Key__(Name)}`;
+const defaultSelector = (Name :string) => `.${NameAs__Key__(Name)}`;
 
 export default class Style extends Block<'style'> {
 	
@@ -51,20 +51,20 @@ export default class Style extends Block<'style'> {
 			const literal = attributes['.abbr'];
 			if ( literal===EMPTY ) { _this.abbr = defaultSelector; }
 			else {
-				if ( !SELECTOR.test(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
+				if ( !isSelector(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
 				const abbr = create(NULL) as Selector;
 				const pairs = literal.split(';');
 				const { length } = pairs;
 				let index = 0;
 				while ( index!==length ) {
-					const tokens = pairs[index++].match(TOKENS);
+					const tokens = pairs[index++]!.match(TOKENS);
 					if ( tokens ) {
-						const componentName :string = tokens[0];
-						abbr[componentName] = tokens.length>1 ? tokens[1] : defaultSelector(componentName);
+						const componentName :string = tokens[0]!;
+						abbr[componentName] = tokens.length>1 ? tokens[1]! : defaultSelector(componentName);
 					}
 				}
 				_this.abbr = (componentName :string) :string => {
-					if ( componentName in abbr ) { return abbr[componentName]; }
+					if ( componentName in abbr ) { return abbr[componentName]!; }
 					throw Error(`style 块中存在被遗漏的伪标签名 ${componentName} 选择器`);
 				};
 			}
@@ -95,17 +95,17 @@ export default class Style extends Block<'style'> {
 		return sheet;
 	}
 	
-	get innerCSS () :string {
-		return this.sheet.cssText;
+	get innerCSS () {
+		return '' + this.sheet;
 	}
-	set innerCSS (value :string) {
+	set innerCSS (value) {
 		if ( typeof ( value as unknown )!=='string' ) { throw TypeError(`innerCSS 只能被赋值字符串`); }
 		_(this).innerCSS = value;
 	}
 	
 };
 
-freeze(Style.prototype);
+freeze(freeze(Style).prototype);
 
 export type Private = object & {
 	allowGlobal? :boolean
