@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '19.2.1';
+const version = '20.0.0';
 
 const Error$1 = Error;
 
@@ -5661,6 +5661,7 @@ class Sheet extends Layer                                                       
 				case 'attribute': {
 					const ref = refs[kind];
 					if ( !ref ) { continue; }
+					const attribute = kind==='attribute';
 					for ( const { 0: literal, 1: layers } of ref ) {
 						let ret = callback(evaluate(literal), kind);
 						if ( ret===undefined$1 ) { continue; }
@@ -5686,7 +5687,9 @@ class Sheet extends Layer                                                       
 						do {
 							const selectors                                                         = elementName ? [ new TypeSelector(elementName, namespace) ] : [];
 							CLASSES_LAYERS.forEach(CLASS_LAYER_CB, selectors);
-							layers[index] .replaceWith(selectors);
+							const layer = layers[index] ;
+							if ( attribute && layer.length ) { throw Error$1(`不能替换有值的 attributeSelector（“${layer}”）`); }
+							else { layer.replaceWith(selectors); }
 						}
 						while ( ++index!==length );
 						elementName && ( typeMap ?? ( typeMap = new KindMap ) ).merge(TYPE_LAYERS, namespace===null ? elementName : namespace + '|' + elementName);

@@ -249,8 +249,8 @@ declare module '.void.splice' { export default Array;
 		[index :number] :T
 		length :number
 		readonly splice :{
-			(this :Array<T>, start :number, deleteCount? :number               ) :void
-			(this :Array<T>, start :number, deleteCount  :number, ...items :T[]) :void
+			(this :Array<T>, start :number, deleteCount? :number               ) :unknown
+			(this :Array<T>, start :number, deleteCount  :number, ...items :T[]) :unknown
 		}
 		readonly forEach :{
 			          (this :Array<T>, callbackfn :(this :void   , value :T, index :number, array :Array<T>) => void                  ) :void
