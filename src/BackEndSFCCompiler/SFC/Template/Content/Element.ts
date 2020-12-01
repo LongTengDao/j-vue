@@ -1,4 +1,5 @@
 import freeze from '.Object.freeze';
+import isPrototypeOf from '.Object.prototype.isPrototypeOf';
 
 import * as Entities from '../../Entities';
 import { EMPTY } from '../../Attributes';
@@ -53,7 +54,7 @@ export default class Element extends Node {
 		}
 	}
 	
-	* beautify (tab :string = '\t') :Generator<string, void, undefined> {
+	* beautify (tab :string = '\t') :Generator<string, void, void> {
 		if ( this.#shadowRoot ) {
 			const teleport = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">`;
 			if ( this.#shadowRoot.inside ) {
@@ -118,7 +119,7 @@ export class RawTextElement extends Element {
 			: `<${tag_attrs(this)} />`;
 	}
 	
-	* beautify (this :RawTextElement, tab = '\t') :Generator<string, void, undefined> {
+	* beautify (this :RawTextElement, tab = '\t') :Generator<string, void, void> {
 		if ( this.textContent ) {
 			yield `<${tag_attrs(this)}>`;
 			for ( const line of this.textContent.split('\n') ) {
@@ -134,5 +135,7 @@ export class RawTextElement extends Element {
 }
 
 freeze(freeze(RawTextElement).prototype);
+
+export const isElement = /*#__PURE__*/isPrototypeOf.bind(Element.prototype) as (value :Node) => value is Element;
 
 import type Attributes from '../../Attributes';

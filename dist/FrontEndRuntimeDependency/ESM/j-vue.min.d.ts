@@ -1,4 +1,4 @@
-export const version :'20.0.1';
+export const version :'20.0.2';
 
 export function Identifier () :string;
 
@@ -38,7 +38,7 @@ export function Style (css? :string, scope? :Scope<string | void>) :HTMLStyleEle
 export function remove (style :HTMLStyleElement) :typeof remove;
 
 export abstract class Component<Sub extends SubComponent<Sub>> extends SubComponent<Sub> { protected constructor () }
-export function mixin<Mixins extends object = object> (...mixins :( ClassAPI | ObjectAPI )[]) :
+export function mixin<Mixins extends object = object> (...mixins :readonly ( ClassAPI | ObjectAPI )[]) :
 	{ [Name in keyof typeof Component] :typeof Component[Name] } &
 	{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &
 	{ new<Sub extends Component<Sub>> () :
@@ -111,7 +111,7 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	static render :void | Render2 | Render3;
 	
 	static readonly Render :void | Render3Constructor;
-	static readonly staticRenderFns :void | readonly Render2[];
+	static readonly staticRenderFns :void | Render2[];
 	static readonly template :void | string;
 	static readonly delimiters :void | [ string, string ];
 	static readonly inheritAttrs :void | boolean;
@@ -235,12 +235,12 @@ type Vue = Readonly<Vue_>;
 declare abstract class Vue_ extends Vue$ { private _? :never }
 declare abstract class Vue$ {
 	
-	$emit (this :this, event :string, ...args :unknown[]) :this;
+	$emit (this :this, event :string, ...args :readonly unknown[]) :this;
 	
-	$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch        (this :this, exp :string                          , cb :<Value> (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch<Value> (this :this, fn :(this :this, self :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch        (this :this, exp :string                           , cb :<Value> (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch        (this :this, exp :string                           , cb :<Value> (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch<Value> (this :this, fn :(this :this, self? :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch<Value> (this :this, fn :(this :this, self? :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
 	
 	$nextTick (this :this, callback :(this :this) => void | Promise<void>) :void;
 	$nextTick () :Promise<void>;
@@ -464,7 +464,7 @@ interface ObjectAPI {
 				flush? :'pre' | 'post' | 'sync',
 			}
 	},
-	methods? :{ [name :string] :{ (this :Vue, ...args :unknown[]) :any } },
+	methods? :{ [name :string] :{ (this :Vue, ...args :readonly unknown[]) :any } },
 	computed? :{
 		[name :string] :
 			{ (this :Vue, self :Vue) :unknown } |
@@ -479,7 +479,7 @@ interface ObjectAPI {
 		{} :{
 			readonly attrs :{ readonly [name :string] :unknown },
 			readonly slots :ScopedSlots,
-			readonly emit :(this :void, event :string, ...args :unknown[]) => void,
+			readonly emit :(this :void, event :string, ...args :readonly unknown[]) => void,
 		},
 	) :{ [name :string] :unknown } | Render3,
 	

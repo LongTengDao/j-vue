@@ -19,7 +19,7 @@ import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF, PLAINTEXT, 
 import { EMPTY, _asClass } from '../../Attributes';
 import Params from '../../Params';
 import Node from './Node';
-import Element, { RawTextElement } from './Element';
+import Element, { RawTextElement, isElement } from './Element';
 import Text from './Text';
 import Mustache from './Mustache';
 import Snippet from '../../Snippet';
@@ -132,7 +132,7 @@ const Shadow = ($name_names$ :string) => {
 export const isSingleElementChild = (firstChild :Element | Text) => {// | null throw Error(`从 Vue 2 开始，组件的根节点不得为空`);
 	let child :Node | null = firstChild;
 	do {
-		if ( !( child instanceof Element ) ) { return false; }//throw Error(`Vue 2 要求组件的根节点必须是元素节点`);
+		if ( !isElement(child) ) { return false; }//throw Error(`Vue 2 要求组件的根节点必须是元素节点`);
 		if ( !( 'v-pre' in child.attributes ) ) {
 			if ( child.localName==='template' || child.localName==='slot' ) { return false; }//throw Error(`Vue 2 不允许组件的根节点为 template 或 slot 元素`);
 		}
@@ -630,7 +630,7 @@ export default class Content extends Node {
 		return outerHTML;
 	}
 	
-	* beautify (tab :string = '\t') :Generator<string, void, undefined> {
+	* beautify (tab :string = '\t') :Generator<string, void, void> {
 		let child = this.firstChild;
 		while ( child ) {
 			yield * child.beautify(tab);

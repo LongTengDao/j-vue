@@ -20,14 +20,14 @@ const visitors = Null({
 	ObjectExpression ({ properties } :ObjectExpression) :void {
 		let index = properties.length;
 		while ( index ) {
-			const property = properties[--index];
+			const property = properties[--index]!;
 			if ( property.shorthand ) { shorthandValues.add(property.value); }
 		}
 	},
 	ObjectPattern ({ properties } :ObjectPattern) :void {
 		let index = properties.length;
 		while ( index ) {
-			const property = properties[--index];
+			const property = properties[--index]!;
 			if ( property.shorthand ) {
 				let { value } = property;
 				if ( value.type==='AssignmentPattern' ) { value = value.left; }
@@ -138,18 +138,7 @@ const mode_ = {
 let MODE :'var' | 'let' | 'const';
 let LITERAL :{ readonly eol :string, readonly tab :string } | null;
 
-const Sheets = (sheet :Map<string, string>) => {
-	let literal = '{';
-	for ( const { 0: ref, 1: exp } of sheet ) {
-		if ( exp ) {
-			literal += `${ref}:({${findGlobals(parse(exp, parserOptions)).names().join(',')}})=>${exp},`;
-		}
-	}
-	return literal.slice(0, -1) + '}';
-};
-const NecessaryStringLiteral = (body :string, name :null | number) :string => {
-	if ( !body.startsWith(with_this__return_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
-	const func = `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`;
+const strip = (_vm_ :string, func :string) :string => {
 	const AST = parse(func, parserOptions);
 	const globals = findGlobals(AST);
 	_$ = 1 + _$s.length;
@@ -161,7 +150,7 @@ const NecessaryStringLiteral = (body :string, name :null | number) :string => {
 	const identifiers = ( globals.nodes() as Identifier[] ).sort(byReversedStart);
 	let i = identifiers.length;
 	while ( i ) {
-		const identifier = identifiers[--i];
+		const identifier = identifiers[--i]!;
 		let name = identifier.name as string;
 		const { start } = identifier;
 		if ( start!==index ) { _vm_func += func.slice(index, start); }
@@ -170,9 +159,25 @@ const NecessaryStringLiteral = (body :string, name :null | number) :string => {
 			_vm_func += //identifier.name==='__proto__' ? '["__proto__"]:' :
 				name + ':';
 		}
-		_vm_func += '_vm.' + name;
+		_vm_func += _vm_ + name;
 	}
 	if ( index!==func.length ) { _vm_func += func.slice(index); }
+	return _vm_func;
+};
+
+const Sheets = (sheet :Map<string, string>, _ :' ' | '') => {
+	let literal = _;
+	for ( const { 0: ref, 1: exp } of sheet ) {
+		if ( exp ) {
+			literal += `${ref}${_}()${_}{${_}return${_ || ( exp[0]==='\'' ? '' : ' ')}${strip('this.', exp)}${_ && `;${_}`}},${_}`;
+		}
+	}
+	return `{${literal.slice(0, -2)}${_}}`;
+};
+
+const NecessaryStringLiteral = (body :string, name :null | number) :string => {
+	if ( !body.startsWith(with_this__return_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
+	let _vm_func :string = strip('_vm.', `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`);
 	if ( !LITERAL ) { _vm_func = MinifyBODY(_vm_func); }
 	body = _vm_func.slice(_vm_func.indexOf(';') + 1, _vm_func.lastIndexOf('}'));
 	return LITERAL
@@ -206,8 +211,8 @@ export const Render3 = (innerHTML :string, mode :'let' | 'const', literal :{ eol
 	const left = Render.slice(0, index);
 	let right = Render.slice(index + 2);
 	return literal
-		? `class Render {${literal.eol}${literal.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${literal.eol}${literal.tab}${literal.tab}return ${right}`};${literal.eol}${literal.tab}}${sheet ? `${literal.eol}${literal.tab}static sheet = ${Sheets(sheet)};` : ''}${shadow ? `${literal.eol}${literal.tab}static shadow = ${StringLiteral(shadow)};` : ''}${literal.eol}}`
-		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${Sheets(sheet)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
+		? `class Render {${literal.eol}${literal.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${literal.eol}${literal.tab}${literal.tab}return ${right}`};${literal.eol}${literal.tab}}${sheet ? `${literal.eol}${literal.tab}static sheet = ${Sheets(sheet, ' ')};` : ''}${shadow ? `${literal.eol}${literal.tab}static shadow = ${StringLiteral(shadow)};` : ''}${literal.eol}}`
+		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${Sheets(sheet, '')}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
 };
 
 export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', literal :{ readonly eol :string, readonly tab :string } | null) :{ readonly render :string, readonly staticRenderFns :readonly string[] } => {

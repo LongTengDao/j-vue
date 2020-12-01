@@ -104,7 +104,7 @@ export default class Mustache extends ( Array as { new () :{} } ) {
 			}
 			else {
 				each.includes('}}') && throwSyntaxError(`插值中不能存在原生结束标记“}}”，因为可能出现“{{ {'}}':{ }} }}”的情况，没有简单的方式进行统一转义`);
-				yield new Text(`{{ ${each} }}`);//each[each.length - 1]==='}'
+				yield new Text(each, true);//each[each.length - 1]==='}'
 				isTemplate = true;
 			}
 		}

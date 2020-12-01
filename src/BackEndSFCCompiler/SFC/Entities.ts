@@ -10,9 +10,11 @@ import { SEMICOLON_ENTITIES, CONTINUE_ENTITIES } from 'lib:entities';
 
 import { NONCHARACTER, CONTROL_CHARACTER } from './RE';
 
-const ESCAPABLE_INNER_TEXT = /[\t\n\r\x20&<\xA0\u2000-\u200A\u2028\u2029\u202F\u3000]/g;// 除了必须转义的，还有防止被 Vue 编译器剔除的空白
+const ESCAPABLE_INNER_TEXT = /[\t\n\r &<\xA0\u2000-\u200A\u2028\u2029\u202F\u3000]/g;// 除了必须转义的，还有防止被 Vue 编译器剔除的空白
+const ESCAPABLE_BEAUTIFUL_TEXT = /[\t&<]/g;
 const escapableInnerTextReplacer = ($0 :string) => `&#${$0.charCodeAt(0)};`;
 export const escapeInnerText = (text :string) :string => text.replace(ESCAPABLE_INNER_TEXT, escapableInnerTextReplacer);
+export const escapeBeautifulText = (text :string) :string => text.replace(ESCAPABLE_BEAUTIFUL_TEXT, escapableInnerTextReplacer);
 
 const ESCAPABLE_ATTRIBUTE_VALUE = /["&]/g;
 const escapableAttributeValueReplacer = ($0 :string) => $0==='"' ? '&quot;' : '&amp;';
@@ -78,7 +80,7 @@ const unescape_or_throw = (ambiguous_ampersand :string, named? :string) :string 
 	if ( ambiguous_ampersand.length===1 ) { throw SyntaxError(`孤立的“&”没有作为 HTML 实体存在`); }
 	if ( !ambiguous_ampersand || ambiguous_ampersand[ambiguous_ampersand.length - 1]!==';' ) { throw SyntaxError(`HTML 实体“${ambiguous_ampersand}”后缺少“;”`); }
 	if ( named ) {
-		if ( named in SEMICOLON_ENTITIES ) { return SEMICOLON_ENTITIES[named]; }
+		if ( named in SEMICOLON_ENTITIES ) { return SEMICOLON_ENTITIES[named]!; }
 		throw ReferenceError(`未知的 HTML 实体名称“${ambiguous_ampersand}”`);
 	}
 	const codePoint :number = ambiguous_ampersand[2]==='x' ? parseInt(ambiguous_ampersand.slice(3, -1), 16) : parseInt(ambiguous_ampersand.slice(2, -1), 10);

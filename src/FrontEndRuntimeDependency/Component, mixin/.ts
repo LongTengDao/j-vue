@@ -322,7 +322,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			options.beforeMount = beforeMount
 				? function beforeBeforeMount () {
 					$watch(this, watchers2);
-					return beforeMount!.apply(this);
+					return apply(beforeMount!, this, ARGS);
 				}
 				: function beforeBeforeMount () {
 					$watch(this, watchers2);
@@ -344,7 +344,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 				options.created = function beforeCreated (this :_Vue) {
 					proProto(this as Context, protoDescriptors!);
 					$watch(this, watchers);
-					return created!.apply(this);
+					return apply(created!, this, ARGS);
 				};
 				break;
 			case 'sw_':
@@ -356,7 +356,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			case 's_c':
 				options.created = function beforeCreated (this :_Vue) {
 					proProto(this as Context, protoDescriptors!);
-					return created!.apply(this);
+					return apply(created!, this, ARGS);
 				};
 				break;
 			case 's__':
@@ -368,7 +368,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 				options.created = function beforeCreated (this :_Vue) {
 					proConstructor(this as Context, protoDescriptors, constructor, Vue3);
 					$watch(this, watchers);
-					return created!.apply(this);
+					return apply(created!, this, ARGS);
 				};
 				break;
 			case 'nw_':
@@ -380,7 +380,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			case 'n_c':
 				options.created = function beforeCreated (this :_Vue) {
 					proConstructor(this as Context, protoDescriptors, constructor, Vue3);
-					return created!.apply(this);
+					return apply(created!, this, ARGS);
 				};
 				break;
 			case 'n__':
@@ -391,7 +391,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 			case '_wc':
 				options.created = function beforeCreated (this :_Vue) {
 					$watch(this, watchers);
-					return created!.apply(this);
+					return apply(created!, this, ARGS);
 				};
 				break;
 			case '_w_':
@@ -413,14 +413,12 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		//@ts-ignore
 		options.displayName && fixPascal(options.displayName, cases);
 		for ( var pascal in components ) {
-			var value = components[pascal];
-			if ( value ) {
-				if ( __dev__ ) {
-					if ( !pascal || STARTS_WITH_LOWERCASE.test(pascal) ) { throw Error(__dev__.compile_name); }
-				}
-				if ( isComponentConstructor(value) ) { components[pascal] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
-				fixPascal(pascal, cases);
+			var value = components[pascal]!;
+			if ( __dev__ ) {
+				if ( !pascal || STARTS_WITH_LOWERCASE.test(pascal) ) { throw Error(__dev__.compile_name); }
 			}
+			if ( isComponentConstructor(value) ) { components[pascal] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
+			fixPascal(pascal, cases);
 		}
 		assign(components, cases, components);
 	}
@@ -452,7 +450,7 @@ return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyM
 };
 interface EasyMap<K extends object, V> extends WeakMap<K, V> {into (key :K) :V;}
 
-function isComponentConstructor (value :object) :value is ClassAPI { return apply(isPrototypeOf, Component, [ value ] as const); }
+var isComponentConstructor = /*#__PURE__*/isPrototypeOf.bind(Component) as (value :object) => value is ClassAPI;
 
 var ARGS = [] as const;
 
@@ -593,7 +591,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	
 	[ options.name, options.displayName ].forEach(function (name :unknown) {
 		if ( typeof name==='string'
-			? !name || STARTS_WITH_LOWERCASE.test(name) || options.components && options.components[name] && options.components[name]!==options
+			? !name || STARTS_WITH_LOWERCASE.test(name) || options.components && name in options.components && options.components[name]!==options
 			: name!==undefined
 		) { throw Error(__dev__.compile_name); }
 	});

@@ -15,7 +15,7 @@ export default abstract class Node {
 	}
 	
 	abstract [Symbol.toPrimitive] (this :Content | Element | Text) :string;
-	abstract beautify (tab? :string) :Generator<string, void, undefined>;
+	abstract beautify (tab? :string) :Generator<string, void, void>;
 	
 };
 
