@@ -586,8 +586,8 @@ export default class Content extends Node {
 		try {
 			parseAppend('', this, false, false, false, false);
 			if ( sheet.size ) {
-				for ( const value of sheet.values() ) {
-					if ( value ) {
+				for ( const expression of sheet.values() ) {
+					if ( expression ) {
 						_.sheet = sheet;
 						break;
 					}

@@ -165,21 +165,18 @@ const strip = (_vm_ :string, func :string) :string => {
 	return _vm_func;
 };
 
-const Sheets = (sheet :Map<string, string>, _ :' ' | '') => {
-	let literal = _;
-	for ( const { 0: ref, 1: exp } of sheet ) {
-		if ( exp ) {
-			literal += `${ref}${_}()${_}{${_}return${_ || ( exp[0]==='\'' ? '' : ' ')}${strip('this.', exp)}${_ && `;${_}`}},${_}`;
-		}
+const Sheets = (sheet :Map<string, string>) => {
+	let literal = ' ';
+	for ( const { 0: ref, 1: expression } of sheet ) {
+		if ( expression ) { literal += `${ref} () { return ${strip('this.', expression)}; }, `; }
 	}
-	return `{${literal.slice(0, -2)}${_}}`;
+	return `{${literal.slice(0, -2)} }`;
 };
 
 const NecessaryStringLiteral = (body :string, name :null | number) :string => {
 	if ( !body.startsWith(with_this__return_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
-	let _vm_func :string = strip('_vm.', `(function(){"use strict";${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`);
-	if ( !LITERAL ) { _vm_func = MinifyBODY(_vm_func); }
-	body = _vm_func.slice(_vm_func.indexOf(';') + 1, _vm_func.lastIndexOf('}'));
+	body = strip('_vm.', `'use strict';(function(){${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`);
+	body = ( LITERAL ? body : MinifyBODY(body) ).slice(25, -3);
 	return LITERAL
 		? name===null
 			? ecma===5
@@ -202,7 +199,7 @@ export const Render3 = (innerHTML :string, mode :'let' | 'const', literal :{ eol
 		hoistStatic: true,
 	});
 	const { 1: params, 2: rest } = CONST_RETURN.exec(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
-	let Render = `"use strict";(${params})=>{${rest}};`;
+	let Render = `'use strict';(${params})=>{${rest}};`;
 	ecma = parserOptions.ecmaVersion = 2014;
 	const globals = findGlobals(parse(Render, parserOptions));
 	globals.size && throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回的内容与预期不符（存在变量泄漏：“${globals.names().join('”“')}”）`);
@@ -211,8 +208,8 @@ export const Render3 = (innerHTML :string, mode :'let' | 'const', literal :{ eol
 	const left = Render.slice(0, index);
 	let right = Render.slice(index + 2);
 	return literal
-		? `class Render {${literal.eol}${literal.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${literal.eol}${literal.tab}${literal.tab}return ${right}`};${literal.eol}${literal.tab}}${sheet ? `${literal.eol}${literal.tab}static sheet = ${Sheets(sheet, ' ')};` : ''}${shadow ? `${literal.eol}${literal.tab}static shadow = ${StringLiteral(shadow)};` : ''}${literal.eol}}`
-		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${Sheets(sheet, '')}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
+		? `class Render {${literal.eol}${literal.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${literal.eol}${literal.tab}${literal.tab}return ${right}`};${literal.eol}${literal.tab}}${sheet ? `${literal.eol}${literal.tab}static sheet = ${Sheets(sheet)};` : ''}${shadow ? `${literal.eol}${literal.tab}static shadow = ${StringLiteral(shadow)};` : ''}${literal.eol}}`
+		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${MinifyBODY(`'use strict';(${Sheets(sheet)});`).slice(14, -2)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
 };
 
 export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', literal :{ readonly eol :string, readonly tab :string } | null) :{ readonly render :string, readonly staticRenderFns :readonly string[] } => {

@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'20.0.2';
+	export const version :'20.0.3';
 	
 	export function Identifier () :string;
 	
@@ -364,7 +364,7 @@ declare namespace exports {
 				previousVNode? :VNode & { /**@deprecated*/ readonly context? :This },
 			) :void | Promise<void>
 		} | {
-			[Hook in 'beforeMount' | 'mounted'  | 'beforeUpdate' | 'updated'                     | 'beforeUnmount' | 'unmounted']? :{
+			[Hook in 'created' | 'beforeMount' | 'mounted'  | 'beforeUpdate' | 'updated'                     | 'beforeUnmount' | 'unmounted']? :{
 				(
 					this :void,
 					el :Element,
@@ -386,7 +386,7 @@ declare namespace exports {
 			}
 		} & {
 			/**@deprecated*/
-			[Hook in 'bind'        | 'inserted'                  | 'update'  | 'componentUpdated'                  | 'unbind'   ]? :{
+			[Hook in             'bind'        | 'inserted'                  | 'update'  | 'componentUpdated'                  | 'unbind'   ]? :{
 				(
 					this :void,
 					el :Element,

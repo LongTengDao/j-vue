@@ -5,9 +5,9 @@ import undefined from '.undefined';
 import NULL from '.null.prototype';
 
 export default /*#__PURE__*/freeze(create(NULL, {
-	beforeMount: {
+	created: {
 		enumerable: true,
-		value: function beforeMount (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : el[binding.arg] = binding.value; },
+		value: function created (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : el[binding.arg] = binding.value; },
 	},
 	bind: {
 		enumerable: true,
@@ -15,10 +15,10 @@ export default /*#__PURE__*/freeze(create(NULL, {
 	},
 	updated: {
 		enumerable: true,
-		value: function updated (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : el[binding.arg] = binding.value; },
+		value: function updated (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : binding.oldValue===binding.value || ( el[binding.arg] = binding.value ); },
 	},
 	componentUpdated: {
 		enumerable: true,
-		value: function componentUpdated (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : el[binding.arg] = binding.value; },
+		value: function componentUpdated (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : binding.oldValue===binding.value || ( el[binding.arg] = binding.value ); },
 	},
 }));
