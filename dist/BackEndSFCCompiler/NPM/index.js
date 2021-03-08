@@ -55,11 +55,11 @@ var hasOwn = hasOwnProperty.bind
 	? /*#__PURE__*/hasOwnProperty.call.bind(hasOwnProperty)
 	: function (object, key) { return /*#__PURE__*/hasOwnProperty.call(object, key); };// && object!=null
 
-var create = Object.create;
+var create$1 = Object.create;
 
 const test = RegExp.prototype.test;
 
-const create$1 = Object.create;
+const create = Object.create;
 
 const toStringTag = Symbol.toStringTag;
 
@@ -71,12 +71,12 @@ const Default = (
 	/*! j-globals: default (internal) */
 	function Default (exports, addOnOrigin) {
 		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
-			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create$1(NULL); }
+			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create(NULL); }
 			if ( assign ) { assign(exports, addOnOrigin); }
 			else { for ( var key in addOnOrigin ) { if ( hasOwn(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
 			exports.default = exports;
 			if ( toStringTag ) {
-				var descriptor = create$1(NULL);
+				var descriptor = create(NULL);
 				descriptor.value = 'Module';
 				defineProperty(exports, toStringTag, descriptor);
 			}
@@ -284,7 +284,7 @@ const Proxy$1 = Proxy;
  * 项目主页：https://GitHub.com/LongTengDao/j-regexp/
  */
 
-var Test                                           = bind
+var Test$1                                           = bind
 	? /*#__PURE__*/bind.bind(test       )       
 	: function (re) {
 		return function (string) {
@@ -292,7 +292,7 @@ var Test                                           = bind
 		};
 	};
 
-var Exec                                           = bind
+var Exec$1                                           = bind
 	? /*#__PURE__*/bind.bind(exec       )       
 	: function (re) {
 		return function (string) {
@@ -300,17 +300,17 @@ var Exec                                           = bind
 		};
 	};
 
-var NT = /[\n\t]+/g;
-var ESCAPE = /\\./g;
-function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
+var NT$2 = /[\n\t]+/g;
+var ESCAPE$2 = /\\./g;
+function graveAccentReplacer$1 ($$        ) { return $$==='\\`' ? '`' : $$; }
 
-function RE (               template                      ) {
+function RE$1 (               template                      ) {
 	var U = this.U;
 	var I = this.I;
 	var M = this.M;
 	var S = this.S;
 	var raw = template.raw;
-	var source = raw[0] .replace(NT, '');
+	var source = raw[0] .replace(NT$2, '');
 	var index = 1;
 	var length = arguments.length;
 	while ( index!==length ) {
@@ -331,11 +331,11 @@ function RE (               template                      ) {
 			if ( value.dotAll===S && value_source.includes('.') ) { throw SyntaxError$1('dotAll'); }
 			source += value_source;
 		}
-		source += raw[index++] .replace(NT, '');
+		source += raw[index++] .replace(NT$2, '');
 	}
-	var re         = RegExp$1(U ? source = source.replace(ESCAPE, graveAccentReplacer) : source, this.flags);
-	var test = re.test = Test(re);
-	var exec = re.exec = Exec(re);
+	var re         = RegExp$1(U ? source = source.replace(ESCAPE$2, graveAccentReplacer$1) : source, this.flags);
+	var test = re.test = Test$1(re);
+	var exec = re.exec = Exec$1(re);
 	test.source = exec.source = source;
 	test.unicode = exec.unicode = U;
 	test.ignoreCase = exec.ignoreCase = I;
@@ -344,9 +344,9 @@ function RE (               template                      ) {
 	return re;
 }
 
-var RE_bind = bind && /*#__PURE__*/bind.bind(RE       );
+var RE_bind$1 = bind && /*#__PURE__*/bind.bind(RE$1       );
 
-function Context (flags        )          {
+function Context$1 (flags        )          {
 	return {
 		U: !flags.includes('u'),
 		I: !flags.includes('i'),
@@ -356,49 +356,49 @@ function Context (flags        )          {
 	};
 }
 
-var CONTEXT          = Proxy$1 && /*#__PURE__*/Context('');
+var CONTEXT$1          = Proxy$1 && /*#__PURE__*/Context$1('');
 
-var newRegExp = Proxy$1 && /*#__PURE__*/new Proxy$1(RE, /*#__PURE__*/freeze({
-	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT, args); },
-	get: function (RE, flags        ) { return RE_bind(Context(flags)); },
+var newRegExp$1 = Proxy$1 && /*#__PURE__*/new Proxy$1(RE$1, /*#__PURE__*/freeze({
+	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT$1, args); },
+	get: function (RE, flags        ) { return RE_bind$1(Context$1(flags)); },
 	defineProperty: function () { return false; },
 	preventExtensions: function () { return false; }
 }));
 
-var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
-var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
-var GROUP = create$1(NULL)         ;
+var NEED_TO_ESCAPE_IN_REGEXP$1 = /^[$()*+\-.?[\\\]^{|]/;
+var SURROGATE_PAIR$1 = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
+var GROUP$1 = create(NULL)         ;
 
-function groupify (branches                   , uFlag          , noEscape          )         {
-	var group = create$1(NULL)         ;
-	var appendBranch = uFlag ? appendPointBranch : appendCodeBranch;
+function groupify$1 (branches                   , uFlag          , noEscape          )         {
+	var group = create(NULL)         ;
+	var appendBranch = uFlag ? appendPointBranch$1 : appendCodeBranch$1;
 	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index]); }
-	return sourcify(group, !noEscape);
+	return sourcify$1(group, !noEscape);
 }
-function appendPointBranch (group       , branch        )       {
+function appendPointBranch$1 (group       , branch        )       {
 	if ( branch ) {
-		var character         = SURROGATE_PAIR.test(branch) ? branch.slice(0, 2) : branch.charAt(0);
-		appendPointBranch(group[character] || ( group[character] = create$1(NULL)          ), branch.slice(character.length));
+		var character         = SURROGATE_PAIR$1.test(branch) ? branch.slice(0, 2) : branch.charAt(0);
+		appendPointBranch$1(group[character] || ( group[character] = create(NULL)          ), branch.slice(character.length));
 	}
-	else { group[''] = GROUP; }
+	else { group[''] = GROUP$1; }
 }
 
-function appendCodeBranch (group       , branch        )       {
+function appendCodeBranch$1 (group       , branch        )       {
 	if ( branch ) {
 		var character         = branch.charAt(0);
-		appendCodeBranch(group[character] || ( group[character] = create$1(NULL)          ), branch.slice(1));
+		appendCodeBranch$1(group[character] || ( group[character] = create(NULL)          ), branch.slice(1));
 	}
-	else { group[''] = GROUP; }
+	else { group[''] = GROUP$1; }
 }
 
-function sourcify (group       , needEscape         )         {
+function sourcify$1 (group       , needEscape         )         {
 	var branches           = [];
 	var singleCharactersBranch           = [];
 	var noEmptyBranch          = true;
 	for ( var character in group ) {
 		if ( character ) {
-			var sub_branches         = sourcify(group[character], needEscape);
-			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP.test(character) ) { character = '\\'+character; }
+			var sub_branches         = sourcify$1(group[character], needEscape);
+			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP$1.test(character) ) { character = '\\'+character; }
 			sub_branches ? branches.push(character+sub_branches) : singleCharactersBranch.push(character);
 		}
 		else { noEmptyBranch = false; }
@@ -417,13 +417,13 @@ function sourcify (group       , needEscape         )         {
 
 const KEYS = /[^\x00-@[-`{-\x7F\s][^\x00-/:-@[-`{-\x7F\s]*(?:_[^\x00-/:-@[-`{-\x7F\s]+)*/g;
 
-const NameIs__Key__ = newRegExp`^${KEYS}$`.test;
+const NameIs__Key__ = newRegExp$1`^${KEYS}$`.test;
 const NameAs__Key__ = (Name        )         => {
 	if ( NameIs__Key__(Name) ) { return `__${Name}__`; }
 	throw SyntaxError$1(`“${Name}”不满足自动生成动态值的条件`);
 };
 
-const NONCHARACTER = newRegExp.u`[
+const NONCHARACTER = newRegExp$1.u`[
 	\uFDD0-\uFDEF
 	\uFFFE\u{1FFFE}\u{2FFFE}\u{3FFFE}\u{4FFFE}\u{5FFFE}\u{6FFFE}\u{7FFFE}\u{8FFFE}\u{9FFFE}\u{AFFFE}\u{BFFFE}\u{CFFFE}\u{DFFFE}\u{EFFFE}\u{FFFFE}\u{10FFFE}
 	\uFFFF\u{1FFFF}\u{2FFFF}\u{3FFFF}\u{4FFFF}\u{5FFFF}\u{6FFFF}\u{7FFFF}\u{8FFFF}\u{9FFFF}\u{AFFFF}\u{BFFFF}\u{CFFFF}\u{DFFFF}\u{EFFFF}\u{FFFFF}\u{10FFFF}
@@ -433,16 +433,16 @@ const CONTROL_CHARACTER = /[\x01-\x08\x0B\x0E-\x1F\x7F-\x9F]/;
 const ASCII_WHITESPACE = /[\t\n\f\r ]/.source;
 const ASCII_ALPHA = /[A-Za-z]/;
 
-const TOKENS = /[^\t\n\f\r=; ]+/g;
+const TOKENS$1 = /[^\t\n\f\r=; ]+/g;
 const PCENCharWithoutDot = /[\-\w\xB7\xC0-\xD6\xD8-\xF6\xF8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]/u.source.slice(1, -1);// /[\u{10000}-\u{EFFFF}]/u => /(?:[\uD800-\uDB7F][\uDC00-\uDFFF])/
-const NON_PCENChar = newRegExp.u`	[^.${PCENCharWithoutDot}]	`;
+const NON_PCENChar = newRegExp$1.u`	[^.${PCENCharWithoutDot}]	`;
 const AliasName = /[A-Z][\-.\w:\x80-\u{10FFFF}]*/u;//newRegExp.u`	[A-Z][${PCENCharWithoutDot}]*	`;
 const startsWithUpperCase = test.bind(/^[A-Z]/);
-const localOrComponentNameWithoutDot = newRegExp.u`	[A-Za-z][${PCENCharWithoutDot}]*	`;
-const _localOrComponentNameDotable_ = newRegExp.u`^	[A-Za-z][.${PCENCharWithoutDot}]*	$`;
+const localOrComponentNameWithoutDot = newRegExp$1.u`	[A-Za-z][${PCENCharWithoutDot}]*	`;
+const _localOrComponentNameDotable_ = newRegExp$1.u`^	[A-Za-z][.${PCENCharWithoutDot}]*	$`;
 const isLocalOrComponentNameDotable = (name        ) => _localOrComponentNameDotable_.test(name);
-const localNameWithoutDot = newRegExp.u`	[a-z][${PCENCharWithoutDot}]*	`;
-const className = newRegExp.u`
+const localNameWithoutDot = newRegExp$1.u`	[a-z][${PCENCharWithoutDot}]*	`;
+const className = newRegExp$1.u`
 	(?:
 		-
 		(?:
@@ -458,7 +458,7 @@ const className = newRegExp.u`
 
 const ATTRIBUTE_NAME = /[^\x00\t\n\f\r "'<>/=]+/;
 const UNQUOTED_ATTRIBUTE_VALUE = /[^\x00\t\n\f\r "'=<>`]+/;//// /[^\t\n\f\r "'=<>`][^\t\n\f\r >]*|(?=>)/; // HTML5 以前的标准宽松一些，实际 HTML 解析则更宽松。但 jVue 目前的整体设计原则是抛出一切不规范的错误，另外顺带提示反引号这个十分特殊的 IE 漏洞的存在
-const ATTRIBUTE_NAME_VALUE = newRegExp       `
+const ATTRIBUTE_NAME_VALUE = newRegExp$1       `
 	(${ATTRIBUTE_NAME})
 	${ASCII_WHITESPACE}*
 	=
@@ -470,7 +470,7 @@ const ATTRIBUTE_NAME_VALUE = newRegExp       `
 		|
 		${UNQUOTED_ATTRIBUTE_VALUE}
 	)`.exec;
-const ATTRIBUTE = newRegExp.g`
+const ATTRIBUTE = newRegExp$1.g`
 	${ATTRIBUTE_NAME}
 	(?:
 		${ASCII_WHITESPACE}*
@@ -485,8 +485,8 @@ const ATTRIBUTE = newRegExp.g`
 		)
 	)?`;
 
-const TAG_NAME = newRegExp`${ASCII_ALPHA}[^\x00\t\n\f\r />]*`;
-const TAG = newRegExp               `
+const TAG_NAME = newRegExp$1`${ASCII_ALPHA}[^\x00\t\n\f\r />]*`;
+const TAG = newRegExp$1               `
 	^
 	<
 	(/?)
@@ -501,7 +501,7 @@ const TAG = newRegExp               `
 `.exec;
 
 const TAG_EMIT_CHAR = /[\t\n\f\r />]/.source;
-const TAG_LIKE = newRegExp`
+const TAG_LIKE = newRegExp$1`
 	<
 	(?:
 		/?${TAG_NAME}${TAG_EMIT_CHAR}
@@ -510,7 +510,7 @@ const TAG_LIKE = newRegExp`
 	)
 `;
 
-const IS_TAG = newRegExp`
+const IS_TAG = newRegExp$1`
 	^
 	<
 	/?
@@ -542,40 +542,40 @@ var clearRegExp = '$_' in RegExp$1
 		return value;
 	};
 
-var NEED_TO_ESCAPE_IN_REGEXP$1 = /^[$()*+\-.?[\\\]^{|]/;
-var SURROGATE_PAIR$1 = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
-var GROUP$1 = create$1(NULL)         ;
+var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
+var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
+var GROUP = create(NULL)         ;
 
-function groupify$1 (branches                   , uFlag          , noEscape          )         {
-	var group = create$1(NULL)         ;
-	var appendBranch = uFlag ? appendPointBranch$1 : appendCodeBranch$1;
+function groupify (branches                   , uFlag          , noEscape          )         {
+	var group = create(NULL)         ;
+	var appendBranch = uFlag ? appendPointBranch : appendCodeBranch;
 	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index]); }
-	return sourcify$1(group, !noEscape);
+	return sourcify(group, !noEscape);
 }
-function appendPointBranch$1 (group       , branch        )       {
+function appendPointBranch (group       , branch        )       {
 	if ( branch ) {
-		var character         = SURROGATE_PAIR$1.test(branch) ? branch.slice(0, 2) : branch.charAt(0);
-		appendPointBranch$1(group[character] || ( group[character] = create$1(NULL)          ), branch.slice(character.length));
+		var character         = SURROGATE_PAIR.test(branch) ? branch.slice(0, 2) : branch.charAt(0);
+		appendPointBranch(group[character] || ( group[character] = create(NULL)          ), branch.slice(character.length));
 	}
-	else { group[''] = GROUP$1; }
+	else { group[''] = GROUP; }
 }
 
-function appendCodeBranch$1 (group       , branch        )       {
+function appendCodeBranch (group       , branch        )       {
 	if ( branch ) {
 		var character         = branch.charAt(0);
-		appendCodeBranch$1(group[character] || ( group[character] = create$1(NULL)          ), branch.slice(1));
+		appendCodeBranch(group[character] || ( group[character] = create(NULL)          ), branch.slice(1));
 	}
-	else { group[''] = GROUP$1; }
+	else { group[''] = GROUP; }
 }
 
-function sourcify$1 (group       , needEscape         )         {
+function sourcify (group       , needEscape         )         {
 	var branches           = [];
 	var singleCharactersBranch           = [];
 	var noEmptyBranch          = true;
 	for ( var character in group ) {
 		if ( character ) {
-			var sub_branches         = sourcify$1(group[character], needEscape);
-			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP$1.test(character) ) { character = '\\'+character; }
+			var sub_branches         = sourcify(group[character], needEscape);
+			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP.test(character) ) { character = '\\'+character; }
 			sub_branches ? branches.push(character+sub_branches) : singleCharactersBranch.push(character);
 		}
 		else { noEmptyBranch = false; }
@@ -592,7 +592,7 @@ function sourcify$1 (group       , needEscape         )         {
 
 /*¡ j-regexp */
 
-var test_bind                                                                              = test.bind
+var test_bind$1                                                                              = test.bind
 	? /*#__PURE__*/test.bind.bind(test       )       
 	: function (            regExp        ) { return function (            string        ) { return regExp.test(string); }; };
 
@@ -607,16 +607,16 @@ var toggleGlobal = 'flags' in RegExp$1.prototype
 		return RegExp$1(regExp, global ? 'g' + flags : flags.replace('g', ''));
 	};
 
-function EOL                     (allow                         , uniform          , disallow                             ) {
+function EOL$1                     (allow                         , uniform          , disallow                             ) {
 	
 	var ALLOW = /*#__PURE__*/isArray(allow)
-		? /*#__PURE__*/RegExp$1(/*#__PURE__*/groupify$1(allow), uniform ? 'g' : '')
+		? /*#__PURE__*/RegExp$1(/*#__PURE__*/groupify(allow), uniform ? 'g' : '')
 		: uniform===undefined$1
 			? ( uniform = ( allow           ).global, allow           )
 			: /*#__PURE__*/toggleGlobal(allow          , !!uniform);
 	
 	if ( disallow ) {
-		var testDisallow = /*#__PURE__*/test_bind(/*#__PURE__*/isArray(disallow) ? /*#__PURE__*/RegExp$1(groupify$1(disallow)) : /*#__PURE__*/toggleGlobal(disallow          , false));
+		var testDisallow = /*#__PURE__*/test_bind$1(/*#__PURE__*/isArray(disallow) ? /*#__PURE__*/RegExp$1(groupify(disallow)) : /*#__PURE__*/toggleGlobal(disallow          , false));
 		return uniform
 			? function EOL (string        )           {
 				if ( testDisallow(string) ) { throw clearRegExp(SyntaxError$1('存在禁用换行符')); }
@@ -678,7 +678,7 @@ const checkNewline = (
 );
 
 const NON_ASCII = /[^\x00-\x7F]/u;
-const NON_TAB = /[^\t\x20]/g;
+const NON_TAB$1 = /[^\t\x20]/g;
 const Snippet = (whole        , errorPosition        )         => {
 	
 	const linesAroundError                                                        = [];
@@ -703,7 +703,7 @@ const Snippet = (whole        , errorPosition        )         => {
 	};
 	linesAroundError[linesAroundError_length++] = {
 		number: '',
-		value: linesBeforeError[errorLineNumber-1].replace(NON_ASCII, '\u3000').replace(NON_TAB, '\x20')+'^',
+		value: linesBeforeError[errorLineNumber-1].replace(NON_ASCII, '\u3000').replace(NON_TAB$1, '\x20')+'^',
 	};
 	
 	let maxLengthOfLineNumber        ;
@@ -763,7 +763,7 @@ const getOwnPropertyDescriptor = (
 	/*! j-globals: null.getOwnPropertyDescriptor (internal) */
 	function () {
 		function __PURE__ (descriptor) {
-			var propertyDescriptor = create(NULL);
+			var propertyDescriptor = create$1(NULL);
 			if ( descriptor.hasOwnProperty('value') ) {
 				propertyDescriptor.value = descriptor.value;
 				propertyDescriptor.writable = descriptor.writable;
@@ -788,7 +788,7 @@ const getOwnPropertyDescriptors = (
 	/*! j-globals: null.getOwnPropertyDescriptors (internal) */
 	function () {
 		function __PURE__ (object) {
-			var descriptorMap = create(NULL);
+			var descriptorMap = create$1(NULL);
 			for ( var keys = ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
 				var key = keys[index];
 				descriptorMap[key] = getOwnPropertyDescriptor(object, key);
@@ -823,7 +823,7 @@ const Keeper = (
 			get flat () { }
 			get flatMap () { }
 			get __proto__ () { return getPrototypeOf(this); }
-			set __proto__ (proto) { setPrototypeOf(this, weak.get(proto) ?? weak.set(proto, preventExtensions(create$1(proto, properties))).get(proto)); }
+			set __proto__ (proto) { setPrototypeOf(this, weak.get(proto) ?? weak.set(proto, preventExtensions(create(proto, properties))).get(proto)); }
 		}).prototype));
 		return properties.constructor.value;
 	}()
@@ -864,12 +864,12 @@ const target2proxy = /*#__PURE__*/newWeakMap()
 	                                                   
  ;
 
-const handlers                       = /*#__PURE__*/assign(create$1(NULL), {
+const handlers                       = /*#__PURE__*/assign(create(NULL), {
 	defineProperty:                 (target                   , key   , descriptor                    )          => {
 		if ( hasOwnProperty_call(target, key) ) {
-			return Reflect_defineProperty(target, key, assign(create$1(NULL), descriptor));
+			return Reflect_defineProperty(target, key, assign(create(NULL), descriptor));
 		}
-		if ( Reflect_defineProperty(target, key, assign(create$1(NULL), descriptor)) ) {
+		if ( Reflect_defineProperty(target, key, assign(create(NULL), descriptor)) ) {
 			const keeper = target2keeper.get(target) ;
 			keeper[keeper.length] = key;
 			return true;
@@ -906,7 +906,7 @@ const orderify =                    (object   )    => {
 	return proxy;
 };
 
-const Null = /*#__PURE__*/function () {
+const Null$1 = /*#__PURE__*/function () {
 	function throwConstructing ()        { throw TypeError$1(`Super constructor Null cannot be invoked with 'new'`); }
 	function throwApplying ()        { throw TypeError$1(`Super constructor Null cannot be invoked without 'new'`); }
 	const Nullify = (constructor                             ) => {
@@ -925,7 +925,7 @@ const Null = /*#__PURE__*/function () {
 	}
 	//@ts-ignore
 	Null.prototype = null;
-	defineProperty(Null, 'name', assign(create$1(NULL), { value: '', configurable: false }));
+	defineProperty(Null, 'name', assign(create(NULL), { value: '', configurable: false }));
 	//delete Null.length;
 	freeze(Null);
 	return Null;
@@ -945,7 +945,7 @@ const Keys = Object.keys;
 
 const getOwnPropertySymbols = Object.getOwnPropertySymbols;
 
-const Null$1 = (
+const Null = (
 	/*! j-globals: null.constructor (internal) */
 	/*#__PURE__*/function () {
 		var assign = Object.assign || function assign (target, source) {
@@ -972,7 +972,7 @@ const Null$1 = (
 				? this
 				: typeof origin==='function'
 					? /*#__PURE__*/Nullify(origin)
-					: /*#__PURE__*/assign(/*#__PURE__*/create(NULL), origin);
+					: /*#__PURE__*/assign(/*#__PURE__*/create$1(NULL), origin);
 		};
 		delete Null.name;
 		//try { delete Null.length; } catch (error) {}
@@ -983,7 +983,7 @@ const Null$1 = (
 	/*¡ j-globals: null.constructor (internal) */
 );
 
-const SEMICOLON_ENTITIES = /*#__PURE__*/ Null$1({
+const SEMICOLON_ENTITIES = /*#__PURE__*/ Null({
 	Aacute: 'Á',
 	aacute: 'á',
 	Abreve: 'Ă',
@@ -3111,7 +3111,7 @@ const SEMICOLON_ENTITIES = /*#__PURE__*/ Null$1({
 	zwnj: '\u200C',
 });
 
-const CONTINUE_ENTITIES = /*#__PURE__*/ Null$1({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
+const CONTINUE_ENTITIES = /*#__PURE__*/ Null({ Aacute:0, aacute:0, Acirc:0, acirc:0, acute:0, AElig:0, aelig:0, Agrave:0, agrave:0, amp:0, AMP:0, Aring:0, aring:0, Atilde:0, atilde:0, Auml:0, auml:0, brvbar:0, Ccedil:0, ccedil:0, cedil:0, cent:0, copy:0, COPY:0, curren:0, deg:0, divide:0, Eacute:0, eacute:0, Ecirc:0, ecirc:0, Egrave:0, egrave:0, ETH:0, eth:0, Euml:0, euml:0, frac12:0, frac14:0, frac34:0, gt:0, GT:0, Iacute:0, iacute:0, Icirc:0, icirc:0, iexcl:0, Igrave:0, igrave:0, iquest:0, Iuml:0, iuml:0, laquo:0, lt:0, LT:0, macr:0, micro:0, middot:0, nbsp:0, not:0, Ntilde:0, ntilde:0, Oacute:0, oacute:0, Ocirc:0, ocirc:0, Ograve:0, ograve:0, ordf:0, ordm:0, Oslash:0, oslash:0, Otilde:0, otilde:0, Ouml:0, ouml:0, para:0, plusmn:0, pound:0, quot:0, QUOT:0, raquo:0, reg:0, REG:0, sect:0, shy:0, sup1:0, sup2:0, sup3:0, szlig:0, THORN:0, thorn:0, times:0, Uacute:0, uacute:0, Ucirc:0, ucirc:0, Ugrave:0, ugrave:0, uml:0, Uuml:0, uuml:0, Yacute:0, yacute:0, yen:0, yuml:0 });
 
 const ESCAPABLE_INNER_TEXT = /[\t\n\r &<\xA0\u2000-\u200A\u2028\u2029\u202F\u3000]/g;// 除了必须转义的，还有防止被 Vue 编译器剔除的空白
 const ESCAPABLE_BEAUTIFUL_TEXT = /[\t&<]/g;
@@ -3125,7 +3125,7 @@ const escapeAttributeValue = (text        )         => text.replace(ESCAPABLE_AT
 
 //export const test = (text :string) => { if ( / /.test(text) ) {} };
 
-const CONTROL_TO_CHAR = Null$1({
+const CONTROL_TO_CHAR = Null({
 	0x80: 0x20AC,
 	0x82: 0x201A,
 	0x83: 0x0192,
@@ -3212,9 +3212,9 @@ const V_ = /^(?:[:@#]|v-|class$|style$)/;
                               
 const EMPTY        = undefined$1;
 
-class Attributes extends Null         {
+class Attributes extends Null$1         {
 	
-	static default = Null(Attributes);
+	static default = Null$1(Attributes);
 	
 	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	
@@ -3323,7 +3323,7 @@ const ELEMENT_START      = 1.1;
 const ELEMENT_END      = 1.2;
 const ELEMENT_SELF_CLOSING      = 1.3;
 const TEXT    = 3;
-const COMMENT    = 8;
+const COMMENT$1    = 8;
 const EOF    = 0;
 
 const PLAINTEXT = /^plaintext$/i;
@@ -3343,7 +3343,7 @@ const Tag = (html        , position        , foreign          , SHORTHAND       
 			if ( end<0 ) { throw SyntaxError$1(html.includes('--!>', position + 4) ? '应使用“-->”而非“--!>”关闭注释节点' : '存在未关闭的注释节点'); }
 			const data         = html.slice(position + 4, end);
 			if ( data.includes('--!>') ) { throw SyntaxError$1(`“--!>”会造成注释意外中断`); }
-			return { type: COMMENT, data, end: end + 3 };
+			return { type: COMMENT$1, data, end: end + 3 };
 		}
 		
 		if ( html[position + 1]==='?' ) { throw SyntaxError$1(foreign ? `不知该如何对待“<?”开启的 XML 指令/声明` : `在 HTML 上下文中，“<?”XML 指令/声明只会被作为注释对待，而且其引号属性并不安全`); }
@@ -3418,7 +3418,7 @@ const BAD_REF = '__proto__';
 const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
 const NS3 = /:(?:(?![A-Z_a-z])|.*?:)/s;
 const NON = /[^\x00-#%-/:-@[-^`{-\x7F\s]/.source;
-const NON_ASCII_SIMPLE_PATH = newRegExp`
+const NON_ASCII_SIMPLE_PATH = newRegExp$1`
 	^\s*
 		(?:
 			[A-Za-z_$]
@@ -3444,7 +3444,7 @@ const STYLE_BY_COMPONENT_IS
 	                                                                      
          = null;
 
-const { parse, acornInjectPlugins, rollup, minify }                                  = require('@ltd/j-es-plus');
+const { parse: parse$1, acornInjectPlugins, rollup, minify: minify$1 }                                  = require('@ltd/j-es-plus');
 const { simple }                              = require('acorn-walk');
 const findGlobals                                      = require('@ltd/acorn-globals');
 const transpileModule                             = require('@ltd/j-ts');
@@ -3499,7 +3499,7 @@ const { 3: compile3, 2: compile2 }
 	let content3core         = readFileSync(filename3core, 'utf8');
 	let content3dom         = readFileSync(filename3dom, 'utf8');
 	const Compile3 = (content_dom        , content_core        ) => {
-		return Exports                                    (content_dom, filename3dom, Null$1({
+		return Exports                                    (content_dom, filename3dom, Null({
 			'@vue/compiler-core': Exports                                     (content_core, filename3core),
 		})).compile;
 	};
@@ -3563,7 +3563,7 @@ const { 3: compile3, 2: compile2 }
 	
 	function Exports    (content        , filename        , cache            ) {
 		const module_require = createRequire(filename);
-		const module = Null$1({ exports: {}      });
+		const module = Null({ exports: {}      });
 		compileFunction(
 			content,
 			[ 'exports', 'require', 'module', '__filename', '__dirname' ],
@@ -3612,7 +3612,7 @@ freeze(freeze(Block).prototype);
 const Private = (
 	/*! j-globals: private (internal) */
 	/*#__PURE__*/function (WeakMap) {
-		function createNULL () { return create$1(NULL); }
+		function createNULL () { return create(NULL); }
 		var GET = createNULL();
 		GET.value = WeakMap.prototype.get;
 		var SET = createNULL();
@@ -3624,7 +3624,7 @@ const Private = (
 					: PRIVATE
 				: PRIVATE===undefined
 					? createNULL
-					:PRIVATE===null ? createNULL : function () { return create$1(PRIVATE); };
+					:PRIVATE===null ? createNULL : function () { return create(PRIVATE); };
 			var weak = /*#__PURE__*/defineProperty(/*#__PURE__*/defineProperty(/*#__PURE__*/new WeakMap, 'get', GET), 'set', SET);
 			function _ (THIS) { return /*#__PURE__*/weak.get(THIS); }
 			_.new = function (THIS) {
@@ -3640,7 +3640,7 @@ const Private = (
 
 const _ = Private()                    ;
 
-const SCRIPT_END_TAG = newRegExp.i`</script${TAG_EMIT_CHAR}`;
+const SCRIPT_END_TAG = newRegExp$1.i`</script${TAG_EMIT_CHAR}`;
 
 /* TODO:
 <https://mimesniff.spec.whatwg.org/#javascript-mime-type>
@@ -3662,7 +3662,7 @@ text/livescript
 text/x-ecmascript
 text/x-javascript
 */
-const JS = newRegExp.i`^${ASCII_WHITESPACE}*(?:
+const JS = newRegExp$1.i`^${ASCII_WHITESPACE}*(?:
 	JS|JavaScript(?:${ASCII_WHITESPACE}*1\.\d)?|JSX
 	|
 	(?:ES|ECMAScript|ECMAS?)(?:${ASCII_WHITESPACE}*\d+)?
@@ -3671,8 +3671,8 @@ const JS = newRegExp.i`^${ASCII_WHITESPACE}*(?:
 	|
 	(?:text|application)\/(?:ECMAScript|JavaScript(?:;${ASCII_WHITESPACE}*version${ASCII_WHITESPACE}*=${ASCII_WHITESPACE}*1\.\d)?)
 )${ASCII_WHITESPACE}*$`;
-const TS = newRegExp.i`^${ASCII_WHITESPACE}*T(?:S|ypeScript)${ASCII_WHITESPACE}*$`;
-const TSX = newRegExp.i`^${ASCII_WHITESPACE}*TSX${ASCII_WHITESPACE}*$`;
+const TS = newRegExp$1.i`^${ASCII_WHITESPACE}*T(?:S|ypeScript)${ASCII_WHITESPACE}*$`;
+const TSX = newRegExp$1.i`^${ASCII_WHITESPACE}*TSX${ASCII_WHITESPACE}*$`;
 
 class Script extends Block {
 	
@@ -3760,7 +3760,7 @@ const {
 	});
 } )();
 
-var Test$1                                           = bind
+var Test                                           = bind
 	? /*#__PURE__*/bind.bind(test       )       
 	: function (re) {
 		return function (string) {
@@ -3768,7 +3768,7 @@ var Test$1                                           = bind
 		};
 	};
 
-var Exec$1                                           = bind
+var Exec                                           = bind
 	? /*#__PURE__*/bind.bind(exec       )       
 	: function (re) {
 		return function (string) {
@@ -3777,10 +3777,10 @@ var Exec$1                                           = bind
 	};
 
 var NT$1 = /[\n\t]+/g;
-var ESCAPE$1 = /\\./g;
-function graveAccentReplacer$1 ($$        ) { return $$==='\\`' ? '`' : $$; }
+var ESCAPE = /\\./g;
+function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
 
-function RE$1 (               template                      ) {
+function RE (               template                      ) {
 	var U = this.U;
 	var I = this.I;
 	var M = this.M;
@@ -3809,9 +3809,9 @@ function RE$1 (               template                      ) {
 		}
 		source += raw[index++] .replace(NT$1, '');
 	}
-	var re         = RegExp$1(U ? source = source.replace(ESCAPE$1, graveAccentReplacer$1) : source, this.flags);
-	var test = re.test = Test$1(re);
-	var exec = re.exec = Exec$1(re);
+	var re         = RegExp$1(U ? source = source.replace(ESCAPE, graveAccentReplacer) : source, this.flags);
+	var test = re.test = Test(re);
+	var exec = re.exec = Exec(re);
 	test.source = exec.source = source;
 	test.unicode = exec.unicode = U;
 	test.ignoreCase = exec.ignoreCase = I;
@@ -3820,9 +3820,9 @@ function RE$1 (               template                      ) {
 	return re;
 }
 
-var RE_bind$1 = bind && /*#__PURE__*/bind.bind(RE$1       );
+var RE_bind = bind && /*#__PURE__*/bind.bind(RE       );
 
-function Context$1 (flags        )          {
+function Context (flags        )          {
 	return {
 		U: !flags.includes('u'),
 		I: !flags.includes('i'),
@@ -3832,11 +3832,11 @@ function Context$1 (flags        )          {
 	};
 }
 
-var CONTEXT$1          = Proxy$1 && /*#__PURE__*/Context$1('');
+var CONTEXT          = Proxy$1 && /*#__PURE__*/Context('');
 
-var newRegExp$1 = Proxy$1 && /*#__PURE__*/new Proxy$1(RE$1, /*#__PURE__*/freeze({
-	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT$1, args); },
-	get: function (RE, flags        ) { return RE_bind$1(Context$1(flags)); },
+var newRegExp = Proxy$1 && /*#__PURE__*/new Proxy$1(RE, /*#__PURE__*/freeze({
+	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT, args); },
+	get: function (RE, flags        ) { return RE_bind(Context(flags)); },
 	defineProperty: function () { return false; },
 	preventExtensions: function () { return false; }
 }));
@@ -3859,7 +3859,7 @@ const notKeyframes = /*#__PURE__*/test.bind(/^(?:(?:default|in(?:herit|itial)|no
 
 const nonASCII = /\x80-\uFFFF/i;
 const hex_digit = /[0-9A-F]/i;
-const escape = /*#__PURE__*/( () => newRegExp$1.i `
+const escape = /*#__PURE__*/( () => newRegExp.i `
 	\\
 	(?:
 		${hex_digit}{1,6}
@@ -3869,7 +3869,7 @@ const escape = /*#__PURE__*/( () => newRegExp$1.i `
 	)
 ` )();
 const ws = /\t\n\f\r /i;
-const ident_token_start = /*#__PURE__*/( () => newRegExp$1.i `
+const ident_token_start = /*#__PURE__*/( () => newRegExp.i `
 	(?:
 		-
 		(?:
@@ -3885,7 +3885,7 @@ const ident_token_start = /*#__PURE__*/( () => newRegExp$1.i `
 		${escape}
 	)
 ` )();
-const ident_token = /*#__PURE__*/( () => newRegExp$1.i `
+const ident_token = /*#__PURE__*/( () => newRegExp.i `
 	${ident_token_start}
 	(?:
 		[-\w${nonASCII}]
@@ -3893,17 +3893,17 @@ const ident_token = /*#__PURE__*/( () => newRegExp$1.i `
 		${escape}
 	)*
 ` )();
-const isCompoundSelector = /*#__PURE__*/( () => newRegExp$1.i `
+const isCompoundSelector = /*#__PURE__*/( () => newRegExp.i `
 	^(?!$)
 	(?:${ident_token}|\*)?
 	(?:\|(?:${ident_token}|\*))?
 	(?:\.${ident_token})*
 	$
 `.test )();
-const SIMPLE_SELECTORS = /*#__PURE__*/( () => newRegExp$1.gi `
+const SIMPLE_SELECTORS = /*#__PURE__*/( () => newRegExp.gi `
 	(?:[.|]?${ident_token}|\*)
 ` )();
-const hash_token = /*#__PURE__*/( () => newRegExp$1.i `
+const hash_token = /*#__PURE__*/( () => newRegExp.i `
 	#
 	(?:
 		[-\w${nonASCII}]
@@ -3911,10 +3911,10 @@ const hash_token = /*#__PURE__*/( () => newRegExp$1.i `
 		${escape}
 	)*
 ` )();
-const isIdSelector = /*#__PURE__*/( () => newRegExp$1.i `
+const isIdSelector = /*#__PURE__*/( () => newRegExp.i `
 	^${hash_token}$
 `.test )();
-const string_token = /*#__PURE__*/( () => newRegExp$1.is `
+const string_token = /*#__PURE__*/( () => newRegExp.is `
 	"
 	(?:\\(?:\r\n|.)|[^\\"\n\f\r])*
 	"?
@@ -3923,7 +3923,7 @@ const string_token = /*#__PURE__*/( () => newRegExp$1.is `
 	(?:\\(?:\r\n|.)|[^\\'\n\f\r])*
 	'?
 ` )();
-const url_token = /*#__PURE__*/( () => newRegExp$1.is `
+const url_token = /*#__PURE__*/( () => newRegExp.is `
 	url
 	(?:
 		\(
@@ -3941,16 +3941,16 @@ const url_token = /*#__PURE__*/( () => newRegExp$1.is `
 |
 	domain\([${ws}]*	[a-z\d\-.:]*	[${ws}]*\)
 ` )();
-const ESCAPE$1$1 = /\\(?:([\dA-F]{1,6})(?:[ \t\n\f]|\r\n?)?|([\n\f]|\r\n?)|(.))/gis;
-const evaluate = (literal        ) => literal.replace(ESCAPE$1$1, (match        , hex         , char         ) => hex ? fromCodePoint(parseInt$1(hex, 16)) : char ?? '');
-const _ws_ = /*#__PURE__*/( () => newRegExp$1.gi `
+const ESCAPE$1 = /\\(?:([\dA-F]{1,6})(?:[ \t\n\f]|\r\n?)?|([\n\f]|\r\n?)|(.))/gis;
+const evaluate = (literal        ) => literal.replace(ESCAPE$1, (match        , hex         , char         ) => hex ? fromCodePoint(parseInt$1(hex, 16)) : char ?? '');
+const _ws_ = /*#__PURE__*/( () => newRegExp.gi `
 	^
 		${ws}+
 	|
 		${ws}+
 	$
 ` )();
-const number_token = /*#__PURE__*/( () => newRegExp$1.i `
+const number_token = /*#__PURE__*/( () => newRegExp.i `
 	[-+]?
 	(?:\d+(?:\.\d+)?|\.\d+)
 	(?:e[+-]?\d+)?
@@ -3958,7 +3958,7 @@ const number_token = /*#__PURE__*/( () => newRegExp$1.i `
 const CDO_token = '<!--';
 const CDC_token = '-->';
 
-const TOKENS$1 = /*#__PURE__*/( () => newRegExp$1.gis `
+const TOKENS = /*#__PURE__*/( () => newRegExp.gis `
 	(?:
 		[${ws}]+
 	|
@@ -3986,7 +3986,7 @@ const TOKENS$1 = /*#__PURE__*/( () => newRegExp$1.gis `
 	.
 ` )();
 
-const BAD_URL = /*#__PURE__*/( () => newRegExp$1.i `
+const BAD_URL = /*#__PURE__*/( () => newRegExp.i `
 	^
 	url\(
 	(?!
@@ -3998,13 +3998,13 @@ const BAD_URL = /*#__PURE__*/( () => newRegExp$1.i `
 	)
 ` )();
 const NUMBER = /[\d.]/;
-const COMMENT$1 = /\/\*.*?\*\//gs;
-const IDENT = /*#__PURE__*/( () => newRegExp$1.i `
+const COMMENT = /\/\*.*?\*\//gs;
+const IDENT = /*#__PURE__*/( () => newRegExp.i `
 	^
 	${ident_token}
 	$
 ` )();
-const FUNCTION = /*#__PURE__*/( () => newRegExp$1.i `
+const FUNCTION = /*#__PURE__*/( () => newRegExp.i `
 	^
 	${ident_token}\(
 	$
@@ -4076,7 +4076,7 @@ const Type = (literal        )       => {
 			return literal==='.' ? literal : Numeric(literal);
 		case '/':
 			if ( literal==='/' ) { return literal; }
-			literal = literal.replace(COMMENT$1, '');
+			literal = literal.replace(COMMENT, '');
 			return literal
 				? literal[0]==='/'
 					? throwSyntaxError(`bad-comment-token`)
@@ -4127,7 +4127,7 @@ let literal         = '';
 let types                           = ''       ;
 let type      ;
 let length         = 0;
-let index         = 0;
+let index$1         = 0;
 let currentLayer                    = null;
 const collection_type                 = [];
 const collection_class                  = [];
@@ -4199,18 +4199,18 @@ const check = (css        ) => {
 
 const parent = Symbol('parent');
 const consume = Symbol('consume');
-const stay = () => { --index; };
-const parse$1 = (sheet       , source        ) => {
-	literals = { length } = source.match(TOKENS$1) ;
-	index = 0;
+const stay = () => { --index$1; };
+const parse = (sheet       , source        ) => {
+	literals = { length } = source.match(TOKENS) ;
+	index$1 = 0;
 	//@ts-ignore
-	while ( index!==length ) { types += Type(literals[index++]); }
+	while ( index$1!==length ) { types += Type(literals[index$1++]); }
 	currentLayer = sheet;
-	index = 0;
-	while ( index!==length ) {
-		type = types[index] ;
-		literal = literals[index++] ;
-		currentLayer = currentLayer[consume]() ?? throwSyntaxError(`CSS 中出现了 ${currentLayer[toStringTag       ]} 上下文不允许的内容“${literal}”：\n${( literals             ).slice(0, index - 1).join('')}`);
+	index$1 = 0;
+	while ( index$1!==length ) {
+		type = types[index$1] ;
+		literal = literals[index$1++] ;
+		currentLayer = currentLayer[consume]() ?? throwSyntaxError(`CSS 中出现了 ${currentLayer[toStringTag       ]} 上下文不允许的内容“${literal}”：\n${( literals             ).slice(0, index$1 - 1).join('')}`);
 	}
 	currentLayer===sheet || currentLayer[parent]===sheet && !( currentLayer                  ) .block || throwSyntaxError(`CSS 终止处尚有未完成的结构`);
 	return (
@@ -4245,14 +4245,14 @@ let newline = '\n';
 let newlineSelector = true;
 let newlineProperty = true;
 
-const OPTIONS          = Null$1({
+const OPTIONS$1          = Null({
 	indent,
 	newline,
 	newlineSelector,
 	newlineProperty,
 });
                                             
-const Options = (options          = OPTIONS) => {
+const Options = (options          = OPTIONS$1) => {
 	( {
 		indent = '\t',
 		newline = '\n',
@@ -4429,7 +4429,7 @@ class AttributeSelector extends Layer         {
 						this._state = 0;
 						return this[parent];
 					case '|':
-						if ( index!==length && types[index]==='=' ) {
+						if ( index$1!==length && types[index$1]==='=' ) {
 							this._state = STATE_DURING_OP;
 							this.newItem = literal;
 						}
@@ -5511,7 +5511,7 @@ class DeclarationList extends Layer                                             
 					break;
 				}
 				if ( this._canQualified ) {
-					for ( let i = index; i!==length; ++i ) {
+					for ( let i = index$1; i!==length; ++i ) {
 						switch ( types[i] ) {
 							case '{':
 								stay();
@@ -5918,7 +5918,7 @@ const REFS = Symbol('refs');
 let _imports_count = 0;
 let _namespaces_count = 0;
 
-class Sheet extends Layer                                                                  {
+class Sheet$1 extends Layer                                                                  {
 	
 	get [Symbol.toStringTag] () { return 'Sheet'; }
 	
@@ -5929,7 +5929,7 @@ class Sheet extends Layer                                                       
 		if ( !inner ) { return this; }
 		check(inner);
 		_imports_count = _namespaces_count = 0;
-		try { this[REFS] = parse$1(this, inner); }
+		try { this[REFS] = parse(this, inner); }
 		finally { clear(); }
 		return this;
 	}
@@ -6015,7 +6015,7 @@ class Sheet extends Layer                                                       
 	
 }
 
-const minify$1 = (css        ) => '' + new Sheet(css);
+const minify = (css        ) => '' + new Sheet$1(css);
 
 /*¡ j-css */
 
@@ -6024,7 +6024,7 @@ const attributeCallback = (evaluated        )                => {
 	if ( evaluated[0]==='_' ) { return '.' + NameAs__Key__(evaluated.slice(1)); }
 };
 
-class Sheet$1 extends Sheet {
+class Sheet extends Sheet$1 {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet'; }
 	
@@ -6051,9 +6051,9 @@ class Sheet$1 extends Sheet {
 	}
 	
 }
-freeze(freeze(Sheet).prototype);
+freeze(freeze(Sheet$1).prototype);
 
-const isSelector = newRegExp.u`^
+const isSelector = newRegExp$1.u`^
 	${ASCII_WHITESPACE}*(?:
 		${AliasName}${ASCII_WHITESPACE}*
 		(?:=${ASCII_WHITESPACE}*
@@ -6063,9 +6063,9 @@ const isSelector = newRegExp.u`^
 	${ASCII_WHITESPACE}*)*
 $`.test;
 
-const STYLE_END_TAG = newRegExp.i`</style${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG$1 = newRegExp$1.i`</style${TAG_EMIT_CHAR}`;
 
-const CSS = newRegExp.i`^${ASCII_WHITESPACE}*(?:text\/)?CSS${ASCII_WHITESPACE}*$`;
+const CSS = newRegExp$1.i`^${ASCII_WHITESPACE}*(?:text\/)?CSS${ASCII_WHITESPACE}*$`;
 
 const defaultSelector = (Name        ) => `.${NameAs__Key__(Name)}`;
 
@@ -6075,7 +6075,7 @@ class Style extends Block          {
 	
 	constructor (attributes            , inner                    ) {
 		
-		super('style', attributes, true, inner, STYLE_END_TAG);
+		super('style', attributes, true, inner, STYLE_END_TAG$1);
 		
 		if ( 'module' in attributes ) { throw Error$1(`jVue 暂未支持编译 style module`); }
 		if ( 'scoped' in attributes ) { throw Error$1(`jVue 暂未支持编译 style scoped`); }
@@ -6090,12 +6090,12 @@ class Style extends Block          {
 			if ( literal===EMPTY ) { _this.abbr = defaultSelector; }
 			else {
 				if ( !isSelector(literal) ) { throw SyntaxError$1(`style 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create$1(NULL)            ;
+				const abbr = create(NULL)            ;
 				const pairs = literal.split(';');
 				const { length } = pairs;
 				let index = 0;
 				while ( index!==length ) {
-					const tokens = pairs[index++] .match(TOKENS);
+					const tokens = pairs[index++] .match(TOKENS$1);
 					if ( tokens ) {
 						const componentName         = tokens[0] ;
 						abbr[componentName] = tokens.length>1 ? tokens[1]  : defaultSelector(componentName);
@@ -6127,7 +6127,7 @@ class Style extends Block          {
 			if ( lang && !CSS.test(lang) ) { throw Error$1(`style 功能块元素如果设置了非 css 的 lang 属性值，那么必须自行提供转译后的 innerCSS`); }
 		}
 		if ( _this.sheet && _this.cache===inner ) { return _this.sheet; }
-		const sheet = new Sheet$1(inner, _this.abbr);
+		const sheet = new Sheet(inner, _this.abbr);
 		_this.sheet = sheet;
 		_this.cache = inner;
 		return sheet;
@@ -6144,7 +6144,7 @@ class Style extends Block          {
 }
 freeze(freeze(Style).prototype);
 
-const parserOptions = Null$1({
+const parserOptions$1 = Null({
 	ecmaVersion: 2014,
 	sourceType: 'module',// use strict mode
 	allowReserved: true,
@@ -6193,7 +6193,7 @@ const Pattern = (node         )       => {
 };
 const Params = (parameters        , min        , max        , attribute        )       => {
 	let program         ;
-	try { program = parse(`(${parameters})=>{}`, parserOptions)       ; }
+	try { program = parse$1(`(${parameters})=>{}`, parserOptions$1)       ; }
 	catch (error) {
 		const index = error.pos-1;
 		throw SyntaxError$1(`${attribute}的内容“${parameters.slice(0, index)}”✗“${parameters.slice(index)}”解析失败`);
@@ -6370,7 +6370,7 @@ freeze(freeze(RawTextElement).prototype);
 
 const isElement = /*#__PURE__*/isPrototypeOf.bind(Element.prototype)                                     ;
 
-const EOL$1 = /[\n\u2028\u2029]|\r\n?/;
+const EOL = /[\n\u2028\u2029]|\r\n?/;
 
 class TextCharacterData extends Node {
 	
@@ -6402,14 +6402,14 @@ class TextCharacterData extends Node {
 			this._isInterpolation
 				? `{{ ${escapeBeautifulText(this.data)} }}`
 				: escapeBeautifulText(this.data)
-		).split(EOL$1);
+		).split(EOL);
 	}
 	
 }
 freeze(freeze(TextCharacterData).prototype);
 
 const TNR = /^[\t\n\r]+|[\t\n\r]+$/g;
-const NT$2 = /(?:\n\t|\r\n?)\t*/g;
+const NT = /(?:\n\t|\r\n?)\t*/g;
 
 const OPEN_LIKE = /{(?:{+|$)/g;
 const escapeOpenLike = ($$        ) => `{{'${$$}'}}`;
@@ -6417,7 +6417,7 @@ const escapeOpenLike = ($$        ) => `{{'${$$}'}}`;
 const trimTab = (raw        )         => {
 	//Entities.test(raw);// 以后如果要完全剔除“\n”，则需要要先检查解码的正确性，防止“&l”“t;”连起来
 	//return raw.replace(/\n\t*/g, '');
-	return raw.replace(NT$2, '\n');
+	return raw.replace(NT, '\n');
 };
 
 const DELIMITERS_0 = '{{';
@@ -6516,8 +6516,8 @@ class Mustache extends ( Array$1                   ) {
 const TRIM = /^\s*\(?|\)?\s*$/g;
 const void_elements = RegExp$1(VOID_ELEMENTS, '');
 const foreign_elements = RegExp$1(FOREIGN_ELEMENTS, '');
-const TEXTAREA_END_TAG = newRegExp.i`</textarea${TAG_EMIT_CHAR}`;
-const STYLE_END_TAG$1 = newRegExp.i`</style${TAG_EMIT_CHAR}`;
+const TEXTAREA_END_TAG = newRegExp$1.i`</textarea${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG = newRegExp$1.i`</style${TAG_EMIT_CHAR}`;
 //const TITLE_END_TAG = newRegExp.i`</title${TAG_EMIT_CHAR}`;
 const TEXTAREA = /^textarea$/i;
 const NATIVE_D = /\.(?:native|\d+)(?:$|\.)/;
@@ -6537,8 +6537,8 @@ const HTML5 = `
 	div
 	span
 `.match(/\S+/g) ;
-const HTML_5 = newRegExp.i`^${groupify(HTML5)}$`;
-const SVG_MathML = newRegExp.i`^${groupify(`
+const HTML_5 = newRegExp$1.i`^${groupify$1(HTML5)}$`;
+const SVG_MathML = newRegExp$1.i`^${groupify$1(`
 	annotation-xml
 	color-profile
 	font-face
@@ -6559,17 +6559,17 @@ const checkNameBeing = (xName        , attributes            , is         )     
 			: `请避免在已废弃的 xmp、plaintext 或 listing 标签上使用 v-html，它的实际行为（可能）是 v-text`
 		);
 	}
-	 if ( compatible_render ) {
+	if ( compatible_render$1 ) {
 		if ( !foreign_elements.test(xName) && FOREIGN_ELEMENTS.test(xName) ) {
 			///compatible_template = false;
-			compatible_render = false;
+			compatible_render$1 = false;
 			//throw SyntaxError(is ? `通过 is 属性，也无法避免 SVG 命名空间中的 foreign 元素的大写变种“${xName}”，不被 Vue 2 作为组件对待` : `SVG 命名空间中的 foreign 标签的大写变种“${xName}”，同样不被 Vue 2 作为组件对待`);
 		}
 	}
 };
 
 let html         = '';
-let index$1 = 0;
+let index = 0;
 
 let keys                                 = null;
 
@@ -6580,7 +6580,7 @@ let delimiters_0         = '';
 let delimiters_1         = '';
 
 let compatible_template          = true;
-let compatible_render          = true;
+let compatible_render$1          = true;
 
 let sheet = new Map$1                ();
 const REF = /^#[a-z]\w*#$/i;
@@ -6588,8 +6588,8 @@ const Ref = ($ref$        ) => {
 	if ( !REF.test($ref$) ) { throw Error$1(`${$ref$} 格式不符合预期`); }
 	const ref = $ref$.slice(1, -1);
 	if ( sheet.size===sheet.set(ref, '').size ) { throw Error$1(`出现了重复的同步样式表名“#${ref}#”`); }
-	if ( compatible_render || compatible_template ) {
-		compatible_render = false;
+	if ( compatible_render$1 || compatible_template ) {
+		compatible_render$1 = false;
 		compatible_template = false;
 	}
 	return ref;
@@ -6610,8 +6610,8 @@ const Shadow = ($name_names$        ) => {
 		if ( !hasNames===shadow_hasNames ) { throw Error$1(`不能既访问子命名 shadow，又访问简单 shadow`); }
 		if ( shadow_hasNames && shadow_names.size===shadow_names.add(names).size ) { throw Error$1(`出现了重复的 shadow“${$name_names$}”`); }
 	}
-	if ( compatible_render || compatible_template ) {
-		compatible_render = false;
+	if ( compatible_render$1 || compatible_template ) {
+		compatible_render$1 = false;
 		compatible_template = false;
 	}
 	return name + hasNames + names;
@@ -6647,22 +6647,22 @@ const isSingleElementChild = (firstChild                ) => {// | null throw Er
 const parseAppend = (parentNode_XName        , parentNode                   , V_PRE         , FOREIGN         , V_FOR         , requireKey         ) => {
 	let lastChild                        = null;
 	for ( ; ; ) {
-		const tag = Tag(html, index$1, FOREIGN, !V_PRE);
+		const tag = Tag(html, index, FOREIGN, !V_PRE);
 		const { type } = tag;
 		if ( type===EOF ) {
 			if ( parentNode_XName ) { throw SyntaxError$1(`template 块中存在未关闭的 ${parentNode_XName} 标签`); }
-			index$1 = tag.end;
+			index = tag.end;
 			break;
 		}
 		if ( type===TEXT ) {
 			for ( const text of new Mustache(tag.raw , V_PRE, delimiters_0, delimiters_1) ) {
 				parentNode.afterAppend(lastChild, lastChild = text);
 			}
-			index$1 = tag.end;
+			index = tag.end;
 			continue;
 		}
-		if ( type===COMMENT ) {
-			index$1 = tag.end;
+		if ( type===COMMENT$1 ) {
+			index = tag.end;
 			continue;
 		}
 		const XName = tag.xName ;
@@ -6673,7 +6673,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					: `template 块中凭空出现了“</${XName}>”结束标签`
 				);
 			}
-			index$1 = tag.end;
+			index = tag.end;
 			if ( V_PRE ) { break; }
 			const { localName } = parentNode           ;
 			if ( localName==='keep-alive' ) {
@@ -6779,13 +6779,13 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			}
 			if ( xName==='slot' ) { throw SyntaxError$1(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，而且无论哪种都没有实际使用意义，请避免使用`); }
 			else {
-				 if ( xName==='component' && 'is' in attributes ) { throw SyntaxError$1(`v-pre 模式下的 component 元素的 is 属性在 Vue 3 中会被忽略（实际上 component 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
+				if ( xName==='component' && 'is' in attributes ) { throw SyntaxError$1(`v-pre 模式下的 component 元素的 is 属性在 Vue 3 中会被忽略（实际上 component 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
 			}
-			 if ( compatible_template ) { for ( const name in attributes ) { if ( name.includes('\\') ) { compatible_template = false; } } }
+			if ( compatible_template ) { for ( const name in attributes ) { if ( name.includes('\\') ) { compatible_template = false; } } }
 			//for ( const name in attributes ) { if ( name[0]==='_' /*:_*/ ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); } }
 		}
 		else {
-			if ( compatible_render && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render = false; }
+			if ( compatible_render$1 && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render$1 = false; }
 			if ( 'v-is' in attributes ) { throw SyntaxError$1(`v-is 是 Vue 3 新增的内置指令，在单文件组件模板中不可能需要被用到；在 Vue 2 中也请避开使用`); }
 			if ( xName==='component' ) {
 				if ( ':is.camel' in attributes ) { throw ReferenceError$1(`component :is.camel 在 Vue 2 和 3 中存在歧义，请避免使用`); }
@@ -6808,7 +6808,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 				if ( index<0 ) { throw SyntaxError$1(`“v-for="${value}"”的格式有误`); }
 				Params(value.slice(0, index).replace(TRIM, ''), 1, 3, `“v-for="${value}"”中的“of/in”前`);
 			}
-			 if ( v_for && 'ref' in attributes ) { throw SyntaxError$1(`Vue 3 不再支持在有 v-for 的标签及其内部标签上设置 ref，请用 :ref 模式代替`); }
+			if ( v_for && 'ref' in attributes ) { throw SyntaxError$1(`Vue 3 不再支持在有 v-for 的标签及其内部标签上设置 ref，请用 :ref 模式代替`); }
 			if ( xName==='slot' ) {
 				if ( 'name' in attributes ) {
 					if ( !attributes['name'] ) {
@@ -6820,7 +6820,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 					if ( BAD_SLOT_NAME.test(attributes['name']) ) { throw ReferenceError$1(`“$”或“_”开头的 slot name 可能无法按预期工作`); }
 				}
 				for ( let name in attributes ) {
-					 if ( compatible_template && name.includes('\\') ) { compatible_template = false; }
+					if ( compatible_template && name.includes('\\') ) { compatible_template = false; }
 					const bind = name[0]===':';
 					if ( bind ) {
 						if ( name.includes('.') ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符，而单文件组件模板中又没有使用 .camel 的必要，因此请不要包含“.”修饰符内容`); }
@@ -6830,37 +6830,37 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 						throw SyntaxError$1(`slot 组件上除 v-pre、v-once、v-for、v-if、v-else-if、v-else 和 v-bind 以外的指令都会被忽略，如果想要绑定 ${name} 为作用域属性，请使用 v-bind:${name}`);
 					}
 					if ( name===BAD_SCOPE ) { throw ReferenceError$1(`使用“${BAD_SCOPE}”作为 scope 无法按预期工作`); }
-					 if ( name==='key' || name==='ref' ) { throw SyntaxError$1(`${name}（key、ref）在 Vue 2 slot 组件上是无效的${bind ? '，即便使用 v-bind: 结果也是一样' : ''}`); }
+					if ( name==='key' || name==='ref' ) { throw SyntaxError$1(`${name}（key、ref）在 Vue 2 slot 组件上是无效的${bind ? '，即便使用 v-bind: 结果也是一样' : ''}`); }
 				}
 			}
 			else {
 				_asClass (attributes, keys, false);
 				if ( compatible_template ) {
-					 if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
+					if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
 					else if (
 						xName==='BaseTransition' || xName==='Suspense' || xName==='Teleport' ||
 						xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup'
 					) { compatible_template = false; }
 				}
-				if ( compatible_render ) {
+				if ( compatible_render$1 ) {
 					if (
 						xName==='base-transition' || xName==='suspense' || xName==='teleport' ||
 						///xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup' ||
 						isTemplate && !lackKey
-					) { compatible_render = false; }
+					) { compatible_render$1 = false; }
 				}
-				 {
+				{
 					if ( 'slot' in attributes || ':slot' in attributes ) { throw SyntaxError$1(`slot 已被 v-slot 取代（如果只是碰巧重名，请使用 :slot.camel）`); }
 					if ( 'slot-scope' in attributes ) { throw SyntaxError$1(`slot-scope 已被 v-slot 取代（如果只是碰巧重名，请使用 slotScope 或 :slot-scope）`); }
 					if ( 'scope' in attributes && isTemplate ) { throw SyntaxError$1(`template scope 已被 v-slot 取代`); }
 				}
 				let already = '';
 				for ( let name in attributes ) {
-					 if ( compatible_template && name.includes('\\') ) { compatible_template = false; }
+					if ( compatible_template && name.includes('\\') ) { compatible_template = false; }
 					switch ( name[0] ) {
 						case '@':
 							if ( name[1]==='_' ) { throw ReferenceError$1(`“_”开头的 listener 可能无法按预期工作`); }
-							 {
+							{
 								if ( NATIVE_D.test(name) ) { throw Error$1(`Vue 3 中 v-on 已不再支持 .native、键位数字修饰符`); }
 								if ( VNODE.test(name) ) {
 									if ( !VNODE_EVENT.test(name) ) { throw Error$1(`以 vnode 起始的“${name}”可能是 Vue 3 中新增的内置事件，它需要通过大写或连字符正确断词`); }
@@ -6913,16 +6913,16 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 						case ':':
 							if ( name.includes('.') && name!==':slot.camel' ) { throw SyntaxError$1(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符，而单文件组件模板中又没有使用 .camel 的必要，因此请不要包含“.”修饰符内容`); }
 							//if ( name[1]==='_' ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); }
-							 if ( name.startsWith(':on') ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
+							if ( name.startsWith(':on') ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
 							break;
 						default:
 							//if ( name[0]==='_' ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); }
-							 if ( name.startsWith('on') ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
+							if ( name.startsWith('on') ) { throw ReferenceError$1(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
 							if ( notComponent ) {
 								if ( V_MODEL_.test(name) ) { throw SyntaxError$1(`只有组件上的 v-model 才能附带 :arg 参数或自定义修饰符`); }
 							}
 							else {
-								 if ( compatible_render && V_MODEL_.test(name) ) { compatible_render = false; }
+								if ( compatible_render$1 && V_MODEL_.test(name) ) { compatible_render$1 = false; }
 							}
 							break;
 					}
@@ -6951,7 +6951,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 		if ( compatible_template && xName==='style' && !STYLE_BY_COMPONENT_IS ) { compatible_template = false; }
 		parentNode.afterAppend(lastChild, lastChild = xName==='style'
 			? new RawTextElement(
-				 'style',
+				'style',
 				attributes,
 				__class__,
 			)
@@ -6965,11 +6965,11 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 				},
 			)
 		);
-		index$1 = tag.end;
+		index = tag.end;
 		if ( type===ELEMENT_SELF_CLOSING ) { continue; }
 		if ( void_elements.test(xName) ) { throw SyntaxError$1(`template 文件中如果出现 HTML void 元素（小写；即便已经过时、废弃或是非标准），宜添加自闭合斜线以避免歧义`); }
 		const foreign          = FOREIGN || xName==='svg' || xName==='math';
-		if ( !html.startsWith('</', index$1) ) {
+		if ( !html.startsWith('</', index) ) {
 			if ( LISTING.test(xName) ) {
 				throw SyntaxError$1(xName==='listing'
 					? `已过时的 listing 标签内容处理方式不定，除非自闭合或内容为空，否则不应用于 .vue 文件（真需要时，考虑使用“<${xName} v-text="\`...\`" />”）`
@@ -7005,17 +7005,17 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			if (
 				xName==='textarea' || xName==='style'// || xName==='title'
 			) {
-				let endTagStart = html.slice(index$1).search(
+				let endTagStart = html.slice(index).search(
 					xName==='textarea' ? TEXTAREA_END_TAG :
-						xName==='style' ? STYLE_END_TAG$1 :
+						xName==='style' ? STYLE_END_TAG :
 							//xName==='title' ? TITLE_END_TAG :
 							null         
 				);
 				if ( endTagStart<0 ) { throw SyntaxError$1(`template 块中存在未关闭的 ${XName} 标签`); }
-				endTagStart += index$1;
-				const inner = html.slice(index$1, endTagStart);
+				endTagStart += index;
+				const inner = html.slice(index, endTagStart);
 				if ( xName==='style' ) {
-					if ( v_pre ) { ( lastChild                   ).textContent = minify$1(inner); }
+					if ( v_pre ) { ( lastChild                   ).textContent = minify(inner); }
 					else {
 						const expression         = '' + new Mustache(inner, v_pre, delimiters_0, delimiters_1);
 						if ( expression ) {
@@ -7038,13 +7038,13 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 						if ( expression ) { attributes['v-text'] = expression; }
 					}
 				}
-				const tag = Tag(html, index$1 = endTagStart, foreign);
+				const tag = Tag(html, index = endTagStart, foreign);
 				if ( tag.xName!==XName ) { throw SyntaxError$1(`${XName} 的结束标记 ${html.slice(endTagStart, tag.end)} 不符合严谨性预期`); }
-				index$1 = tag.end;
+				index = tag.end;
 				continue;
 			}
 		}
-		parseAppend(XName, lastChild, v_pre, foreign, v_for, compatible_render && lackKey && notComponent && xName!=='slot' && ( requireKey || 'v-for' in attributes || v_if ));// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
+		parseAppend(XName, lastChild, v_pre, foreign, v_for, compatible_render$1 && lackKey && notComponent && xName!=='slot' && ( requireKey || 'v-for' in attributes || v_if ));// 不需要改循环实现，因为层数多了 Vue 本身也会爆栈。
 	}
 };
 
@@ -7060,15 +7060,15 @@ class Content extends Node {
 		delimiters_0 = _.delimiters_0;
 		delimiters_1 = _.delimiters_1;
 		if ( _.keys ) {
-			keys = create$1(NULL)                           ;
+			keys = create(NULL)                           ;
 			for ( const key of _.keys ) { keys[key] = null; }
 		}
 		partial = _.abbr ?? null;
 		partial_with_tagName = partial && '' in partial ? partial[''] .tagName : ' ';
 		html = inner;
-		index$1 = 0;
+		index = 0;
 		compatible_template = true;
-		compatible_render = true;
+		compatible_render$1 = true;
 		super();
 		try {
 			parseAppend('', this, false, false, false, false);
@@ -7085,7 +7085,7 @@ class Content extends Node {
 		}
 		catch (error) {
 			sheet = new Map$1;
-			error.message = `${error.message}：\n${Snippet(inner, index$1)}`;
+			error.message = `${error.message}：\n${Snippet(inner, index)}`;
 			throw error;
 		}
 		finally {
@@ -7097,7 +7097,7 @@ class Content extends Node {
 			}
 		}
 		if ( !compatible_template ) { this.#compatible_template = false; }
-		if ( !compatible_render ) { this.#compatible_render = false; }
+		if ( !compatible_render$1 ) { this.#compatible_render = false; }
 		return this;
 	}
 	
@@ -7113,7 +7113,7 @@ class Content extends Node {
 			while ( ( child = child.nextSibling ) ) { outerHTML += child; }
 		}
 		compatible_template = this.#compatible_template;
-		compatible_render = this.#compatible_render;
+		compatible_render$1 = this.#compatible_render;
 		return outerHTML;
 	}
 	
@@ -7127,10 +7127,10 @@ class Content extends Node {
 	
 }
 
-const TEMPLATE_END_TAG = newRegExp.i`</template${TAG_EMIT_CHAR}`;
+const TEMPLATE_END_TAG = newRegExp$1.i`</template${TAG_EMIT_CHAR}`;
 
 const ATTR = /\[ *[a-zA-Z][\w-]*(?:\|[a-zA-Z][\w-]*) *(?:~?= *(?:[a-zA-Z][\w-]*|'[^']*'|"[^"]*") *)?\]/u;
-const PARTS = newRegExp.gu`
+const PARTS = newRegExp$1.gu`
 	${AliasName}
 	|
 	${localOrComponentNameWithoutDot}
@@ -7139,7 +7139,7 @@ const PARTS = newRegExp.gu`
 	|
 	${ATTR}
 `;
-const PARTIALS = newRegExp.gu`
+const PARTIALS = newRegExp$1.gu`
 	${AliasName}${ASCII_WHITESPACE}*
 	=${ASCII_WHITESPACE}*
 		${localOrComponentNameWithoutDot}${ASCII_WHITESPACE}*
@@ -7152,21 +7152,21 @@ const PARTIALS = newRegExp.gu`
 			${ASCII_WHITESPACE}*
 		)*
 `;
-const PARTIAL = newRegExp.u`^
+const PARTIAL = newRegExp$1.u`^
 	${ASCII_WHITESPACE}*
 	(?:
 		${PARTIALS};${ASCII_WHITESPACE}*
 	)*
 $`;
-const PARTIAL_WITH_TAG = newRegExp.u`^
+const PARTIAL_WITH_TAG = newRegExp$1.u`^
 	${ASCII_WHITESPACE}*(?:
 		${AliasName}${ASCII_WHITESPACE}*;
 	${ASCII_WHITESPACE}*)*
 $`;
 
-const HTML = newRegExp.i`^(?:HTML|${ASCII_WHITESPACE}*text/html${ASCII_WHITESPACE}*)$`;
+const HTML = newRegExp$1.i`^(?:HTML|${ASCII_WHITESPACE}*text/html${ASCII_WHITESPACE}*)$`;
 
-let compatible_render$1          = true;
+let compatible_render          = true;
 
 class Template extends Block {
 	
@@ -7202,7 +7202,7 @@ class Template extends Block {
 			const literal = attributes['.abbr'];
 			if ( literal===EMPTY ) { throw SyntaxError$1(`template 功能块的“.abbr”属性必须具有值`); }
 			if ( !PARTIAL.test(literal) ) { throw SyntaxError$1(`template 功能块的“.abbr”属性语法错误：\n${literal}`); }
-			const abbr = _this.abbr = create$1(NULL)           ;
+			const abbr = _this.abbr = create(NULL)           ;
 			const pairs = literal.match(PARTIALS);
 			if ( pairs ) {
 				let index = pairs.length;
@@ -7225,7 +7225,7 @@ class Template extends Block {
 							let n = selector.slice(1, i).trim();
 							if ( n.startsWith('v-') || n==='class' || n==='style' ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中不能添加“v-”开头的属性或“class”“style”`); }
 							n = n.replace('|', ':');
-							attrs ?? ( attrs = create$1(NULL)                 );
+							attrs ?? ( attrs = create(NULL)                 );
 							let v                ;
 							if ( i>0 ) {
 								if ( selector[i - 1]==='~' ) {
@@ -7257,7 +7257,7 @@ class Template extends Block {
 			if ( name.startsWith('.abbr:') ) {
 				const tagName = name.slice(6);
 				if ( tagName && tagName!=='_' && !isLocalOrComponentNameDotable(tagName) ) { throw SyntaxError$1(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
-				const abbr = _this.abbr ?? ( _this.abbr = create$1(NULL)            );
+				const abbr = _this.abbr ?? ( _this.abbr = create(NULL)            );
 				const literal = attributes[name];
 				if ( literal===EMPTY ) {
 					if ( '' in abbr ) { throw SyntaxError$1(`template 功能块的无值“.abbr:*”属性只能有一个`); }
@@ -7268,7 +7268,7 @@ class Template extends Block {
 					const pairs = literal.split(';');
 					let index = pairs.length;
 					while ( index ) {
-						const tokens = pairs[--index] .match(TOKENS);
+						const tokens = pairs[--index] .match(TOKENS$1);
 						if ( tokens ) {
 							const xName         = tokens[0] ;
 							if ( xName in abbr ) { throw SyntaxError$1(`template 功能块的“${name}”属性值中存在重复的条目“${xName}”`); }
@@ -7319,7 +7319,7 @@ class Template extends Block {
 	
 	get innerHTML ()         {
 		const { content } = this;
-		 compatible_render$1 = compatible_render && !!content.firstChild && isSingleElementChild(content.firstChild);
+		compatible_render = compatible_render$1 && !!content.firstChild && isSingleElementChild(content.firstChild);
 		return '' + content;
 	}
 	set innerHTML (value        ) {
@@ -7350,7 +7350,7 @@ freeze(freeze(CustomBlock).prototype);
 
 const SCRIPT_STYLE_TEMPLATE = /^(?:script|style|template)$/i;
 const NON_EOL = /[^\n\r\u2028\u2029]+/g;
-const NON_TAB$1 = /[^\t ]/g;
+const NON_TAB = /[^\t ]/g;
 const parseComponent = (sfc     , vue        )       => {
 	
 	const eol = sfc.eol || '\n';
@@ -7369,7 +7369,7 @@ const parseComponent = (sfc     , vue        )       => {
 			
 			const tag = Tag(vue, index);
 			switch ( tag.type ) {
-				case COMMENT:
+				case COMMENT$1:
 					index = tag.end;
 					continue;
 				case TEXT:
@@ -7422,7 +7422,7 @@ const parseComponent = (sfc     , vue        )       => {
 						const lastLineStart = previousLineEnd<0 ? 0 : previousLineEnd + eol_length;
 						inner =
 							checkNewline(vue.slice(0, lastLineStart)).replace(NON_EOL, '') +
-							checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB$1, ' ') +
+							checkNewline(vue.slice(lastLineStart, innerStart)).replace(NON_TAB, ' ') +
 							inner;
 					}
 				}
@@ -7470,7 +7470,7 @@ let shorthandValues                     ;
 let _$        ;
 let _vm         ;
 let _this         ;
-const visitors = Null$1({
+const visitors = Null({
 	ObjectExpression ({ properties }                  )       {
 		let index = properties.length;
 		while ( index ) {
@@ -7509,19 +7509,19 @@ const visitors = Null$1({
 	},
 });
 
-const parserOptions$1 = Null$1({
+const parserOptions = Null({
 	ecmaVersion: 5            ,
 	sourceType: 'module'         ,// use strict mode
 	allowReserved: true         ,
 	///preserveParens: true,
 });
 let ecma           = 5;
-const MinifyOptionsBODY = () => Null$1({
+const MinifyOptionsBODY = () => Null({
 	warnings: 'verbose',
-	parse: Null$1({
+	parse: Null({
 		html5_comments: false,
 	}         ),
-	compress: Null$1({
+	compress: Null({
 		warnings: true,
 		//collapse_vars: false,
 		pure_getters: true,
@@ -7534,7 +7534,7 @@ const MinifyOptionsBODY = () => Null$1({
 		unsafe_arrows: true,
 		unsafe_methods: true,
 	}         ),
-	format: Null$1({
+	format: Null({
 		inline_script: false,
 		beautify: false,
 	}         ),
@@ -7569,7 +7569,7 @@ const MinifyOptionsBODY = () => Null$1({
 const $event = /^Dropping unused function argument (?:\$event|_(?:cache|ctx)) \[\d+:\d+,\d+]$/;
 const not$event = (warning        ) => !$event.test(warning);
 const MinifyBODY = async (files        ) => {
-	const { error, warnings, code } = await minify(files, MinifyOptionsBODY());
+	const { error, warnings, code } = await minify$1(files, MinifyOptionsBODY());
 	if ( error ) { throw error; }
 	if ( warnings ) {
 		const filtered = warnings.filter(not$event);
@@ -7593,7 +7593,7 @@ let MODE                         ;
 let WS                                                       ;
 
 const strip = (func        )         => {
-	const AST = parse(func, parserOptions$1);
+	const AST = parse$1(func, parserOptions);
 	const globals = findGlobals(AST);
 	_$ = 1 + _$s.length;
 	_vm = _this = false;
@@ -7655,8 +7655,8 @@ const Render3 = async (innerHTML        , mode                 , ws             
 	});
 	const { 1: params, 2: rest } = CONST_RETURN(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
 	let Render = `'use strict';(${params})=>{${rest}};`;
-	ecma = parserOptions$1.ecmaVersion = 2014;
-	const globals = findGlobals(parse(Render, parserOptions$1));
+	ecma = parserOptions.ecmaVersion = 2014;
+	const globals = findGlobals(parse$1(Render, parserOptions));
 	globals.size && throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回的内容与预期不符（存在变量泄漏：“${globals.names().join('”“')}”）`);
 	if ( ws ) { Render = Render.replace(NSS, (nss, ss) => ws.eol + ws.tab.repeat(2 + ss.length/2)).slice(13, -1); }
 	else {
@@ -7677,7 +7677,7 @@ const Render2 = async (innerHTML        , mode                         , ws     
 	if ( tips.length ) { throw Error$1(`.vue template 官方编译建议：\n       ${tips.join('\n       ')}`); }
 	WS = ws;
 	MODE = mode;
-	ecma = parserOptions$1.ecmaVersion = mode==='var' ? 5 : 2014;
+	ecma = parserOptions.ecmaVersion = mode==='var' ? 5 : 2014;
 	render = await NecessaryStringLiteral(render, null);
 	let index = 0;
 	for ( const { length } = staticRenderFns; index!==length; ++index ) {
@@ -7695,8 +7695,8 @@ const VisibleStringLiteral = (id        )         => {
 	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` ) + literal.slice(2) : literal;
 };
 
-const is__KEY__ = newRegExp`^__${KEYS}__$`.test;
-const test_bind$1 = test.bind.bind(test       )                                                                                      ;
+const is__KEY__ = newRegExp$1`^__${KEYS}__$`.test;
+const test_bind = test.bind.bind(test       )                                                                                      ;
 
 async function From (tab        , mode                         , styles         , template                 , from               , eol        )                  {
 	
@@ -7745,7 +7745,7 @@ async function From (tab        , mode                         , styles         
 			if ( mode!=='var' ) {
 				code += `export ${await Render3(innerHTML, mode, ws, _(template))}${eol}`;/// (); import!
 			}
-			if ( compatible_render$1 ) {
+			if ( compatible_render ) {
 				const { render, staticRenderFns } = await Render2(innerHTML, mode, ws);
 				code += `export ${mode} render = /*#__PURE__*/${mode==='var' ? `function (render) { return render._withStripped = render; }` : `( render => render._withStripped = render )`}(${render});${eol}`;
 				code += staticRenderFns.length
@@ -7772,7 +7772,7 @@ async function From (tab        , mode                         , styles         
 	
 	const { length } = styles;
 	if ( length ) {
-		const isScoped = scopeKeys ? test_bind$1(RegExp$1(`^[.#]?__${groupify(scopeKeys)}__$`)) : is__KEY__;
+		const isScoped = scopeKeys ? test_bind(RegExp$1(`^[.#]?__${groupify$1(scopeKeys)}__$`)) : is__KEY__;
 		let index = 0;
 		while ( index!==length ) {
 			const style = styles[index++] ;
@@ -7802,7 +7802,7 @@ async function From (tab        , mode                         , styles         
 		if ( mode!=='var' ) {
 			code += `export ${mode} Render = /*#__PURE__*/_Render(${await Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
 		}
-		if ( compatible_render$1 ) {
+		if ( compatible_render ) {
 			const { render, staticRenderFns } = await Render2(innerHTML, mode, null);
 			code += `export ${mode} render = /*#__PURE__*/_Render(${render}, ${scope});${eol}`;
 			code += staticRenderFns.length
@@ -7834,15 +7834,15 @@ const rollupOptions = {
 	context: 'this',
 }         ;
 
-const TRUE = Null$1({
+const TRUE = Null({
 	format: 'es',
 	sourcemap: true,
 }         );
-const FALSE = Null$1({
+const FALSE = Null({
 	format: 'es',
 	sourcemap: false,
 }         );
-const INLINE = Null$1({
+const INLINE = Null({
 	format: 'es',
 	sourcemap: 'inline',
 }         );
@@ -7860,8 +7860,8 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 	}
 	const main         = sfc.export('default', x_from)          ;
 	let round = 1;
-	const bundle = await rollup(assign(create$1(NULL), rollupOptions, {
-		acorn: Null$1({
+	const bundle = await rollup(assign(create(NULL), rollupOptions, {
+		acorn: Null({
 			ecmaVersion: x_var==='var' ? 5 : 2014,
 			allowReserved: true,
 			sourceType: 'module',
@@ -7871,7 +7871,7 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 		input: '/'+'_'.repeat(main.length),
 		external: (path        )          => path!==x_from,
 		plugins: [
-			Null$1({
+			Null({
 				resolveId (path        )         {
 					if ( round===1 || path===x_from ) { return path; }
 					throw URIError$1(path);
@@ -7913,8 +7913,8 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 	return map===true ? { code: only.code, map: only.map } : only.code;
 };
 
-const OPTIONS$1 = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true }         ;
-const VUE_EOL = EOL([ LF, CRLF, CR ], true, [ FF, LS, PS ]);
+const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true }         ;
+const VUE_EOL = EOL$1([ LF, CRLF, CR ], true, [ FF, LS, PS ]);
 if ( !ES.global ) { throw Error$1(`j-eol ! g`); }
 
 class SFC {
@@ -7929,7 +7929,7 @@ class SFC {
 		
 		if ( isBuffer(vue) ) {
 			try {
-				const { BOM, string } = buffer2object(vue, OPTIONS$1);
+				const { BOM, string } = buffer2object(vue, OPTIONS);
 				this.bom = BOM;
 				vue = string;
 			}

@@ -10,7 +10,7 @@
 		"url": "https://GitHub.com/LongTengDao/j-vue.git"
 	},
 	"dependencies": {
-		"@ltd/acorn-globals": "1.8.0",
+		"@ltd/acorn-globals": "2.0.0",
 		"@ltd/j-ts": "6.2.3",
 		"@ltd/j-es-plus": "2.0.0",
 		"acorn-walk": "8.0.2",
