@@ -57,13 +57,19 @@ export const { 3: compile3, 2: compile2 } :{
 	readonly 2 :{ readonly [_ in 'var' | 'const' | 'let'] :typeof import('vue-template-compiler').compile },
 } = ( () => {
 	
+	const { createRequire } :typeof import('module') = require('module');
+	const { readFileSync } :typeof import('fs') = require('fs');
+	const { compileFunction } :typeof import('vm') = require('vm');
+	const { dirname } :typeof import('path') = require('path');
+	
 	const Const3dom = Replacer(
 		[ `|| node.tag === 'style'` ],
 		[ `makeMap('style,iframe,script,noscript', true)`, `makeMap('style,script', true)` ],
 		[ /compilerCore\.isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 2 ],
 	);
 	const Const3core = Replacer(
-		[ /!shared\.isGloballyWhitelisted\([^)]*\)|identifier\.name !== `(?:require|arguments)`/g, 'true', 4 ],
+		[ /shared\.isGloballyWhitelisted\([^)]*\)/g, 'false', 2 ],
+		[ /id\.name === '(?:require|arguments)'/g, 'false', 2 ],
 		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
 		[ /(?<=^const memberExpRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ]
 	);
@@ -79,11 +85,11 @@ export const { 3: compile3, 2: compile2 } :{
 		[ `el.tag === 'style' ||` ],
 		[ /(?<=^var simplePathRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ],
 		[ RegExp(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].var, 2 ],
-		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],
+		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],///
 	);
 	const Const2 = Replacer(
 		[ RegExp(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].const, 2 ],
-		[ /function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match :string, p1 :string) :string => `(${p1})=>{`, 7 ],
+		[ /function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match :string, p1 :string) :string => `(${p1})=>{`, 7 ],///
 	);
 	const Let2 = Replacer(
 		[ /const /g, 'let ', NaN ],
@@ -91,10 +97,10 @@ export const { 3: compile3, 2: compile2 } :{
 	
 	const _prod :string = process.env.NODE_ENV==='production' ? '.prod' : '';
 	
-	const filename3core :string = require.resolve(`@vue/compiler-dom/node_modules/@vue/compiler-core/dist/compiler-core.cjs${_prod}.js`);
 	const filename3dom :string = require.resolve(`@vue/compiler-dom/dist/compiler-dom.cjs${_prod}.js`);
-	let content3core :string = require('fs').readFileSync(filename3core, 'utf8');
-	let content3dom :string = require('fs').readFileSync(filename3dom, 'utf8');
+	const filename3core :string = createRequire(filename3dom).resolve(`@vue/compiler-core/dist/compiler-core.cjs${_prod}.js`);
+	let content3core :string = readFileSync(filename3core, 'utf8');
+	let content3dom :string = readFileSync(filename3dom, 'utf8');
 	const Compile3 = (content_dom :string, content_core :string) => {
 		return Exports<typeof import('@vue/compiler-dom')>(content_dom, filename3dom, Null({
 			'@vue/compiler-core': Exports<typeof import('@vue/compiler-core')>(content_core, filename3core),
@@ -102,7 +108,7 @@ export const { 3: compile3, 2: compile2 } :{
 	};
 	
 	const filename2 :string = require.resolve('vue-template-compiler/build.js');
-	let content2 :string = require('fs').readFileSync(filename2, 'utf8');
+	let content2 :string = readFileSync(filename2, 'utf8');
 	const Compile2 = (content :string) => Exports<typeof import('vue-template-compiler')>(content, filename2).compile;
 	
 	return {
@@ -159,13 +165,13 @@ export const { 3: compile3, 2: compile2 } :{
 	}
 	
 	function Exports<T> (content :string, filename :string, cache? :Null<any>) {
-		const module_require = ( require('module').createRequire ?? require('module').createRequireFromPath )(filename);
+		const module_require = createRequire(filename);
 		const module = Null({ exports: {} as T });
-		require('vm').compileFunction(
+		compileFunction(
 			content,
 			[ 'exports', 'require', 'module', '__filename', '__dirname' ],
 			{ filename }
-		).call(module.exports, module.exports, cache ? (id :string) => cache[id] ?? module_require(id) : module_require, module, filename, require('path').dirname(filename));
+		).call(module.exports, module.exports, cache ? (id :string) => cache[id] ?? module_require(id) : module_require, module, filename, dirname(filename));
 		return module.exports;
 	}
 	

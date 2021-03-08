@@ -1,5 +1,6 @@
 import Error from '.Error';
 import RegExp from '.RegExp';
+import test from '.RegExp.prototype.test';
 import undefined from '.undefined';
 
 import { StringLiteral } from '@ltd/j-es';
@@ -21,9 +22,12 @@ const VisibleStringLiteral = (id :string) :string => {
 	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` ) + literal.slice(2) : literal;
 };
 
-const __KEY__ = newRegExp`^__${KEYS}__$`;
+const is__KEY__ = newRegExp`^__${KEYS}__$`.test;
+const test_bind = test.bind.bind(test as any) as unknown as (this :void, regExp :RegExp) => (this :void, string :string) => boolean;
 
-export default function * From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string) {
+export default async function From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string) :Promise<string> {
+	
+	let code = '';
 	
 	const options = { indent: tab, newline: eol, newlineSelector: false, newlineProperty: false };
 	
@@ -32,86 +36,86 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 		if ( length ) {
 			const style = styles[0]!;
 			if ( _(style).media!==undefined ) { throw Error(`当前模式下，style 标签上的 media 属性无法被保留`); }
-			yield `export ${mode} style = ${StringLiteral(style.innerCSS)};${eol}`;
+			code += `export ${mode} style = ${StringLiteral(style.innerCSS)};${eol}`;
 			for ( const line of style.sheet[Symbol.iterator](options) ) {
-				yield `//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
+				code += `//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
 			}
-			yield eol;
+			code += eol;
 			if ( length===1 ) {
-				yield `export ${mode} styles = [ style ];`;
+				code += `export ${mode} styles = [ style ];`;
 			}
 			else {
-				yield `export ${mode} styles = [ style,${eol}`;
+				code += `export ${mode} styles = [ style,${eol}`;
 				let index = 1;
 				while ( index!==length ) {
 					const style = styles[index++]!;
 					if ( _(style).media!==undefined ) { throw Error(`当前模式下，style 标签上的 media 属性无法被保留`); }
-					yield `${tab}${StringLiteral(style.innerCSS)},${eol}`;
+					code += `${tab}${StringLiteral(style.innerCSS)},${eol}`;
 					for ( const line of style.sheet[Symbol.iterator](options) ) {
-						yield `${tab}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
+						code += `${tab}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}${eol}`;
 					}
 				}
-				yield `];`;
+				code += `];`;
 			}
 		}
 		else {
-			yield `export ${mode} styles = [ ];`;
+			code += `export ${mode} styles = [ ];`;
 		}
-		yield eol;
+		code += eol;
 		if ( template ) {
-			yield eol;
+			code += eol;
 			const { innerHTML } = template;
 			const __ = compatible_template ? '' : '//';
-			const literal = { eol, tab };
-			yield `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
-			yield `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
+			const ws = { eol, tab };
+			code += `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
+			code += `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
-				yield `export ${Render3(innerHTML, mode, literal, _(template))}${eol}`;/// (); import!
+				code += `export ${await Render3(innerHTML, mode, ws, _(template))}${eol}`;/// (); import!
 			}
 			if ( compatible_render ) {
-				const { render, staticRenderFns } = Render2(innerHTML, mode, literal);
-				yield `export ${mode} render = /*#__PURE__*/${mode==='var' ? `function (render) { return render._withStripped = render; }` : `( render => render._withStripped = render )`}(${render});${eol}`;
-				yield staticRenderFns.length
+				const { render, staticRenderFns } = await Render2(innerHTML, mode, ws);
+				code += `export ${mode} render = /*#__PURE__*/${mode==='var' ? `function (render) { return render._withStripped = render; }` : `( render => render._withStripped = render )`}(${render});${eol}`;
+				code += staticRenderFns.length
 					? `export ${mode} staticRenderFns = [${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}];${eol}`
 					: `export ${mode} staticRenderFns = [ ];${eol}`;
 			}
 			for ( const line of template.content.beautify(tab) ) {
-				yield `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`;
+				code += `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`;
 			}
 		}
-		yield eol;
-		return;
+		code += eol;
+		return code;
 	}
 	
 	const _from_ = VisibleStringLiteral(from);
-	yield `export { Identifier, Scope, Style, remove, Component, mixin, prop } from ${_from_};${eol}`;
-	yield `import { Scope, Template, Render as _Render, StaticRenderFns } from ${_from_};${eol}${eol}`;
+	code += `export { Identifier, Scope, Style, remove, Component, mixin, $, prop } from ${_from_};${eol}`;
+	code += `import { Scope, Template, Render as _Render, StaticRenderFns } from ${_from_};${eol}${eol}`;
 	
 	const scopeKeys = template && _(template).keys;
 	const scope = scopeKeys ? 'scopeObject' : 'scopeFunction';
-	yield scopeKeys
+	code += scopeKeys
 		? `export ${mode} ${scope} = /*#__PURE__*/Scope('${scopeKeys.join(',')}')`
 		: `export ${mode} ${scope} = /*#__PURE__*/Scope()`;
 	
 	const { length } = styles;
 	if ( length ) {
-		const checkScoped = scopeKeys ? RegExp(`^__${groupify(scopeKeys)}__$`) : __KEY__;
+		const isScoped = scopeKeys ? test_bind(RegExp(`^[.#]?__${groupify(scopeKeys)}__$`)) : is__KEY__;
 		let index = 0;
 		while ( index!==length ) {
 			const style = styles[index++]!;
 			const { sheet } = style;
 			const { allowGlobal, media } = _(style);
-			allowGlobal || sheet.checkScoped(checkScoped);
+			allowGlobal || sheet.checkScoped(isScoped);
 			for ( const line of sheet[Symbol.iterator](options) ) {
-				yield `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
+				code += `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
 			}
-			yield media===undefined
+			code += media===undefined
 				? `${eol}.$(${StringLiteral(style.innerCSS)})`
 				: `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(media)})`;
 		}
 	}
 	
-	yield `;${eol}`;
+	code += `;${eol}`;
 	
 	if ( template ) {
 		const { innerHTML } = template;
@@ -119,25 +123,27 @@ export default function * From (tab :string, mode :'const' | 'var' | 'let', styl
 		const lines = [];
 		let lines_length = 0;
 		for ( const line of template.content.beautify(tab) ) { lines[lines_length++] = `//${tab}${line.replace(LF_CR_LS_PS, escapeHTML_LF_CR_LS_PS)}${eol}`; }
-		yield eol;
+		code += eol;
 		let index = 0;
-		while ( index!==lines_length ) { yield lines[index++]; }
+		while ( index!==lines_length ) { code += lines[index++]; }
 		if ( mode!=='var' ) {
-			yield `export ${mode} Render = /*#__PURE__*/_Render(${Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
+			code += `export ${mode} Render = /*#__PURE__*/_Render(${await Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
 		}
 		if ( compatible_render ) {
-			const { render, staticRenderFns } = Render2(innerHTML, mode, null);
-			yield `export ${mode} render = /*#__PURE__*/_Render(${render}, ${scope});${eol}`;
-			yield staticRenderFns.length
+			const { render, staticRenderFns } = await Render2(innerHTML, mode, null);
+			code += `export ${mode} render = /*#__PURE__*/_Render(${render}, ${scope});${eol}`;
+			code += staticRenderFns.length
 				? `export ${mode} staticRenderFns = /*#__PURE__*/StaticRenderFns([${eol}${tab}${staticRenderFns.join(`,${eol}${tab}`)},${eol}], ${scope});${eol}`
 				: `export ${mode} staticRenderFns = [ ];${eol}`;
-			yield eol;
+			code += eol;
 		}
 		index = 0;
-		while ( index!==lines_length ) { yield lines[index++]; }
-		yield `${__}export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, ${scope});${eol}`;
-		yield `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
+		while ( index!==lines_length ) { code += lines[index++]; }
+		code += `${__}export ${mode} template = /*#__PURE__*/Template(${StringLiteral(innerHTML)}, ${scope});${eol}`;
+		code += `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
 	}
+	
+	return code;
 	
 };
 

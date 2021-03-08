@@ -12,14 +12,13 @@ const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throw
 
 import { NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM } from './RE';
 
-import { EOL, LF, FF, CRLF, CR, LS, PS } from '@ltd/j-eol';
-const VUE_EOL = EOL([ LF, CRLF, CR ], [ FF, LS, PS ], true);
+import { EOL, LF, FF, CRLF, CR, LS, PS, ES as ES_EOL } from '@ltd/j-eol';
+const VUE_EOL = EOL([ LF, CRLF, CR ], true, [ FF, LS, PS ]);
+if ( !ES_EOL.global ) { throw Error(`j-eol ! g`); }
 
 import parseComponent from './parseComponent';
 import From from './From';
 import one from './one';
-
-const ES_EOL = /\r\n?|[\n\u2028\u2029]/g;
 
 export default class SFC {
 	
@@ -71,14 +70,14 @@ export default class SFC {
 	template :Template | null = null;
 	readonly customBlocks :CustomBlock[] = [];
 	
-	export (this :SFC, mode :'default' | 'const' | 'var' | 'let' | {
+	async export (this :SFC, mode :'default' | 'const' | 'var' | 'let' | {
 		'var' :'const' | 'var' | 'let',
 		'?j-vue'? :string,
 		'j-vue'? :string | null,
 		'map'? :boolean | 'inline',
 		'src'? (src :string) :Promise<string>,
 		'lang'? (lang :string, inner :string) :string | Promise<string>,
-	}, from :string | null = 'j-vue') :string | Promise<string | { code :string, map :any }> {
+	}, from :string | null = 'j-vue') :Promise<string | { code :string, map :any }> {
 		if ( typeof mode==='object' ) { return one(this, mode); }
 		const { bom, tab, eol, script, styles, template } = this;
 		if ( mode==='default' ) {
@@ -89,9 +88,7 @@ export default class SFC {
 				: bom + script.innerJS.replace(ES_EOL, eol);
 		}
 		else {
-			let code :string = bom;
-			for ( const chunk of From(tab, mode, styles, template, from, eol) ) { code += chunk; }
-			return code;
+			return bom + await From(tab, mode, styles, template, from, eol);
 		}
 	}
 	

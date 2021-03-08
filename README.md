@@ -120,7 +120,7 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
         this.#c.value;
         
         // It's possible to set instance level render like options.setup() returns in Vue 3:
-        super._render = () => Vue3!.h('p', [ this.d ]);
+        Component.render = () => Vue3!.h('p', [ this.d ]);
         
     }
     
@@ -163,8 +163,8 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     
 };
 
-const vm3 :SubComponent =       Vue3.createApp(SubComponent._(Vue3))    . mount('body    ');
-const vm2 :SubComponent = new ( Vue2.extend   (SubComponent._(    )) )().$mount('body > *');
+const vm3 :SubComponent =       Vue3.createApp(SubComponent._toOptions(Vue3))    . mount('body    ');
+const vm2 :SubComponent = new ( Vue2.extend   (SubComponent._toOptions(    )) )().$mount('body > *');
 
 import * as Vue3 from 'vue@3';
 import      Vue2 from 'vue@2.6.12';

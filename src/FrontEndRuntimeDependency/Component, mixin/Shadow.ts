@@ -79,4 +79,5 @@ export function ShadowChecker (this :void, along :string, restNames :Names, data
 
 type All = { [name :string] :{ (this :void, el :HTMLElement | null) :void } | ShadowRoot | null };
 
-import type { Context, Data, __Dev__, Names } from './';
+import type { Context, Data, Names } from './';
+import type { __Dev__ } from 'j-vue';

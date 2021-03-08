@@ -39,7 +39,7 @@ export const Tag = (html :string, position :number, foreign? :boolean, SHORTHAND
 		
 		if ( IS_TAG.test(rest) ) {
 			
-			const _ = TAG.exec(rest);
+			const _ = TAG(rest);
 			if ( !_ ) { throw SyntaxError('标签格式有误'); }
 			const { 0: { length }, 1: endSolidus, 2: xName, 3: attributesLiteral, 4: selfClosingSolidus } = _;
 			

@@ -15,7 +15,7 @@ import _ from '../private';
 import { EMPTY } from '../Attributes';
 import Sheet from './Sheet';
 
-const isSelector = newRegExp.u!`^
+const isSelector = newRegExp.u`^
 	${s}*(?:
 		${AliasName}${s}*
 		(?:=${s}*
@@ -25,9 +25,9 @@ const isSelector = newRegExp.u!`^
 	${s}*)*
 $`.test;
 
-const STYLE_END_TAG = newRegExp.i!`</style${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG = newRegExp.i`</style${TAG_EMIT_CHAR}`;
 
-const CSS = newRegExp.i!`^${s}*(?:text\/)?CSS${s}*$`;
+const CSS = newRegExp.i`^${s}*(?:text\/)?CSS${s}*$`;
 
 const defaultSelector = (Name :string) => `.${NameAs__Key__(Name)}`;
 

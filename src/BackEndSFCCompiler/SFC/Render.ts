@@ -2,6 +2,7 @@ import Error from '.Error';
 import WeakSet from '.WeakSet';
 //import Object from '.Object';
 import test from '.RegExp.prototype.test';
+import exec from '.RegExp.prototype.exec';
 import Null from '.null';
 import throwError from '.throw.Error';
 
@@ -80,7 +81,7 @@ const MinifyOptionsBODY = () => Null({
 		unsafe_arrows: true,
 		unsafe_methods: true,
 	} as const),
-	output: Null({
+	format: Null({
 		inline_script: false,
 		beautify: false,
 	} as const),
@@ -104,7 +105,7 @@ const MinifyOptionsBODY = () => Null({
 			//keep_fnames: false,
 		} as const),
 		mangle: false,
-		output: Null({
+		format: Null({
 			inline_script: false,
 			beautify: true,
 			indent_level: 0,
@@ -112,10 +113,10 @@ const MinifyOptionsBODY = () => Null({
 		} as const),
 	} as const);
 };*/
-const $event = /^Dropping unused function argument \$event \[\d+:\d+,\d+]$/;
+const $event = /^Dropping unused function argument (?:\$event|_(?:cache|ctx)) \[\d+:\d+,\d+]$/;
 const not$event = (warning :string) => !$event.test(warning);
-const MinifyBODY = (files :string) => {
-	const { error, warnings, code } = minify(files, MinifyOptionsBODY());
+const MinifyBODY = async (files :string) => {
+	const { error, warnings, code } = await minify(files, MinifyOptionsBODY());
 	if ( error ) { throw error; }
 	if ( warnings ) {
 		const filtered = warnings.filter(not$event);
@@ -124,7 +125,7 @@ const MinifyBODY = (files :string) => {
 	return code!;
 };
 
-const CONST_RETURN = /^(?:cons|le)t ({ [\w :,]+ }) = Vue\n(.*)$/s;
+const CONST_RETURN = exec.bind(/^(?:cons|le)t ({ [\w :,]+ }) = Vue\n(.*)$/s) as (string :string) => [ string, string, string ] | null;
 
 const with_this__return_ = 'with(this){return ';
 
@@ -136,9 +137,9 @@ const mode_ = {
 } as const;
 
 let MODE :'var' | 'let' | 'const';
-let LITERAL :{ readonly eol :string, readonly tab :string } | null;
+let WS :{ readonly eol :string, readonly tab :string } | null;
 
-const strip = (_vm_ :string, func :string) :string => {
+const strip = (func :string) :string => {
 	const AST = parse(func, parserOptions);
 	const globals = findGlobals(AST);
 	_$ = 1 + _$s.length;
@@ -159,37 +160,38 @@ const strip = (_vm_ :string, func :string) :string => {
 			_vm_func += //identifier.name==='__proto__' ? '["__proto__"]:' :
 				name + ':';
 		}
-		_vm_func += _vm_ + name;
+		_vm_func += '_vm.' + name;
 	}
 	if ( index!==func.length ) { _vm_func += func.slice(index); }
 	return _vm_func;
 };
 
-const Sheets = (sheet :Map<string, string>) => {
-	let literal = ' ';
+const NOOP = { eol: '', tab: '' } as const;
+const Sheets = (sheet :Map<string, string>, ws :{ readonly eol :string, readonly tab :string } = NOOP) => {
+	let literal = '';
 	for ( const { 0: ref, 1: expression } of sheet ) {
-		if ( expression ) { literal += `${ref} () { return ${strip('this.', expression)}; }, `; }
+		if ( expression ) { literal += `${ws.eol}${ws.tab}${ws.tab}${ref}: _vm => ${strip(expression)},`; }
 	}
-	return `{${literal.slice(0, -2)} }`;
+	return `{${literal}${ws.eol}${ws.tab}}`;
 };
 
-const NecessaryStringLiteral = (body :string, name :null | number) :string => {
+const NecessaryStringLiteral = async (body :string, name :null | number) :Promise<string> => {
 	if ( !body.startsWith(with_this__return_) ) { throw Error(`jVue 内部错误：vue-template-compiler .compile 返回了与预期不符的内容格式`); }
-	body = strip('_vm.', `'use strict';(function(){${LITERAL ? LITERAL.tab + LITERAL.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${LITERAL ? LITERAL.eol + LITERAL.tab + LITERAL.tab : ''}return ${body.slice(with_this__return_.length, -1)};${LITERAL ? LITERAL.eol + LITERAL.tab : ''}});`);
-	body = ( LITERAL ? body : MinifyBODY(body) ).slice(25, -3);
-	return LITERAL
+	body = strip(`'use strict';(function(){${WS ? WS.tab + WS.tab : ''}${MODE} _vm = this, ${mode_[MODE]};${WS ? WS.eol + WS.tab + WS.tab : ''}return ${body.slice(with_this__return_.length, -1)};${WS ? WS.eol + WS.tab : ''}});`);
+	body = ( WS ? body : await MinifyBODY(body) ).slice(25, -3);
+	return WS
 		? name===null
 			? ecma===5
-				? `${LITERAL.eol}${LITERAL.tab}function render () {${LITERAL.eol}${body}}${LITERAL.eol}`
-				: `{${LITERAL.eol}${LITERAL.tab}render () {${LITERAL.eol}${body}}${LITERAL.eol}}.render`
-			: `{${LITERAL.eol}${LITERAL.tab}${LITERAL.tab}${name}${ecma===5 ? ': function' : ''} () {${LITERAL.eol}${LITERAL.tab}${body.replace('return ', return_ => LITERAL!.tab + return_)}${LITERAL.tab}}${LITERAL.eol}${LITERAL.tab}}[${name}]`
+				? `${WS.eol}${WS.tab}function render () {${WS.eol}${body}}${WS.eol}`
+				: `{${WS.eol}${WS.tab}render () {${WS.eol}${body}}${WS.eol}}.render`
+			: `{${WS.eol}${WS.tab}${WS.tab}${name}${ecma===5 ? ': function' : ''} () {${WS.eol}${WS.tab}${body.replace('return ', return_ => WS!.tab + return_)}${WS.tab}}${WS.eol}${WS.tab}}[${name}]`
 		: StringLiteral(body);
 };
 
 const onError = (error :SyntaxError) :never => { throw Error(`.vue template 官方编译未通过：\n       ${error.message}`); };
 const isCustomElement = test.bind(/^(?![A-Z]|base-transition$|component$|keep-alive$|s(?:lot|uspense)$|te(?:mplate|leport)$)/);
 const NSS = /\n+((?:  )*)/g;
-export const Render3 = (innerHTML :string, mode :'let' | 'const', literal :{ eol :string, tab :string } | null, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }) :string => {
+export const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }) :Promise<string> => {
 	const { code } = compile3[mode](innerHTML, {
 		onError,
 		isCustomElement,
@@ -198,31 +200,37 @@ export const Render3 = (innerHTML :string, mode :'let' | 'const', literal :{ eol
 		cacheHandlers: true,
 		hoistStatic: true,
 	});
-	const { 1: params, 2: rest } = CONST_RETURN.exec(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
+	const { 1: params, 2: rest } = CONST_RETURN(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
 	let Render = `'use strict';(${params})=>{${rest}};`;
 	ecma = parserOptions.ecmaVersion = 2014;
 	const globals = findGlobals(parse(Render, parserOptions));
 	globals.size && throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回的内容与预期不符（存在变量泄漏：“${globals.names().join('”“')}”）`);
-	Render = ( literal ? Render.replace(NSS, (nss, ss) => literal.eol + literal.tab.repeat(2 + ss.length/2)) : MinifyBODY(Render) ).slice(13, -1);
+	if ( ws ) { Render = Render.replace(NSS, (nss, ss) => ws.eol + ws.tab.repeat(2 + ss.length/2)).slice(13, -1); }
+	else {
+		Render = await MinifyBODY(Render);
+		Render = Render.slice(Render[14]==='(' ? 14 : 13, Render.lastIndexOf('}') + 1);
+	}
 	const index = Render.indexOf('=>');
 	const left = Render.slice(0, index);
 	let right = Render.slice(index + 2);
-	return literal
-		? `class Render {${literal.eol}${literal.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${literal.eol}${literal.tab}${literal.tab}return ${right}`};${literal.eol}${literal.tab}}${sheet ? `${literal.eol}${literal.tab}static sheet = ${Sheets(sheet)};` : ''}${shadow ? `${literal.eol}${literal.tab}static shadow = ${StringLiteral(shadow)};` : ''}${literal.eol}}`
-		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${MinifyBODY(`'use strict';(${Sheets(sheet)});`).slice(14, -2)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
+	return ws
+		? `class Render {${ws.eol}${ws.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${ws.eol}${ws.tab}${ws.tab}return ${right}`};${ws.eol}${ws.tab}}${sheet ? `${ws.eol}${ws.tab}static sheet = ${Sheets(sheet, ws)};` : ''}${shadow ? `${ws.eol}${ws.tab}static shadow = ${StringLiteral(shadow)};` : ''}${ws.eol}}`
+		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${( await MinifyBODY(`'use strict';(${Sheets(sheet)});`) ).slice(14, -2)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
 };
 
-export const Render2 = (innerHTML :string, mode :'var' | 'let' | 'const', literal :{ readonly eol :string, readonly tab :string } | null) :{ readonly render :string, readonly staticRenderFns :readonly string[] } => {
-	const { errors, tips, render, staticRenderFns } = compile2[mode](innerHTML);
+export const Render2 = async (innerHTML :string, mode :'var' | 'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null) :Promise<{ readonly render :string, readonly staticRenderFns :readonly string[] }> => {
+	let { errors, tips, render, staticRenderFns } = compile2[mode](innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n       ${errors.join('\n       ')}`); }
 	if ( tips.length ) { throw Error(`.vue template 官方编译建议：\n       ${tips.join('\n       ')}`); }
-	LITERAL = literal;
+	WS = ws;
 	MODE = mode;
 	ecma = parserOptions.ecmaVersion = mode==='var' ? 5 : 2014;
-	return {
-		render: NecessaryStringLiteral(render, null),
-		staticRenderFns: staticRenderFns.map(NecessaryStringLiteral),
-	};
+	render = await NecessaryStringLiteral(render, null);
+	let index = 0;
+	for ( const { length } = staticRenderFns; index!==length; ++index ) {
+		staticRenderFns[index] = await NecessaryStringLiteral(staticRenderFns[index]!, index);
+	}
+	return { render, staticRenderFns };
 };
 
 type Identifier = {

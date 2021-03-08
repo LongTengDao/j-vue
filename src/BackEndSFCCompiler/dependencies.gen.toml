@@ -4,20 +4,19 @@ const = '''
 function genSelect (el, value, modifiers) {
 	addHandler(el, 'change', `
 		{
-			const VALUE = _value ?? '_value';
 			const { multiple, options } = $event.target;
 			if ( $event = multiple ? [] : void null ) {
 				let length = 0;
 				for ( const option of options ) {
 					if ( option.selected ) {
-						$event[length++] = ${modifiers && modifiers.number ? '_n' : ''}(VALUE in option ? option[VALUE] : option.value);
+						$event[length++] = ${modifiers && modifiers.number ? '_n' : ''}('_value' in option ? option._value : option.value);
 					}
 				}
 			}
 			else {
 				for ( const option of options ) {
 					if ( option.selected ) {
-						$event           = ${modifiers && modifiers.number ? '_n' : ''}(VALUE in option ? option[VALUE] : option.value); break;
+						$event           = ${modifiers && modifiers.number ? '_n' : ''}('_value' in option ? option._value : option.value); break;
 					}
 				}
 			}
@@ -34,19 +33,18 @@ function genSelect (el, value, modifiers) {
 			i: 0,
 			s: $event.target.options,
 			$: 0,
-			_: _value || '_value',
 		};
 		if ( $event.v ) {
 			while ( $event.i<$event.s.length ) {
 				if ( ( $event.$ = $event.s[$event.i++] ).selected ) {
-					$event.v[$event.v.length] = ${modifiers && modifiers.number ? '_n' : ''}($event.$[$event._ in $event.$ ? $event._ : 'value']);
+					$event.v[$event.v.length] = ${modifiers && modifiers.number ? '_n' : ''}('_value' in $event.$ ? $event.$._value : $event.$.value);
 				}
 			}
 		}
 		else {
 			while ( $event.i<$event.s.length ) {
 				if ( ( $event.$ = $event.s[$event.i++] ).selected ) {
-					$event.v                         = ${modifiers && modifiers.number ? '_n' : ''}($event.$[$event._ in $event.$ ? $event._ : 'value']); break;
+					$event.v                  = ${modifiers && modifiers.number ? '_n' : ''}('_value' in $event.$ ? $event.$._value : $event.$.value); break;
 				}
 			}
 		}

@@ -15,6 +15,7 @@ declare module '.Error' { export default Error; }
 
 declare module '.Function' { export default Function; }
 declare module '.Function.prototype.apply' { export default Function.prototype.apply; }
+declare module '.Function.prototype.bind' { export default Function.prototype.bind; }
 
 declare module '.Infinity' { export default Infinity; }
 
@@ -72,7 +73,7 @@ declare module '.Object.prototype.hasOwnProperty' { export default Object.protot
 declare module '.Object.prototype.isPrototypeOf' { export default Object.prototype.isPrototypeOf; }
 declare module '.Object.prototype.propertyIsEnumerable' { export default Object.prototype.propertyIsEnumerable; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
-declare module '.Object.setPrototypeOf' { export default Object.setPrototypeOf; }
+declare module '.Object.setPrototypeOf?' { export default Object.setPrototypeOf; }
 
 declare module '.Proxy?' { export default Proxy; }
 

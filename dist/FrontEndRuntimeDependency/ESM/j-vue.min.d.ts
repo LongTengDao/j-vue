@@ -1,4 +1,4 @@
-export const version :'20.0.3';
+export const version :'21.0.0';
 
 export function Identifier () :string;
 
@@ -9,7 +9,7 @@ export const Scope :{
 };
 export type Scope<Keys extends string | void> = (
 	Keys extends string ? { readonly [Key in Keys] :string } :
-	Keys extends void ? { (...args :any) :string; readonly prototype? :{ readonly [key :string] :string }; } :
+	Keys extends void ? { (...args :any) :string; readonly prototype :{ readonly [Key in string]? :string }; } :
 never ) & {
 	readonly $ :<T extends Scope<string | void>> (this :T, css? :string, media? :string) => T;
 	readonly [_]? :(string :string) => string;
@@ -48,7 +48,7 @@ export function mixin<Mixins extends object = object> (...mixins :readonly ( Cla
 declare const _mixins :unique symbol;
 
 export const prop :Readonly<{
-	beforeMount (el :Element, binding :{ arg? :any, value? :any }) :void,
+	created (el :Element, binding :{ arg? :any, value? :any }) :void,
 	bind (el :Element, binding :{ arg? :any, value? :any }) :void,
 	
 	updated (el :Element, binding :{ arg? :any, value? :any }) :void,
@@ -118,28 +118,8 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	static readonly components :void | { readonly [name :string] :ClassAPI | ObjectAPI };
 	static readonly emits :void | Emits;
 	
-	static readonly _ :(this :ClassAPI, Vue3? :Vue3, __dev__? :{
-		readonly [Error in
-			| 'proto'
-			| 'compile_name'
-			| 'compile_props'
-			| 'compile_emits'
-			| 'compile_is'
-			| 'compile_layer'
-			| 'compile_reserved'
-			| 'compile_redefined'
-			| 'compile_overwrite'
-			| 'compile_type'
-			| 'compile_symbol'
-			| 'compile_shadow'
-			| 'runtime_shadow'
-			| 'runtime_redefined'
-			| 'runtime_symbol'
-			| 'runtime_reserved'
-			| 'runtime_enumerable'
-			| 'runtime_data'
-		]? :string
-	}) => ObjectAPI;
+	static readonly _main :(this :ClassAPI) => void;
+	static readonly _toOptions :(this :ClassAPI, Vue3? :Vue3, __dev__? :__Dev__) => ObjectAPI;
 	protected constructor (Vue3? :Vue3);
 	
 	private _Render :void;
@@ -206,6 +186,30 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	private static readonly model :void;
 	
 }
+
+type __Dev__ = {
+	readonly [Error in
+		| 'proto'
+		| 'compile_case'
+		| 'compile_name'
+		| 'compile_props'
+		| 'compile_emits'
+		| 'compile_is'
+		| 'compile_layer'
+		| 'compile_reserved'
+		| 'compile_redefined'
+		| 'compile_overwrite'
+		| 'compile_type'
+		| 'compile_symbol'
+		| 'compile_shadow'
+		| 'runtime_shadow'
+		| 'runtime_redefined'
+		| 'runtime_symbol'
+		| 'runtime_reserved'
+		| 'runtime_enumerable'
+		| 'runtime_data'
+	]? :string
+};
 
 type OwnNames<T> = Extract<OwnKeys<T>, string>;
 type OwnKeys<T> = Exclude<keyof T,

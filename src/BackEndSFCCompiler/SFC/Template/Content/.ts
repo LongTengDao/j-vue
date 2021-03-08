@@ -4,6 +4,7 @@ import ReferenceError from '.ReferenceError';
 import RegExp from '.RegExp';
 import Set from '.Set';
 import Map from '.Map';
+import exec from '.RegExp.prototype.exec';
 import create from '.Object.create';
 import NULL from '.null.prototype';
 import throwError from '.throw.Error';
@@ -14,7 +15,7 @@ import { NON_SCALAR as SURROGATE_IN_INPUT_STREAM } from '@ltd/j-utf';
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
 import { forAliasRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_V_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF, NON_ASCII_SIMPLE_PATH, STYLE_BY_COMPONENT_IS, BUILT_IN, NS3 } from '../../../dependencies';
-import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR, STARTS_WITH_UPPER_CASE, NameIs__Key__, NON_PCENChar } from '../../RE';
+import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR, startsWithUpperCase, NameIs__Key__, NON_PCENChar } from '../../RE';
 import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF, PLAINTEXT, LISTING, XMP } from '../../Tag';
 import { EMPTY, _asClass } from '../../Attributes';
 import Params from '../../Params';
@@ -28,9 +29,9 @@ import { minify } from '@ltd/j-css';
 const TRIM = /^\s*\(?|\)?\s*$/g;
 const void_elements = RegExp(VOID_ELEMENTS, '');
 const foreign_elements = RegExp(FOREIGN_ELEMENTS, '');
-const TEXTAREA_END_TAG = newRegExp.i!`</textarea${TAG_EMIT_CHAR}`;
-const STYLE_END_TAG = newRegExp.i!`</style${TAG_EMIT_CHAR}`;
-//const TITLE_END_TAG = newRegExp.i!`</title${TAG_EMIT_CHAR}`;
+const TEXTAREA_END_TAG = newRegExp.i`</textarea${TAG_EMIT_CHAR}`;
+const STYLE_END_TAG = newRegExp.i`</style${TAG_EMIT_CHAR}`;
+//const TITLE_END_TAG = newRegExp.i`</title${TAG_EMIT_CHAR}`;
 const TEXTAREA = /^textarea$/i;
 const NATIVE_D = /\.(?:native|\d+)(?:$|\.)/;
 const V_MODEL_ = /^v-model(?::|(?=\.)(?!(?:\.(?:lazy|number|trim))+$))/;
@@ -49,8 +50,8 @@ const HTML5 = `
 	div
 	span
 `.match(/\S+/g)!;
-const HTML_5 = newRegExp.i!`^${groupify(HTML5)}$`;
-const SVG_MathML = newRegExp.i!`^${groupify(`
+const HTML_5 = newRegExp.i`^${groupify(HTML5)}$`;
+const SVG_MathML = newRegExp.i`^${groupify(`
 	annotation-xml
 	color-profile
 	font-face
@@ -110,9 +111,9 @@ const Ref = ($ref$ :string) => {
 let shadow_name :string = '';
 let shadow_hasNames :boolean = false;
 const shadow_names = new Set<string>();
-const SHADOW = /^#([a-z]\w*)(?:(\.)([a-z]\w*))?#$/i;
+const SHADOW = exec.bind(/^#([a-z]\w*)(?:(\.)([a-z]\w*))?#$/i) as (string :string) => [ string, string, string?, string? ] | null;
 const Shadow = ($name_names$ :string) => {
-	const { 1: name, 2: hasNames = '', 3: names = '' } = SHADOW.exec($name_names$) || throwError(`${$name_names$} 格式不符合预期`);
+	const { 1: name, 2: hasNames = '', 3: names = '' } = SHADOW($name_names$) ?? throwError(`${$name_names$} 格式不符合预期`);
 	if ( shadow_name ) {
 		if ( name!==shadow_name ) { throw Error(`不支持多路径 shadow，请使用子命名区分`); }
 		( shadow_hasNames = !!hasNames ) && shadow_names.add(names);
@@ -216,7 +217,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			///	alias = _[0];
 			///	addOn = ' ' + _.slice(1).join(' ');
 			///}
-			if ( STARTS_WITH_UPPER_CASE.test(alias) ) {
+			if ( startsWithUpperCase(alias) ) {
 				if ( alias in partial ) {
 					const _ = partial[alias]!;
 					xName = _.tagName==='_' ? alias + '_' : _.tagName || alias;
@@ -295,7 +296,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 				Vue3: if ( xName==='component' && 'is' in attributes ) { throw SyntaxError(`v-pre 模式下的 component 元素的 is 属性在 Vue 3 中会被忽略（实际上 component 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
 			}
 			Vue2: if ( compatible_template ) { for ( const name in attributes ) { if ( name.includes('\\') ) { compatible_template = false; } } }
-			//for ( const name in attributes ) { if ( name[0]==='_' ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); } }
+			//for ( const name in attributes ) { if ( name[0]==='_' /*:_*/ ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); } }
 		}
 		else {
 			if ( compatible_render && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render = false; }
@@ -425,7 +426,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 							break;
 						case ':':
 							if ( name.includes('.') && name!==':slot.camel' ) { throw SyntaxError(`Vue 3 中 v-bind: 已不再支持 .prop、.sync 修饰符，而单文件组件模板中又没有使用 .camel 的必要，因此请不要包含“.”修饰符内容`); }
-							if ( name[1]==='_' ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); }
+							//if ( name[1]==='_' ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); }
 							Vue3: if ( name.startsWith(':on') ) { throw ReferenceError(`Vue 3 中合并了 listeners 和 attrs 的通道，因此 attrs 的内容不能以 on 起始`); }
 							break;
 						default:

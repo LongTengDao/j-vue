@@ -1,7 +1,7 @@
 export = exports;
 declare namespace exports {
 	
-	export const version :'20.0.3';
+	export const version :'21.0.0';
 	
 	export class SFC {
 		
@@ -54,8 +54,8 @@ declare namespace exports {
 			readonly lang? :string
 		}>;
 		
-		export (mode :'default') :string;
-		export (mode :'const' | 'var' | 'let', from? :string | null) :string;
+		export (mode :'default') :Promise<string>;
+		export (mode :'const' | 'var' | 'let', from? :string | null) :Promise<string>;
 		export (mode :{
 			'var' :'const' | 'var' | 'let',
 			'?j-vue'? :string,
@@ -75,11 +75,13 @@ declare namespace exports {
 		
 	}
 	
-	export function TSD (this :void, {}? :{ readonly [ID in
-		  'j-vue' |
-		'*?j-vue' |
-		'*?j-vue='
+	export function TSD (this :void, ids? :{ readonly [ID in
+		|   'j-vue'
+		| '*?j-vue'
+		| '*?j-vue='
 	]? :string }) :string;
+	
+	export const DOT :string;
 	
 	export { exports as default };
 	

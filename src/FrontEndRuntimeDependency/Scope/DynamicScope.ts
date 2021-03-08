@@ -25,7 +25,7 @@ function scopify (value :string | object | any[], cache :StaticScope) :string {
 					keys = '';
 					values = value.split(' ');
 					for ( index = values.length; index; ) {
-						key = value[--index];
+						key = value[--index]!;
 						if ( key ) { keys = get(cache, key)+' '+keys; }
 					}
 					return keys && keys.slice(0, -1);

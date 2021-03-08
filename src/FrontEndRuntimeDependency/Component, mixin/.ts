@@ -6,7 +6,7 @@ import WeakMap from '.WeakMap?';
 import isArray from '.Array.isArray';
 import from from '.Array.from?';
 import getPrototypeOf from '.Reflect.getPrototypeOf?=Object.getPrototypeOf';
-import setPrototypeOf from '.Object.setPrototypeOf';
+import setPrototypeOf from '.Object.setPrototypeOf?';
 import getOwnPropertyNames from '.Object.getOwnPropertyNames';
 import getOwnPropertyDescriptor from '.Object.getOwnPropertyDescriptor';
 import getOwnPropertySymbols from '.Object.getOwnPropertySymbols?';
@@ -21,6 +21,7 @@ import freeze from '.Object.freeze';
 import PROTO_BUG from '.Object.prototype';
 import hasOwnProperty from '.Object.prototype.hasOwnProperty';
 import isPrototypeOf from '.Object.prototype.isPrototypeOf';
+import document from '.document';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
 
@@ -34,56 +35,79 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 		prototype: {
 			configurable: false,
 			enumerable: false,
-			value: /*#__PURE__*/freeze(create(null, {
-				_render: {
-					enumerable: false,
-					get: undefined,
-					set: function _render (this :Context, value :_Render3 | _Render2) { ( this._ || this.$options ).render = value; },
-				},
-			})),
+			value: null,
 		},
 		render: {
 			enumerable: false,
 			get: undefined,
-			set: function render (value :_Render3 | _Render2) { ( that!._ || that!.$options ).render = value; },
+			set: function render (this :void, value :_Render3 | _Render2) { ( that!._ || that!.$options ).render = value; },
 		},
-		_: {
+		_main: {
 			enumerable: false,
-			value: function toOptions (this :ClassAPI, Vue3? :_Vue3, __dev__? :{ readonly [Key in keyof __Dev__]? :string }) {
-				if ( !isComponentConstructor(this) ) { throw Error('!( this extends Component )._()'); }
-				var DID_OPTIONS = OPTIONS.objects.into(__dev__ || OPTIONS as any).into(Vue3 || OPTIONS as any);
-				var TMP_OPTIONS = new OPTIONS.objectsTmp;
-				var options = ToOptions(
-					this,
-					Vue3 || undefined,
-					__dev__ ? DEV.reduce(function Dev (dev, key) {
-						dev[key] = __dev__![key] || key;
-						return dev;
-					}, create(NULL) as { -readonly [Key in keyof __Dev__] :string }) : null,
-					DID_OPTIONS,
-					TMP_OPTIONS
-				);
-				TMP_OPTIONS.forEach!(function (optionsValue, constructorKey) { DID_OPTIONS.set(constructorKey, optionsValue); });
-				return options;
+			value: function _main (this :ClassAPI) :void {
+				if ( !isComponentConstructor(this) ) { throw TypeError('(!Component)._main()'); }
+				var Vue = Function('return Vue')();
+				typeof Vue==='object'
+					? Vue.createApp(
+						ToOptions(
+							this,
+							Vue,
+							Vue.config.devtools ? ( Vue.config.performance = true, {} ) : undefined
+						)
+					)
+					.mount(document.body)
+					: new ( Vue.extend(
+						ToOptions(
+							this,
+							undefined,
+							Vue.devtools ? ( Vue.config.performance = true, {} ) : undefined
+						)
+					) )()
+					.$mount(( document.body.innerHTML = '<br>', 'br' ));
+			},
+		},
+		_toOptions: {
+			enumerable: false,
+			value: function _toOptions (this :ClassAPI, Vue3? :_Vue3, __dev__? :{ readonly [Key in keyof __Dev__]? :string }) {
+				if ( !isComponentConstructor(this) ) { throw TypeError('(!Component)._toOptions()'); }
+				return ToOptions(this, Vue3, __dev__);
 			},
 		},
 	}
 ));
 
+function ToOptions (this :void, constructor :ClassAPI, Vue3? :_Vue3, __dev__? :{ readonly [Key in keyof __Dev__]? :string }) {
+	var DID_OPTIONS = OPTIONS.objects.into(__dev__ || OPTIONS as any).into(Vue3 || OPTIONS as any);
+	var TMP_OPTIONS = new OPTIONS.objectsTmp;
+	var options = Options(
+		constructor,
+		Vue3 || undefined,
+		__dev__ ? DEV.reduce(function Dev (dev, key) {
+			dev[key] = __dev__![key] || key;
+			return dev;
+		}, create(NULL) as { -readonly [Key in keyof __Dev__] :string }) : null,
+		DID_OPTIONS,
+		TMP_OPTIONS
+	);
+	TMP_OPTIONS.forEach!(function (optionsValue, constructorKey) { DID_OPTIONS.set(constructorKey, optionsValue); });
+	return options;
+}
+
 var _mixins :typeof SYMBOL = Symbol && /*#__PURE__*/Symbol('_mixins') as typeof SYMBOL;
 
-var __PURE__ = /*#__PURE__*/function () {
-	try { return Function('Component,_mixins', '"use strict";return(...mixins)=>class extends Component{constructor(){return Component()}static get[_mixins](){return mixins}}')(Component, _mixins); }
-	catch (error) {}
-}();
+function __PURE__ (this :void, Sub :any, mixins :any[]) {
+	Sub.prototype = null;
+	Sub[_mixins] = mixins;
+	return setPrototypeOf(Sub, Component);
+}
 
 export function mixin (this :void) {
 	return arguments.length
-		? /*#__PURE__*/apply(__PURE__, null, arguments as any)
+		? /*#__PURE__*/__PURE__(function () { return that; }, /*#__PURE__*/from(arguments))
 		: Component;
 }
 
-function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev__ | null, DID_OPTIONS :WeakMap<ClassAPI, _ObjectAPI>, TMP_OPTIONS :Map<ClassAPI, _ObjectAPI>) :_ObjectAPI {
+function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev__ | null, DID_OPTIONS :WeakMap<ClassAPI, _ObjectAPI>, TMP_OPTIONS :Map<ClassAPI, _ObjectAPI>) :_ObjectAPI {
 	
 	var options :_ObjectAPI | undefined = DID_OPTIONS.get(constructor) || TMP_OPTIONS.get(constructor);
 	if ( options ) { return options; }
@@ -96,7 +120,7 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		while ( index!==static_mixins.length ) {
 			var mixin = static_mixins[index++]!;
 			if ( isComponentConstructor(mixin) ) {
-				var mixinOptions = ToOptions(mixin, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
+				var mixinOptions = Options(mixin, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
 				if ( isMixins(mixin) ) {
 					var mixinMixins = mixinOptions.mixins!;
 					var mixinIndex = 0;
@@ -113,13 +137,15 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		return options;
 	}
 	
+	var prototype = constructor.prototype;
+	
 	var Super = OPTIONS.super.get(constructor);
 	if ( !Super ) {
 		OPTIONS.super.set(constructor, Super = getPrototypeOf(constructor));
-		Super===Component || isMixins(Super) || setPrototypeOf(constructor, Component);
+		Super===Component || isMixins(Super) || ( setPrototypeOf(constructor, Component), setPrototypeOf(prototype, null) );
 	}
 	if ( Super!==Component ) {
-		var SuperOptions = ToOptions(Super, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
+		var SuperOptions = Options(Super, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
 		isMixins(Super)
 			? SuperOptions.mixins!.length===1
 			? options.extends = SuperOptions.mixins![0]
@@ -174,7 +200,6 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 		}
 	}
 	
-	var prototype = constructor.prototype;
 	var protoDescriptors :ProtoDescriptors | null = null;
 	
 	var protoNames = getOwnPropertyNames(prototype);
@@ -407,20 +432,37 @@ function ToOptions (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__D
 	//@ts-ignore
 	if ( options.components || options.name || options.displayName ) {
 		var components = options.components = assign(create(NULL), options.components);
-		var cases = create(NULL) as Names;
-		//@ts-ignore
-		options.name && fixPascal(options.name, cases);
-		//@ts-ignore
-		options.displayName && fixPascal(options.displayName, cases);
-		for ( var pascal in components ) {
-			var value = components[pascal]!;
-			if ( __dev__ ) {
+		if ( __dev__ ) {
+			for ( pascal in components ) {
 				if ( !pascal || STARTS_WITH_LOWERCASE.test(pascal) ) { throw Error(__dev__.compile_name); }
 			}
-			if ( isComponentConstructor(value) ) { components[pascal] = ToOptions(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
-			fixPascal(pascal, cases);
+			if ( Vue3 && !options.render && options.template ) {
+				if (
+					//@ts-ignore
+					options.name && INCLUDES_UPPERCASE.test(options.name.slice(1))
+				) { throw Error(__dev__.compile_case); }
+				if (
+					//@ts-ignore
+					options.displayName && INCLUDES_UPPERCASE.test(options.displayName.slice(1))
+				) { throw Error(__dev__.compile_case); }
+				for ( pascal in components ) {
+					if ( INCLUDES_UPPERCASE.test(pascal.slice(1)) ) { throw Error(__dev__.compile_case); }
+				}
+			}
 		}
-		assign(components, cases, components);
+		for ( var pascal in components ) {
+			var value = components[pascal]!;
+			if ( isComponentConstructor(value) ) { components[pascal] = Options(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
+		}
+		if ( !Vue3 ) {
+			var cases = create(NULL) as Names;
+			//@ts-ignore
+			options.name && fixPascal(options.name, cases);
+			//@ts-ignore
+			options.displayName && fixPascal(options.displayName, cases);
+			for ( pascal in components ) { fixPascal(pascal, cases); }
+			assign(components, cases, components);
+		}
 	}
 	
 	return options;
@@ -514,6 +556,7 @@ function devAssertFunction<T> (this :__Dev__, fn :T) {
 	return fn as T extends CallableFunction ? T : never;
 }
 
+var INCLUDES_UPPERCASE = /[A-Z]/;
 var STARTS_WITH_LOWERCASE = /^[a-z]/;
 var CHECKED = WeakMap && /*#__PURE__*/new WeakMap<ClassAPI | _ObjectAPI, Names<ClassAPI | _ObjectAPI>>();
 function forKeys (option :{} | undefined, callback :(name :string) => void) {
@@ -635,8 +678,9 @@ function hyphenate (before :string, after :string, cases :Names) {
 	}
 }
 
-var DEV = [
+var DEV :readonly ( keyof __Dev__ )[] = [
 	'proto',
+	'compile_case',
 	'compile_name',
 	'compile_props',
 	'compile_emits',
@@ -654,9 +698,7 @@ var DEV = [
 	'runtime_reserved',
 	'runtime_enumerable',
 	'runtime_data',
-] as const;
-
-export type __Dev__ = typeof DEV extends readonly ( infer T )[] ? { readonly [Key in Extract<T, string>] :string } : never;
+];
 
 export type ClassAPI =
 	{ new (Vue3? :_Vue3) :Context } &
@@ -700,4 +742,4 @@ type Watcher = {
 
 declare const SYMBOL :unique symbol;
 
-import type { _Component, _Vue, _ObjectAPI, Vue3 as _Vue3, Render2 as _Render2, Render3 as _Render3, Render3Constructor as _Render3Constructor } from 'j-vue';
+import type { _Component, _Vue, _ObjectAPI, Vue3 as _Vue3, Render2 as _Render2, Render3 as _Render3, Render3Constructor as _Render3Constructor, __Dev__ } from 'j-vue';

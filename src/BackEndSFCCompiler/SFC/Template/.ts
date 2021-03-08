@@ -17,10 +17,10 @@ import { ASCII_WHITESPACE as s, TOKENS, AliasName, localOrComponentNameWithoutDo
 import { EMPTY } from '../Attributes';
 import { DELIMITERS_0, DELIMITERS_1 } from './Content/Mustache';
 
-const TEMPLATE_END_TAG = newRegExp.i!`</template${TAG_EMIT_CHAR}`;
+const TEMPLATE_END_TAG = newRegExp.i`</template${TAG_EMIT_CHAR}`;
 
-const ATTR = /\[ *\w[\w-]* *(?:~?= *(?:\w[\w-]*|'[^']*'|"[^"]*") *)?\]/u;
-const PARTS = newRegExp.gu!`
+const ATTR = /\[ *[a-zA-Z][\w-]*(?:\|[a-zA-Z][\w-]*) *(?:~?= *(?:[a-zA-Z][\w-]*|'[^']*'|"[^"]*") *)?\]/u;
+const PARTS = newRegExp.gu`
 	${AliasName}
 	|
 	${localOrComponentNameWithoutDot}
@@ -29,7 +29,7 @@ const PARTS = newRegExp.gu!`
 	|
 	${ATTR}
 `;
-const PARTIALS = newRegExp.gu!`
+const PARTIALS = newRegExp.gu`
 	${AliasName}${s}*
 	=${s}*
 		${localOrComponentNameWithoutDot}${s}*
@@ -42,19 +42,19 @@ const PARTIALS = newRegExp.gu!`
 			${s}*
 		)*
 `;
-const PARTIAL = newRegExp.u!`^
+const PARTIAL = newRegExp.u`^
 	${s}*
 	(?:
 		${PARTIALS};${s}*
 	)*
 $`;
-const PARTIAL_WITH_TAG = newRegExp.u!`^
+const PARTIAL_WITH_TAG = newRegExp.u`^
 	${s}*(?:
 		${AliasName}${s}*;
 	${s}*)*
 $`;
 
-const HTML = newRegExp.i!`^(?:HTML|${s}*text/html${s}*)$`;
+const HTML = newRegExp.i`^(?:HTML|${s}*text/html${s}*)$`;
 
 export let compatible_render :boolean = true;
 
@@ -114,7 +114,8 @@ export default class Template extends Block {
 							const i = selector.indexOf('=');
 							let n = selector.slice(1, i).trim();
 							if ( n.startsWith('v-') || n==='class' || n==='style' ) { throw SyntaxError(`template 功能块的“.abbr”属性值中不能添加“v-”开头的属性或“class”“style”`); }
-							attrs || ( attrs = create(NULL) as Null<string> );
+							n = n.replace('|', ':');
+							attrs ?? ( attrs = create(NULL) as Null<string> );
 							let v :string | EMPTY;
 							if ( i>0 ) {
 								if ( selector[i - 1]==='~' ) {

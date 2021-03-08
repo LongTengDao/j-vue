@@ -6,7 +6,7 @@ import undefined from '.undefined';
 import { newRegExp } from '@ltd/j-regexp';
 import { transpileModule } from '../../dependencies';
 import { ASCII_WHITESPACE as s, TAG_EMIT_CHAR } from '../RE';
-const SCRIPT_END_TAG = newRegExp.i!`</script${TAG_EMIT_CHAR}`;
+const SCRIPT_END_TAG = newRegExp.i`</script${TAG_EMIT_CHAR}`;
 
 /* TODO:
 <https://mimesniff.spec.whatwg.org/#javascript-mime-type>
@@ -28,7 +28,7 @@ text/livescript
 text/x-ecmascript
 text/x-javascript
 */
-const JS = newRegExp.i!`^${s}*(?:
+const JS = newRegExp.i`^${s}*(?:
 	JS|JavaScript(?:${s}*1\.\d)?|JSX
 	|
 	(?:ES|ECMAScript|ECMAS?)(?:${s}*\d+)?
@@ -37,8 +37,8 @@ const JS = newRegExp.i!`^${s}*(?:
 	|
 	(?:text|application)\/(?:ECMAScript|JavaScript(?:;${s}*version${s}*=${s}*1\.\d)?)
 )${s}*$`;
-const TS = newRegExp.i!`^${s}*T(?:S|ypeScript)${s}*$`;
-const TSX = newRegExp.i!`^${s}*TSX${s}*$`;
+const TS = newRegExp.i`^${s}*T(?:S|ypeScript)${s}*$`;
+const TSX = newRegExp.i`^${s}*TSX${s}*$`;
 
 import Block from '../Block';
 import _ from '../private';

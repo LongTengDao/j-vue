@@ -22,7 +22,7 @@ const Pattern = (node :Pattern) :void => {
 		case 'ObjectPattern':// { Pattern }
 			let propertyIndex = 0;
 			for ( const { properties } = node, { length } = properties; propertyIndex!==length; ) {
-				const property = properties[propertyIndex++];
+				const property = properties[propertyIndex++]!;
 				switch ( property.type ) {
 					case 'Property':// { key: valuePattern }
 						Pattern(property.value);
@@ -75,7 +75,7 @@ const Params = (parameters :string, min :number, max :number, attribute :string)
 	if ( !length ) { return; }
 	NAMES.length = 0;
 	let index = 0;
-	while ( index!==length ) { Pattern(params[index++]); }
+	while ( index!==length ) { Pattern(params[index++]!); }
 	if ( NAMES.length ) { throw ReferenceError(`${attribute}创建了以“_”或“$”开头的局部变量“${NAMES.join('”“')}”，这可能使得内层 Vue 模板编译结果以错误的方式运行`); }
 };
 

@@ -115,7 +115,7 @@ export function proData (self :Context, protoDescriptors :ProtoDescriptors | nul
 		var nowNames = Keys(ctx);
 		var index = nowNames.length;
 		while ( index ) {
-			name = nowNames[--index];
+			name = nowNames[--index]!;
 			if ( !( name in restNames ) && name[0]!=='$' ) { data[name] = ctx[name as keyof Context]; }
 		}
 	}
@@ -201,5 +201,5 @@ export function devData (self :Context, protoDescriptors :ProtoDescriptors | nul
 }
 
 import type { ShadowAssigner, ShadowChecker } from './Shadow';
-import type { ProtoDescriptors, ClassAPI, Context, Data, __Dev__, Names } from './';
-import type { Vue3 as _Vue3 } from 'j-vue';
+import type { ProtoDescriptors, ClassAPI, Context, Data, Names } from './';
+import type { Vue3 as _Vue3, __Dev__ } from 'j-vue';

@@ -2,6 +2,7 @@ import Error from '.Error';
 import SyntaxError from '.SyntaxError';
 import undefined from '.undefined';
 
+import { StringLiteral } from '@ltd/j-es';
 import { Null } from '@ltd/j-orderify';
 
 import * as Entities from './Entities';
@@ -33,10 +34,10 @@ export default class Attributes extends Null<string> {
 			let _ = 0;
 			let index = 0;
 			for ( const { length } = pairs; index!==length; ) {
-				let name = pairs[index++];
+				let name = pairs[index++]!;
 				let value :string | EMPTY;
 				if ( name.includes('=') ) {
-					( { 1: name, 2: value } = ATTRIBUTE_NAME_VALUE.exec(name)! );
+					( { 1: name, 2: value } = ATTRIBUTE_NAME_VALUE(name)! );
 					if ( value[0]==='"' || value[0]==='\'' ) { value = value.slice(1, -1); }
 					//if ( BAD_ENTITY.test(value) && (
 					//	name==='href' ? xName==='a' || xName==='area' :
@@ -44,8 +45,8 @@ export default class Attributes extends Null<string> {
 					//) ) { throw Error(`${xName} 标签中的 ${name} 属性值 ${value} 中存在可疑的实体，无论它是否是 URI 参数，请明确转义`); }
 					value = Entities.unescape(value);
 				}
-				if ( name[0]==='_' ) { ++_; }
-				else if ( SHORTHAND ) {///////////////////
+				if ( name[0]==='_' || name[0]===':' && ( name.length!==1 && name[1]==='_' ) ) { ++_; }
+				if ( SHORTHAND ) {///////////////////
 					switch ( name[0] ) {
 						case ':':
 						case '@':
@@ -85,33 +86,41 @@ export default class Attributes extends Null<string> {
 		let k = '';
 		let kv = '';
 		for ( const name in attributes ) {
+			let classItem :string;
+			let condition :string | EMPTY;
 			if ( name[0]==='_' ) {
-				let classItem = name.slice(1);
-				if ( keys ) {
-					if ( !( classItem in keys ) ) { throw Error(`${classItem} 没有陈列在 template .keys 中，这种组合是无意义的`); }
-					classItem = `__${classItem}__`;
-				}
-				else { classItem = NameAs__Key__(classItem); }
-				const condition = attributes[name];
-				if ( condition ) {
-					if ( v_pre ) { throw Error(`v-pre 下的 ${name}="${condition}" 是无法转写的`); }
-					kv += `,'${classItem}':(${condition})`;
-				}
-				else { k += ' ' + classItem; }
-				delete attributes[name];
-				if ( !--attributes.#_ ) { break; }
+				if ( attributes[name]!==EMPTY ) { throw Error(`${name}="${attributes[name]}" 的值是无意义的`); }
+				classItem = name.slice(1);
 			}
+			else if ( name[0]===':' && name[1]==='_' ) {
+				condition = attributes[name];
+				if ( !condition ) { throw Error(`${name} 必须要有值`); }
+				if ( v_pre ) { throw Error(`v-pre 下的 ${name}="${condition}" 是无法转写的`); }
+				classItem = name.slice(2);
+			}
+			else { continue; }
+			if ( keys ) {
+				if ( !( classItem in keys ) ) { throw Error(`${classItem} 没有陈列在 template .keys 中，这种组合是无意义的`); }
+				classItem = `__${classItem}__`;
+			}
+			else { classItem = NameAs__Key__(classItem); }
+			condition
+				? kv += `+((${condition})?' ${classItem}':'')`
+				: k += ' ' + classItem;
+			delete attributes[name];
+			if ( !--attributes.#_ ) { break; }
 		}
-		if ( k ) {
-			attributes['class'] = attributes['class'] ? k.slice(1) + ' ' + attributes['class'] : k.slice(1);
-		}
+		
 		if ( kv ) {
-			if ( kv.lastIndexOf(',') ) { kv = `{${kv.slice(1)}}`; }
-			else {
-				const i = kv.indexOf(':');
-				kv = `${kv.slice(i + 1)}?'${kv.slice(1, i)}':''`;
+			if ( attributes['class'] ) {
+				delete attributes['class'];
+				kv = StringLiteral(attributes['class'] + k) + kv;
 			}
+			else { kv = k ? StringLiteral(k.slice(1)) + kv : kv.slice(1); }
 			attributes[':class'] = attributes[':class'] ? `[${kv},${attributes[':class']}]` : kv;
+		}
+		else if ( k ) {
+			attributes['class'] = attributes['class'] ? attributes['class'] + k : k.slice(1);
 		}
 	}
 	
