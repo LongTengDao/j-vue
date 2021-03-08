@@ -92,9 +92,9 @@ var NULL = (
 
 var TypeError$1 = TypeError;
 
-var apply = typeof Reflect!=='undefined' ? Reflect.apply : undefined$1;
+var apply = typeof Reflect==='undefined' ? undefined$1 : Reflect.apply;
 
-var toStringTag = typeof Symbol!=='undefined' ? Symbol.toStringTag : undefined$1;
+var toStringTag = typeof Symbol==='undefined' ? undefined$1 : Symbol.toStringTag;
 
 var assign = Object.assign;
 
@@ -189,7 +189,7 @@ function sourcify (group       , needEscape         )         {
 
 /*¡ j-regexp */
 
-var Symbol$1 = typeof Symbol!=='undefined' ? Symbol : undefined$1;
+var Symbol$1 = typeof Symbol==='undefined' ? undefined$1 : Symbol;
 
 var document$1 = document;
 
@@ -401,7 +401,7 @@ function remove (style                  )                {
 	return remove;
 }
 
-var WeakMap$1 = typeof WeakMap!=='undefined' ? WeakMap : undefined$1;
+var WeakMap$1 = typeof WeakMap==='undefined' ? undefined$1 : WeakMap;
 
 var from = Array.from;
 
@@ -417,11 +417,11 @@ var getOwnPropertySymbols = Object.getOwnPropertySymbols;
 
 var defineProperties = Object.defineProperties;
 
-var get = typeof Reflect!=='undefined' ? Reflect.get : undefined$1;
+var get = typeof Reflect==='undefined' ? undefined$1 : Reflect.get;
 
 var Keys = Object.keys;
 
-var OwnKeys = typeof Reflect!=='undefined' ? Reflect.ownKeys : undefined$1;
+var OwnKeys = typeof Reflect==='undefined' ? undefined$1 : Reflect.ownKeys;
 
 var getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors;
 

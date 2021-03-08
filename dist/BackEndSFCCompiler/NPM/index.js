@@ -3777,7 +3777,7 @@ var Exec                                           = bind
 	};
 
 var NT$1 = /[\n\t]+/g;
-var ESCAPE = /\\./g;
+var ESCAPE$1 = /\\./g;
 function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
 
 function RE (               template                      ) {
@@ -3809,7 +3809,7 @@ function RE (               template                      ) {
 		}
 		source += raw[index++] .replace(NT$1, '');
 	}
-	var re         = RegExp$1(U ? source = source.replace(ESCAPE, graveAccentReplacer) : source, this.flags);
+	var re         = RegExp$1(U ? source = source.replace(ESCAPE$1, graveAccentReplacer) : source, this.flags);
 	var test = re.test = Test(re);
 	var exec = re.exec = Exec(re);
 	test.source = exec.source = source;
@@ -3941,8 +3941,8 @@ const url_token = /*#__PURE__*/( () => newRegExp.is `
 |
 	domain\([${ws}]*	[a-z\d\-.:]*	[${ws}]*\)
 ` )();
-const ESCAPE$1 = /\\(?:([\dA-F]{1,6})(?:[ \t\n\f]|\r\n?)?|([\n\f]|\r\n?)|(.))/gis;
-const evaluate = (literal        ) => literal.replace(ESCAPE$1, (match        , hex         , char         ) => hex ? fromCodePoint(parseInt$1(hex, 16)) : char ?? '');
+const ESCAPE = /\\(?:([\dA-F]{1,6})(?:[ \t\n\f]|\r\n?)?|([\n\f]|\r\n?)|(.))/gis;
+const evaluate = (literal        ) => literal.replace(ESCAPE, (match        , hex         , char         ) => hex ? fromCodePoint(parseInt$1(hex, 16)) : char ?? '');
 const _ws_ = /*#__PURE__*/( () => newRegExp.gi `
 	^
 		${ws}+
