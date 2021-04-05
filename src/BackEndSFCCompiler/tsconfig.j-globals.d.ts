@@ -131,8 +131,6 @@ declare module '.SyntaxError' { export default SyntaxError; }
 
 declare module '.TypeError' { export default TypeError; }
 
-declare module '.URIError' { export default URIError; }
-
 declare module '.WeakMap' { export default constructor;
 	class constructor<K extends object, V> extends WeakMap<K, V> { constructor (entries? :Iterable<{ readonly 0 :K, readonly 1 :V }>) }
 }

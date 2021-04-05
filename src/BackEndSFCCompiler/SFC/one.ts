@@ -1,36 +1,30 @@
 import Error from '.Error';
-import URIError from '.URIError';
-import assign from '.Object.assign';
-import create from '.Object.create';
-import NULL from '.null.prototype';
 import Null from '.null';
 
 import { rollup, acornInjectPlugins } from '../dependencies';
 
-const rollupOptions = {
-	onwarn (warning :any) :void {
-		if ( typeof warning==='string' ) { throw Error(warning); }
-		const { code } = warning;
-		if ( code!=='UNUSED_EXTERNAL_IMPORT'/* && code!=='THIS_IS_UNDEFINED'*/ ) { throw warning; }
-	},
-	acornInjectPlugins,
-	strictDeprecations: true,
-	treeshake: false,
-	context: 'this',
-} as const;
+const onwarn = (warning :any) :void => {
+	if ( typeof warning==='string' ) { throw Error(warning); }
+	const { code } = warning;
+	if ( code!=='UNUSED_EXTERNAL_IMPORT'/* && code!=='THIS_IS_UNDEFINED'*/ ) { throw warning; }
+};
 
-const TRUE = Null({
-	format: 'es',
-	sourcemap: true,
-} as const);
-const FALSE = Null({
-	format: 'es',
-	sourcemap: false,
-} as const);
-const INLINE = Null({
-	format: 'es',
-	sourcemap: 'inline',
-} as const);
+const paths = (id :string) :string => id;
+
+const VAR = {
+	ecmaVersion: 5,
+	allowReserved: true,
+	sourceType: 'module',
+	allowAwaitOutsideFunction: false,
+	//preserveParens: true,
+} as const;
+const X_VAR = {
+	ecmaVersion: 2014,
+	allowReserved: true,
+	sourceType: 'module',
+	allowAwaitOutsideFunction: true,
+	//preserveParens: true,
+} as const;
 
 export { one as default };
 const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = from===null ? '?j-vue=' : '?j-vue', map = false, src, lang } :{
@@ -47,30 +41,30 @@ const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner!); }
 	}
 	const main :string = await sfc.export('default', x_from) as string;
-	let round = 1;
-	const bundle = await rollup(assign(create(NULL), rollupOptions, {
-		acorn: Null({
-			ecmaVersion: x_var==='var' ? 5 : 2014,
-			allowReserved: true,
-			sourceType: 'module',
-			allowAwaitOutsideFunction: x_var!=='var',
-			//preserveParens: true,
-		} as const),
-		input: '/'+'_'.repeat(main.length),
-		external: (path :string) :boolean => path!==x_from,
+	let round = 'resolvingMain';
+	const bundle = await rollup(Null({
+		onwarn,
+		acornInjectPlugins,
+		strictDeprecations: true,
+		treeshake: false,
+		context: 'this',
+		acorn: Null(x_var==='var' ? VAR : X_VAR),
+		input: '\x00'.repeat(main.length),
+		external: (id :string) :boolean => id!==x_from,
 		plugins: [
 			Null({
-				resolveId (path :string) :string {
-					if ( round===1 || path===x_from ) { return path; }
-					throw URIError(path);
+				resolveId (id :string) :string {
+					if ( round==='resolvingMain' || id===x_from ) { return id; }
+					throw Error(`jVue 内部错误：resolveId(${id})`);
 				},
-				async load () :Promise<string> {
-					if ( round===1 ) {
-						round = 2;
+				async load (id :string) :Promise<string> {
+					if ( round==='resolvingMain' ) {
+						round = 'mainLoaded';
 						return main;
 					}
-					if ( round===3 ) { throw Error('3'); }
-					round = 3;
+					if ( id!==x_from ) { throw Error(`jVue 内部错误：load(${id})`); }
+					if ( round!=='mainLoaded' ) { throw Error(`jVue 内部错误：re-load(${id})`); }
+					round = 'xLoaded';
 					const { template, styles } = sfc;
 					if ( src ) {
 						if ( template && template.src ) { template.inner = await src(template.src); }
@@ -93,11 +87,15 @@ const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 					const { code } = { ports } = await sfc.export(x_var, from) as { ports :string[], code :string };
 					return code;
 				},
-			})
+			}),
 		],
 	}));
-	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
-	if ( output.length!==1 ) { throw Error(''+output.length); }
+	const { output } = await bundle.generate(Null({
+		format: 'es',
+		sourcemap: map,
+		paths,
+	}));
+	if ( output.length!==1 ) { throw Error(`jVue 内部错误：output.length===${output.length}`); }
 	const only = output[0];
 	return map===true
 		? { ports, code: only.code, map: only.map }

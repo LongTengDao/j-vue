@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '22.0.0';
+const version = '22.0.1';
 
 const Error$1 = Error;
 
@@ -67,14 +67,14 @@ const toStringTag = Symbol.toStringTag;
 
 const defineProperty = Object.defineProperty;
 
-const assign = Object.assign;
+const Object_assign = Object.assign;
 
 const Default = (
 	/*! j-globals: default (internal) */
 	function Default (exports, addOnOrigin) {
 		return /*#__PURE__*/ function Module (exports, addOnOrigin) {
 			if ( !addOnOrigin ) { addOnOrigin = exports; exports = create(NULL); }
-			if ( assign ) { assign(exports, addOnOrigin); }
+			if ( Object_assign ) { Object_assign(exports, addOnOrigin); }
 			else { for ( var key in addOnOrigin ) { if ( hasOwn(addOnOrigin, key) ) { exports[key] = addOnOrigin[key]; } } }
 			exports.default = exports;
 			if ( toStringTag ) {
@@ -871,12 +871,12 @@ const target2proxy = /*#__PURE__*/newWeakMap()
 	                                                   
  ;
 
-const handlers                       = /*#__PURE__*/assign(create(NULL), {
+const handlers                       = /*#__PURE__*/Object_assign(create(NULL), {
 	defineProperty:                 (target                   , key   , descriptor                    )          => {
 		if ( hasOwnProperty_call(target, key) ) {
-			return Reflect_defineProperty(target, key, assign(create(NULL), descriptor));
+			return Reflect_defineProperty(target, key, Object_assign(create(NULL), descriptor));
 		}
-		if ( Reflect_defineProperty(target, key, assign(create(NULL), descriptor)) ) {
+		if ( Reflect_defineProperty(target, key, Object_assign(create(NULL), descriptor)) ) {
 			const keeper = target2keeper.get(target) ;
 			keeper[keeper.length] = key;
 			return true;
@@ -908,7 +908,7 @@ const orderify =                    (object   )    => {
 	if ( proxy2target.has(object) ) { return object; }
 	let proxy = target2proxy.get(object)                 ;
 	if ( proxy ) { return proxy; }
-	proxy = newProxy(object, assign(new Keeper          (), Reflect_ownKeys(object)));
+	proxy = newProxy(object, Object_assign(new Keeper          (), Reflect_ownKeys(object)));
 	target2proxy.set(object, proxy);
 	return proxy;
 };
@@ -932,7 +932,7 @@ const Null$1 = /*#__PURE__*/function () {
 	}
 	//@ts-ignore
 	Null.prototype = null;
-	defineProperty(Null, 'name', assign(create(NULL), { value: '', configurable: false }));
+	defineProperty(Null, 'name', Object_assign(create(NULL), { value: '', configurable: false }));
 	//delete Null.length;
 	freeze(Null);
 	return Null;
@@ -7836,32 +7836,28 @@ async function From (tab        , mode                         , styles         
 	
 }
 
-const URIError$1 = URIError;
+const onwarn = (warning     )       => {
+	if ( typeof warning==='string' ) { throw Error$1(warning); }
+	const { code } = warning;
+	if ( code!=='UNUSED_EXTERNAL_IMPORT'/* && code!=='THIS_IS_UNDEFINED'*/ ) { throw warning; }
+};
 
-const rollupOptions = {
-	onwarn (warning     )       {
-		if ( typeof warning==='string' ) { throw Error$1(warning); }
-		const { code } = warning;
-		if ( code!=='UNUSED_EXTERNAL_IMPORT'/* && code!=='THIS_IS_UNDEFINED'*/ ) { throw warning; }
-	},
-	acornInjectPlugins,
-	strictDeprecations: true,
-	treeshake: false,
-	context: 'this',
+const paths = (id        )         => id;
+
+const VAR = {
+	ecmaVersion: 5,
+	allowReserved: true,
+	sourceType: 'module',
+	allowAwaitOutsideFunction: false,
+	//preserveParens: true,
 }         ;
-
-const TRUE = Null({
-	format: 'es',
-	sourcemap: true,
-}         );
-const FALSE = Null({
-	format: 'es',
-	sourcemap: false,
-}         );
-const INLINE = Null({
-	format: 'es',
-	sourcemap: 'inline',
-}         );
+const X_VAR = {
+	ecmaVersion: 2014,
+	allowReserved: true,
+	sourceType: 'module',
+	allowAwaitOutsideFunction: true,
+	//preserveParens: true,
+}         ;
 const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = from===null ? '?j-vue=' : '?j-vue', map = false, src, lang }   
 	                               
 	                  
@@ -7876,30 +7872,30 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner ); }
 	}
 	const main         = await sfc.export('default', x_from)          ;
-	let round = 1;
-	const bundle = await rollup(assign(create(NULL), rollupOptions, {
-		acorn: Null({
-			ecmaVersion: x_var==='var' ? 5 : 2014,
-			allowReserved: true,
-			sourceType: 'module',
-			allowAwaitOutsideFunction: x_var!=='var',
-			//preserveParens: true,
-		}         ),
-		input: '/'+'_'.repeat(main.length),
-		external: (path        )          => path!==x_from,
+	let round = 'resolvingMain';
+	const bundle = await rollup(Null({
+		onwarn,
+		acornInjectPlugins,
+		strictDeprecations: true,
+		treeshake: false,
+		context: 'this',
+		acorn: Null(x_var==='var' ? VAR : X_VAR),
+		input: '\x00'.repeat(main.length),
+		external: (id        )          => id!==x_from,
 		plugins: [
 			Null({
-				resolveId (path        )         {
-					if ( round===1 || path===x_from ) { return path; }
-					throw URIError$1(path);
+				resolveId (id        )         {
+					if ( round==='resolvingMain' || id===x_from ) { return id; }
+					throw Error$1(`jVue 内部错误：resolveId(${id})`);
 				},
-				async load ()                  {
-					if ( round===1 ) {
-						round = 2;
+				async load (id        )                  {
+					if ( round==='resolvingMain' ) {
+						round = 'mainLoaded';
 						return main;
 					}
-					if ( round===3 ) { throw Error$1('3'); }
-					round = 3;
+					if ( id!==x_from ) { throw Error$1(`jVue 内部错误：load(${id})`); }
+					if ( round!=='mainLoaded' ) { throw Error$1(`jVue 内部错误：re-load(${id})`); }
+					round = 'xLoaded';
 					const { template, styles } = sfc;
 					if ( src ) {
 						if ( template && template.src ) { template.inner = await src(template.src); }
@@ -7922,11 +7918,15 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 					const { code } = { ports } = await sfc.export(x_var, from)                                     ;
 					return code;
 				},
-			})
+			}),
 		],
 	}));
-	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
-	if ( output.length!==1 ) { throw Error$1(''+output.length); }
+	const { output } = await bundle.generate(Null({
+		format: 'es',
+		sourcemap: map,
+		paths,
+	}));
+	if ( output.length!==1 ) { throw Error$1(`jVue 内部错误：output.length===${output.length}`); }
 	const only = output[0];
 	return map===true
 		? { ports, code: only.code, map: only.map }
