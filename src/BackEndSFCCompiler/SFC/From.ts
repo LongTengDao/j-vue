@@ -25,9 +25,10 @@ const VisibleStringLiteral = (id :string) :string => {
 const is__KEY__ = newRegExp`^__${KEYS}__$`.test;
 const test_bind = test.bind.bind(test as any) as unknown as (this :void, regExp :RegExp) => (this :void, string :string) => boolean;
 
-export default async function From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string) :Promise<string> {
+export default async function From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string, bom :'\uFEFF' | '') :Promise<{ ports :string[] | null, code :string }> {
 	
-	let code = '';
+	let ports :string[] | null = null;
+	let code :string = bom;
 	
 	const options = { indent: tab, newline: eol, newlineSelector: false, newlineProperty: false };
 	
@@ -70,7 +71,8 @@ export default async function From (tab :string, mode :'const' | 'var' | 'let', 
 			code += `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
 			code += `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
-				code += `export ${await Render3(innerHTML, mode, ws, _(template))}${eol}`;/// (); import!
+				const { Render } = { ports } = await Render3(innerHTML, mode, ws, _(template));/// (); import!
+				code += `export ${Render}${eol}`;
 			}
 			if ( compatible_render ) {
 				const { render, staticRenderFns } = await Render2(innerHTML, mode, ws);
@@ -84,7 +86,7 @@ export default async function From (tab :string, mode :'const' | 'var' | 'let', 
 			}
 		}
 		code += eol;
-		return code;
+		return { ports, code };
 	}
 	
 	const _from_ = VisibleStringLiteral(from);
@@ -127,7 +129,8 @@ export default async function From (tab :string, mode :'const' | 'var' | 'let', 
 		let index = 0;
 		while ( index!==lines_length ) { code += lines[index++]; }
 		if ( mode!=='var' ) {
-			code += `export ${mode} Render = /*#__PURE__*/_Render(${await Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
+			const { Render } = { ports } = await Render3(innerHTML, mode, null, _(template));/// (); import or ~~runtime~~?
+			code += `export ${mode} Render = /*#__PURE__*/_Render(${Render}, ${scope});${eol}`;
 		}
 		if ( compatible_render ) {
 			const { render, staticRenderFns } = await Render2(innerHTML, mode, null);
@@ -143,7 +146,7 @@ export default async function From (tab :string, mode :'const' | 'var' | 'let', 
 		code += `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
 	}
 	
-	return code;
+	return { ports, code };
 	
 };
 

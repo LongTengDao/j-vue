@@ -70,14 +70,14 @@ export default class SFC {
 	template :Template | null = null;
 	readonly customBlocks :CustomBlock[] = [];
 	
-	async export (this :SFC, mode :'default' | 'const' | 'var' | 'let' | {
+	export (this :SFC, mode :'default' | 'const' | 'var' | 'let' | {
 		'var' :'const' | 'var' | 'let',
 		'?j-vue'? :string,
 		'j-vue'? :string | null,
 		'map'? :boolean | 'inline',
 		'src'? (src :string) :Promise<string>,
 		'lang'? (lang :string, inner :string) :string | Promise<string>,
-	}, from :string | null = 'j-vue') :Promise<string | { code :string, map :any }> {
+	}, from :string | null = 'j-vue') :string | Promise<{ ports :string[] | null, code :string, map? :any }> {
 		if ( typeof mode==='object' ) { return one(this, mode); }
 		const { bom, tab, eol, script, styles, template } = this;
 		if ( mode==='default' ) {
@@ -87,9 +87,7 @@ export default class SFC {
 				? bom + `export { default } from ${StringLiteral(script.src!)};`
 				: bom + script.innerJS.replace(ES_EOL, eol);
 		}
-		else {
-			return bom + await From(tab, mode, styles, template, from, eol);
-		}
+		else { return From(tab, mode, styles, template, from, eol, bom); }
 	}
 	
 };

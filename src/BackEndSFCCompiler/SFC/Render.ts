@@ -125,7 +125,8 @@ const MinifyBODY = async (files :string) => {
 	return code!;
 };
 
-const CONST_RETURN = exec.bind(/^(?:cons|le)t ({ [\w :,]+ }) = Vue\n(.*)$/s) as (string :string) => [ string, string, string ] | null;
+const CONST_RETURN = exec.bind(/^(?:cons|le)t ({[\w :,]*}) = Vue\n(.*)$/s) as (string :string) => [ string, string, string ] | null;
+const PORTS = /[\w$]+(?= *[:,}])/g;
 
 const with_this__return_ = 'with(this){return ';
 
@@ -191,7 +192,7 @@ const NecessaryStringLiteral = async (body :string, name :null | number) :Promis
 const onError = (error :SyntaxError) :never => { throw Error(`.vue template 官方编译未通过：\n       ${error.message}`); };
 const isCustomElement = test.bind(/^(?![A-Z]|base-transition$|component$|keep-alive$|s(?:lot|uspense)$|te(?:mplate|leport)$)/);
 const NSS = /\n+((?:  )*)/g;
-export const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }) :Promise<string> => {
+export const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }) :Promise<{ ports :string[], Render :string }> => {
 	const { code } = compile3[mode](innerHTML, {
 		onError,
 		isCustomElement,
@@ -201,6 +202,7 @@ export const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ re
 		hoistStatic: true,
 	});
 	const { 1: params, 2: rest } = CONST_RETURN(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
+	const ports = params.match(PORTS) ?? [];
 	let Render = `'use strict';(${params})=>{${rest}};`;
 	ecma = parserOptions.ecmaVersion = 2014;
 	const globals = findGlobals(parse(Render, parserOptions));
@@ -213,9 +215,10 @@ export const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ re
 	const index = Render.indexOf('=>');
 	const left = Render.slice(0, index);
 	let right = Render.slice(index + 2);
-	return ws
+	Render = ws
 		? `class Render {${ws.eol}${ws.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${ws.eol}${ws.tab}${ws.tab}return ${right}`};${ws.eol}${ws.tab}}${sheet ? `${ws.eol}${ws.tab}static sheet = ${Sheets(sheet, ws)};` : ''}${shadow ? `${ws.eol}${ws.tab}static shadow = ${StringLiteral(shadow)};` : ''}${ws.eol}}`
 		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${( await MinifyBODY(`'use strict';(${Sheets(sheet)});`) ).slice(14, -2)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
+	return { ports, Render };
 };
 
 export const Render2 = async (innerHTML :string, mode :'var' | 'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null) :Promise<{ readonly render :string, readonly staticRenderFns :readonly string[] }> => {

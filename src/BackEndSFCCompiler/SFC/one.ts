@@ -40,12 +40,13 @@ const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 	map? :boolean | 'inline',
 	src? (src :string) :Promise<string>,
 	lang? (lang :string, inner :string) :string | Promise<string>,
-}) :Promise<string | { code :string, map :any }> => {
+}) :Promise<{ ports :string[] | null, code :string, map? :any }> => {
+	let ports :string[] | null = null;
 	if ( lang ) {
 		const { script } = sfc;
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner!); }
 	}
-	const main :string = sfc.export('default', x_from) as string;
+	const main :string = await sfc.export('default', x_from) as string;
 	let round = 1;
 	const bundle = await rollup(assign(create(NULL), rollupOptions, {
 		acorn: Null({
@@ -76,7 +77,7 @@ const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 						const { length } = styles;
 						let index = 0;
 						while ( index!==length ) {
-							const style = styles[index++];
+							const style = styles[index++]!;
 							if ( style.src ) { style.inner = await src(style.src); }
 						}
 					}
@@ -85,11 +86,12 @@ const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 						const { length } = styles;
 						let index = 0;
 						while ( index!==length ) {
-							const style = styles[index++];
+							const style = styles[index++]!;
 							if ( style.lang ) { style.innerCSS = await lang(style.lang, style.inner!); }
 						}
 					}
-					return sfc.export(x_var, from) as string;
+					const { code } = { ports } = await sfc.export(x_var, from) as { ports :string[], code :string };
+					return code;
 				},
 			})
 		],
@@ -97,7 +99,9 @@ const one = async (sfc :SFC, { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
 	if ( output.length!==1 ) { throw Error(''+output.length); }
 	const only = output[0];
-	return map===true ? { code: only.code, map: only.map } : only.code;
+	return map===true
+		? { ports, code: only.code, map: only.map }
+		: { ports, code: only.code };
 };
 
 import type SFC from './';

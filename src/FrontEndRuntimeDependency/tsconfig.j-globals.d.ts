@@ -15,7 +15,7 @@ declare module '.Error' { export default Error; }
 
 declare module '.Function' { export default Function; }
 declare module '.Function.prototype.apply' { export default Function.prototype.apply; }
-declare module '.Function.prototype.bind' { export default Function.prototype.bind; }
+declare module '.Function.prototype.bind?' { export default Function.prototype.bind; }
 
 declare module '.Infinity' { export default Infinity; }
 

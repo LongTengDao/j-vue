@@ -1,7 +1,7 @@
 export = exports;
 declare namespace exports {
 	
-	export const version :'21.0.2';
+	export const version :'22.0.0';
 	
 	export class SFC {
 		
@@ -54,8 +54,8 @@ declare namespace exports {
 			readonly lang? :string
 		}>;
 		
-		export (mode :'default') :Promise<string>;
-		export (mode :'const' | 'var' | 'let', from? :string | null) :Promise<string>;
+		export (mode :'default') :string;
+		export (mode :'const' | 'var' | 'let', from? :string | null) :Promise<object & { ports :string[] | null, code :string }>;
 		export (mode :{
 			'var' :'const' | 'var' | 'let',
 			'?j-vue'? :string,
@@ -63,7 +63,7 @@ declare namespace exports {
 			'map'? :false | 'inline',
 			'src'? (src :string) :Promise<string>,
 			'lang'? (lang :string, inner :string) :string | Promise<string>,
-		}) :Promise<string>;
+		}) :Promise<object & { ports :string[] | null, code :string }>;
 		export (mode :{
 			'var' :'const' | 'var' | 'let',
 			'?j-vue'? :string,
@@ -71,7 +71,7 @@ declare namespace exports {
 			'map' :true,
 			'src'? (src :string) :Promise<string>,
 			'lang'? (lang :string, inner :string) :string | Promise<string>,
-		}) :Promise<object & { code :string, map :any }>;
+		}) :Promise<object & { ports :string[] | null, code :string, map :any }>;
 		
 	}
 	

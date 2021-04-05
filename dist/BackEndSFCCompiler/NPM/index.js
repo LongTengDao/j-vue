@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '21.0.2';
+const version = '22.0.0';
 
 const Error$1 = Error;
 
@@ -13,6 +13,10 @@ const isBuffer = Buffer.isBuffer;
 const freeze = Object.freeze;
 
 const undefined$1 = void 0;
+
+const test = RegExp.prototype.test;
+
+const bind = Function.prototype.bind;
 
 const RegExp$1 = RegExp;
 
@@ -57,8 +61,6 @@ var hasOwn = hasOwnProperty.bind
 
 var create$1 = Object.create;
 
-const test = RegExp.prototype.test;
-
 const create = Object.create;
 
 const toStringTag = Symbol.toStringTag;
@@ -88,10 +90,10 @@ const Default = (
 );
 
 /*!@preserve@license
- * 模块名称：ES
+ * 模块名称：j-es
  * 模块功能：ECMAScript 语法相关共享实用程序。从属于“简计划”。
    　　　　　ECMAScript syntax util. Belong to "Plan J".
- * 模块版本：0.11.0
+ * 模块版本：0.12.0
  * 许可条款：LGPL-3.0
  * 所属作者：龙腾道 <LongTengDao@LongTengDao.com> (www.LongTengDao.com)
  * 问题反馈：https://GitHub.com/LongTengDao/j-es/issues
@@ -132,7 +134,7 @@ function StringLiteral (value        )         {
 		+'\'';
 }
 
-/*¡ ES */
+/*¡ j-es */
 
 const from = (
 	/*! j-globals: Buffer.from (fallback) */
@@ -267,8 +269,6 @@ function buffer2object (buffer        , options          )                      
 
 /*¡ j-utf */
 
-const bind = Function.prototype.bind;
-
 const exec = RegExp.prototype.exec;
 
 const Proxy$1 = Proxy;
@@ -344,7 +344,7 @@ function RE$1 (               template                      ) {
 	return re;
 }
 
-var RE_bind$1 = bind && /*#__PURE__*/bind.bind(RE$1       );
+var RE_bind$1 = /*#__PURE__*/bind.bind(RE$1       );
 
 function Context$1 (flags        )          {
 	return {
@@ -356,23 +356,26 @@ function Context$1 (flags        )          {
 	};
 }
 
-var CONTEXT$1          = Proxy$1 && /*#__PURE__*/Context$1('');
+var CONTEXT$1          = /*#__PURE__*/Context$1('');
 
-var newRegExp$1 = Proxy$1 && /*#__PURE__*/new Proxy$1(RE$1, /*#__PURE__*/freeze({
-	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT$1, args); },
-	get: function (RE, flags        ) { return RE_bind$1(Context$1(flags)); },
-	defineProperty: function () { return false; },
+var newRegExp$1 = /*#__PURE__*/new Proxy$1(RE$1, {
+	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT$1, args); }
+	,
+	get: function (RE, flags        ) { return RE_bind$1(Context$1(flags)); }
+	,
+	defineProperty: function () { return false; }
+	,
 	preventExtensions: function () { return false; }
-}));
+});
 
 var NEED_TO_ESCAPE_IN_REGEXP$1 = /^[$()*+\-.?[\\\]^{|]/;
 var SURROGATE_PAIR$1 = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
-var GROUP$1 = create(NULL)         ;
+var GROUP$1 = /*#__PURE__*/create(NULL)         ;
 
 function groupify$1 (branches                   , uFlag          , noEscape          )         {
 	var group = create(NULL)         ;
 	var appendBranch = uFlag ? appendPointBranch$1 : appendCodeBranch$1;
-	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index]); }
+	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index] ); }
 	return sourcify$1(group, !noEscape);
 }
 function appendPointBranch$1 (group       , branch        )       {
@@ -397,20 +400,20 @@ function sourcify$1 (group       , needEscape         )         {
 	var noEmptyBranch          = true;
 	for ( var character in group ) {
 		if ( character ) {
-			var sub_branches         = sourcify$1(group[character], needEscape);
-			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP$1.test(character) ) { character = '\\'+character; }
-			sub_branches ? branches.push(character+sub_branches) : singleCharactersBranch.push(character);
+			var sub_branches         = sourcify$1(group[character] , needEscape);
+			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP$1.test(character) ) { character = '\\' + character; }
+			sub_branches ? branches.push(character + sub_branches) : singleCharactersBranch.push(character);
 		}
 		else { noEmptyBranch = false; }
 	}
-	singleCharactersBranch.length && branches.unshift(singleCharactersBranch.length===1 ? singleCharactersBranch[0] : '['+singleCharactersBranch.join('')+']');
+	singleCharactersBranch.length && branches.unshift(singleCharactersBranch.length===1 ? singleCharactersBranch[0]  : '[' + singleCharactersBranch.join('') + ']');
 	return branches.length===0
 		? ''
 		: ( branches.length===1 && ( singleCharactersBranch.length || noEmptyBranch )
 			? branches[0]
-			: '(?:'+branches.join('|')+')'
+			: '(?:' + branches.join('|') + ')'
 		)
-		+( noEmptyBranch ? '' : '?' );
+		+ ( noEmptyBranch ? '' : '?' );
 }
 
 /*¡ j-regexp */
@@ -544,12 +547,12 @@ var clearRegExp = '$_' in RegExp$1
 
 var NEED_TO_ESCAPE_IN_REGEXP = /^[$()*+\-.?[\\\]^{|]/;
 var SURROGATE_PAIR = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
-var GROUP = create(NULL)         ;
+var GROUP = /*#__PURE__*/create(NULL)         ;
 
 function groupify (branches                   , uFlag          , noEscape          )         {
 	var group = create(NULL)         ;
 	var appendBranch = uFlag ? appendPointBranch : appendCodeBranch;
-	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index]); }
+	for ( var length         = branches.length, index         = 0; index<length; ++index ) { appendBranch(group, branches[index] ); }
 	return sourcify(group, !noEscape);
 }
 function appendPointBranch (group       , branch        )       {
@@ -574,26 +577,26 @@ function sourcify (group       , needEscape         )         {
 	var noEmptyBranch          = true;
 	for ( var character in group ) {
 		if ( character ) {
-			var sub_branches         = sourcify(group[character], needEscape);
-			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP.test(character) ) { character = '\\'+character; }
-			sub_branches ? branches.push(character+sub_branches) : singleCharactersBranch.push(character);
+			var sub_branches         = sourcify(group[character] , needEscape);
+			if ( needEscape && NEED_TO_ESCAPE_IN_REGEXP.test(character) ) { character = '\\' + character; }
+			sub_branches ? branches.push(character + sub_branches) : singleCharactersBranch.push(character);
 		}
 		else { noEmptyBranch = false; }
 	}
-	singleCharactersBranch.length && branches.unshift(singleCharactersBranch.length===1 ? singleCharactersBranch[0] : '['+singleCharactersBranch.join('')+']');
+	singleCharactersBranch.length && branches.unshift(singleCharactersBranch.length===1 ? singleCharactersBranch[0]  : '[' + singleCharactersBranch.join('') + ']');
 	return branches.length===0
 		? ''
 		: ( branches.length===1 && ( singleCharactersBranch.length || noEmptyBranch )
 			? branches[0]
-			: '(?:'+branches.join('|')+')'
+			: '(?:' + branches.join('|') + ')'
 		)
-		+( noEmptyBranch ? '' : '?' );
+		+ ( noEmptyBranch ? '' : '?' );
 }
 
 /*¡ j-regexp */
 
-var test_bind$1                                                                              = test.bind
-	? /*#__PURE__*/test.bind.bind(test       )       
+var test_bind$1 = bind
+	? /*#__PURE__*/bind.bind(test)                                                                           
 	: function (            regExp        ) { return function (            string        ) { return regExp.test(string); }; };
 
 var toggleGlobal = 'flags' in RegExp$1.prototype
@@ -602,9 +605,9 @@ var toggleGlobal = 'flags' in RegExp$1.prototype
 	}
 	: function toggleGlobal (regExp        , global         ) {
 		if ( regExp.global===global ) { return regExp; }
-		var flags = '' + regExp;
-		flags = flags.slice(flags.lastIndexOf('/') + 1);
-		return RegExp$1(regExp, global ? 'g' + flags : flags.replace('g', ''));
+		var literal = '' + regExp;
+		var flags = literal.slice(literal.lastIndexOf('/') + 1);
+		return RegExp$1(regExp.source, global ? 'g' + flags : flags.replace('g', ''));
 	};
 
 function EOL$1                     (allow                         , uniform          , disallow                             ) {
@@ -612,15 +615,19 @@ function EOL$1                     (allow                         , uniform     
 	var ALLOW = /*#__PURE__*/isArray(allow)
 		? /*#__PURE__*/RegExp$1(/*#__PURE__*/groupify(allow), uniform ? 'g' : '')
 		: uniform===undefined$1
-			? ( uniform = ( allow           ).global, allow           )
-			: /*#__PURE__*/toggleGlobal(allow          , !!uniform);
+			? ( uniform = allow.global, allow )
+			: /*#__PURE__*/toggleGlobal(allow, !!uniform);
 	
 	if ( disallow ) {
-		var testDisallow = /*#__PURE__*/test_bind$1(/*#__PURE__*/isArray(disallow) ? /*#__PURE__*/RegExp$1(groupify(disallow)) : /*#__PURE__*/toggleGlobal(disallow          , false));
+		var testDisallow = /*#__PURE__*/test_bind$1(
+			/*#__PURE__*/isArray(disallow)
+				? /*#__PURE__*/RegExp$1(groupify(disallow))
+				: /*#__PURE__*/toggleGlobal(disallow, false)
+		);
 		return uniform
 			? function EOL (string        )           {
 				if ( testDisallow(string) ) { throw clearRegExp(SyntaxError$1('存在禁用换行符')); }
-				var eols = clearRegExp(string.match(ALLOW))                ;
+				var eols = clearRegExp(string.match(ALLOW)                );
 				if ( !eols ) { return ''; }
 				var eol = eols[0] ;
 				for ( var length = eols.length, index = 1; index!==length; ++index ) { if ( eols[index]!==eol ) { throw SyntaxError$1('存在多种换行符'); } }
@@ -628,21 +635,21 @@ function EOL$1                     (allow                         , uniform     
 			}
 			: function EOL (string        )           {
 				if ( testDisallow(string) ) { throw clearRegExp(SyntaxError$1('存在禁用换行符')); }
-				var eols = clearRegExp(string.match(ALLOW))                ;
+				var eols = clearRegExp(string.match(ALLOW)                );
 				return eols ? eols[0]  : '';
 			};
 	}
 	else {
 		return uniform
 			? function EOL (string        )           {
-				var eols = clearRegExp(string.match(ALLOW))                ;
+				var eols = clearRegExp(string.match(ALLOW)                );
 				if ( !eols ) { return ''; }
 				var eol = eols[0] ;
 				for ( var length = eols.length, index = 1; index!==length; ++index ) { if ( eols[index]!==eol ) { throw SyntaxError$1('存在多种换行符'); } }
 				return eol;
 			}
 			: function EOL (string        )           {
-				var eols = clearRegExp(string.match(ALLOW))                ;
+				var eols = clearRegExp(string.match(ALLOW)                );
 				return eols ? eols[0]  : '';
 			};
 	}
@@ -3820,7 +3827,7 @@ function RE (               template                      ) {
 	return re;
 }
 
-var RE_bind = bind && /*#__PURE__*/bind.bind(RE       );
+var RE_bind = /*#__PURE__*/bind.bind(RE       );
 
 function Context (flags        )          {
 	return {
@@ -3832,14 +3839,17 @@ function Context (flags        )          {
 	};
 }
 
-var CONTEXT          = Proxy$1 && /*#__PURE__*/Context('');
+var CONTEXT          = /*#__PURE__*/Context('');
 
-var newRegExp = Proxy$1 && /*#__PURE__*/new Proxy$1(RE, /*#__PURE__*/freeze({
-	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT, args); },
-	get: function (RE, flags        ) { return RE_bind(Context(flags)); },
-	defineProperty: function () { return false; },
+var newRegExp = /*#__PURE__*/new Proxy$1(RE, {
+	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT, args); }
+	,
+	get: function (RE, flags        ) { return RE_bind(Context(flags)); }
+	,
+	defineProperty: function () { return false; }
+	,
 	preventExtensions: function () { return false; }
-}));
+});
 
 /*¡ j-regexp */
 
@@ -7578,7 +7588,8 @@ const MinifyBODY = async (files        ) => {
 	return code ;
 };
 
-const CONST_RETURN = exec.bind(/^(?:cons|le)t ({ [\w :,]+ }) = Vue\n(.*)$/s)                                                         ;
+const CONST_RETURN = exec.bind(/^(?:cons|le)t ({[\w :,]*}) = Vue\n(.*)$/s)                                                         ;
+const PORTS = /[\w$]+(?= *[:,}])/g;
 
 const with_this__return_ = 'with(this){return ';
 
@@ -7644,7 +7655,7 @@ const NecessaryStringLiteral = async (body        , name               )        
 const onError = (error             )        => { throw Error$1(`.vue template 官方编译未通过：\n       ${error.message}`); };
 const isCustomElement = test.bind(/^(?![A-Z]|base-transition$|component$|keep-alive$|s(?:lot|uspense)$|te(?:mplate|leport)$)/);
 const NSS = /\n+((?:  )*)/g;
-const Render3 = async (innerHTML        , mode                 , ws                                                       , { sheet, shadow }                                                                    )                  => {
+const Render3 = async (innerHTML        , mode                 , ws                                                       , { sheet, shadow }                                                                    )                                               => {
 	const { code } = compile3[mode](innerHTML, {
 		onError,
 		isCustomElement,
@@ -7654,6 +7665,7 @@ const Render3 = async (innerHTML        , mode                 , ws             
 		hoistStatic: true,
 	});
 	const { 1: params, 2: rest } = CONST_RETURN(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
+	const ports = params.match(PORTS) ?? [];
 	let Render = `'use strict';(${params})=>{${rest}};`;
 	ecma = parserOptions.ecmaVersion = 2014;
 	const globals = findGlobals(parse$1(Render, parserOptions));
@@ -7666,9 +7678,10 @@ const Render3 = async (innerHTML        , mode                 , ws             
 	const index = Render.indexOf('=>');
 	const left = Render.slice(0, index);
 	let right = Render.slice(index + 2);
-	return ws
+	Render = ws
 		? `class Render {${ws.eol}${ws.tab}constructor ${left} ${right[0]==='{' ? right.slice(0, -1) : `{${ws.eol}${ws.tab}${ws.tab}return ${right}`};${ws.eol}${ws.tab}}${sheet ? `${ws.eol}${ws.tab}static sheet = ${Sheets(sheet, ws)};` : ''}${shadow ? `${ws.eol}${ws.tab}static shadow = ${StringLiteral(shadow)};` : ''}${ws.eol}}`
 		: StringLiteral(left + ( right[0]==='{' ? right : `{return${right[0]==='(' ? '' : ' '}${right}}` ) + ( sheet ? `static sheet=${( await MinifyBODY(`'use strict';(${Sheets(sheet)});`) ).slice(14, -2)}` : '' ) + ( sheet && shadow ? ';' : '' ) + ( shadow ? `static shadow=${StringLiteral(shadow)}` : '' ));
+	return { ports, Render };
 };
 
 const Render2 = async (innerHTML        , mode                         , ws                                                       )                                                                                    => {
@@ -7698,9 +7711,10 @@ const VisibleStringLiteral = (id        )         => {
 const is__KEY__ = newRegExp$1`^__${KEYS}__$`.test;
 const test_bind = test.bind.bind(test       )                                                                                      ;
 
-async function From (tab        , mode                         , styles         , template                 , from               , eol        )                  {
+async function From (tab        , mode                         , styles         , template                 , from               , eol        , bom               )                                                    {
 	
-	let code = '';
+	let ports                  = null;
+	let code         = bom;
 	
 	const options = { indent: tab, newline: eol, newlineSelector: false, newlineProperty: false };
 	
@@ -7743,7 +7757,8 @@ async function From (tab        , mode                         , styles         
 			code += `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
 			code += `${__}export ${mode} template = ${StringLiteral(innerHTML)};${eol}`;
 			if ( mode!=='var' ) {
-				code += `export ${await Render3(innerHTML, mode, ws, _(template))}${eol}`;/// (); import!
+				const { Render } = { ports } = await Render3(innerHTML, mode, ws, _(template));/// (); import!
+				code += `export ${Render}${eol}`;
 			}
 			if ( compatible_render ) {
 				const { render, staticRenderFns } = await Render2(innerHTML, mode, ws);
@@ -7757,7 +7772,7 @@ async function From (tab        , mode                         , styles         
 			}
 		}
 		code += eol;
-		return code;
+		return { ports, code };
 	}
 	
 	const _from_ = VisibleStringLiteral(from);
@@ -7800,7 +7815,8 @@ async function From (tab        , mode                         , styles         
 		let index = 0;
 		while ( index!==lines_length ) { code += lines[index++]; }
 		if ( mode!=='var' ) {
-			code += `export ${mode} Render = /*#__PURE__*/_Render(${await Render3(innerHTML, mode, null, _(template))}, ${scope});${eol}`;/// (); import or ~~runtime~~?
+			const { Render } = { ports } = await Render3(innerHTML, mode, null, _(template));/// (); import or ~~runtime~~?
+			code += `export ${mode} Render = /*#__PURE__*/_Render(${Render}, ${scope});${eol}`;
 		}
 		if ( compatible_render ) {
 			const { render, staticRenderFns } = await Render2(innerHTML, mode, null);
@@ -7816,7 +7832,7 @@ async function From (tab        , mode                         , styles         
 		code += `export ${mode} delimiters = [ '{{', '}}' ];${eol}`;
 	}
 	
-	return code;
+	return { ports, code };
 	
 }
 
@@ -7853,12 +7869,13 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 	                         
 	                                    
 	                                                              
- )                                               => {
+ )                                                               => {
+	let ports                  = null;
 	if ( lang ) {
 		const { script } = sfc;
 		if ( script && script.lang ) { script.innerJS = await lang(script.lang, script.inner ); }
 	}
-	const main         = sfc.export('default', x_from)          ;
+	const main         = await sfc.export('default', x_from)          ;
 	let round = 1;
 	const bundle = await rollup(assign(create(NULL), rollupOptions, {
 		acorn: Null({
@@ -7889,7 +7906,7 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 						const { length } = styles;
 						let index = 0;
 						while ( index!==length ) {
-							const style = styles[index++];
+							const style = styles[index++] ;
 							if ( style.src ) { style.inner = await src(style.src); }
 						}
 					}
@@ -7898,11 +7915,12 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 						const { length } = styles;
 						let index = 0;
 						while ( index!==length ) {
-							const style = styles[index++];
+							const style = styles[index++] ;
 							if ( style.lang ) { style.innerCSS = await lang(style.lang, style.inner ); }
 						}
 					}
-					return sfc.export(x_var, from)          ;
+					const { code } = { ports } = await sfc.export(x_var, from)                                     ;
+					return code;
 				},
 			})
 		],
@@ -7910,7 +7928,9 @@ const one = async (sfc     , { 'var': x_var, 'j-vue': from, '?j-vue': x_from = f
 	const { output } = await bundle.generate(map==='inline' ? INLINE : map===true ? TRUE : FALSE);
 	if ( output.length!==1 ) { throw Error$1(''+output.length); }
 	const only = output[0];
-	return map===true ? { code: only.code, map: only.map } : only.code;
+	return map===true
+		? { ports, code: only.code, map: only.map }
+		: { ports, code: only.code };
 };
 
 const OPTIONS = { swappable: false, stripBOM: true, startsWithASCII: true, throwError: true }         ;
@@ -7967,14 +7987,14 @@ class SFC {
 	template                  = null;
 	         customBlocks                = [];
 	
-	async export (           mode                                         
+	export (           mode                                         
 		                               
 		                  
 		                        
 		                           
 		                                      
 		                                                                
-	 , from                = 'j-vue')                                               {
+	 , from                = 'j-vue')                                                                        {
 		if ( typeof mode==='object' ) { return one(this, mode); }
 		const { bom, tab, eol, script, styles, template } = this;
 		if ( mode==='default' ) {
@@ -7984,9 +8004,7 @@ class SFC {
 				? bom + `export { default } from ${StringLiteral(script.src )};`
 				: bom + script.innerJS.replace(ES, eol);
 		}
-		else {
-			return bom + await From(tab, mode, styles, template, from, eol);
-		}
+		else { return From(tab, mode, styles, template, from, eol, bom); }
 	}
 	
 }
