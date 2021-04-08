@@ -1,6 +1,7 @@
 import Error from '.Error';
 import RegExp from '.RegExp';
 import test from '.RegExp.prototype.test';
+import bind from '.Function.prototype.bind';
 import undefined from '.undefined';
 
 import { StringLiteral } from '@ltd/j-es';
@@ -23,7 +24,7 @@ const VisibleStringLiteral = (id :string) :string => {
 };
 
 const is__KEY__ = newRegExp`^__${KEYS}__$`.test;
-const test_bind = test.bind.bind(test as any) as unknown as (this :void, regExp :RegExp) => (this :void, string :string) => boolean;
+const test_bind = bind.bind(test as any) as unknown as (this :void, regExp :RegExp) => (this :void, string :string) => boolean;
 
 export default async function From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string, bom :'\uFEFF' | '') :Promise<{ ports :string[] | null, code :string }> {
 	

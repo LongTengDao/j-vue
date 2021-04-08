@@ -4,12 +4,11 @@ import ReferenceError from '.ReferenceError';
 import RegExp from '.RegExp';
 import Set from '.Set';
 import Map from '.Map';
-import exec from '.RegExp.prototype.exec';
 import create from '.Object.create';
 import NULL from '.null.prototype';
 import throwError from '.throw.Error';
 
-import { newRegExp, groupify } from '@ltd/j-regexp';
+import { groupify, newRegExp, theRegExp } from '@ltd/j-regexp';
 import { NON_SCALAR as SURROGATE_IN_INPUT_STREAM } from '@ltd/j-utf';
 
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
@@ -111,7 +110,7 @@ const Ref = ($ref$ :string) => {
 let shadow_name :string = '';
 let shadow_hasNames :boolean = false;
 const shadow_names = new Set<string>();
-const SHADOW = exec.bind(/^#([a-z]\w*)(?:(\.)([a-z]\w*))?#$/i) as (string :string) => [ string, string, string?, string? ] | null;
+const SHADOW = theRegExp<1>(/^#([a-z]\w*)(?:(\.)([a-z]\w*))?#$/i).exec;
 const Shadow = ($name_names$ :string) => {
 	const { 1: name, 2: hasNames = '', 3: names = '' } = SHADOW($name_names$) ?? throwError(`${$name_names$} 格式不符合预期`);
 	if ( shadow_name ) {
@@ -286,14 +285,15 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 		if ( v_pre ) {
 			_asClass!(attributes, keys, true);
 			if ( STYLE_BY_COMPONENT_IS && xName==='style' ) { throw SyntaxError(STYLE_BY_COMPONENT_IS.pre); }
+			if ( xName==='slot' ) { throw SyntaxError(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，而且无论哪种都没有实际使用意义，请避免使用`); }
+			if ( isTemplate ) { throw SyntaxError(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
+			//Vue3: if ( xName==='component' && 'is' in attributes ) { throw SyntaxError(`v-pre 模式下的 ${xName} 元素的 is 属性在 Vue 3 中会被忽略（实际上 ${xName} 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
+			if ( xName==='component' || xName==='suspense' || xName==='teleport' || xName==='transition' ) { throw Error(`请避免在 v-pre 下使用 ${xName}（它既不是浏览器内置元素，也不是合格的自定义元素）`); }
+			if ( !notComponent ) { throw Error(`请避免在 v-pre 下使用组件名（如果“${xName}”不是一个组件，请避免使用大写字母开头）`); }
 			if ( !V_PRE ) {
-				if ( isTemplate ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
+				///if ( isTemplate ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
 				if ( 'v-for' in attributes ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 v-for 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
 				if ( 'v-else-if' in attributes || 'v-else' in attributes ) { throw SyntaxError(`从自身开始带有 v-pre 指令且具有 v-else-if/v-else 属性的元素在 Vue 3 中会带上 v-pre 属性，且这没有意义，请避免使用`); }
-			}
-			if ( xName==='slot' ) { throw SyntaxError(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，而且无论哪种都没有实际使用意义，请避免使用`); }
-			else {
-				Vue3: if ( xName==='component' && 'is' in attributes ) { throw SyntaxError(`v-pre 模式下的 component 元素的 is 属性在 Vue 3 中会被忽略（实际上 component 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
 			}
 			Vue2: if ( compatible_template ) { for ( const name in attributes ) { if ( name.includes('\\') ) { compatible_template = false; } } }
 			//for ( const name in attributes ) { if ( name[0]==='_' /*:_*/ ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); } }
@@ -302,10 +302,10 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			if ( compatible_render && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render = false; }
 			if ( 'v-is' in attributes ) { throw SyntaxError(`v-is 是 Vue 3 新增的内置指令，在单文件组件模板中不可能需要被用到；在 Vue 2 中也请避开使用`); }
 			if ( xName==='component' ) {
-				if ( ':is.camel' in attributes ) { throw ReferenceError(`component :is.camel 在 Vue 2 和 3 中存在歧义，请避免使用`); }
+				if ( ':is.camel' in attributes ) { throw ReferenceError(`${xName} :is.camel 在 Vue 2 和 3 中存在歧义，请避免使用`); }
 				if ( ':is' in attributes ) {}
 				else if ( 'is' in attributes ) { checkNameBeing(attributes['is']!, attributes, true); }
-				else { throw SyntaxError(`component 组件不能缺少 is 属性`); }
+				else { throw SyntaxError(`${xName} 组件不能缺少 is 属性`); }
 			}
 			else {
 				if ( ':is' in attributes || 'is' in attributes ) { throw ReferenceError(`非 component 的 is 属性在 Vue 2、3 之间解释不同，请避免使用（或使用 :is.camel 来让 Vue 2 中获得与 Vue 3 中一致的行为）`); }
@@ -352,6 +352,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 				if ( compatible_template ) {
 					Vue2: if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
 					else if (
+						xName==='Component' ||
 						xName==='BaseTransition' || xName==='Suspense' || xName==='Teleport' ||
 						xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup'
 					) { compatible_template = false; }
@@ -392,7 +393,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 							if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
 							if ( name[name.length - 1]==='#' ) {
 								if ( BUILT_IN.has(xName) ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在 ${xName} 标签上`); }
-								if ( !notComponent ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` component 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
+								if ( !notComponent ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` ${xName} 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
 								if ( xName.includes('-') ? SVG_MathML.test(xName) : !HTML_5.test(xName) && xName!=='style' ) { throw Error(`HTML 原生标签中，只有 ${HTML5.join('、')} 支持 Shadow DOM，其中不包括“${xName}”，而同步样式表功能也只支持 style 标签`); }
 								if ( attributes[name]!==EMPTY ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不支持属性值`); }
 								if ( v_for ) { throw Error(`jVue 的 Shadow DOM / 同步样式表功能不支持在 v-for 内使用`); }

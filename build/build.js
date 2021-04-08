@@ -36,7 +36,7 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 				'@ltd/j-ts': require('../../../LongTengDao/j-ts/dist/NPM/package.json').version,
 				'@ltd/j-es-plus': require('../../../LongTengDao/j-es-plus/dist/NPM/package.json').version,
 				'acorn-walk': '8.0.2',
-				'@vue/compiler-dom': '^3.0.6',
+				'@vue/compiler-dom': '^3.0.10',
 				'vue-template-compiler': '2.6.12',
 				'de-indent': '1.0.2',
 				'he': '1.2.0',

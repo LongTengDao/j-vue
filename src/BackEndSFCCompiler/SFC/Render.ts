@@ -2,11 +2,11 @@ import Error from '.Error';
 import WeakSet from '.WeakSet';
 //import Object from '.Object';
 import test from '.RegExp.prototype.test';
-import exec from '.RegExp.prototype.exec';
 import Null from '.null';
 import throwError from '.throw.Error';
 
 import { StringLiteral } from '@ltd/j-es';
+import { theRegExp } from '@ltd/j-regexp';
 
 import { compile2, compile3, parse, findGlobals, simple, minify } from '../dependencies';
 
@@ -125,7 +125,7 @@ const MinifyBODY = async (files :string) => {
 	return code!;
 };
 
-const CONST_RETURN = exec.bind(/^(?:cons|le)t ({[\w :,]*}) = Vue\n(.*)$/s) as (string :string) => [ string, string, string ] | null;
+const CONST_RETURN = theRegExp<1 | 2>(/^(?:cons|le)t ({[\w :,]*}) = Vue\n(.*)$/s).exec;
 const PORTS = /[\w$]+(?= *[:,}])/g;
 
 const with_this__return_ = 'with(this){return ';

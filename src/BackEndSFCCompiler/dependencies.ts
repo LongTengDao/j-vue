@@ -20,16 +20,15 @@ export const BAD_KEY = '__proto__';
 export const BAD_REF = '__proto__';
 export const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
 export const NS3 = /:(?:(?![A-Z_a-z])|.*?:)/s;
-const NON = /[^\x00-#%-/:-@[-^`{-\x7F\s]/.source;
+const NON = `\\xA0-\\uFFFF`;
 export const NON_ASCII_SIMPLE_PATH = newRegExp`
 	^\s*
 		(?:
 			[A-Za-z_$]
 			[\w$]*
 		)?
-		[^\x00-\x7F\s]
-		${NON}*
-		(?:\([^)]*?\);*)?
+		[${NON}]
+		[\w$${NON}]*
 	\s*$
 `;
 export const BUILT_IN = new Set(`
@@ -71,7 +70,7 @@ export const { 3: compile3, 2: compile2 } :{
 		[ /shared\.isGloballyWhitelisted\([^)]*\)/g, 'false', 2 ],
 		[ /id\.name === '(?:require|arguments)'/g, 'false', 2 ],
 		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
-		[ /(?<=^const memberExpRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ]
+		[ /isComponentTag\(tag\)(?! {)/g, `tag==='component'`, 3 ],
 	);
 	const Let3core = Replacer(
 		[ /push\(`const /g, 'push\(`let ', NaN ],
@@ -83,7 +82,7 @@ export const { 3: compile3, 2: compile2 } :{
 		[ /(?<! in ){}(?=[);,])(?!\)\.)/g, `Object.create(null)`, 23 ],
 		[ `el.attrsMap.hasOwnProperty('v-for')`, `hasOwn(el.attrsMap, 'v-for')` ],
 		[ `el.tag === 'style' ||` ],
-		[ /(?<=^var simplePathRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ],
+		[ /^var simplePathRE = \/.+\/;$/m, (match :string) => match.replace(/(?<=\$)/g, NON) ],
 		[ RegExp(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].var, 2 ],
 		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],///
 	);

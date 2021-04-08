@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '22.0.2';
+const version = '23.0.0';
 
 const Error$1 = Error;
 
@@ -299,6 +299,17 @@ var Exec$1                                           = bind
 			return exec.call(re, string);
 		};
 	};
+
+function theRegExp (re        )         {
+	var test = re.test = Test$1(re);
+	var exec = re.exec = Exec$1(re);
+	var source = test.source = exec.source = re.source;
+	test.unicode = exec.unicode = re.unicode;
+	test.ignoreCase = exec.ignoreCase = re.ignoreCase;
+	test.multiline = exec.multiline = source.indexOf('^')<0 && source.indexOf('$')<0 ? null : re.multiline;
+	test.dotAll = exec.dotAll = source.indexOf('.')<0 ? null : re.dotAll;
+	return re;
+}
 
 var NT$2 = /[\n\t]+/g;
 var ESCAPE$2 = /\\./g;
@@ -3424,16 +3435,15 @@ const BAD_KEY = '__proto__';
 const BAD_REF = '__proto__';
 const BAD_INS = /\r(?!\n)|[\u2028\u2029]/;
 const NS3 = /:(?:(?![A-Z_a-z])|.*?:)/s;
-const NON = /[^\x00-#%-/:-@[-^`{-\x7F\s]/.source;
+const NON = `\\xA0-\\uFFFF`;
 const NON_ASCII_SIMPLE_PATH = newRegExp$1`
 	^\s*
 		(?:
 			[A-Za-z_$]
 			[\w$]*
 		)?
-		[^\x00-\x7F\s]
-		${NON}*
-		(?:\([^)]*?\);*)?
+		[${NON}]
+		[\w$${NON}]*
 	\s*$
 `;
 const BUILT_IN = new Set$1(`
@@ -3475,7 +3485,7 @@ const { 3: compile3, 2: compile2 }
 		[ /shared\.isGloballyWhitelisted\([^)]*\)/g, 'false', 2 ],
 		[ /id\.name === '(?:require|arguments)'/g, 'false', 2 ],
 		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match        , p1        ) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
-		[ /(?<=^const memberExpRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ]
+		[ /isComponentTag\(tag\)(?! {)/g, `tag==='component'`, 3 ],
 	);
 	const Let3core = Replacer(
 		[ /push\(`const /g, 'push\(`let ', NaN ],
@@ -3487,7 +3497,7 @@ const { 3: compile3, 2: compile2 }
 		[ /(?<! in ){}(?=[);,])(?!\)\.)/g, `Object.create(null)`, 23 ],
 		[ `el.attrsMap.hasOwnProperty('v-for')`, `hasOwn(el.attrsMap, 'v-for')` ],
 		[ `el.tag === 'style' ||` ],
-		[ /(?<=^var simplePathRE = \/)(?=.+\/;$)/m, () => `^${NON.replace('/:-', '')}${NON}*$|` ],
+		[ /^var simplePathRE = \/.+\/;$/m, (match        ) => match.replace(/(?<=\$)/g, NON) ],
 		[ RegExp$1(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func        , name        ) => gen[2][name                       ].var, 2 ],
 		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin                       ] ), 4 ],///
 	);
@@ -3996,7 +4006,7 @@ const TOKENS = /*#__PURE__*/( () => newRegExp.gis `
 	.
 ` )();
 
-const BAD_URL = /*#__PURE__*/( () => newRegExp.i `
+const IS_BAD_URL = /*#__PURE__*/( () => newRegExp.i `
 	^
 	url\(
 	(?!
@@ -4006,19 +4016,19 @@ const BAD_URL = /*#__PURE__*/( () => newRegExp.i `
 		\)
 		$
 	)
-` )();
-const NUMBER = /[\d.]/;
+`.test )();
+const IS_NUMBER = /*#__PURE__*/test.bind(/[\d.]/);
 const COMMENT = /\/\*.*?\*\//gs;
-const IDENT = /*#__PURE__*/( () => newRegExp.i `
+const IS_IDENT = /*#__PURE__*/( () => newRegExp.i `
 	^
 	${ident_token}
 	$
-` )();
-const FUNCTION = /*#__PURE__*/( () => newRegExp.i `
+`.test )();
+const IS_FUNCTION = /*#__PURE__*/( () => newRegExp.i `
 	^
 	${ident_token}\(
 	$
-` )();
+`.test )();
 
 const comment = 'c';
 const whitespace = 'w';
@@ -4033,12 +4043,12 @@ const percentage = 'p';
 const url = 'u';
 
 const IdentLike = (literal        ) =>
-	IDENT.test(literal) ? ident :
-		FUNCTION.test(literal) ?
+	IS_IDENT(literal) ? ident :
+		IS_FUNCTION(literal) ?
 			url_prefix_ (literal) ? throwSyntaxError(`function-token "url-prefix" 不在标准中，而它此刻的内容又存在歧义`) :
 				domain_ (literal) ? throwSyntaxError(`function-token "domain" 不在标准中，而它此刻的内容又存在歧义`) :
 					function_ :
-			BAD_URL.test(literal) ? throwSyntaxError(`bad-url-token`) :
+			IS_BAD_URL(literal) ? throwSyntaxError(`bad-url-token`) :
 				url;
 
 const Numeric = (literal        ) => {
@@ -4079,7 +4089,7 @@ const Type = (literal        )       => {
 			return literal       ;
 		case '-':
 			if ( literal==='-' ) { return literal; }
-			if ( NUMBER.test(literal[1] ) ) { return Numeric(literal); }
+			if ( IS_NUMBER(literal[1] ) ) { return Numeric(literal); }
 			if ( literal==='-->' ) { return throwSyntaxError(`CDC-token`); }
 			break;
 		case '.':
@@ -4197,13 +4207,13 @@ class Refs {
 	constructor () { return this; }
 }
 
-const NULL_SURROGATE = /[\x00\uD800-\uDFFF]/u;
-const NON_PRINTABLE = /[\x00-\x08\x0B\x0E-\x1F\x7F]/;
+const IS_NULL_SURROGATE = /*#__PURE__*/test.bind(/[\x00\uD800-\uDFFF]/u);
+const IS_NON_PRINTABLE = /*#__PURE__*/test.bind(/[\x00-\x08\x0B\x0E-\x1F\x7F]/);
 const NOT_CHANGES = /\\.?|[^\\\x80-\x9F]+/gs;
 const check = (css        ) => {
 	if ( css[0]==='\uFEFF' ) { throw SyntaxError$1(`CSS 中 UTF BOM（U+FEFF）算作普通字符，处于起始位置时很可能是误用`); }
-	if ( NULL_SURROGATE.test(css) ) { throw SyntaxError$1(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
-	if ( NON_PRINTABLE.test(css) ) { throw SyntaxError$1(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
+	if ( IS_NULL_SURROGATE(css) ) { throw SyntaxError$1(`CSS 中 NUL（U+00）或残破的代理对码点（U+D800〜U+DFFF）字面量会被替换为 U+FFFD，请避免使用`); }
+	if ( IS_NON_PRINTABLE(css) ) { throw SyntaxError$1(`CSS 中不能出现除 TAB、LF、FF、CR 以外的控制字符字面量`); }
 	if ( css.replace(NOT_CHANGES, '') ) { throw SyntaxError$1(`U+80～U+9F 字面量在 CSS 2 和 3 之间表现不同，请避免使用`); }
 };
 
@@ -4936,8 +4946,8 @@ const followCombinator = ({ lastItem }                ) => lastItem==='>' || las
 
 const missingCompoundSelector = ({ lastItem }                 ) => !lastItem || lastItem===',' || lastItem==='>' || lastItem==='+' || lastItem==='~' || lastItem==='||';
 
-const NTH_START = /^(?:\+(?:\d+n?)?|-(?:\d+n?|n(?:-\d+)?)|\d+n?|even|n(?:-\d+)?|odd)$/i;
-const NTH_WHOLE = /^(?:[+-]?(?:\d+(?:n(?:[+-]\d+)?)?|event|n(?:[+-]\d+)?)|odd)$/i;
+const IS_NTH_START = /*#__PURE__*/test.bind(/^(?:\+(?:\d+n?)?|-(?:\d+n?|n(?:-\d+)?)|\d+n?|even|n(?:-\d+)?|odd)$/i);
+const IS_NTH_WHOLE = /*#__PURE__*/test.bind(/^(?:[+-]?(?:\d+(?:n(?:[+-]\d+)?)?|event|n(?:[+-]\d+)?)|odd)$/i);
 
 const STATE_BEFORE_NTH = 1         ;
 const STATE_DURING_NTH = 2         ;
@@ -4973,7 +4983,7 @@ class NthChild extends Layer       {
 					case '+':
 					case number:
 					case dimension:
-						if ( !NTH_START.test(literal) ) { break; }
+						if ( !IS_NTH_START(literal) ) { break; }
 						this.nthLiteral = literal;
 						this._state = STATE_DURING_NTH;
 						return this;
@@ -4990,11 +5000,11 @@ class NthChild extends Layer       {
 						this.nthLiteral += literal;
 						return this;
 					case ')':
-						if ( !NTH_WHOLE.test(this.nthLiteral) ) { break; }
+						if ( !IS_NTH_WHOLE(this.nthLiteral) ) { break; }
 						this._state = 0;
 						return this[parent];
 					case whitespace:
-						if ( !NTH_WHOLE.test(this.nthLiteral) ) { break; }
+						if ( !IS_NTH_WHOLE(this.nthLiteral) ) { break; }
 						this._state = STATE_AFTER_NTH;
 						return this;
 				}
@@ -6608,7 +6618,7 @@ const Ref = ($ref$        ) => {
 let shadow_name         = '';
 let shadow_hasNames          = false;
 const shadow_names = new Set$1        ();
-const SHADOW = exec.bind(/^#([a-z]\w*)(?:(\.)([a-z]\w*))?#$/i)                                                                   ;
+const SHADOW = theRegExp   (/^#([a-z]\w*)(?:(\.)([a-z]\w*))?#$/i).exec;
 const Shadow = ($name_names$        ) => {
 	const { 1: name, 2: hasNames = '', 3: names = '' } = SHADOW($name_names$) ?? throwError(`${$name_names$} 格式不符合预期`);
 	if ( shadow_name ) {
@@ -6782,14 +6792,15 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 		let shadowRoot                                                           = null;
 		if ( v_pre ) {
 			_asClass (attributes, keys, true);
+			if ( xName==='slot' ) { throw SyntaxError$1(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，而且无论哪种都没有实际使用意义，请避免使用`); }
+			if ( isTemplate ) { throw SyntaxError$1(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
+			//Vue3: if ( xName==='component' && 'is' in attributes ) { throw SyntaxError(`v-pre 模式下的 ${xName} 元素的 is 属性在 Vue 3 中会被忽略（实际上 ${xName} 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
+			if ( xName==='component' || xName==='suspense' || xName==='teleport' || xName==='transition' ) { throw Error$1(`请避免在 v-pre 下使用 ${xName}（它既不是浏览器内置元素，也不是合格的自定义元素）`); }
+			if ( !notComponent ) { throw Error$1(`请避免在 v-pre 下使用组件名（如果“${xName}”不是一个组件，请避免使用大写字母开头）`); }
 			if ( !V_PRE ) {
-				if ( isTemplate ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
+				///if ( isTemplate ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
 				if ( 'v-for' in attributes ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令的 v-for 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
 				if ( 'v-else-if' in attributes || 'v-else' in attributes ) { throw SyntaxError$1(`从自身开始带有 v-pre 指令且具有 v-else-if/v-else 属性的元素在 Vue 3 中会带上 v-pre 属性，且这没有意义，请避免使用`); }
-			}
-			if ( xName==='slot' ) { throw SyntaxError$1(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，而且无论哪种都没有实际使用意义，请避免使用`); }
-			else {
-				if ( xName==='component' && 'is' in attributes ) { throw SyntaxError$1(`v-pre 模式下的 component 元素的 is 属性在 Vue 3 中会被忽略（实际上 component 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
 			}
 			if ( compatible_template ) { for ( const name in attributes ) { if ( name.includes('\\') ) { compatible_template = false; } } }
 			//for ( const name in attributes ) { if ( name[0]==='_' /*:_*/ ) { throw ReferenceError(`“_”开头的 attr 可能无法按预期工作`); } }
@@ -6798,10 +6809,10 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			if ( compatible_render$1 && requireKey && lackKey && !isTemplate && xName!=='slot' ) { compatible_render$1 = false; }
 			if ( 'v-is' in attributes ) { throw SyntaxError$1(`v-is 是 Vue 3 新增的内置指令，在单文件组件模板中不可能需要被用到；在 Vue 2 中也请避开使用`); }
 			if ( xName==='component' ) {
-				if ( ':is.camel' in attributes ) { throw ReferenceError$1(`component :is.camel 在 Vue 2 和 3 中存在歧义，请避免使用`); }
+				if ( ':is.camel' in attributes ) { throw ReferenceError$1(`${xName} :is.camel 在 Vue 2 和 3 中存在歧义，请避免使用`); }
 				if ( ':is' in attributes ) ;
 				else if ( 'is' in attributes ) { checkNameBeing(attributes['is'] , attributes, true); }
-				else { throw SyntaxError$1(`component 组件不能缺少 is 属性`); }
+				else { throw SyntaxError$1(`${xName} 组件不能缺少 is 属性`); }
 			}
 			else {
 				if ( ':is' in attributes || 'is' in attributes ) { throw ReferenceError$1(`非 component 的 is 属性在 Vue 2、3 之间解释不同，请避免使用（或使用 :is.camel 来让 Vue 2 中获得与 Vue 3 中一致的行为）`); }
@@ -6848,6 +6859,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 				if ( compatible_template ) {
 					if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
 					else if (
+						xName==='Component' ||
 						xName==='BaseTransition' || xName==='Suspense' || xName==='Teleport' ||
 						xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup'
 					) { compatible_template = false; }
@@ -6888,7 +6900,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 							if ( already ) { throw SyntaxError$1(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
 							if ( name[name.length - 1]==='#' ) {
 								if ( BUILT_IN.has(xName) ) { throw Error$1(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在 ${xName} 标签上`); }
-								if ( !notComponent ) { throw Error$1(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` component 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
+								if ( !notComponent ) { throw Error$1(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` ${xName} 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
 								if ( xName.includes('-') ? SVG_MathML.test(xName) : !HTML_5.test(xName) && xName!=='style' ) { throw Error$1(`HTML 原生标签中，只有 ${HTML5.join('、')} 支持 Shadow DOM，其中不包括“${xName}”，而同步样式表功能也只支持 style 标签`); }
 								if ( attributes[name]!==EMPTY ) { throw Error$1(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不支持属性值`); }
 								if ( v_for ) { throw Error$1(`jVue 的 Shadow DOM / 同步样式表功能不支持在 v-for 内使用`); }
@@ -7588,7 +7600,7 @@ const MinifyBODY = async (files        ) => {
 	return code ;
 };
 
-const CONST_RETURN = exec.bind(/^(?:cons|le)t ({[\w :,]*}) = Vue\n(.*)$/s)                                                         ;
+const CONST_RETURN = theRegExp       (/^(?:cons|le)t ({[\w :,]*}) = Vue\n(.*)$/s).exec;
 const PORTS = /[\w$]+(?= *[:,}])/g;
 
 const with_this__return_ = 'with(this){return ';
@@ -7709,7 +7721,7 @@ const VisibleStringLiteral = (id        )         => {
 };
 
 const is__KEY__ = newRegExp$1`^__${KEYS}__$`.test;
-const test_bind = test.bind.bind(test       )                                                                                      ;
+const test_bind = bind.bind(test       )                                                                                      ;
 
 async function From (tab        , mode                         , styles         , template                 , from               , eol        , bom               )                                                    {
 	
