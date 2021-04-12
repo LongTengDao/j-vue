@@ -192,7 +192,7 @@ function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev
 					//@ts-ignore
 					staticName==='beforeCreated' || staticName==='created' || staticName==='beforeMount' || staticName==='mounted' || staticName==='beforeUpdate' || staticName==='updated' || staticName==='activated' || staticName==='deactivated' || staticName==='beforeUnmount' || staticName==='unmounted' || staticName==='beforeDestroy' || staticName==='destroyed' ||
 					//@ts-ignore
-					staticName==='inject' || staticName==='props'
+					staticName==='inject' || staticName==='props' || protoName1==='emits'
 				) { throw Error(__dev__.compile_layer); }
 			}
 			//@ts-ignore
@@ -247,7 +247,7 @@ function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev
 				if ( protoName1[0]==='_' ) { throw Error(__dev__.compile_reserved); }
 				if (
 					protoName1==='setup' || protoName1==='watch' || protoName1==='methods' || protoName1==='computed' || protoName1==='extends' || protoName1==='mixins' ||
-					protoName1==='emits' || protoName1==='components' || protoName1==='directives' || protoName1==='staticRenderFns' || protoName1==='template' || protoName1==='inheritAttrs' ||
+					protoName1==='components' || protoName1==='directives' || protoName1==='staticRenderFns' || protoName1==='template' || protoName1==='inheritAttrs' ||
 					protoName1==='name' ||
 					protoName1==='Render' ||
 					protoName1==='delimiters' ||

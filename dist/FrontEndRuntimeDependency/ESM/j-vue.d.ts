@@ -1,10 +1,11 @@
-export const version :'23.0.0';
+export const version :'24.0.0';
 
 export function Identifier () :string;
 
 export const Scope :{
-	<Keys extends string> (this :void | Scope<string | void> | readonly Scope<string | void>[], keys :string) :Scope<Keys>;
-						  (this :void | Scope<string | void> | readonly Scope<string | void>[]              ) :Scope<void>;
+	<Keys extends string>
+	(this :void | Scope<string | void> | readonly Scope<string | void>[], keys :string) :Scope<Keys>;
+	(this :void | Scope<string | void> | readonly Scope<string | void>[]              ) :Scope<void>;
 	readonly prototype :null;
 };
 export type Scope<Keys extends string | void> = (
@@ -42,17 +43,17 @@ export function mixin<Mixins extends object = object> (...mixins :readonly ( Cla
 	{ [Name in keyof typeof Component] :typeof Component[Name] } &
 	{ readonly [_mixins] :readonly ( ClassAPI | ObjectAPI )[] } &
 	{ new<Sub extends Component<Sub>> () :
-		Component<Sub> &
-		{ [Name in OwnKeys<Mixins>] :Mixins[Name] }
+		& Component<Sub>
+		& { [Name in OwnKeys<Mixins>] :Mixins[Name] }
 	};
 declare const _mixins :unique symbol;
 
 export const prop :Readonly<{
-	created (el :Element, binding :{ arg? :any, value? :any }) :void,
-	bind (el :Element, binding :{ arg? :any, value? :any }) :void,
+	created (el :Element, binding :{ readonly arg? :unknown, readonly value? :unknown }) :void,
+	bind (el :Element, binding :{ readonly arg? :unknown, readonly value? :unknown }) :void,
 	
-	updated (el :Element, binding :{ arg? :any, value? :any }) :void,
-	componentUpdated (el :Element, binding :{ arg? :any, value? :any }) :void,
+	updated (el :Element, binding :{ readonly arg? :unknown, readonly value? :unknown }) :void,
+	componentUpdated (el :Element, binding :{ readonly arg? :unknown, readonly value? :unknown }) :void,
 }>;
 
 export { exports as default };
@@ -78,6 +79,7 @@ declare abstract class AnyComponent<Sub extends SubComponent<Sub>> extends SubCo
 	get _inject () :any;
 	get _props () :any;
 	get _directives () :any;
+	get _emits () :any;
 }
 declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	
@@ -99,10 +101,11 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	protected _render? () :VNode | ( VNode | string )[];
 	protected _provide? () :{ [key :string] :unknown };
 	
-	get _data () :void | readonly OwnNames<Sub>[];
+	get _data () :void | readonly Exclude<OwnNames<Sub>, `$${string}`>[];
 	get _inject () :void | Inject<Sub>;
 	get _props () :void | Props<Sub>;
 	get _directives () :void | Directives<Sub>;
+	get _emits () :void | Emits;
 	
 	static readonly data :void;
 	static readonly directives :void | Directives<Vue>;
@@ -116,7 +119,6 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	static readonly delimiters :void | [ string, string ];
 	static readonly inheritAttrs :void | boolean;
 	static readonly components :void | { readonly [name :string] :ClassAPI | ObjectAPI };
-	static readonly emits :void | Emits;
 	
 	static readonly _main :(this :ClassAPI) => void;
 	static readonly _toOptions :(this :ClassAPI, Vue3? :Vue3, __dev__? :__Dev__) => ObjectAPI;
@@ -129,7 +131,6 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	private _delimiters :void;
 	private _inheritAttrs :void;
 	private _components :void;
-	private _emits :void;
 	
 	private _mixins :void;
 	private _extends :void;
@@ -166,6 +167,7 @@ declare abstract class SubComponent<Sub extends Vue> extends Vue {
 	
 	private static readonly inject :void;
 	private static readonly props :void;
+	private static readonly emits :void;
 	
 	private static readonly mixins :void;
 	private static readonly extends :void;
@@ -211,45 +213,39 @@ type __Dev__ = {
 	]? :string
 };
 
-type OwnNames<T> = Extract<OwnKeys<T>, string>;
+type OwnNames<T> = Exclude<OwnKeys<T>, symbol>;
 type OwnKeys<T> = Exclude<keyof T,
-	'_beforeCreated' | '_created' | '_beforeMount' | '_mounted' | '_beforeUpdate' | '_updated' | '_activated' | '_deactivated' | '_beforeUnmount' | '_unmounted' | '_beforeDestroy' | '_destroyed' |
-	'_render' | '_provide' |
-	'_inject' | '_props' | '_directives' |
-	'_Render' |
-	'_staticRenderFns' | '_template' | '_inheritAttrs' | '_components' | '_emits' | '_mixins' |
-	'_extends' | '_data' | '_watch' | '_methods' | '_computed' | '_setup' |
-	'_delimiters' |
-	'_filters' | '_comments' | '_functional' | '_propsData' | '_model' |
-	'_' |
-	'$emit' |
-	'$watch' |
-	'$nextTick' |
-	'$forceUpdate' |
-	'$scopedSlots' | '$options' | '$parent' | '$slots' | '$attrs' | '$refs' | '$root' |
-	'$el' |
-	'$data' | '$props' |
-	'$createElement' |
-	'$children' | '$listeners' | '$destroy' | '$delete' | '$mount' | '$once' | '$set' | '$off' | '$on' |
-	'$'
-	>;
+	| `_${string}`
+	| '$emit'
+	| '$watch'
+	| '$nextTick'
+	| '$forceUpdate'
+	| '$scopedSlots' | '$options' | '$parent' | '$slots' | '$attrs' | '$refs' | '$root'
+	| '$el'
+	| '$data' | '$props'
+	| '$createElement'
+	| '$children' | '$listeners' | '$destroy' | '$delete' | '$mount' | '$once' | '$set' | '$off' | '$on'
+	| '$'
+>;
 
 declare const Vue :{ new () :Vue };
-type Vue = Readonly<Vue_>;
+type Vue = { readonly [Key in keyof Vue_] :Vue_[Key] };
 declare abstract class Vue_ extends Vue$ { private _? :never }
 declare abstract class Vue$ {
 	
-	$emit (this :this, event :string, ...args :readonly unknown[]) :this;
+	$emit <This extends Vue & { readonly _emits :readonly string[]                                                                        }                                    > (this :This, event :This['_emits'][number], ...args :                                                                                                                                                                                            readonly any[]) :This;
+	$emit <This extends Vue & { readonly _emits :NonArray<{ [event :string] :null | { (this :void, ...args :readonly any[]) :boolean } }> }, Event extends keyof This['_emits']> (this :This, event :Event,                  ...args :This['_emits'][Event] extends { (this :void, args :unknown) :args is infer Arg } ? readonly [ Arg ] : This['_emits'][Event] extends { (this :void, ...args :infer Args) :boolean } ? Args : readonly any[]) :This;
+	$emit <This extends Vue & { readonly _emits :void                                                                                     }                                    > (this :This, event :string,                 ...args :                                                                                                                                                                                            readonly any[]) :This;
 	
-	$watch        (this :this, exp :string                           , cb :<Value> (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch        (this :this, exp :string                           , cb :<Value> (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch<Value> (this :this, fn :(this :this, self? :this) => Value, cb :        (this :this, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
-	$watch<Value> (this :this, fn :(this :this, self? :this) => Value, cb :        (this :this, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch<This extends Vue>        (this :This, exp :string                          , cb :<Value> (this :This, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch<This extends Vue>        (this :This, exp :string                          , cb :<Value> (this :This, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch<This extends Vue, Value> (this :This, fn :(this :This, self :This) => Value, cb :        (this :This, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
+	$watch<This extends Vue, Value> (this :This, fn :(this :This, self :This) => Value, cb :        (this :This, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };
 	
-	$nextTick (this :this, callback :(this :this) => void | Promise<void>) :void;
-	$nextTick () :Promise<void>;
+	$nextTick<This extends Vue> (this :This, callback :(this :This) => void | Promise<void>) :void;
+	$nextTick<This extends Vue> (this :This) :Promise<void>;
 	
-	$forceUpdate (this :this) :void;
+	$forceUpdate<This extends Vue> (this :This) :void;
 	
 	$options :Readonly<ObjectAPI>;
 	$scopedSlots? :ScopedSlots;
@@ -291,20 +287,20 @@ declare abstract class Vue$ {
 }
 
 type Props<This extends Vue> =
-	readonly Exclude<OwnNames<This>, 'key' | 'ref'>[] |
-	NonArray<{
-		[Key in Exclude<OwnNames<This>, 'key' | 'ref'>]? :
-		ConstructorType<This[Key]> | ConstructorType<This[Key]>[] |
-		NonArray<{
-			type? :ConstructorType<This[Key]> | ConstructorType<This[Key]>[],
-			validator? (value :unknown) :value is This[Key],
-		} & ( {
-			default? :This[Key] extends object ? { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] } : This[Key] | { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] },
-			required? :false,
-		} | {
-			default? :never,
-			required? :boolean,
-		})>
+	| readonly Exclude<OwnNames<This>, 'key' | 'ref' | `$${string}`>[]
+	| NonArray<{
+		[Key in Exclude<OwnNames<This>, 'key' | 'ref' | `$${string}`>]? :
+			| ConstructorType<This[Key]> | ConstructorType<This[Key]>[]
+			| NonArray<{
+				type? :ConstructorType<This[Key]> | ConstructorType<This[Key]>[],
+				validator? (value :unknown) :value is This[Key],
+			} & ( {
+				default? :This[Key] extends object ? { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] } : This[Key] | { (this :void, props? :{ readonly [name :string] :unknown }) :This[Key] },
+				required? :false,
+			} | {
+				default? :never,
+				required? :boolean,
+			})>
 	}>;
 type ConstructorType<T> = {
 	new (...args :any) :
@@ -317,19 +313,23 @@ type ConstructorType<T> = {
 };
 
 type Inject<This extends Vue> =
-	readonly OwnNames<This>[] |
-	NonArray<{
+	| readonly OwnNames<This>[]
+	| NonArray<{
 		[Key in OwnKeys<This>]? :
-		string | symbol |
-		{
-			from? :string | symbol,
-			default? :This[Key] extends object ? { (this :void) :This[Key] } : This[Key] | { (this :void) :This[Key] },
-		}
+			| string | symbol
+			| {
+				from? :string | symbol,
+				default? :This[Key] extends object ? { (this :void) :This[Key] } : This[Key] | { (this :void) :This[Key] },
+			}
 	}>;
 
 type Emits =
-	readonly string[] |
-	NonArray<{ [event :string] :null | { (this :void, ...args :readonly unknown[]) :boolean } }>;
+	| readonly string[]
+	| NonArray<{
+		[event :string] :
+			| null
+			| { (this :void, ...args :readonly any[]) :boolean }
+	}>;
 
 type Directives<This extends Vue> = { [name :string] :Directive<This> };
 type Directive<This extends Vue> =
@@ -421,8 +421,8 @@ interface ObjectAPI {
 	directives? :Directives<Vue>,
 	components? :{ [name :string] :ObjectAPI },
 	provide? :
-		{ [key :string] :unknown } |
-		{ (this :Vue) :{ [key :string] :unknown } },
+		| { [key :string] :unknown }
+		| { (this :Vue) :{ [key :string] :unknown } },
 	emits? :Emits,
 	
 	inject? :Inject<Vue>,
@@ -460,8 +460,8 @@ interface ObjectAPI {
 	data? (this :Vue, self :Vue) :{ [name :string] :unknown },
 	watch? :{
 		[exp :string] :
-			{ <Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void> } |
-			{
+			| { <Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void> }
+			| {
 				handler<Value> (this :Vue, value :Value, oldValue? :Value) :void | Promise<void>,
 				deep? :boolean,
 				immediate? :boolean,
@@ -471,8 +471,8 @@ interface ObjectAPI {
 	methods? :{ [name :string] :{ (this :Vue, ...args :readonly unknown[]) :any } },
 	computed? :{
 		[name :string] :
-			{ (this :Vue, self :Vue) :unknown } |
-			{
+			| { (this :Vue, self :Vue) :unknown }
+			| {
 				get? (this :Vue, self :Vue) :unknown,
 				set? (this :Vue, value :unknown) :void | Promise<void>,
 			}
@@ -494,6 +494,11 @@ interface ObjectAPI {
 export type Vue3 = Readonly<{
 	h (this :void, type :string | NonArray, props? :NonArray | null, children? :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined } | { [name :string] :{ (this :void, arg :unknown) :VNode[] | undefined } }) :VNode;
 	h (this :void, type :string | NonArray,                          children  :( VNode | string )[] | { (this :void, arg :unknown) :VNode[] | undefined }                                                                          ) :VNode;
+	ref<T> (this :void, value :T) :{ value :T };
+	reactive<T extends object> (this :void, value :T) :T;
+	computed<T> (this :void, get :(this :void) => T) :{ readonly value :T };
+	computed<T> (this :void, {} :{ readonly get :(this :void) => T; readonly set :(this :void, value :T) => void }) :{ value :T };
+	compile? :never;
 } & { [API in
 	| 'BaseTransition'
 	| 'Comment'
@@ -510,8 +515,6 @@ export type Vue3 = Readonly<{
 	| 'camelize'
 	| 'capitalize'
 	| 'cloneVNode'
-	| 'compile'
-	| 'computed'
 	| 'createApp'
 	| 'createBlock'
 	| 'createCommentVNode'
@@ -556,9 +559,7 @@ export type Vue3 = Readonly<{
 	| 'proxyRefs'
 	| 'pushScopeId'
 	| 'queuePostFlushCb'
-	| 'reactive'
 	| 'readonly'
-	| 'ref'
 	| 'registerRuntimeCompiler'
 	| 'render'
 	| 'renderList'

@@ -77,7 +77,19 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     set '_watch(placeholder2--can be any unique words in fact);immediate' (r) { }
     
     
-    /* props (Non-static for type, also starts with `_`) */
+    /* emits (Non-static for type, also starts with `_`) */
+    
+    get _emits () {
+    	return {
+            e1: (value :unknown) :value is 1 => value===1,
+            e2: (arg0 :0, arg1 :1) :boolean => arg0===0 && arg1===1,
+    	};
+    }
+    
+    e (this :SubComponent) { this.$emit('e1', 1).$emit('e2', 0, 1); }
+    
+    
+    /* props (like emits) */
     
     get _props () { return [ 'p' ] as const; }
     
@@ -157,8 +169,6 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     static components = {};
     
     static provide = {};
-    
-    static emits = [ 'e' ];
     
     
 };

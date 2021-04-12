@@ -4,21 +4,15 @@ import create from '.Object.create';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
 
+function created (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) :                                     ( el[binding.arg] = binding.value ); }
+function updated (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : binding.oldValue===binding.value || ( el[binding.arg] = binding.value ); }
+
 export default /*#__PURE__*/freeze(create(NULL, {
-	created: {
-		enumerable: true,
-		value: function created (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : el[binding.arg] = binding.value; },
-	},
-	bind: {
-		enumerable: true,
-		value: function bind (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : el[binding.arg] = binding.value; },
-	},
-	updated: {
-		enumerable: true,
-		value: function updated (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : binding.oldValue===binding.value || ( el[binding.arg] = binding.value ); },
-	},
-	componentUpdated: {
-		enumerable: true,
-		value: function componentUpdated (el :any, binding :any) { binding.arg===undefined ? assign(el, binding.value) : binding.oldValue===binding.value || ( el[binding.arg] = binding.value ); },
-	},
+	
+	created: { value: created, enumerable: true },
+	bind: { value: created, enumerable: true },
+	
+	updated: { value: updated, enumerable: true },
+	componentUpdated: { value: updated, enumerable: true },
+	
 }));
