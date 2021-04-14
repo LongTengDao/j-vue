@@ -44,9 +44,6 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     
     m () { ++this.d; }
     
-    // Even `vm.constructor`! Anything possible in object-api, is possible in class-api!
-    ['constructor'] () { }
-    
     
     /* computed */
     
