@@ -86,7 +86,9 @@ abstract class SubComponent extends SuperComponent<SubComponent> {
     	};
     }
     
-    e (this :SubComponent) { this.$emit('e1', 1).$emit('e2', 0, 1); }
+    e (this :SubComponent) {// For current TypeScript, `this :SubComponent` is necessary in method including `$emit` calling!
+    	this.$emit('e1', 1).$emit('e2', 0, 1);
+    }
     
     
     /* props (like emits) */

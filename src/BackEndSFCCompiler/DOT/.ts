@@ -1,1 +1,0 @@
-export default require('path').join(__dirname, 'lib', '.j-vue.js');

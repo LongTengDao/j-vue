@@ -123,7 +123,7 @@ declare namespace exports {
 		static readonly inheritAttrs :void | boolean;
 		static readonly components :void | { readonly [name :string] :ClassAPI | ObjectAPI };
 		
-		static readonly _main :(this :ClassAPI) => void;
+		static get _main () :(this :void) => void;
 		static readonly _toOptions :(this :ClassAPI, Vue3? :Vue3, __dev__? :__Dev__) => ObjectAPI;
 		protected constructor (Vue3? :Vue3);
 		
@@ -236,9 +236,9 @@ declare namespace exports {
 	abstract class Vue_ extends Vue$ { private _? :never }
 	abstract class Vue$ {
 		
-		$emit <This extends Vue & { readonly _emits :readonly string[]                                                                        }                                    > (this :This, event :This['_emits'][number], ...args :                                                                                                                                                                                            readonly any[]) :This;
-		$emit <This extends Vue & { readonly _emits :NonArray<{ [event :string] :null | { (this :void, ...args :readonly any[]) :boolean } }> }, Event extends keyof This['_emits']> (this :This, event :Event,                  ...args :This['_emits'][Event] extends { (this :void, args :unknown) :args is infer Arg } ? readonly [ Arg ] : This['_emits'][Event] extends { (this :void, ...args :infer Args) :boolean } ? Args : readonly any[]) :This;
-		$emit <This extends Vue & { readonly _emits :void                                                                                     }                                    > (this :This, event :string,                 ...args :                                                                                                                                                                                            readonly any[]) :This;
+		$emit <This extends Vue & { readonly _emits :readonly string[]                                                                        }                                    > (this :This, event :This['_emits'][number], ...args :                                                                                                                                                                                          readonly any[]) :This;
+		$emit <This extends Vue & { readonly _emits :NonArray<{ [event :string] :null | { (this :void, ...args :readonly any[]) :boolean } }> }, Event extends keyof This['_emits']> (this :This, event :Event,                  ...args :This['_emits'][Event] extends { (this :void, arg :unknown) :arg is infer Arg } ? readonly [ Arg ] : This['_emits'][Event] extends { (this :void, ...args :infer Args) :boolean } ? Args : readonly any[]) :This;
+		$emit <This extends Vue & { readonly _emits :void                                                                                     }                                    > (this :This, event :string,                 ...args :                                                                                                                                                                                          readonly any[]) :This;
 		
 		$watch<This extends Vue>        (this :This, exp :string                          , cb :<Value> (this :This, value :Value, oldValue  :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :false  , flush? :'pre' | 'post' | 'sync' }) :{ () :void };
 		$watch<This extends Vue>        (this :This, exp :string                          , cb :<Value> (this :This, value :Value, oldValue? :Value) => void | Promise<void>, options? :{ deep? :boolean, immediate? :boolean, flush? :'pre' | 'post' | 'sync' }) :{ () :void };

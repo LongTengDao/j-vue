@@ -1,7 +1,7 @@
 export = exports;
 declare namespace exports {
 	
-	export const version :'24.0.0';
+	export const version :'25.0.0';
 	
 	export class SFC {
 		
@@ -82,6 +82,8 @@ declare namespace exports {
 	]? :string }) :string;
 	
 	export const DOT :string;
+	export const UMD :string;
+	export const ESM :string;
 	
 	export { exports as default };
 	

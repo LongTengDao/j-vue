@@ -210,7 +210,12 @@ export const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ re
 	if ( ws ) { Render = Render.replace(NSS, (nss, ss) => ws.eol + ws.tab.repeat(2 + ss.length/2)).slice(13, -1); }
 	else {
 		Render = await MinifyBODY(Render);
-		Render = Render.slice(Render[14]==='(' ? 14 : 13, Render.lastIndexOf('}') + 1);
+		const end = Render.length - 1;
+		Render = Render[14]==='('
+			? Render.slice(14, Render[end]===';' ? end - 1 : end)
+			: Render[end]===';'
+				? Render.slice(13, end)
+				: Render.slice(13);
 	}
 	const index = Render.indexOf('=>');
 	const left = Render.slice(0, index);

@@ -16,7 +16,7 @@ export { parseComponent as default };
 const parseComponent = (sfc :SFC, vue :string) :void => {
 	
 	const eol = sfc.eol || '\n';
-	const eol_0 = eol[0];
+	const eol_0 = eol[0]!;
 	const eol_length = eol.length;
 	
 	let index = 0;

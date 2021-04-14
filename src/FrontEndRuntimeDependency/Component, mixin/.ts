@@ -11,6 +11,7 @@ import getOwnPropertyNames from '.Object.getOwnPropertyNames';
 import getOwnPropertyDescriptor from '.Object.getOwnPropertyDescriptor';
 import getOwnPropertySymbols from '.Object.getOwnPropertySymbols?';
 import defineProperties from '.Object.defineProperties';
+import defineProperty from '.Object.defineProperty';
 import get from '.Reflect.get?';
 import apply from '.Reflect.apply?';
 import assign from '.Object.assign?';
@@ -21,6 +22,7 @@ import freeze from '.Object.freeze';
 import PROTO_BUG from '.Object.prototype';
 import hasOwnProperty from '.Object.prototype.hasOwnProperty';
 import isPrototypeOf from '.Object.prototype.isPrototypeOf';
+import test from '.RegExp.prototype.test';
 import document from '.document';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
@@ -39,32 +41,43 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 		},
 		render: {
 			enumerable: false,
-			get: undefined,
+			get: function render (this :void) { throw TypeError('Component.render='); },
 			set: function render (this :void, value :_Render3 | _Render2) { ( that!._ || that!.$options ).render = value; },
 		},
 		_main: {
 			enumerable: false,
-			value: function _main (this :ClassAPI) :void {
-				if ( !isComponentConstructor(this) ) { throw TypeError('(!Component)._main()'); }
-				var Vue = Function('return Vue')();
-				typeof Vue==='object'
-					? Vue.createApp(
-						ToOptions(
-							this,
-							Vue,
-							Vue.config.devtools ? ( Vue.config.performance = true, {} ) : undefined
-						)
-					)
-					.mount(document.body)
-					: new ( Vue.extend(
-						ToOptions(
-							this,
-							undefined,
-							Vue.devtools ? ( Vue.config.performance = true, {} ) : undefined
-						)
-					) )()
-					.$mount(( document.body.innerHTML = '<br>', 'br' ));
+			get: function _main (this :ClassAPI) {
+				var Component = this;
+				if ( !isComponentConstructor(Component) ) { throw TypeError('(!Component)._main'); }
+				return function _main (this :unknown) :void {
+					if ( this!==Component && isComponentConstructor(this) ) { throw TypeError('(Component!this)._main()'); }
+					var Vue = Function('return Vue')();
+					if ( typeof Vue==='object' ) {
+						//@ts-ignore
+						var __dev__ = getOwnPropertyDescriptor(Vue.createApp(create(NULL)).config, 'isNativeTag')!.writable ? undefined : create(NULL);
+						var app = Vue.createApp(
+							ToOptions(
+								Component,
+								Vue,
+								__dev__
+							)
+						);
+						if ( __dev__ ) { defineProperty(app.config, 'isCustomElement', { value: test.bind(/^[a-z][^-]*?-/) }).performance = true; }
+						app.mount(document.body);
+					}
+					else {
+						new ( Vue.extend(
+							ToOptions(
+								Component,
+								undefined,
+								Vue.devtools ? ( Vue.config.ignoredElements.push(/^[a-z][^-]*?-/), Vue.config.performance = true, create(NULL) ) : undefined
+							)
+						) )()
+						.$mount(( document.body.innerHTML = '<br>', 'br' ));
+					}
+				};
 			},
+			set: undefined,
 		},
 		_toOptions: {
 			enumerable: false,
@@ -492,7 +505,7 @@ return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyM
 };
 interface EasyMap<K extends object, V> extends WeakMap<K, V> {into (key :K) :V;}
 
-var isComponentConstructor = /*#__PURE__*/isPrototypeOf.bind(Component) as (value :object) => value is ClassAPI;
+var isComponentConstructor = /*#__PURE__*/isPrototypeOf.bind(Component) as (value :any) => value is ClassAPI;
 
 var ARGS = [] as const;
 

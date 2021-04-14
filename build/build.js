@@ -61,7 +61,11 @@ require('@ltd/j-dev')(__dirname+'/..')(async ({ build, 龙腾道: Auth, get, ful
 		},
 	});
 	
-	await map('dist/FrontEndRuntimeDependency/ESM/.j-vue.js', 'dist/BackEndSFCCompiler/NPM/lib/.j-vue.js');
+	await map(
+		[ 'dist/FrontEndRuntimeDependency/ESM/.j-vue.js', 'dist/BackEndSFCCompiler/NPM/lib/DOT.js' ],
+		[ 'dist/FrontEndRuntimeDependency/UMD/j-vue.js', 'dist/BackEndSFCCompiler/NPM/lib/UMD.js' ],
+		[ 'dist/FrontEndRuntimeDependency/ESM/j-vue.js', 'dist/BackEndSFCCompiler/NPM/lib/ESM.js' ],
+	);
 	
 	await build({ LICENSE_: Copy, DOC: true });
 	

@@ -82,6 +82,8 @@ declare namespace exports {
 	]? :string }) :string;
 	
 	export const DOT :string;
+	export const UMD :string;
+	export const ESM :string;
 	
 	export { exports as default };
 	
