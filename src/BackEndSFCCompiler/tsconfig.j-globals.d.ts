@@ -84,7 +84,6 @@ declare module '.Object.prototype.hasOwnProperty' { export default Object.protot
 declare module '.Object.prototype.isPrototypeOf' { export default Object.prototype.isPrototypeOf; }
 declare module '.Object.prototype.propertyIsEnumerable' { export default Object.prototype.propertyIsEnumerable; }
 declare module '.Object.prototype.toString' { export default Object.prototype.toString; }
-declare module '.Object.setPrototypeOf' { export default Object.setPrototypeOf; }
 
 declare module '.Proxy' { export default Proxy; }
 declare module '.Proxy?' { export default Proxy; }
@@ -230,61 +229,3 @@ declare module '.throw.SyntaxError' { export default throwSyntaxError;
 }
 
 declare module '.undefined' { export default undefined; }
-
-declare module '.void.splice' { export default Array;
-	const Array :ArrayConstructor;
-	type ArrayConstructor = {
-		new<T = any> () :Array<T>
-		readonly isArray :(arg :any) => arg is readonly any[]
-		readonly from :{
-			<T            > (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>                                                                ) :Array<T>
-			<T, U         > (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>, mapfn: (this :void   , v: T, k: number) => U                  ) :Array<U>
-			<T, U, ThisArg> (this :ArrayConstructor, iterable: Iterable<T> | ArrayLike<T>, mapfn: (this :ThisArg, v: T, k: number) => U, thisArg: ThisArg) :Array<U>
-		}
-		readonly of :<T> (this :ArrayConstructor, ...items :T[]) => Array<T>
-	};
-	type Array<T> = {
-		readonly [Key in 'copyWithin' | 'fill' | 'lastIndexOf' | 'pop' | 'push' | 'reverse' | 'shift' | 'unshift' | 'sort' | 'includes' | 'indexOf' | 'join' | 'keys' | 'entries' | 'values' | 'toLocaleString' | 'toString'] :T[][Key]// Exclude<keyof T[], 'slice' | 'concat' | 'map' | 'filter' | 'flat' | 'flatMap' | number | 'length' | 'splice' | 'forEach' | 'every' | 'some' | 'reduce' | 'reduceRight' | 'find' | 'findIndex'>
-	} & {
-		readonly constructor :ArrayConstructor
-		[index :number] :T
-		length :number
-		readonly splice :{
-			(this :Array<T>, start :number, deleteCount? :number               ) :unknown
-			(this :Array<T>, start :number, deleteCount  :number, ...items :T[]) :unknown
-		}
-		readonly forEach :{
-			          (this :Array<T>, callbackfn :(this :void   , value :T, index :number, array :Array<T>) => void                  ) :void
-			<ThisArg> (this :Array<T>, callbackfn :(this :ThisArg, value :T, index :number, array :Array<T>) => void, thisArg :ThisArg) :void
-		}
-		readonly every :{
-			          (this :Array<T>, callbackfn :(this :void   , value :T, index :number, array :Array<T>) => boolean                  ) :boolean
-			<ThisArg> (this :Array<T>, callbackfn :(this :ThisArg, value :T, index :number, array :Array<T>) => boolean, thisArg :ThisArg) :boolean
-		}
-		readonly some :{
-			          (this :Array<T>, callbackfn :(this :void   , value :T, index :number, array :Array<T>) => boolean                  ) :boolean
-			<ThisArg> (this :Array<T>, callbackfn :(this :ThisArg, value :T, index :number, array :Array<T>) => boolean, thisArg :ThisArg) :boolean
-		}
-		readonly reduce :{
-			          (callbackfn :(previousValue :T      , currentValue :T, currentIndex :number, array :Array<T>) => T                             ) :T
-			          (callbackfn :(previousValue :T      , currentValue :T, currentIndex :number, array :Array<T>) => T      , initialValue :T      ) :T
-			<ThisArg> (callbackfn :(previousValue :ThisArg, currentValue :T, currentIndex :number, array :Array<T>) => ThisArg, initialValue :ThisArg) :ThisArg
-		}
-		readonly reduceRight :{
-			          (callbackfn :(previousValue :T      , currentValue :T, currentIndex :number, array :Array<T>) => T                             ) :T
-			          (callbackfn :(previousValue :T      , currentValue :T, currentIndex :number, array :Array<T>) => T      , initialValue :T      ) :T
-			<ThisArg> (callbackfn :(previousValue :ThisArg, currentValue :T, currentIndex :number, array :Array<T>) => ThisArg, initialValue :ThisArg) :ThisArg
-		}
-		readonly find :{
-			<S extends T         > (predicate :(this :void   , value :T, index :number, array :Array<T>) => value is S                  ) :S | undefined
-			<S extends T, ThisArg> (predicate :(this :ThisArg, value :T, index :number, array :Array<T>) => value is S, thisArg :ThisArg) :S | undefined
-		}
-		readonly findIndex :{
-			          (predicate :(this :void   , value :T, index :number, array :Array<T>) => boolean                  ) :number
-			<ThisArg> (predicate :(this :ThisArg, value :T, index :number, array :Array<T>) => boolean, thisArg :ThisArg) :number
-		}
-		readonly [Symbol.iterator] :{
-			() :IterableIterator<T>
-		}
-	};
-}

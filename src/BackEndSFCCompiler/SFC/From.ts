@@ -5,7 +5,7 @@ import bind from '.Function.prototype.bind';
 import undefined from '.undefined';
 
 import { StringLiteral } from '@ltd/j-es';
-import { newRegExp, groupify } from '@ltd/j-regexp';
+import { groupify } from '@ltd/j-regexp';
 
 import KEYS from '../../FrontEndRuntimeDependency/Scope/KEYS';
 
@@ -22,9 +22,9 @@ const VisibleStringLiteral = (id :string) :string => {
 	const literal :string = StringLiteral(id);
 	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` ) + literal.slice(2) : literal;
 };
-
-const is__KEY__ = newRegExp`^__${KEYS}__$`.test;
 const test_bind = bind.bind(test as any) as unknown as (this :void, regExp :RegExp) => (this :void, string :string) => boolean;
+const Is__KEY__ = (KEY :string) => test_bind(RegExp(`^[.#]?__${KEY}__$`));
+const is__KEY__ = Is__KEY__(KEYS.source);
 
 export default async function From (tab :string, mode :'const' | 'var' | 'let', styles :Style[], template :Template | null, from :string | null, eol :string, bom :'\uFEFF' | '') :Promise<{ ports :string[] | null, code :string }> {
 	
@@ -91,7 +91,7 @@ export default async function From (tab :string, mode :'const' | 'var' | 'let', 
 	}
 	
 	const _from_ = VisibleStringLiteral(from);
-	code += `export { Identifier, Scope, Style, remove, Component, mixin, $, prop } from ${_from_};${eol}`;
+	code += `export { Identifier, Scope, Style, remove, Component, mixin, prop } from ${_from_};${eol}`;
 	code += `import { Scope, Template, Render as _Render, StaticRenderFns } from ${_from_};${eol}${eol}`;
 	
 	const scopeKeys = template && _(template).keys;
@@ -102,7 +102,7 @@ export default async function From (tab :string, mode :'const' | 'var' | 'let', 
 	
 	const { length } = styles;
 	if ( length ) {
-		const isScoped = scopeKeys ? test_bind(RegExp(`^[.#]?__${groupify(scopeKeys)}__$`)) : is__KEY__;
+		const isScoped = scopeKeys ? Is__KEY__(groupify(scopeKeys)) : is__KEY__;
 		let index = 0;
 		while ( index!==length ) {
 			const style = styles[index++]!;

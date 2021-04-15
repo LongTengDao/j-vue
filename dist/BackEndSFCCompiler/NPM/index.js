@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '25.0.0';
+const version = '25.0.1';
 
 const Error$1 = Error;
 
@@ -771,83 +771,6 @@ const Reflect_deleteProperty = Reflect.deleteProperty;
 
 const Reflect_ownKeys = Reflect.ownKeys;
 
-const setPrototypeOf = Object.setPrototypeOf;
-
-const getPrototypeOf = Object.getPrototypeOf;
-
-const preventExtensions = Object.preventExtensions;
-
-const getOwnPropertyDescriptor = (
-	/*! j-globals: null.getOwnPropertyDescriptor (internal) */
-	function () {
-		function __PURE__ (descriptor) {
-			var propertyDescriptor = create$1(NULL);
-			if ( descriptor.hasOwnProperty('value') ) {
-				propertyDescriptor.value = descriptor.value;
-				propertyDescriptor.writable = descriptor.writable;
-			}
-			else {
-				propertyDescriptor.get = descriptor.get;
-				propertyDescriptor.set = descriptor.set;
-			}
-			propertyDescriptor.enumerable = descriptor.enumerable;
-			propertyDescriptor.configurable = descriptor.configurable;
-			return propertyDescriptor;
-		}
-		return function getOwnPropertyDescriptor (object, key) {
-			return /*#__PURE__*/__PURE__(/*#__PURE__*/Object_getOwnPropertyDescriptor(object, key));
-		};
-	}()
-	/*¡ j-globals: null.getOwnPropertyDescriptor (internal) */
-);
-
-var ownKeys = typeof Reflect==='object' ? Reflect.ownKeys : Object.getOwnPropertyNames;
-const getOwnPropertyDescriptors = (
-	/*! j-globals: null.getOwnPropertyDescriptors (internal) */
-	function () {
-		function __PURE__ (object) {
-			var descriptorMap = create$1(NULL);
-			for ( var keys = ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
-				var key = keys[index];
-				descriptorMap[key] = getOwnPropertyDescriptor(object, key);
-			}
-			return descriptorMap;
-		}
-		return function getOwnPropertyDescriptors (object) {
-			return /*#__PURE__*/__PURE__(object);
-		};
-	}()
-	/*¡ j-globals: null.getOwnPropertyDescriptors (internal) */
-);
-
-const Keeper = (
-	/*! j-globals: Array (internal) */
-	/*#__PURE__*/function () {
-		const DELETED = class extends null { set length (value) { while ( value ) { this[--value] = null; } } }.prototype;
-		//new Proxy({}, {
-		//	defineProperty: () => true,// indexes
-		//	set: () => true,// length
-		//});
-		const weak = new WeakMap;
-		weak.get = weak.get;
-		weak.set = weak.set;
-		const properties = getOwnPropertyDescriptors(freeze(freeze(class extends Array$1 {
-			static [Symbol.species] = class extends null { constructor () { return DELETED; } };
-			constructor () { return super(); }
-			get slice () { }
-			get concat () { }
-			get map () { }
-			get filter () { }
-			get flat () { }
-			get flatMap () { }
-			get __proto__ () { return getPrototypeOf(this); }
-			set __proto__ (proto) { setPrototypeOf(this, weak.get(proto) ?? weak.set(proto, preventExtensions(create(proto, properties))).get(proto)); }
-		}).prototype));
-		return properties.constructor.value;
-	}()
-	/*¡ j-globals: Array (internal) */
-);
-
 /*!@preserve@license
  * 模块名称：j-orderify
  * 模块功能：返回一个能保证给定对象的属性按此后添加顺序排列的 proxy，即使键名是 symbol，或整数 string。从属于“简计划”。
@@ -858,6 +781,8 @@ const Keeper = (
  * 问题反馈：https://GitHub.com/LongTengDao/j-orderify/issues
  * 项目主页：https://GitHub.com/LongTengDao/j-orderify/
  */
+
+const Keeper =     ()      => [];
 
 const hasOwnProperty_call = /*#__PURE__*/hasOwnProperty.call.bind(hasOwnProperty);
 
@@ -898,7 +823,7 @@ const handlers                       = /*#__PURE__*/Object_assign(create(NULL), 
 		if ( Reflect_deleteProperty(target, key) ) {
 			const keeper = target2keeper.get(target) ;
 			const index = keeper.indexOf(key);
-			index<0 || keeper.splice(index, 1);
+			index<0 || --keeper.copyWithin(index, index + 1).length;
 			return true;
 		}
 		return false;
@@ -919,7 +844,7 @@ const orderify =                    (object   )    => {
 	if ( proxy2target.has(object) ) { return object; }
 	let proxy = target2proxy.get(object)                 ;
 	if ( proxy ) { return proxy; }
-	proxy = newProxy(object, Object_assign(new Keeper          (), Reflect_ownKeys(object)));
+	proxy = newProxy(object, Object_assign(Keeper          (), Reflect_ownKeys(object)));
 	target2proxy.set(object, proxy);
 	return proxy;
 };
@@ -936,7 +861,7 @@ const Null$1 = /*#__PURE__*/function () {
 		return new.target
 			? new.target===Null
 				? /*#__PURE__*/throwConstructing()
-				: /*#__PURE__*/newProxy(this, new Keeper     ())
+				: /*#__PURE__*/newProxy(this, Keeper     ())
 			: typeof constructor==='function'
 				? /*#__PURE__*/Nullify(constructor)
 				: /*#__PURE__*/throwApplying();
@@ -3733,7 +3658,54 @@ const throwSyntaxError = (
 
 const Map$1 = Map;
 
+const preventExtensions = Object.preventExtensions;
+
+const getPrototypeOf = Object.getPrototypeOf;
+
 const push = Array.prototype.push;
+
+const getOwnPropertyDescriptor = (
+	/*! j-globals: null.getOwnPropertyDescriptor (internal) */
+	function () {
+		function __PURE__ (descriptor) {
+			var propertyDescriptor = create$1(NULL);
+			if ( descriptor.hasOwnProperty('value') ) {
+				propertyDescriptor.value = descriptor.value;
+				propertyDescriptor.writable = descriptor.writable;
+			}
+			else {
+				propertyDescriptor.get = descriptor.get;
+				propertyDescriptor.set = descriptor.set;
+			}
+			propertyDescriptor.enumerable = descriptor.enumerable;
+			propertyDescriptor.configurable = descriptor.configurable;
+			return propertyDescriptor;
+		}
+		return function getOwnPropertyDescriptor (object, key) {
+			return /*#__PURE__*/__PURE__(/*#__PURE__*/Object_getOwnPropertyDescriptor(object, key));
+		};
+	}()
+	/*¡ j-globals: null.getOwnPropertyDescriptor (internal) */
+);
+
+var ownKeys = typeof Reflect==='object' ? Reflect.ownKeys : Object.getOwnPropertyNames;
+const getOwnPropertyDescriptors = (
+	/*! j-globals: null.getOwnPropertyDescriptors (internal) */
+	function () {
+		function __PURE__ (object) {
+			var descriptorMap = create$1(NULL);
+			for ( var keys = ownKeys(object), length = keys.length, index = 0; index<length; ++index ) {
+				var key = keys[index];
+				descriptorMap[key] = getOwnPropertyDescriptor(object, key);
+			}
+			return descriptorMap;
+		}
+		return function getOwnPropertyDescriptors (object) {
+			return /*#__PURE__*/__PURE__(object);
+		};
+	}()
+	/*¡ j-globals: null.getOwnPropertyDescriptors (internal) */
+);
 
 /*!@preserve@license
  * 模块名称：j-css
@@ -4145,7 +4117,7 @@ const LITERALS                    = [];
 let literals                    = LITERALS;
 let literal         = '';
 let types                           = ''       ;
-let type      ;
+let type       = ''       ;
 let length         = 0;
 let index$1         = 0;
 let currentLayer                    = null;
@@ -4204,7 +4176,10 @@ class Refs {
 	selector                        = collection_selector.length
 		? collection_selector
 		: null;
-	constructor () { return this; }
+	constructor () {
+		if ( collection_selector.length ) { collection_selector = []; }
+		return this;
+	}
 }
 
 const IS_NULL_SURROGATE = /*#__PURE__*/test.bind(/[\x00\uD800-\uDFFF]/u);
@@ -4247,17 +4222,17 @@ const parse = (sheet       , source        ) => {
 
 const clear = ()       => {
 	collection_type.length =
-		collection_class.length =
-			collection_attribute.length =
-				collection_id.length =
-					collection_url.length =
-						collection_keyframes.length =
-							collection_animation.length =
-								collection_selector.length = 0;
-	collection_selector.length && ( collection_selector = [] );
+	collection_class.length =
+	collection_attribute.length =
+	collection_id.length =
+	collection_url.length =
+	collection_keyframes.length =
+	collection_animation.length =
+	collection_selector.length =
+		0;
 	literals = LITERALS;
 	currentLayer = null;
-	literal = '';
+	literal = types = ''       ;
 };
 
 let indent = '\t';
@@ -4765,14 +4740,20 @@ class Declaration extends Layer                             {// property or desc
 	[consume] (                 ) {
 		if ( this._colon ) {
 			switch ( type ) {
-				case ';':
+				case ';': {
+					const { lastItem } = this;
+					( lastItem===' ' || lastItem==='/**/' ) && --this.length;
 					if ( !this.length ) { break; }
 					return this[parent];
-				case function_:
-					return this.newItem = new ( url_ (literal) ? Url : Parenthesis )(literal.slice(0, -1));
-				case '}':
+				}
+				case '}': {
+					const { lastItem } = this;
+					( lastItem===' ' || lastItem==='/**/' ) && --this.length;
 					if ( !this.length ) { break; }
 					return this[parent] [parent] [parent];
+				}
+				case function_:
+					return this.newItem = new ( url_ (literal) ? Url : Parenthesis )(literal.slice(0, -1));
 				case '?':
 				case '/':
 				case '-':
@@ -6011,11 +5992,11 @@ class Sheet$1 extends Layer                                                     
 	//////treeShake (this :Sheet, selectorList :string) {}
 	
 	replace (             callback                                                                    , kinds                         = KINDS)       {
-		replace(this, (literal        ) => callback(evaluate(literal)), kinds);
+		replace(this, (literal        , kind       ) => callback(evaluate(literal), kind), kinds);
 	}
 	
 	forEach (             callback                                                         , kinds                         = KINDS)       {
-		replace(this, (literal        ) => void callback(literal), kinds);
+		replace(this, (literal        , kind       ) => void callback(literal, kind), kinds);
 	}
 	
 	findGlobal (             isScoped                                                  )                {
@@ -7724,9 +7705,9 @@ const VisibleStringLiteral = (id        )         => {
 	const literal         = StringLiteral(id);
 	return id[0]==='\x00' ? ( NULo.test(id) ? `'\\x00` : `'\\0` ) + literal.slice(2) : literal;
 };
-
-const is__KEY__ = newRegExp$1`^__${KEYS}__$`.test;
 const test_bind = bind.bind(test       )                                                                                      ;
+const Is__KEY__ = (KEY        ) => test_bind(RegExp$1(`^[.#]?__${KEY}__$`));
+const is__KEY__ = Is__KEY__(KEYS.source);
 
 async function From (tab        , mode                         , styles         , template                 , from               , eol        , bom               )                                                    {
 	
@@ -7793,7 +7774,7 @@ async function From (tab        , mode                         , styles         
 	}
 	
 	const _from_ = VisibleStringLiteral(from);
-	code += `export { Identifier, Scope, Style, remove, Component, mixin, $, prop } from ${_from_};${eol}`;
+	code += `export { Identifier, Scope, Style, remove, Component, mixin, prop } from ${_from_};${eol}`;
 	code += `import { Scope, Template, Render as _Render, StaticRenderFns } from ${_from_};${eol}${eol}`;
 	
 	const scopeKeys = template && _(template).keys;
@@ -7804,7 +7785,7 @@ async function From (tab        , mode                         , styles         
 	
 	const { length } = styles;
 	if ( length ) {
-		const isScoped = scopeKeys ? test_bind(RegExp$1(`^[.#]?__${groupify$1(scopeKeys)}__$`)) : is__KEY__;
+		const isScoped = scopeKeys ? Is__KEY__(groupify$1(scopeKeys)) : is__KEY__;
 		let index = 0;
 		while ( index!==length ) {
 			const style = styles[index++] ;
