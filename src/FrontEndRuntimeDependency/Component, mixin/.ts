@@ -23,6 +23,7 @@ import PROTO_BUG from '.Object.prototype';
 import hasOwnProperty from '.Object.prototype.hasOwnProperty';
 import isPrototypeOf from '.Object.prototype.isPrototypeOf';
 import test from '.RegExp.prototype.test';
+import window from '.window';
 import document from '.document';
 import undefined from '.undefined';
 import NULL from '.null.prototype';
@@ -50,19 +51,23 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 				var Component = this;
 				if ( !isComponentConstructor(Component) ) { throw TypeError('(!Component)._main'); }
 				return function _main (this :unknown) :void {
+					if ( once ) { throw Error('Component._main()x2'); }
 					if ( this!==Component && isComponentConstructor(this) ) { throw TypeError('(Component!this)._main()'); }
 					var Vue = Function('return Vue')();
 					if ( typeof Vue==='object' ) {
-						//@ts-ignore
-						var __dev__ = getOwnPropertyDescriptor(Vue.createApp(create(NULL)).config, 'isNativeTag')!.writable ? undefined : create(NULL);
+						var dev = isArray(( window as { devtoolsFormatters? :[] } ).devtoolsFormatters);
 						var app = Vue.createApp(
 							ToOptions(
 								Component,
 								Vue,
-								__dev__
+								dev ? create(NULL) : undefined
 							)
 						);
-						if ( __dev__ ) { defineProperty(app.config, 'isCustomElement', { value: test.bind(/^[a-z][^-]*?-/) }).performance = true; }
+						defineProperty(app.config, 'isCustomElement', { value: test.bind(STARTS_WITH_LOWERCASE), writable: true });
+						if ( dev ) {
+							THROW_IRREPARABLE = false;
+							app.config.performance = true;
+						}
 						app.mount(document.body);
 					}
 					else {
@@ -70,11 +75,12 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 							ToOptions(
 								Component,
 								undefined,
-								Vue.devtools ? ( Vue.config.ignoredElements.push(/^[a-z][^-]*?-/), Vue.config.performance = true, create(NULL) ) : undefined
+								Vue.devtools ? ( Vue.config.ignoredElements.push(STARTS_WITH_LOWERCASE), Vue.config.performance = true, create(NULL) ) : undefined
 							)
 						) )()
 						.$mount(( document.body.innerHTML = '<br>', 'br' ));
 					}
+					once = true;
 				};
 			},
 			set: undefined,
@@ -88,6 +94,7 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 		},
 	}
 ));
+var once = false;
 
 function ToOptions (this :void, constructor :ClassAPI, Vue3? :_Vue3, __dev__? :{ readonly [Key in keyof __Dev__]? :string }) {
 	var DID_OPTIONS = OPTIONS.objects.into(__dev__ || OPTIONS as any).into(Vue3 || OPTIONS as any);
@@ -449,7 +456,7 @@ function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev
 			for ( pascal in components ) {
 				if ( !pascal || STARTS_WITH_LOWERCASE.test(pascal) ) { throw Error(__dev__.compile_name); }
 			}
-			if ( Vue3 && !options.render && options.template ) {
+			if ( THROW_IRREPARABLE && Vue3 && !options.render && options.template ) {
 				if (
 					//@ts-ignore
 					options.name && INCLUDES_UPPERCASE.test(options.name.slice(1))
@@ -569,6 +576,7 @@ function devAssertFunction<T> (this :__Dev__, fn :T) {
 	return fn as T extends CallableFunction ? T : never;
 }
 
+var THROW_IRREPARABLE = true;
 var INCLUDES_UPPERCASE = /[A-Z]/;
 var STARTS_WITH_LOWERCASE = /^[a-z]/;
 var CHECKED = WeakMap && /*#__PURE__*/new WeakMap<ClassAPI | _ObjectAPI, Names<ClassAPI | _ObjectAPI>>();
@@ -714,10 +722,10 @@ var DEV :readonly ( keyof __Dev__ )[] = [
 ];
 
 export type ClassAPI =
-	{ new (Vue3? :_Vue3) :Context } &
-	{ readonly prototype :_Component<_Vue> & { readonly [SYMBOL]? :unknown } } &
-	{ readonly [Key in keyof typeof _Component] :typeof _Component[Key] } &
-	{ readonly [_mixins]? :readonly ( ClassAPI | _ObjectAPI )[] };
+	& { new (Vue3? :_Vue3) :Context }
+	& { readonly prototype :_Component<_Vue> & { readonly [SYMBOL]? :unknown } }
+	& { readonly [Key in keyof typeof _Component] :typeof _Component[Key] }
+	& { readonly [_mixins]? :readonly ( ClassAPI | _ObjectAPI )[] };
 
 export interface Context extends _Vue {
 	readonly _? :{

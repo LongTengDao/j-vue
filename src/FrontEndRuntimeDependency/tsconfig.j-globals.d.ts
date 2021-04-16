@@ -140,3 +140,5 @@ declare module '.null.prototype' { export default NULL;
 }
 
 declare module '.undefined' { export default undefined; }
+
+declare module '.window' { export default window; }

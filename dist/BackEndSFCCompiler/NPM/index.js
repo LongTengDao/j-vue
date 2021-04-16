@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '25.0.2';
+const version = '25.1.0';
 
 const Error$1 = Error;
 
@@ -315,6 +315,10 @@ var NT$2 = /[\n\t]+/g;
 var ESCAPE$2 = /\\./g;
 function graveAccentReplacer$1 ($$        ) { return $$==='\\`' ? '`' : $$; }
 
+var includes$1 = ''.includes       
+	? function (that        , searchString        ) { return that.includes(searchString); }
+	: function (that        , searchString        ) { return that.indexOf(searchString)>-1; };
+
 function RE$1 (               template                      ) {
 	var U = this.U;
 	var I = this.I;
@@ -338,8 +342,8 @@ function RE$1 (               template                      ) {
 			if ( typeof value_source!=='string' ) { throw TypeError$1('source'); }
 			if ( value.unicode===U ) { throw SyntaxError$1('unicode'); }
 			if ( value.ignoreCase===I ) { throw SyntaxError$1('ignoreCase'); }
-			if ( value.multiline===M && ( value_source.includes('^') || value_source.includes('$') ) ) { throw SyntaxError$1('multiline'); }
-			if ( value.dotAll===S && value_source.includes('.') ) { throw SyntaxError$1('dotAll'); }
+			if ( value.multiline===M && ( includes$1(value_source, '^') || includes$1(value_source, '$') ) ) { throw SyntaxError$1('multiline'); }
+			if ( value.dotAll===S && includes$1(value_source, '.') ) { throw SyntaxError$1('dotAll'); }
 			source += value_source;
 		}
 		source += raw[index++] .replace(NT$2, '');
@@ -350,34 +354,52 @@ function RE$1 (               template                      ) {
 	test.source = exec.source = source;
 	test.unicode = exec.unicode = U;
 	test.ignoreCase = exec.ignoreCase = I;
-	test.multiline = exec.multiline = source.includes('^') || source.includes('$') ? M : null;
-	test.dotAll = exec.dotAll = source.includes('.') ? S : null;
+	test.multiline = exec.multiline = includes$1(source, '^') || includes$1(source, '$') ? M : null;
+	test.dotAll = exec.dotAll = includes$1(source, '.') ? S : null;
 	return re;
 }
 
-var RE_bind$1 = /*#__PURE__*/bind.bind(RE$1       );
+var RE_bind$1 = bind && /*#__PURE__*/bind.bind(RE$1       );
 
 function Context$1 (flags        )          {
 	return {
-		U: !flags.includes('u'),
-		I: !flags.includes('i'),
-		M: !flags.includes('m'),
-		S: !flags.includes('s'),
+		U: !includes$1(flags, 'u'),
+		I: !includes$1(flags, 'i'),
+		M: !includes$1(flags, 'm'),
+		S: !includes$1(flags, 's'),
 		flags: flags
 	};
 }
 
 var CONTEXT$1          = /*#__PURE__*/Context$1('');
 
-var newRegExp$1 = /*#__PURE__*/new Proxy$1(RE$1, {
-	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT$1, args); }
-	,
-	get: function (RE, flags        ) { return RE_bind$1(Context$1(flags)); }
-	,
-	defineProperty: function () { return false; }
-	,
-	preventExtensions: function () { return false; }
-});
+var newRegExp$1 = Proxy$1
+	? /*#__PURE__*/new Proxy$1(RE$1, {
+		apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT$1, args); }
+		,
+		get: function (RE, flags        ) { return RE_bind$1(Context$1(flags)); }
+		,
+		defineProperty: function () { return false; }
+		,
+		preventExtensions: function () { return false; }
+	})
+	: /*#__PURE__*/function () {
+		RE$1.apply = RE$1.apply;
+		var newRegExp = function () { return RE$1.apply(CONTEXT$1, arguments       ); }       ;
+		for ( var flags = 63; flags--; ) {
+			( function (context) {
+				newRegExp[context.flags] = function () { return RE$1.apply(context, arguments       ); };
+			} )(Context$1(
+				( flags & 32 ? '' : 'g' ) +
+				( flags & 16 ? '' : 'i' ) +
+				( flags &  8 ? '' : 'm' ) +
+				( flags &  4 ? '' : 's' ) +
+				( flags &  2 ? '' : 'u' ) +
+				( flags &  1 ? '' : 'y' )
+			));
+		}
+		return freeze ? freeze(newRegExp) : newRegExp;
+	}();
 
 var NEED_TO_ESCAPE_IN_REGEXP$1 = /^[$()*+\-.?[\\\]^{|]/;
 var SURROGATE_PAIR$1 = /^[\uD800-\uDBFF][\uDC00-\uDFFF]/;
@@ -3771,6 +3793,10 @@ var NT$1 = /[\n\t]+/g;
 var ESCAPE$1 = /\\./g;
 function graveAccentReplacer ($$        ) { return $$==='\\`' ? '`' : $$; }
 
+var includes = ''.includes       
+	? function (that        , searchString        ) { return that.includes(searchString); }
+	: function (that        , searchString        ) { return that.indexOf(searchString)>-1; };
+
 function RE (               template                      ) {
 	var U = this.U;
 	var I = this.I;
@@ -3794,8 +3820,8 @@ function RE (               template                      ) {
 			if ( typeof value_source!=='string' ) { throw TypeError$1('source'); }
 			if ( value.unicode===U ) { throw SyntaxError$1('unicode'); }
 			if ( value.ignoreCase===I ) { throw SyntaxError$1('ignoreCase'); }
-			if ( value.multiline===M && ( value_source.includes('^') || value_source.includes('$') ) ) { throw SyntaxError$1('multiline'); }
-			if ( value.dotAll===S && value_source.includes('.') ) { throw SyntaxError$1('dotAll'); }
+			if ( value.multiline===M && ( includes(value_source, '^') || includes(value_source, '$') ) ) { throw SyntaxError$1('multiline'); }
+			if ( value.dotAll===S && includes(value_source, '.') ) { throw SyntaxError$1('dotAll'); }
 			source += value_source;
 		}
 		source += raw[index++] .replace(NT$1, '');
@@ -3806,34 +3832,52 @@ function RE (               template                      ) {
 	test.source = exec.source = source;
 	test.unicode = exec.unicode = U;
 	test.ignoreCase = exec.ignoreCase = I;
-	test.multiline = exec.multiline = source.includes('^') || source.includes('$') ? M : null;
-	test.dotAll = exec.dotAll = source.includes('.') ? S : null;
+	test.multiline = exec.multiline = includes(source, '^') || includes(source, '$') ? M : null;
+	test.dotAll = exec.dotAll = includes(source, '.') ? S : null;
 	return re;
 }
 
-var RE_bind = /*#__PURE__*/bind.bind(RE       );
+var RE_bind = bind && /*#__PURE__*/bind.bind(RE       );
 
 function Context (flags        )          {
 	return {
-		U: !flags.includes('u'),
-		I: !flags.includes('i'),
-		M: !flags.includes('m'),
-		S: !flags.includes('s'),
+		U: !includes(flags, 'u'),
+		I: !includes(flags, 'i'),
+		M: !includes(flags, 'm'),
+		S: !includes(flags, 's'),
 		flags: flags
 	};
 }
 
 var CONTEXT          = /*#__PURE__*/Context('');
 
-var newRegExp = /*#__PURE__*/new Proxy$1(RE, {
-	apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT, args); }
-	,
-	get: function (RE, flags        ) { return RE_bind(Context(flags)); }
-	,
-	defineProperty: function () { return false; }
-	,
-	preventExtensions: function () { return false; }
-});
+var newRegExp = Proxy$1
+	? /*#__PURE__*/new Proxy$1(RE, {
+		apply: function (RE, thisArg, args                                   ) { return apply$1(RE, CONTEXT, args); }
+		,
+		get: function (RE, flags        ) { return RE_bind(Context(flags)); }
+		,
+		defineProperty: function () { return false; }
+		,
+		preventExtensions: function () { return false; }
+	})
+	: /*#__PURE__*/function () {
+		RE.apply = RE.apply;
+		var newRegExp = function () { return RE.apply(CONTEXT, arguments       ); }       ;
+		for ( var flags = 63; flags--; ) {
+			( function (context) {
+				newRegExp[context.flags] = function () { return RE.apply(context, arguments       ); };
+			} )(Context(
+				( flags & 32 ? '' : 'g' ) +
+				( flags & 16 ? '' : 'i' ) +
+				( flags &  8 ? '' : 'm' ) +
+				( flags &  4 ? '' : 's' ) +
+				( flags &  2 ? '' : 'u' ) +
+				( flags &  1 ? '' : 'y' )
+			));
+		}
+		return freeze ? freeze(newRegExp) : newRegExp;
+	}();
 
 /*¡ j-regexp */
 
