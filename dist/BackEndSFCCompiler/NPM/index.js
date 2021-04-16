@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '25.0.1';
+const version = '25.0.2';
 
 const Error$1 = Error;
 
@@ -3157,7 +3157,7 @@ const EMPTY        = undefined$1;
 
 class Attributes extends Null$1         {
 	
-	static default = Null$1(Attributes);
+	static default = Null$1(this);
 	
 	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	
@@ -3407,13 +3407,15 @@ const { 3: compile3, 2: compile2 }
 		[ /compilerCore\.isBuiltInType\(tag, ([^)]+)\)/g, (match        , p1        ) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 2 ],
 	);
 	const Const3core = Replacer(
-		[ /shared\.isGloballyWhitelisted\([^)]*\)/g, 'false', 2 ],
-		[ /id\.name === '(?:require|arguments)'/g, 'false', 2 ],
+		[ /shared\.isGloballyWhitelisted\([^)]*\)/g, `false`, 2 ],
+		[ /id\.name === '(?:require|arguments)'/g, `false`, 2 ],
 		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match        , p1        ) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
 		[ /isComponentTag\(tag\)(?! {)/g, `tag==='component'`, 3 ],
+		[ / && .*?(?=\(\.\.\.args\)`)/g, `?.`, 2 ],
+		[ /`undefined`/g, `void null`, 2 ],
 	);
 	const Let3core = Replacer(
-		[ /push\(`const /g, 'push\(`let ', NaN ],
+		[ /push\(`const /g, `push\(\`let `, NaN ],
 	);
 	
 	const Var2 = Replacer(
@@ -3431,7 +3433,7 @@ const { 3: compile3, 2: compile2 }
 		[ /function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match        , p1        )         => `(${p1})=>{`, 7 ],///
 	);
 	const Let2 = Replacer(
-		[ /const /g, 'let ', NaN ],
+		[ /const /g, `let `, NaN ],
 	);
 	
 	const _prod         = process$1.env.NODE_ENV==='production' ? '.prod' : '';
@@ -7792,12 +7794,15 @@ async function From (tab        , mode                         , styles         
 			const { sheet } = style;
 			const { allowGlobal, media } = _(style);
 			allowGlobal || sheet.checkScoped(isScoped);
-			for ( const line of sheet[Symbol.iterator](options) ) {
-				code += `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
+			const { innerCSS } = style;
+			if ( innerCSS ) {
+				for ( const line of sheet[Symbol.iterator](options) ) {
+					code += `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
+				}
+				code += media===undefined$1
+					? `${eol}.$(${StringLiteral(innerCSS)})`
+					: `${eol}.$(${StringLiteral(innerCSS)}, ${StringLiteral(media)})`;
 			}
-			code += media===undefined$1
-				? `${eol}.$(${StringLiteral(style.innerCSS)})`
-				: `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(media)})`;
 		}
 	}
 	

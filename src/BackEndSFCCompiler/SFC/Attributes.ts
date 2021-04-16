@@ -22,7 +22,7 @@ export const EMPTY :EMPTY = undefined;
 
 export default class Attributes extends Null<string> {
 	
-	static default = Null(Attributes);
+	static default = Null(this);
 	
 	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	

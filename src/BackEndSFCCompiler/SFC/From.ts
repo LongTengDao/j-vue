@@ -109,12 +109,15 @@ export default async function From (tab :string, mode :'const' | 'var' | 'let', 
 			const { sheet } = style;
 			const { allowGlobal, media } = _(style);
 			allowGlobal || sheet.checkScoped(isScoped);
-			for ( const line of sheet[Symbol.iterator](options) ) {
-				code += `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
+			const { innerCSS } = style;
+			if ( innerCSS ) {
+				for ( const line of sheet[Symbol.iterator](options) ) {
+					code += `${eol}//${tab}${line.replace(LF_CR_LS_PS, escapeCSS_LF_CR_LS_PS)}`;
+				}
+				code += media===undefined
+					? `${eol}.$(${StringLiteral(innerCSS)})`
+					: `${eol}.$(${StringLiteral(innerCSS)}, ${StringLiteral(media)})`;
 			}
-			code += media===undefined
-				? `${eol}.$(${StringLiteral(style.innerCSS)})`
-				: `${eol}.$(${StringLiteral(style.innerCSS)}, ${StringLiteral(media)})`;
 		}
 	}
 	

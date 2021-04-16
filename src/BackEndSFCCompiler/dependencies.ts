@@ -67,13 +67,15 @@ export const { 3: compile3, 2: compile2 } :{
 		[ /compilerCore\.isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 2 ],
 	);
 	const Const3core = Replacer(
-		[ /shared\.isGloballyWhitelisted\([^)]*\)/g, 'false', 2 ],
-		[ /id\.name === '(?:require|arguments)'/g, 'false', 2 ],
+		[ /shared\.isGloballyWhitelisted\([^)]*\)/g, `false`, 2 ],
+		[ /id\.name === '(?:require|arguments)'/g, `false`, 2 ],
 		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
 		[ /isComponentTag\(tag\)(?! {)/g, `tag==='component'`, 3 ],
+		[ / && .*?(?=\(\.\.\.args\)`)/g, `?.`, 2 ],
+		[ /`undefined`/g, `void null`, 2 ],
 	);
 	const Let3core = Replacer(
-		[ /push\(`const /g, 'push\(`let ', NaN ],
+		[ /push\(`const /g, `push\(\`let `, NaN ],
 	);
 	
 	const Var2 = Replacer(
@@ -91,7 +93,7 @@ export const { 3: compile3, 2: compile2 } :{
 		[ /function\((|\$event|" \+ alias \+ iterator1 \+ iterator2 \+ "|" \+ slotScope \+ ")\){/g, (match :string, p1 :string) :string => `(${p1})=>{`, 7 ],///
 	);
 	const Let2 = Replacer(
-		[ /const /g, 'let ', NaN ],
+		[ /const /g, `let `, NaN ],
 	);
 	
 	const _prod :string = process.env.NODE_ENV==='production' ? '.prod' : '';
