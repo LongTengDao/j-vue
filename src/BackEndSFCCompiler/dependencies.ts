@@ -73,6 +73,7 @@ export const { 3: compile3, 2: compile2 } :{
 		[ /isComponentTag\(tag\)(?! {)/g, `tag==='component'`, 3 ],
 		[ / && .*?(?=\(\.\.\.args\)`)/g, `?.`, 2 ],
 		[ /`undefined`/g, `void null`, 2 ],
+		[ /(?<=] )\|\|(?= \(`)/, `??`]
 	);
 	const Let3core = Replacer(
 		[ /push\(`const /g, `push\(\`let `, NaN ],
@@ -145,7 +146,19 @@ export const { 3: compile3, 2: compile2 } :{
 	>) {
 		return function replacer (this :void, content :string) {
 			for ( let [ search, replacer = '', count = 1 ] of replacers ) {
-				if ( typeof search!=='string' && search.global===( count===1 ) ) { throw Error(`jVue 内部错误`); }
+				if ( typeof search==='object' ) {
+					if ( search.global ) {
+						if ( count===1 ) { throw Error(`jVue 内部错误`); }
+					}
+					else {
+						if ( count!==1 ) { throw Error(`jVue 内部错误`); }
+						search = RegExp(search, 'g' + search.flags);
+					}
+				}
+				else {
+					if ( count!==1 ) { throw Error(`jVue 内部错误`); }
+					search = RegExp(search.replace(/[$^*()+[{|\\.?]/g, (match :string) => '\\' + match), 'g');
+				}
 				if ( typeof replacer==='string' ) {
 					if ( replacer.includes('$') ) { throw Error(`jVue 内部错误`); }
 					content = content.replace(search, () => {

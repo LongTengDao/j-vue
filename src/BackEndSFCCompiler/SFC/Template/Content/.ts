@@ -86,7 +86,8 @@ let index = 0;
 let keys :{ [key :string] :null } | null = null;
 
 let partial :Partial | null = null;
-let partial_with_tagName :string = '';
+let partial_with = false;
+let partial_with_tagName :string | null = null;
 
 let delimiters_0 :string = '';
 let delimiters_1 :string = '';
@@ -219,7 +220,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			if ( startsWithUpperCase(alias) ) {
 				if ( alias in partial ) {
 					const _ = partial[alias]!;
-					xName = _.tagName==='_' ? alias + '_' : _.tagName || alias;
+					xName = _.tagName ?? alias;
 					__class__ = _.class;/// + addOn;
 					const { attrs } = _;
 					for ( let name in attrs ) {
@@ -248,8 +249,8 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 						}
 					}
 				}
-				else if ( partial_with_tagName!==' ' && NameIs__Key__(alias) ) {
-					xName = partial_with_tagName==='_' ? alias + '_' : partial_with_tagName || alias;
+				else if ( partial_with && NameIs__Key__(alias) ) {
+					xName = partial_with_tagName ?? alias;
 					__class__ = `__${alias}__`;/// + addOn;
 				}
 			}
@@ -579,7 +580,8 @@ export default class Content extends Node {
 			for ( const key of _.keys ) { keys[key] = null; }
 		}
 		partial = _.abbr ?? null;
-		partial_with_tagName = partial && '' in partial ? partial['']!.tagName : ' ';
+		partial_with = partial ? '' in partial : false;
+		if ( partial_with ) { partial_with_tagName = partial!['']!.tagName; }
 		html = inner;
 		index = 0;
 		compatible_template = true;
@@ -604,7 +606,7 @@ export default class Content extends Node {
 			throw error;
 		}
 		finally {
-			keys = partial = null;
+			keys = partial = partial_with_tagName = null;
 			html = '';
 			if ( shadow_name ) {
 				shadow_name = '';

@@ -1,35 +1,22 @@
 import Error from '.Error';
 import TypeError from '.TypeError';
 import SyntaxError from '.SyntaxError';
-import create from '.Object.create';
 import freeze from '.Object.freeze';
 import undefined from '.undefined';
-import NULL from '.null.prototype';
 import throwSyntaxError from '.throw.SyntaxError';
 
 import { newRegExp } from '@ltd/j-regexp';
 
-import { ASCII_WHITESPACE as s, TOKENS, AliasName, localNameWithoutDot, className, TAG_EMIT_CHAR, NameAs__Key__ } from '../RE';
+import { ASCII_WHITESPACE as s, TAG_EMIT_CHAR } from '../RE';
 import Block from '../Block';
+import { forStyle as Abbr } from '../Abbr';
 import _ from '../private';
 import { EMPTY } from '../Attributes';
 import Sheet from './Sheet';
 
-const isSelector = newRegExp.u`^
-	${s}*(?:
-		${AliasName}${s}*
-		(?:=${s}*
-			(?:${localNameWithoutDot}|(?=\.))
-			(?:\.${className})*
-		${s}*)?;
-	${s}*)*
-$`.test;
-
 const STYLE_END_TAG = newRegExp.i`</style${TAG_EMIT_CHAR}`;
 
 const CSS = newRegExp.i`^${s}*(?:text\/)?CSS${s}*$`;
-
-const defaultSelector = (Name :string) => `.${NameAs__Key__(Name)}`;
 
 export default class Style extends Block<'style'> {
 	
@@ -47,28 +34,7 @@ export default class Style extends Block<'style'> {
 		
 		_this.allowGlobal = '.global' in attributes && ( attributes['.global']===EMPTY || throwSyntaxError(`style 块的“.global”属性不能具有值`) );
 		
-		if ( '.abbr' in attributes ) {
-			const literal = attributes['.abbr'];
-			if ( literal===EMPTY ) { _this.abbr = defaultSelector; }
-			else {
-				if ( !isSelector(literal) ) { throw SyntaxError(`style 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create(NULL) as Selector;
-				const pairs = literal.split(';');
-				const { length } = pairs;
-				let index = 0;
-				while ( index!==length ) {
-					const tokens = pairs[index++]!.match(TOKENS);
-					if ( tokens ) {
-						const componentName :string = tokens[0]!;
-						abbr[componentName] = tokens.length>1 ? tokens[1]! : defaultSelector(componentName);
-					}
-				}
-				_this.abbr = (componentName :string) :string => {
-					if ( componentName in abbr ) { return abbr[componentName]!; }
-					throw Error(`style 块中存在被遗漏的伪标签名 ${componentName} 选择器`);
-				};
-			}
-		}
+		_this.abbr = Abbr(attributes);
 		
 		if ( 'media' in attributes ) {
 			if ( attributes.media===EMPTY ) { throw SyntaxError(`style 功能块元素的 media 属性必须具有值`); }
@@ -116,6 +82,5 @@ export type Private = object & {
 	innerCSS? :string
 };
 export type Replacer = (this :void, componentName :string) => string;
-type Selector = { [componentName :string] :string };
 
 import type Attributes from '../Attributes';

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const version = '25.1.0';
+const version = '26.0.0';
 
 const Error$1 = Error;
 
@@ -3435,6 +3435,7 @@ const { 3: compile3, 2: compile2 }
 		[ /isComponentTag\(tag\)(?! {)/g, `tag==='component'`, 3 ],
 		[ / && .*?(?=\(\.\.\.args\)`)/g, `?.`, 2 ],
 		[ /`undefined`/g, `void null`, 2 ],
+		[ /(?<=] )\|\|(?= \(`)/, `??`]
 	);
 	const Let3core = Replacer(
 		[ /push\(`const /g, `push\(\`let `, NaN ],
@@ -3507,7 +3508,19 @@ const { 3: compile3, 2: compile2 }
 	 ) {
 		return function replacer (            content        ) {
 			for ( let [ search, replacer = '', count = 1 ] of replacers ) {
-				if ( typeof search!=='string' && search.global===( count===1 ) ) { throw Error$1(`jVue 内部错误`); }
+				if ( typeof search==='object' ) {
+					if ( search.global ) {
+						if ( count===1 ) { throw Error$1(`jVue 内部错误`); }
+					}
+					else {
+						if ( count!==1 ) { throw Error$1(`jVue 内部错误`); }
+						search = RegExp$1(search, 'g' + search.flags);
+					}
+				}
+				else {
+					if ( count!==1 ) { throw Error$1(`jVue 内部错误`); }
+					search = RegExp$1(search.replace(/[$^*()+[{|\\.?]/g, (match        ) => '\\' + match), 'g');
+				}
 				if ( typeof replacer==='string' ) {
 					if ( replacer.includes('$') ) { throw Error$1(`jVue 内部错误`); }
 					content = content.replace(search, () => {
@@ -3679,6 +3692,197 @@ const throwSyntaxError = (
 	}
 	/*¡ j-globals: throw.SyntaxError (internal) */
 );
+
+const isSelector = newRegExp$1.u`^
+	${ASCII_WHITESPACE}*(?:
+		${AliasName}${ASCII_WHITESPACE}*
+		(?:=${ASCII_WHITESPACE}*
+			(?:${localNameWithoutDot}|(?=\.))
+			(?:\.${className})*
+		${ASCII_WHITESPACE}*)?;
+	${ASCII_WHITESPACE}*)*
+$`.test;
+
+const defaultSelector = (Name        ) => `.${NameAs__Key__(Name)}`;
+
+                                                    
+
+const forStyle = (attributes            ) => {
+	if ( '.abbr' in attributes ) {
+		const literal = attributes['.abbr'];
+		if ( literal===EMPTY ) { return defaultSelector; }
+		else {
+			if ( !isSelector(literal) ) { throw SyntaxError$1(`style 块的“.abbr”属性语法错误：\n${literal}`); }
+			const abbr = create(NULL)            ;
+			const pairs = literal.split(';');
+			const { length } = pairs;
+			let index = 0;
+			while ( index!==length ) {
+				const tokens = pairs[index++] .match(TOKENS$1);
+				if ( tokens ) {
+					const componentName         = tokens[0] ;
+					abbr[componentName] = tokens.length>1 ? tokens[1]  : defaultSelector(componentName);
+				}
+			}
+			return (componentName        )         => {
+				if ( componentName in abbr ) { return abbr[componentName] ; }
+				throw Error$1(`style 块中存在被遗漏的伪标签名 ${componentName} 选择器`);
+			};
+		}
+	}
+	return;
+};
+
+const ATTR = newRegExp$1.u`
+	\[ *
+	[a-zA-Z][\w-]*(?:\|[a-zA-Z][\w-]*)? *
+	(?:
+		~?
+		= *
+		(?:
+			[a-zA-Z][\w-]*
+		|
+			'[^']*'
+		|
+			"[^"]*"
+		) *
+	)?
+	\]
+`;
+const sAfterAliasName = newRegExp$1`
+	${ASCII_WHITESPACE}+$
+`;
+const PARTS = newRegExp$1.gu`
+	${localOrComponentNameWithoutDot}
+	|
+	\*
+	|
+	\.(?:${className})?
+	|
+	${ATTR}
+`;
+const PARTIALS = newRegExp$1.gu`
+	${AliasName}${ASCII_WHITESPACE}*
+	=${ASCII_WHITESPACE}*
+		(?:
+			${localOrComponentNameWithoutDot}
+		|
+			\*
+		)${ASCII_WHITESPACE}*
+		(?:
+			(?:
+				\.(?:${className})?
+			|
+				${ATTR}
+			)
+			${ASCII_WHITESPACE}*
+		)*
+`;
+const TEMPLATE_ABBR = newRegExp$1.u`^
+	${ASCII_WHITESPACE}*(?:
+		${PARTIALS};
+	${ASCII_WHITESPACE}*)*
+$`;
+const TEMPLATE_ABBR_COLON_ = newRegExp$1.u`^
+	${ASCII_WHITESPACE}*(?:
+		${AliasName}${ASCII_WHITESPACE}*;
+	${ASCII_WHITESPACE}*)*
+$`;
+
+                                                                                                                                            
+
+const forTemplate = (attributes            ) => {
+	let abbr                     ;
+	
+	if ( '.abbr' in attributes ) {
+		const literal = attributes['.abbr'];
+		if ( literal===EMPTY ) { throw SyntaxError$1(`template 功能块的“.abbr”属性必须具有值`); }
+		if ( !TEMPLATE_ABBR.test(literal) ) { throw SyntaxError$1(`template 功能块的“.abbr”属性语法错误：\n${literal}`); }
+		abbr = create(NULL)           ;
+		const pairs = literal.match(PARTIALS);
+		if ( pairs ) {
+			let index = pairs.length;
+			do {
+				const part = pairs[--index] ;
+				const indexOfEqual = part.indexOf('=');
+				const xName         = part.slice(0, indexOfEqual).replace(sAfterAliasName, '');
+				if ( xName in abbr ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中存在重复的条目“${xName}”`); }
+				const x_selectors = part.slice(indexOfEqual + 1).match(PARTS) ;
+				let tagName                = x_selectors[0] ;
+				if ( tagName==='*' ) { tagName = null; }
+				let className         = '';
+				let attrs                      = null;
+				let i = 1;
+				while ( i!==x_selectors.length ) {
+					const selector = x_selectors[i++] ;
+					if ( selector[0]==='.' ) {
+						className += selector==='.'
+							? ' ' + NameAs__Key__(xName)
+							: ' ' + selector.slice(1);
+					}
+					else {
+						const i = selector.indexOf('=');
+						let n = selector.slice(1, i).trim();
+						if ( n.startsWith('v-') || n==='class' || n==='style' ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中不能添加“v-”开头的属性或“class”“style”`); }
+						n = n.replace('|', ':');
+						attrs ?? ( attrs = create(NULL)                 );
+						let v                ;
+						if ( i>0 ) {
+							if ( selector[i - 1]==='~' ) {
+								n = n.slice(0, -1).trim();
+								if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n}”`); }
+								n = '$' + n;
+							}
+							v = selector.slice(i + 1, -1).trim();
+							if ( v[0]=='"' || v[0]==='\'' ) { v = v.slice(1, -1); }
+						}
+						else {
+							if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n}”`); }
+							n = '$' + n;
+						}
+						if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n[0]==='~' ? n.slice(1) : n}”`); }
+						attrs[n] = v;
+					}
+				}
+				abbr[xName] = {
+					tagName,
+					class: className.slice(1),
+					attrs,
+				};
+			}
+			while ( index );
+		}
+	}
+	
+	for ( const name in attributes ) {
+		if ( name.startsWith('.abbr:') ) {
+			let tagName                = name.slice(6);
+			if ( tagName==='*' ) { tagName = null; }
+			else if ( !isLocalOrComponentNameDotable(tagName) ) { throw SyntaxError$1(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
+			abbr ?? ( abbr = create(NULL)            );
+			const literal = attributes[name];
+			if ( literal===EMPTY ) {
+				if ( '' in abbr ) { throw SyntaxError$1(`template 功能块的无值“.abbr:***”属性只能有一个`); }
+				abbr[''] = { tagName, class: '', attrs: null };
+			}
+			else {
+				if ( !TEMPLATE_ABBR_COLON_.test(literal) ) { throw SyntaxError$1(`template 功能块的“${name}”属性语法错误：\n${literal}`); }
+				const pairs = literal.split(';');
+				let index = pairs.length;
+				while ( index ) {
+					const tokens = pairs[--index] .match(TOKENS$1);
+					if ( tokens ) {
+						const xName         = tokens[0] ;
+						if ( xName in abbr ) { throw SyntaxError$1(`template 功能块的“${name}”属性值中存在重复的条目“${xName}”`); }
+						abbr[xName] = { tagName, class: NameAs__Key__(xName), attrs: null };
+					}
+				}
+			}
+		}
+	}
+	
+	return abbr;
+};
 
 const Map$1 = Map;
 
@@ -6100,21 +6304,9 @@ class Sheet extends Sheet$1 {
 }
 freeze(freeze(Sheet$1).prototype);
 
-const isSelector = newRegExp$1.u`^
-	${ASCII_WHITESPACE}*(?:
-		${AliasName}${ASCII_WHITESPACE}*
-		(?:=${ASCII_WHITESPACE}*
-			(?:${localNameWithoutDot}|(?=\.))
-			(?:\.${className})*
-		${ASCII_WHITESPACE}*)?;
-	${ASCII_WHITESPACE}*)*
-$`.test;
-
 const STYLE_END_TAG$1 = newRegExp$1.i`</style${TAG_EMIT_CHAR}`;
 
 const CSS = newRegExp$1.i`^${ASCII_WHITESPACE}*(?:text\/)?CSS${ASCII_WHITESPACE}*$`;
-
-const defaultSelector = (Name        ) => `.${NameAs__Key__(Name)}`;
 
 class Style extends Block          {
 	
@@ -6132,28 +6324,7 @@ class Style extends Block          {
 		
 		_this.allowGlobal = '.global' in attributes && ( attributes['.global']===EMPTY || throwSyntaxError(`style 块的“.global”属性不能具有值`) );
 		
-		if ( '.abbr' in attributes ) {
-			const literal = attributes['.abbr'];
-			if ( literal===EMPTY ) { _this.abbr = defaultSelector; }
-			else {
-				if ( !isSelector(literal) ) { throw SyntaxError$1(`style 块的“.abbr”属性语法错误：\n${literal}`); }
-				const abbr = create(NULL)            ;
-				const pairs = literal.split(';');
-				const { length } = pairs;
-				let index = 0;
-				while ( index!==length ) {
-					const tokens = pairs[index++] .match(TOKENS$1);
-					if ( tokens ) {
-						const componentName         = tokens[0] ;
-						abbr[componentName] = tokens.length>1 ? tokens[1]  : defaultSelector(componentName);
-					}
-				}
-				_this.abbr = (componentName        )         => {
-					if ( componentName in abbr ) { return abbr[componentName] ; }
-					throw Error$1(`style 块中存在被遗漏的伪标签名 ${componentName} 选择器`);
-				};
-			}
-		}
+		_this.abbr = forStyle(attributes);
 		
 		if ( 'media' in attributes ) {
 			if ( attributes.media===EMPTY ) { throw SyntaxError$1(`style 功能块元素的 media 属性必须具有值`); }
@@ -6621,7 +6792,8 @@ let index = 0;
 let keys                                 = null;
 
 let partial                 = null;
-let partial_with_tagName         = '';
+let partial_with = false;
+let partial_with_tagName                = null;
 
 let delimiters_0         = '';
 let delimiters_1         = '';
@@ -6754,7 +6926,7 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 			if ( startsWithUpperCase(alias) ) {
 				if ( alias in partial ) {
 					const _ = partial[alias] ;
-					xName = _.tagName==='_' ? alias + '_' : _.tagName || alias;
+					xName = _.tagName ?? alias;
 					__class__ = _.class;/// + addOn;
 					const { attrs } = _;
 					for ( let name in attrs ) {
@@ -6783,8 +6955,8 @@ const parseAppend = (parentNode_XName        , parentNode                   , V_
 						}
 					}
 				}
-				else if ( partial_with_tagName!==' ' && NameIs__Key__(alias) ) {
-					xName = partial_with_tagName==='_' ? alias + '_' : partial_with_tagName || alias;
+				else if ( partial_with && NameIs__Key__(alias) ) {
+					xName = partial_with_tagName ?? alias;
 					__class__ = `__${alias}__`;/// + addOn;
 				}
 			}
@@ -7113,7 +7285,8 @@ class Content extends Node {
 			for ( const key of _.keys ) { keys[key] = null; }
 		}
 		partial = _.abbr ?? null;
-		partial_with_tagName = partial && '' in partial ? partial[''] .tagName : ' ';
+		partial_with = partial ? '' in partial : false;
+		if ( partial_with ) { partial_with_tagName = partial [''] .tagName; }
 		html = inner;
 		index = 0;
 		compatible_template = true;
@@ -7138,7 +7311,7 @@ class Content extends Node {
 			throw error;
 		}
 		finally {
-			keys = partial = null;
+			keys = partial = partial_with_tagName = null;
 			html = '';
 			if ( shadow_name ) {
 				shadow_name = '';
@@ -7177,42 +7350,6 @@ class Content extends Node {
 }
 
 const TEMPLATE_END_TAG = newRegExp$1.i`</template${TAG_EMIT_CHAR}`;
-
-const ATTR = /\[ *[a-zA-Z][\w-]*(?:\|[a-zA-Z][\w-]*) *(?:~?= *(?:[a-zA-Z][\w-]*|'[^']*'|"[^"]*") *)?\]/u;
-const PARTS = newRegExp$1.gu`
-	${AliasName}
-	|
-	${localOrComponentNameWithoutDot}
-	|
-	\.(?:${className})?
-	|
-	${ATTR}
-`;
-const PARTIALS = newRegExp$1.gu`
-	${AliasName}${ASCII_WHITESPACE}*
-	=${ASCII_WHITESPACE}*
-		${localOrComponentNameWithoutDot}${ASCII_WHITESPACE}*
-		(?:
-			(?:
-				\.(?:${className})?
-			|
-				${ATTR}
-			)
-			${ASCII_WHITESPACE}*
-		)*
-`;
-const PARTIAL = newRegExp$1.u`^
-	${ASCII_WHITESPACE}*
-	(?:
-		${PARTIALS};${ASCII_WHITESPACE}*
-	)*
-$`;
-const PARTIAL_WITH_TAG = newRegExp$1.u`^
-	${ASCII_WHITESPACE}*(?:
-		${AliasName}${ASCII_WHITESPACE}*;
-	${ASCII_WHITESPACE}*)*
-$`;
-
 const HTML = newRegExp$1.i`^(?:HTML|${ASCII_WHITESPACE}*text/html${ASCII_WHITESPACE}*)$`;
 
 let compatible_render          = true;
@@ -7247,86 +7384,7 @@ class Template extends Block {
 			_this.keys = keys;
 		}
 		
-		if ( '.abbr' in attributes ) {
-			const literal = attributes['.abbr'];
-			if ( literal===EMPTY ) { throw SyntaxError$1(`template 功能块的“.abbr”属性必须具有值`); }
-			if ( !PARTIAL.test(literal) ) { throw SyntaxError$1(`template 功能块的“.abbr”属性语法错误：\n${literal}`); }
-			const abbr = _this.abbr = create(NULL)           ;
-			const pairs = literal.match(PARTIALS);
-			if ( pairs ) {
-				let index = pairs.length;
-				do {
-					const x_selectors = pairs[--index] .match(PARTS) ;
-					const xName         = x_selectors[0] ;
-					if ( xName in abbr ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中存在重复的条目“${xName}”`); }
-					let className         = '';
-					let attrs                      = null;
-					let i = 2;
-					while ( i!==x_selectors.length ) {
-						const selector = x_selectors[i++] ;
-						if ( selector[0]==='.' ) {
-							className += selector==='.'
-								? ' ' + NameAs__Key__(xName)
-								: ' ' + selector.slice(1);
-						}
-						else {
-							const i = selector.indexOf('=');
-							let n = selector.slice(1, i).trim();
-							if ( n.startsWith('v-') || n==='class' || n==='style' ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中不能添加“v-”开头的属性或“class”“style”`); }
-							n = n.replace('|', ':');
-							attrs ?? ( attrs = create(NULL)                 );
-							let v                ;
-							if ( i>0 ) {
-								if ( selector[i - 1]==='~' ) {
-									n = n.slice(0, -1).trim();
-									if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n}”`); }
-									n = '$' + n;
-								}
-								v = selector.slice(i + 1, -1).trim();
-								if ( v[0]=='"' || v[0]==='\'' ) { v = v.slice(1, -1); }
-							}
-							else {
-								if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n}”`); }
-								n = '$' + n;
-							}
-							if ( n in attrs ) { throw SyntaxError$1(`template 功能块的“.abbr”属性值中出现了重复的属性“${n[0]==='~' ? n.slice(1) : n}”`); }
-							attrs[n] = v;
-						}
-					}
-					abbr[xName] = {
-						tagName: x_selectors[1] ,
-						class: className.slice(1),
-						attrs,
-					};
-				}
-				while ( index );
-			}
-		}
-		for ( const name in attributes ) {
-			if ( name.startsWith('.abbr:') ) {
-				const tagName = name.slice(6);
-				if ( tagName && tagName!=='_' && !isLocalOrComponentNameDotable(tagName) ) { throw SyntaxError$1(`template 功能块的“${name}”属性的标签名部分不符合要求`); }
-				const abbr = _this.abbr ?? ( _this.abbr = create(NULL)            );
-				const literal = attributes[name];
-				if ( literal===EMPTY ) {
-					if ( '' in abbr ) { throw SyntaxError$1(`template 功能块的无值“.abbr:*”属性只能有一个`); }
-					abbr[''] = { tagName, class: '', attrs: null };
-				}
-				else {
-					if ( !PARTIAL_WITH_TAG.test(literal) ) { throw SyntaxError$1(`template 功能块的“${name}”属性语法错误：\n${literal}`); }
-					const pairs = literal.split(';');
-					let index = pairs.length;
-					while ( index ) {
-						const tokens = pairs[--index] .match(TOKENS$1);
-						if ( tokens ) {
-							const xName         = tokens[0] ;
-							if ( xName in abbr ) { throw SyntaxError$1(`template 功能块的“${name}”属性值中存在重复的条目“${xName}”`); }
-							abbr[xName] = { tagName, class: NameAs__Key__(xName), attrs: null };
-						}
-					}
-				}
-			}
-		}
+		_this.abbr = forTemplate(attributes);
 		
 		let notYet = true;
 		for ( const name in attributes ) {
