@@ -1,5 +1,6 @@
-import throwSyntaxError from '.throw.SyntaxError';
 import Array from '.Array';
+import freeze from '.Object.freeze';
+import throwSyntaxError from '.throw.SyntaxError';
 
 import { StringLiteral } from '@ltd/j-es';
 
@@ -111,3 +112,5 @@ export default class Mustache extends ( Array as { new () :{} } ) {
 	}
 	
 };
+
+freeze(freeze(Mustache).prototype);

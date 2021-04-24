@@ -226,7 +226,6 @@ declare module 'j-vue' {
 	type __Dev__ = {
 		readonly [Error in
 			| 'proto'
-			| 'compile_case'
 			| 'compile_name'
 			| 'compile_props'
 			| 'compile_emits'

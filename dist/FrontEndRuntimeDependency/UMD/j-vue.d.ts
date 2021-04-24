@@ -2,7 +2,7 @@ export as namespace jVue;
 export = exports;
 declare namespace exports {
 	
-	export const version :'26.0.0';
+	export const version :'26.1.0';
 	
 	export function Identifier () :string;
 	
@@ -196,7 +196,6 @@ declare namespace exports {
 	type __Dev__ = {
 		readonly [Error in
 			| 'proto'
-			| 'compile_case'
 			| 'compile_name'
 			| 'compile_props'
 			| 'compile_emits'

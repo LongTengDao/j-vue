@@ -22,8 +22,6 @@ export const EMPTY :EMPTY = undefined;
 
 export default class Attributes extends Null<string> {
 	
-	static default = Null(this);
-	
 	get [Symbol.toStringTag] () { return 'SFC.*.Attributes'; }
 	
 	constructor (literal :string, SHORTHAND :boolean = false) {
@@ -123,6 +121,8 @@ export default class Attributes extends Null<string> {
 			attributes['class'] = attributes['class'] ? attributes['class'] + k : k.slice(1);
 		}
 	}
+	
+	static default = Null(this);
 	
 };
 

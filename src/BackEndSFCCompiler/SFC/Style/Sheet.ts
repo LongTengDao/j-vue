@@ -1,7 +1,7 @@
 import ReferenceError from '.ReferenceError';
 import freeze from '.Object.freeze';
 
-import { Sheet } from '@ltd/j-css';
+import { Sheet as Super } from '@ltd/j-css';
 
 import { startsWithUpperCase, NameAs__Key__ } from '../RE';
 
@@ -10,7 +10,7 @@ const attributeCallback = (evaluated :string) :string | void => {
 	if ( evaluated[0]==='_' ) { return '.' + NameAs__Key__(evaluated.slice(1)); }
 };
 
-export default class extends Sheet {
+export default class Sheet extends Super {
 	
 	get [Symbol.toStringTag] () { return 'SFC.Style.Sheet'; }
 	

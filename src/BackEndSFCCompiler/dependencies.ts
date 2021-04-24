@@ -1,5 +1,4 @@
 import Error from '.Error';
-import Set from '.Set';
 import RegExp from '.RegExp';
 import Keys from '.Object.keys';
 import process from '.process';
@@ -31,15 +30,6 @@ export const NON_ASCII_SIMPLE_PATH = newRegExp`
 		[\w$${NON}]*
 	\s*$
 `;
-export const BUILT_IN = new Set(`
-	keep-alive
-	slot
-	suspense
-	teleport
-	template
-	transition
-	transition-group
-`.match(/\S+/g)!);
 export const STYLE_BY_COMPONENT_IS :{
 	pre :`Vue 不允许 template 中直接书写 style 标签，jVue 会将其替换为“<component is="style" />”的形式，以绕过 Vue 的编译期检查，但这样做的前提是标签自身或外层节点不能有 v-pre 指令`,
 	is :`Vue 不允许 template 中直接书写 style 标签，jVue 会将其替换为“<component is="style" />”的形式，以绕过 Vue 的编译期检查，因而该标签上不能已存在 is 类属性`,
@@ -71,9 +61,9 @@ export const { 3: compile3, 2: compile2 } :{
 		[ /id\.name === '(?:require|arguments)'/g, `false`, 2 ],
 		[ /isBuiltInType\(tag, ([^)]+)\)/g, (match :string, p1 :string) => `tag===${p1.replace(/\B[A-Z]/g, W => `-${W.toLowerCase()}`).toLowerCase()}`, 4 ],
 		[ /isComponentTag\(tag\)(?! {)/g, `tag==='component'`, 3 ],
-		[ / && .*?(?=\(\.\.\.args\)`)/g, `?.`, 2 ],
-		[ /`undefined`/g, `void null`, 2 ],
-		[ /(?<=] )\|\|(?= \(`)/, `??`]
+		[ /`undefined`/g, `void 0`, 2 ],
+		[ /(?<=] )\|\|(?= \(`)/, `??` ],
+		[ `with (_ctx) ` ],
 	);
 	const Let3core = Replacer(
 		[ /push\(`const /g, `push\(\`let `, NaN ],
@@ -87,7 +77,7 @@ export const { 3: compile3, 2: compile2 } :{
 		[ `el.tag === 'style' ||` ],
 		[ /^var simplePathRE = \/.+\/;$/m, (match :string) => match.replace(/(?<=\$)/g, NON) ],
 		[ RegExp(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].var, 2 ],
-		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void null', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],///
+		[ /undefined(?='\) \+|'\r?\n|")|(?<=')\$\$v(?=')/g, origin => ( { undefined: 'void 0', $$v: '$event' }[origin as 'undefined' | '$$v'] ), 4 ],///
 	);
 	const Const2 = Replacer(
 		[ RegExp(`function gen(${Keys(gen[2]).join('|')}) \\((.*?)\\n}\\n`, 'gs'), (func :string, name :string) => gen[2][name as keyof typeof gen[2]].const, 2 ],

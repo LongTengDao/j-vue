@@ -11,15 +11,13 @@ import KEYS from '../../../FrontEndRuntimeDependency/Scope/KEYS';
 import _ from '../private';
 import Block from '../Block';
 import { forTemplate as Abbr } from '../Abbr';
-import Content, { compatible_render as _compatible_render, isSingleElementChild as isVue2Compatible } from './Content/';
+import Content from './Content/';
 import { ASCII_WHITESPACE as s, TAG_EMIT_CHAR, TAG_LIKE } from '../RE';
 import { EMPTY } from '../Attributes';
 import { DELIMITERS_0, DELIMITERS_1 } from './Content/Mustache';
 
 const TEMPLATE_END_TAG = newRegExp.i`</template${TAG_EMIT_CHAR}`;
 const HTML = newRegExp.i`^(?:HTML|${s}*text/html${s}*)$`;
-
-export let compatible_render :boolean = true;
 
 export default class Template extends Block {
 	
@@ -91,11 +89,7 @@ export default class Template extends Block {
 		return content;
 	}
 	
-	get innerHTML () :string {
-		const { content } = this;
-		Vue2: compatible_render = _compatible_render && !!content.firstChild && isVue2Compatible(content.firstChild);
-		return '' + content;
-	}
+	get innerHTML () :string { return '' + this.content; }
 	set innerHTML (value :string) {
 		if ( typeof ( value as unknown )!=='string' ) { throw TypeError(`innerHTML 只能被赋值字符串`); }
 		_(this).innerHTML = value;

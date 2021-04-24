@@ -19,7 +19,7 @@ export {
 };
 
 import Default from '.default';
-export default Default({
+export default /*#__PURE__*/Default({
 	version: version,
 	Identifier: Identifier,
 	Scope: Scope,

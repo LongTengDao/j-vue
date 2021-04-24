@@ -42,6 +42,7 @@ export default class Element extends Node {
 			child = child.nextSibling;
 		}
 		if ( this.#shadowRoot ) {
+			///Vue3: return `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set"><template shadowroot="open">${innerHTML}</template></${this.localName}>`;
 			innerHTML = `<teleport v-if="${this.#shadowRoot.along}$get" :to="${this.#shadowRoot.along}$get">${innerHTML}</teleport>`;
 			return this.#shadowRoot.inside
 				? `<${tag_attrs(this)} :ref="${this.#shadowRoot.along}$set">${innerHTML}</${this.localName}>`

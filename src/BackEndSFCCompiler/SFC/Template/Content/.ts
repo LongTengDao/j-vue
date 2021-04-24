@@ -4,7 +4,9 @@ import ReferenceError from '.ReferenceError';
 import RegExp from '.RegExp';
 import Set from '.Set';
 import Map from '.Map';
+import test from '.RegExp.prototype.test';
 import create from '.Object.create';
+import freeze from '.Object.freeze';
 import NULL from '.null.prototype';
 import throwError from '.throw.Error';
 
@@ -13,7 +15,7 @@ import { NON_SCALAR as SURROGATE_IN_INPUT_STREAM } from '@ltd/j-utf';
 
 import { FOREIGN_ELEMENTS, VOID_ELEMENTS, RAW_TEXT_ELEMENTS } from 'lib:elements';
 
-import { forAliasRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_V_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF, NON_ASCII_SIMPLE_PATH, STYLE_BY_COMPONENT_IS, BUILT_IN, NS3 } from '../../../dependencies';
+import { forAliasRE, emptySlotScopeToken, SLOT_DIRECTIVE, BAD_SLOT_NAME, BAD_V_SLOT_NAME, BAD_SCOPE, BAD_KEY, BAD_REF, NON_ASCII_SIMPLE_PATH, STYLE_BY_COMPONENT_IS, NS3 } from '../../../dependencies';
 import { CONTROL_CHARACTER as CONTROL_CHARACTER_IN_INPUT_STREAM, NONCHARACTER as NONCHARACTER_IN_INPUT_STREAM, TAG_EMIT_CHAR, startsWithUpperCase, NameIs__Key__, NON_PCENChar } from '../../RE';
 import { Tag, ELEMENT_END, ELEMENT_SELF_CLOSING, COMMENT, TEXT, EOF, PLAINTEXT, LISTING, XMP } from '../../Tag';
 import { EMPTY, _asClass } from '../../Attributes';
@@ -25,6 +27,19 @@ import Mustache from './Mustache';
 import Snippet from '../../Snippet';
 import { minify } from '@ltd/j-css';
 
+const Is = (template :TemplateStringsArray) => test.bind(RegExp(`^${groupify(template[0]!.replace(/_/g, '').match(/[\da-zA-Z\-]+/g)!)}$`));
+export const inBlackList = Is`
+	undefined
+	Infinity NaN
+	Intl
+	isFinite isNaN
+	parseFloat parseInt
+	decodeURI decodeURIComponent encodeURI encodeURIComponent
+	Math JSON
+	Number Date Array Object Boolean String RegExp Map Set
+	BigInt
+	require
+`;
 const TRIM = /^\s*\(?|\)?\s*$/g;
 const void_elements = RegExp(VOID_ELEMENTS, '');
 const foreign_elements = RegExp(FOREIGN_ELEMENTS, '');
@@ -34,11 +49,9 @@ const STYLE_END_TAG = newRegExp.i`</style${TAG_EMIT_CHAR}`;
 const TEXTAREA = /^textarea$/i;
 const NATIVE_D = /\.(?:native|\d+)(?:$|\.)/;
 const V_MODEL_ = /^v-model(?::|(?=\.)(?!(?:\.(?:lazy|number|trim))+$))/;
-const STARTS_WITH_LOWERCASE_AND_NOT = /^(?:[abd-z]|c(?!omponent$))/;
-const STARTS_WITH_LOWERCASE_AND_NOT_NOR = /^(?:[abd-rt-z]|c(?!omponent$)|s(?!uspense$))/;
 const VNODE = /^@-?[vV]node/;
 const VNODE_EVENT = /^@[vV]node(?:(?:-b|B)efore)?(?:-[a-z]|[A-Z])[a-z]*$/;
-const ON_MODIFIER = /^[^.]*(?:capture|once|passive)(?:\.|$)/i;
+const ON_MODIFIER = /^[^.]*(?:capture|once|passive)(?:\.|$)/iu;
 const HTML5 = `
 	body
 	blockquote
@@ -49,8 +62,8 @@ const HTML5 = `
 	div
 	span
 `.match(/\S+/g)!;
-const HTML_5 = newRegExp.i`^${groupify(HTML5)}$`;
-const SVG_MathML = newRegExp.i`^${groupify(`
+const HTML_5 = newRegExp.i`^${groupify(HTML5)}$`.test;
+const SVG_MathML = Is`
 	annotation-xml
 	color-profile
 	font-face
@@ -59,10 +72,30 @@ const SVG_MathML = newRegExp.i`^${groupify(`
 	font-face-format
 	font-face-name
 	missing-glyph
-`.match(/\S+/g)!)}$`;
+`;
 const NON_HTML = /[^\dA-Za-z]/;
-const STARTS_WITH_LETTER = /^[A-Za-z]/;
-const INSIDE = /^(?:keep-alive|transition(?:-group)?|base-transition)$/;
+///const STARTS_WITH_LETTER = /^[A-Za-z]/;
+const startsWithLowerCase = test.bind(/^[a-z]/);
+const is = Is`
+	base-transition component keep-alive slot suspense teleport template transition transition-group`;
+export const isCustomElement = (tag :string) => startsWithLowerCase(tag) && !is(tag);
+const 不是自定义组件 = test.bind(/^(?:[abd-z]|c(?!omponent$))/);
+const 不允许包含插槽模板 = test.bind(/^(?:[abd-rt-z]|c(?!omponent$)|s(?!uspense$))/);
+const 避免在PRE下误用的内置标签 = Is`
+	                component                 suspense teleport          transition                 `;
+const 必须单子的内置标签 = Is`
+	base-transition           keep-alive                                 transition                 `;
+const 不便变动子的内置标签 = Is`
+	base-transition           keep-alive                                 transition transition-group`;
+const 是内置标签 = Is`
+	base-transition           keep-alive slot suspense teleport template transition transition-group`;
+const 可能渲染为片段的内置标签 = Is`
+	                                     slot                   template                            `;
+const 可能被当作内置标签的自定义组件 = Is`
+	Base_Transition Component Keep_Alive      Suspense Teleport          Transition Transition_Group`;
+const 跨版本解释不同的内置标签 = Is`
+	base-transition                           suspense teleport                                     `;
+///	                          Keep_Alive                                 Transition Transition_Group
 
 const checkNameBeing = (xName :string, attributes :Attributes, is :boolean) :void => {
 	if ( 'v-html' in attributes && ( xName==='xmp' || xName==='plaintext' || xName==='listing' ) ) {
@@ -92,8 +125,8 @@ let partial_with_tagName :string | null = null;
 let delimiters_0 :string = '';
 let delimiters_1 :string = '';
 
-export let compatible_template :boolean = true;
-export let compatible_render :boolean = true;
+let compatible_template :boolean = true;
+let compatible_render :boolean = true;
 
 let sheet = new Map<string, string>();
 const REF = /^#[a-z]\w*#$/i;
@@ -130,12 +163,12 @@ const Shadow = ($name_names$ :string) => {
 	return name + hasNames + names;
 };
 
-export const isSingleElementChild = (firstChild :Element | Text) => {// | null throw Error(`从 Vue 2 开始，组件的根节点不得为空`);
+const isSingleElementChild = (firstChild :Element | Text) => {// | null throw Error(`从 Vue 2 开始，组件的根节点不得为空`);
 	let child :Node | null = firstChild;
 	do {
 		if ( !isElement(child) ) { return false; }//throw Error(`Vue 2 要求组件的根节点必须是元素节点`);
 		if ( !( 'v-pre' in child.attributes ) ) {
-			if ( child.localName==='template' || child.localName==='slot' ) { return false; }//throw Error(`Vue 2 不允许组件的根节点为 template 或 slot 元素`);
+			if ( 可能渲染为片段的内置标签(child.localName) ) { return false; }//throw Error(`Vue 2 不允许组件的根节点为 template 或 slot 元素`);
 		}
 	}
 	while ( ( child = child.nextSibling ) );
@@ -189,21 +222,23 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			index = tag.end;
 			if ( V_PRE ) { break; }
 			const { localName } = parentNode as Element;
-			if ( localName==='keep-alive' ) {
-				const { firstChild } = parentNode;
-				if ( firstChild ) {
-					if ( !firstChild.nextSibling && 'localName' in firstChild && firstChild.localName==='transition' ) {
-						throw SyntaxError(`根据官方示例，transition 应当套在 keep-alive 外面，而不是里面`);
+			if ( 必须单子的内置标签(localName) ) {
+				if ( localName==='keep-alive' ) {
+					const { firstChild } = parentNode;
+					if ( firstChild ) {
+						if ( !firstChild.nextSibling && 'localName' in firstChild && firstChild.localName==='transition' ) {
+							throw SyntaxError(`根据官方示例，transition 应当套在 keep-alive 外面，而不是里面`);
+						}
+						if ( isSingleElementChild(firstChild) ) { break; }
 					}
-					if ( isSingleElementChild(firstChild) ) { break; }
 				}
+				else {
+					const { firstChild } = parentNode;
+					if ( firstChild && isSingleElementChild(firstChild) ) { break; }
+				}
+				throw SyntaxError(`${localName} 只能包含一个元素子节点`);
 			}
-			else if ( localName==='transition' || localName==='base-transition' ) {
-				const { firstChild } = parentNode;
-				if ( firstChild && isSingleElementChild(firstChild) ) { break; }
-			}
-			else { break; }
-			throw SyntaxError(`${localName} 只能包含一个元素子节点`);
+			break;
 		}
 		let xName :string = XName;
 		let __class__ :string | undefined;
@@ -258,15 +293,16 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 		
 		if ( compatible_template && NS3.test(xName) ) { compatible_template = false; }
 		
-		const notComponent = STARTS_WITH_LOWERCASE_AND_NOT.test(xName);
-		let afterColon = xName;
+		const notComponent = 不是自定义组件(xName);
 		if ( notComponent ) {
+			let afterColon = xName;
 			const index = xName.indexOf(':');
 			if ( index>0 ) {
-				if ( xName.lastIndexOf(':')!==index ) { throw Error(`“${xName}”中含有多个“:”，并不是一个合格的标签名`); }
-				if ( NON_PCENChar.test(xName.slice(0, index)) ) { throw Error(`“${xName}”的命名空间中含有不符合限定的字符，并不是一个合格的标签名`); }
-				afterColon = xName.slice(index + 1);
-				if ( !STARTS_WITH_LETTER.test(afterColon) ) { throw Error(`“${xName}”的后半部分没有以字母开头，并不是一个合格的原生标签或自定义元素名`); }
+				throw Error(`HTML 规范不支持 XML 中的标签命名空间语法，因此“${xName}”既不是一个原生标签，也不是一个自定义元素名（如果这是一个组件，请避免使用小写字母开头）`);
+				///if ( xName.lastIndexOf(':')!==index ) { throw Error(`“${xName}”中含有多个“:”，并不是一个合格的标签名`); }
+				///if ( NON_PCENChar.test(xName.slice(0, index)) ) { throw Error(`“${xName}”的命名空间中含有不符合限定的字符，并不是一个合格的标签名`); }
+				///afterColon = xName.slice(index + 1);
+				///if ( !STARTS_WITH_LETTER.test(afterColon) ) { throw Error(`“${xName}”的后半部分没有以字母开头，并不是一个合格的原生标签或自定义元素名`); }
 			}
 			if ( afterColon.includes('-') ) {
 				if ( NON_PCENChar.test(afterColon) ) { throw Error(`“${xName}”${index>0 ? '的后半部分' : ''}中含有不符合限定的字符，并不是一个合格的自定义元素名（如果这是一个组件，请避免使用小写字母开头）`); }
@@ -289,10 +325,11 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 			if ( xName==='slot' ) { throw SyntaxError(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，而且无论哪种都没有实际使用意义，请避免使用`); }
 			if ( isTemplate ) { throw SyntaxError(`v-pre 模式下的 slot 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
 			//Vue3: if ( xName==='component' && 'is' in attributes ) { throw SyntaxError(`v-pre 模式下的 ${xName} 元素的 is 属性在 Vue 3 中会被忽略（实际上 ${xName} 并不是一个浏览器内置元素，也不是合格的自定义元素名），请避免使用`); }
-			if ( xName==='component' || xName==='suspense' || xName==='teleport' || xName==='transition' ) { throw Error(`请避免在 v-pre 下使用 ${xName}（它既不是浏览器内置元素，也不是合格的自定义元素）`); }
+			if ( 避免在PRE下误用的内置标签(xName) ) { throw Error(`请避免在 v-pre 下使用 ${xName}（它既不是浏览器内置元素，也不是合格的自定义元素）`); }
 			if ( !notComponent ) { throw Error(`请避免在 v-pre 下使用组件名（如果“${xName}”不是一个组件，请避免使用大写字母开头）`); }
 			if ( !V_PRE ) {
 				///if ( isTemplate ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 template 元素，在 Vue 2 与 3 中存在歧义，且没有必要，请避免使用`); }///if ( compatible_template ) { compatible_template = false; }
+				/// ^base-transition
 				if ( 'v-for' in attributes ) { throw SyntaxError(`从自身开始带有 v-pre 指令的 v-for 元素在 Vue 2 与 3 中存在歧义，请避免使用`); }///
 				if ( 'v-else-if' in attributes || 'v-else' in attributes ) { throw SyntaxError(`从自身开始带有 v-pre 指令且具有 v-else-if/v-else 属性的元素在 Vue 3 中会带上 v-pre 属性，且这没有意义，请避免使用`); }
 			}
@@ -352,18 +389,10 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 				_asClass!(attributes, keys, false);
 				if ( compatible_template ) {
 					Vue2: if ( 'v-model' in attributes && ( xName==='select' || xName==='input' && attributes['type']==='checkbox' ) ) { compatible_template = false; }
-					else if (
-						xName==='Component' ||
-						xName==='BaseTransition' || xName==='Suspense' || xName==='Teleport' ||
-						xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup'
-					) { compatible_template = false; }
+					else if ( 可能被当作内置标签的自定义组件(xName) ) { compatible_template = false; }
 				}
 				if ( compatible_render ) {
-					if (
-						xName==='base-transition' || xName==='suspense' || xName==='teleport' ||
-						///xName==='KeepAlive' || xName==='Transition' || xName==='TransitionGroup' ||
-						isTemplate && !lackKey
-					) { compatible_render = false; }
+					if ( 跨版本解释不同的内置标签(xName) || isTemplate && !lackKey ) { compatible_render = false; }
 				}
 				Vue2: {
 					if ( 'slot' in attributes || ':slot' in attributes ) { throw SyntaxError(`slot 已被 v-slot 取代（如果只是碰巧重名，请使用 :slot.camel）`); }
@@ -393,9 +422,9 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 						case '#':
 							if ( already ) { throw SyntaxError(`不能同时存在多个插槽指令“${already}”和“${name}”`); }
 							if ( name[name.length - 1]==='#' ) {
-								if ( BUILT_IN.has(xName) ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在 ${xName} 标签上`); }
-								if ( !notComponent ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` ${xName} 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
-								if ( xName.includes('-') ? SVG_MathML.test(xName) : !HTML_5.test(xName) && xName!=='style' ) { throw Error(`HTML 原生标签中，只有 ${HTML5.join('、')} 支持 Shadow DOM，其中不包括“${xName}”，而同步样式表功能也只支持 style 标签`); }
+								if ( notComponent ) { if ( 是内置标签(xName) ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在 ${xName} 标签上`); } }
+								else { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不能用在组件标签${xName==='component' ? ` ${xName} 上` : `上（如果 ${xName} 不是组件，请避免使用大写字母开头）`}`); }
+								if ( xName.includes('-') ? SVG_MathML(xName) : !HTML_5(xName) && xName!=='style' ) { throw Error(`HTML 原生标签中，只有 ${HTML5.join('、')} 支持 Shadow DOM，其中不包括“${xName}”，而同步样式表功能也只支持 style 标签`); }
 								if ( attributes[name]!==EMPTY ) { throw Error(`jVue 借用了插槽缩写语法表示 Shadow DOM / 同步样式表，并以“#”结尾加以区分，该功能不支持属性值`); }
 								if ( v_for ) { throw Error(`jVue 的 Shadow DOM / 同步样式表功能不支持在 v-for 内使用`); }
 								if ( xName==='style' ) {
@@ -410,12 +439,12 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 								const value = attributes[name];
 								if ( isTemplate ) {
 									if ( !parentNode_XName ) { throw Error(`插槽所在的 template 必须位于组件标签内`); }
-									if ( STARTS_WITH_LOWERCASE_AND_NOT_NOR.test(( parentNode as Element ).localName) ) {
-										throw Error(`插槽所在的 template 必须位于组件标签的根层` + ( BUILT_IN.has(( parentNode as Element ).localName) ? `` : `（如果 ${( parentNode as Element ).localName} 是组件，则请避免使用小写字母开头）` ));
+									if ( 不允许包含插槽模板(( parentNode as Element ).localName) ) {
+										throw Error(`插槽所在的 template 必须位于组件标签的根层` + ( 是内置标签(( parentNode as Element ).localName) ? `` : `（如果 ${( parentNode as Element ).localName} 是组件，则请避免使用小写字母开头）` ));
 									}
 								}
 								else {
-									if ( notComponent && xName!=='suspense' ) { throw Error(`插槽只能出现在 template 或组件上` + ( BUILT_IN.has(xName) ? `` : `（如果 ${xName} 是组件，则请避免使用小写字母开头）` )); }
+									if ( 不允许包含插槽模板(xName) ) { throw Error(`插槽只能出现在 template 或组件上` + ( 是内置标签(xName) ? `` : `（如果 ${xName} 是组件，则请避免使用小写字母开头）` )); }
 									if ( name!=='#default' ) { throw SyntaxError(`具名插槽只能出现在 template 上`); }
 									if ( value===EMPTY ) { throw Error(`无值的默认插槽 v-slot 指令没有必要显式地写在组件上`); }
 								}
@@ -477,7 +506,7 @@ const parseAppend = (parentNode_XName :string, parentNode :Content | Element, V_
 				__class__,
 				shadowRoot && {
 					along: shadowRoot.along,
-					inside: !parentNode_XName || INSIDE.test(( parentNode as Element ).localName),
+					inside: !parentNode_XName || 不便变动子的内置标签(( parentNode as Element ).localName),
 				},
 			)
 		);
@@ -620,6 +649,8 @@ export default class Content extends Node {
 	
 	readonly #compatible_template :boolean = true;
 	readonly #compatible_render :boolean = true;
+	get _compatible_template () { return this.#compatible_template; }
+	get _compatible_render () { return this.#compatible_render && this.firstChild && isSingleElementChild(this.firstChild); }// Vue2: isVue2Compatible
 	
 	[Symbol.toPrimitive] (this :Content) {
 		let child = this.firstChild;
@@ -629,8 +660,6 @@ export default class Content extends Node {
 			if ( outerHTML[0]==='#' ) { outerHTML = '&#35;' + outerHTML.slice(1); }
 			while ( ( child = child.nextSibling ) ) { outerHTML += child; }
 		}
-		compatible_template = this.#compatible_template;
-		compatible_render = this.#compatible_render;
 		return outerHTML;
 	}
 	
@@ -643,6 +672,8 @@ export default class Content extends Node {
 	}
 	
 };
+
+freeze(freeze(Content).prototype);
 
 import type { Private, Partial } from '../';
 import type Attributes from '../../Attributes';

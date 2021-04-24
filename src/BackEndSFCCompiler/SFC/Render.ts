@@ -1,7 +1,7 @@
 import Error from '.Error';
 import WeakSet from '.WeakSet';
 //import Object from '.Object';
-import test from '.RegExp.prototype.test';
+import freeze from '.Object.freeze';
 import Null from '.null';
 import throwError from '.throw.Error';
 
@@ -9,6 +9,10 @@ import { StringLiteral } from '@ltd/j-es';
 import { theRegExp } from '@ltd/j-regexp';
 
 import { compile2, compile3, parse, findGlobals, simple, minify } from '../dependencies';
+import _ from './private';
+import { inBlackList, isCustomElement } from './Template/Content/';
+
+let compatible = false;
 
 const byReversedStart = (a :Identifier, b :Identifier) => b.start - a.start;
 
@@ -154,6 +158,7 @@ const strip = (func :string) :string => {
 	while ( i ) {
 		const identifier = identifiers[--i]!;
 		let name = identifier.name as string;
+		if ( compatible && inBlackList(name) ) { compatible = false; }
 		const { start } = identifier;
 		if ( start!==index ) { _vm_func += func.slice(index, start); }
 		name = func.slice(start, index = identifier.end);
@@ -189,24 +194,40 @@ const NecessaryStringLiteral = async (body :string, name :null | number) :Promis
 		: StringLiteral(body);
 };
 
-const onError = (error :SyntaxError) :never => { throw Error(`.vue template 官方编译未通过：\n       ${error.message}`); };
-const isCustomElement = test.bind(/^(?![A-Z]|base-transition$|component$|keep-alive$|s(?:lot|uspense)$|te(?:mplate|leport)$)/);
+const options = freeze(Null({
+	onError (error :SyntaxError) :never { throw Error(`.vue template 官方编译未通过：\n       ${error.message}`); },
+	isCustomElement,
+	mode: 'function',
+	prefixIdentifiers: true,
+	cacheHandlers: true,
+	hoistStatic: true,
+} as const));
+const options4find = freeze(Null({
+	onError (error :SyntaxError) :never { throw Error(`jVue 内部错误：.vue template 额外官方编译未通过：\n       ${error.message}`); },
+	isCustomElement,
+	mode: 'function',
+	prefixIdentifiers: false,
+	cacheHandlers: false,
+	hoistStatic: false,
+} as const));
 const NSS = /\n+((?:  )*)/g;
-export const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }) :Promise<{ ports :string[], Render :string }> => {
-	const { code } = compile3[mode](innerHTML, {
-		onError,
-		isCustomElement,
-		mode: 'function',
-		prefixIdentifiers: true,
-		cacheHandlers: true,
-		hoistStatic: true,
-	});
-	const { 1: params, 2: rest } = CONST_RETURN(code) ?? throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回了与预期不符的内容格式`);
+const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null, { sheet, shadow } :{ readonly sheet? :Map<string, string>, readonly shadow? :string }, need :boolean) => {
+	const { code } = compile3[mode](innerHTML, options);
+	const { 1: params, 2: rest } = CONST_RETURN(code) ?? { 1: '', 2: code };
 	const ports = params.match(PORTS) ?? [];
 	let Render = `'use strict';(${params})=>{${rest}};`;
 	ecma = parserOptions.ecmaVersion = 2014;
 	const globals = findGlobals(parse(Render, parserOptions));
 	globals.size && throwError(`jVue 内部错误：@dom/compiler-dom .compile 返回的内容与预期不符（存在变量泄漏：“${globals.names().join('”“')}”）`);
+	if (
+		need &&
+		compatible &&
+		findGlobals(
+			parse(`'use strict';()=>{${compile3[mode](innerHTML, options4find).code}}`, parserOptions)
+		)
+		.names()
+		.some(inBlackList)
+	) { compatible = false; }
 	if ( ws ) { Render = Render.replace(NSS, (nss, ss) => ws.eol + ws.tab.repeat(2 + ss.length/2)).slice(13, -1); }
 	else {
 		Render = await MinifyBODY(Render);
@@ -226,7 +247,7 @@ export const Render3 = async (innerHTML :string, mode :'let' | 'const', ws :{ re
 	return { ports, Render };
 };
 
-export const Render2 = async (innerHTML :string, mode :'var' | 'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null) :Promise<{ readonly render :string, readonly staticRenderFns :readonly string[] }> => {
+const Render2 = async (innerHTML :string, mode :'var' | 'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null) => {
 	let { errors, tips, render, staticRenderFns } = compile2[mode](innerHTML);
 	if ( errors.length ) { throw Error(`.vue template 官方编译未通过：\n       ${errors.join('\n       ')}`); }
 	if ( tips.length ) { throw Error(`.vue template 官方编译建议：\n       ${tips.join('\n       ')}`); }
@@ -239,6 +260,21 @@ export const Render2 = async (innerHTML :string, mode :'var' | 'let' | 'const', 
 		staticRenderFns[index] = await NecessaryStringLiteral(staticRenderFns[index]!, index);
 	}
 	return { render, staticRenderFns };
+};
+
+export { Render as default };
+const Render = async (template :Template, mode :'var' | 'let' | 'const', ws :{ readonly eol :string, readonly tab :string } | null) => {
+	const { content } = template;
+	const innerHTML = '' + content;
+	compatible = content._compatible_template;
+	const render2 = content._compatible_render ? await Render2(innerHTML, mode, ws) : null;
+	return {
+		render2,
+		render3: mode==='var' ? null : await Render3(innerHTML, mode, ws, _(template), !render2),
+		/// - {ws}: (); import!
+		/// - null: (); import or ~~runtime~~?
+		innerHTML: compatible ? innerHTML : null,
+	};
 };
 
 type Identifier = {
@@ -266,3 +302,5 @@ type ObjectPattern = {
 		},
 	}>,
 };
+
+import type Template from './Template/';

@@ -11,7 +11,6 @@ import getOwnPropertyNames from '.Object.getOwnPropertyNames';
 import getOwnPropertyDescriptor from '.Object.getOwnPropertyDescriptor';
 import getOwnPropertySymbols from '.Object.getOwnPropertySymbols?';
 import defineProperties from '.Object.defineProperties';
-import defineProperty from '.Object.defineProperty';
 import get from '.Reflect.get?';
 import apply from '.Reflect.apply?';
 import assign from '.Object.assign?';
@@ -55,7 +54,10 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 					if ( this!==Component && isComponentConstructor(this) ) { throw TypeError('(Component!this)._main()'); }
 					var Vue = Function('return Vue')();
 					if ( typeof Vue==='object' ) {
-						var dev = isArray(( window as { devtoolsFormatters? :[] } ).devtoolsFormatters);
+						var dev =
+							'__VUE__' in window &&
+							'__VUE_HMR_RUNTIME__' in window &&
+							isArray(( window as any ).devtoolsFormatters);
 						var app = Vue.createApp(
 							ToOptions(
 								Component,
@@ -63,11 +65,8 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 								dev ? create(NULL) : undefined
 							)
 						);
-						defineProperty(app.config, 'isCustomElement', { value: test.bind(STARTS_WITH_LOWERCASE), writable: true });
-						if ( dev ) {
-							THROW_IRREPARABLE = false;
-							app.config.performance = true;
-						}
+						app.config.isCustomElement = isCustomElement;
+						if ( dev ) { app.config.performance = true; }
 						app.mount(document.body);
 					}
 					else {
@@ -75,7 +74,8 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 							ToOptions(
 								Component,
 								undefined,
-								Vue.devtools ? ( Vue.config.ignoredElements.push(STARTS_WITH_LOWERCASE), Vue.config.performance = true, create(NULL) ) : undefined
+								Vue.devtools ? ( Vue.config.ignoredElements.push(STARTS_WITH_LOWERCASE), Vue.config.performance = true, create(NULL) ) : undefined,
+								FunctionalComponent2
 							)
 						) )()
 						.$mount(( document.body.innerHTML = '<br>', 'br' ));
@@ -89,15 +89,15 @@ var Component :ClassAPI = /*#__PURE__*/freeze(/*#__PURE__*/defineProperties(
 			enumerable: false,
 			value: function _toOptions (this :ClassAPI, Vue3? :_Vue3, __dev__? :{ readonly [Key in keyof __Dev__]? :string }) {
 				if ( !isComponentConstructor(this) ) { throw TypeError('(!Component)._toOptions()'); }
-				return ToOptions(this, Vue3, __dev__);
+				return ToOptions(this, Vue3, __dev__, Vue3 ? OPTIONS.fix.get(Vue3) || FunctionalComponentConstructor(Vue3) : FunctionalComponent2);
 			},
 		},
 	}
 ));
 var once = false;
 
-function ToOptions (this :void, constructor :ClassAPI, Vue3? :_Vue3, __dev__? :{ readonly [Key in keyof __Dev__]? :string }) {
-	var DID_OPTIONS = OPTIONS.objects.into(__dev__ || OPTIONS as any).into(Vue3 || OPTIONS as any);
+function ToOptions (this :void, constructor :ClassAPI, Vue3? :_Vue3, __dev__? :{ readonly [Key in keyof __Dev__]? :string }, FunctionalComponent? :FunctionalComponentConstructor) {
+	var DID_OPTIONS = OPTIONS.objects.into(__dev__ || OPTIONS as any).into(FunctionalComponent || OPTIONS as any);
 	var TMP_OPTIONS = new OPTIONS.objectsTmp;
 	var options = Options(
 		constructor,
@@ -107,7 +107,8 @@ function ToOptions (this :void, constructor :ClassAPI, Vue3? :_Vue3, __dev__? :{
 			return dev;
 		}, create(NULL) as { -readonly [Key in keyof __Dev__] :string }) : null,
 		DID_OPTIONS,
-		TMP_OPTIONS
+		TMP_OPTIONS,
+		FunctionalComponent || null
 	);
 	TMP_OPTIONS.forEach!(function (optionsValue, constructorKey) { DID_OPTIONS.set(constructorKey, optionsValue); });
 	return options;
@@ -127,7 +128,7 @@ export function mixin (this :void) {
 		: Component;
 }
 
-function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev__ | null, DID_OPTIONS :WeakMap<ClassAPI, _ObjectAPI>, TMP_OPTIONS :Map<ClassAPI, _ObjectAPI>) :_ObjectAPI {
+function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev__ | null, DID_OPTIONS :WeakMap<ClassAPI, _ObjectAPI>, TMP_OPTIONS :Map<ClassAPI, _ObjectAPI>, FunctionalComponent :FunctionalComponentConstructor | null) :_ObjectAPI {
 	
 	var options :_ObjectAPI | undefined = DID_OPTIONS.get(constructor) || TMP_OPTIONS.get(constructor);
 	if ( options ) { return options; }
@@ -140,7 +141,7 @@ function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev
 		while ( index!==static_mixins.length ) {
 			var mixin = static_mixins[index++]!;
 			if ( isComponentConstructor(mixin) ) {
-				var mixinOptions = Options(mixin, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
+				var mixinOptions = Options(mixin, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS, FunctionalComponent);
 				if ( isMixins(mixin) ) {
 					var mixinMixins = mixinOptions.mixins!;
 					var mixinIndex = 0;
@@ -165,7 +166,7 @@ function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev
 		Super===Component || isMixins(Super) || ( setPrototypeOf(constructor, Component), setPrototypeOf(prototype, null) );
 	}
 	if ( Super!==Component ) {
-		var SuperOptions = Options(Super, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS);
+		var SuperOptions = Options(Super, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS, FunctionalComponent);
 		isMixins(Super)
 			? SuperOptions.mixins!.length===1
 			? options.extends = SuperOptions.mixins![0]
@@ -216,7 +217,7 @@ function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev
 				) { throw Error(__dev__.compile_layer); }
 			}
 			//@ts-ignore
-			set(options, staticName, constructor[staticName]);
+			set(options, staticName==='displayName' ? 'name' : staticName, constructor[staticName]);
 		}
 	}
 	
@@ -450,38 +451,29 @@ function Options (constructor :ClassAPI, Vue3 :_Vue3 | undefined, __dev__ :__Dev
 	TMP_OPTIONS.set(constructor, options);
 	
 	//@ts-ignore
-	if ( options.components || options.name || options.displayName ) {
+	if ( options.components || options.name ) {
 		var components = options.components = assign(create(NULL), options.components);
 		if ( __dev__ ) {
 			for ( pascal in components ) {
 				if ( !pascal || STARTS_WITH_LOWERCASE.test(pascal) ) { throw Error(__dev__.compile_name); }
 			}
-			if ( THROW_IRREPARABLE && Vue3 && !options.render && options.template ) {
+			if ( Vue3 && FunctionalComponent ) {
 				if (
 					//@ts-ignore
 					options.name && INCLUDES_UPPERCASE.test(options.name.slice(1))
-				) { throw Error(__dev__.compile_case); }
-				if (
-					//@ts-ignore
-					options.displayName && INCLUDES_UPPERCASE.test(options.displayName.slice(1))
-				) { throw Error(__dev__.compile_case); }
-				for ( pascal in components ) {
-					if ( INCLUDES_UPPERCASE.test(pascal.slice(1)) ) { throw Error(__dev__.compile_case); }
-				}
+				) { throw Error(__dev__.compile_name); }
 			}
 		}
 		for ( var pascal in components ) {
 			var value = components[pascal]!;
-			if ( isComponentConstructor(value) ) { components[pascal] = Options(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS); }
+			if ( isComponentConstructor(value) ) { components[pascal] = Options(value, Vue3, __dev__, DID_OPTIONS, TMP_OPTIONS, FunctionalComponent); }
 		}
-		if ( !Vue3 ) {
+		if ( FunctionalComponent ) {
 			var cases = create(NULL) as Names;
 			//@ts-ignore
-			options.name && fixPascal(options.name, cases);
-			//@ts-ignore
-			options.displayName && fixPascal(options.displayName, cases);
-			for ( pascal in components ) { fixPascal(pascal, cases); }
-			assign(components, cases, components);
+			options.name && fixPascal(options.name, cases, FunctionalComponent);
+			for ( pascal in components ) { fixPascal(pascal, cases, FunctionalComponent); }
+			assign(components, assign(cases, components));
 		}
 	}
 	
@@ -495,7 +487,7 @@ var OPTIONS = /*#__PURE__*/function () {
 class EasyMap extends WeakMap{into(key){let sub=this.get(key);sub??this.set(key,sub=new EasyMap);return sub}}EasyMap.prototype.get=WeakMap.prototype.get;EasyMap.prototype.set=WeakMap.prototype.set;\
 class StrongMap extends Map{}StrongMap.prototype.get=Map.prototype.get;StrongMap.prototype.set=Map.prototype.set;StrongMap.prototype.forEach=Map.prototype.forEach;\
 class StrongSet extends Set{}StrongSet.prototype.add=Set.prototype.add;StrongSet.prototype[Symbol.iterator]=Set.prototype[Symbol.iterator];\
-return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyMap,data:new EasyMap,proto:new EasyMap,constructor:new EasyMap,shadow:new EasyMap,Set:StrongSet}\
+return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyMap,data:new EasyMap,proto:new EasyMap,constructor:new EasyMap,shadow:new EasyMap,fix:new EasyMap,Set:StrongSet}\
 ')();
 	}
 	catch (error) {}
@@ -508,6 +500,7 @@ return{objects:new EasyMap,objectsTmp:StrongMap,super:new EasyMap,rest:new EasyM
 	proto :WeakMap<_ObjectAPI, ProtoDescriptors>,
 	constructor :WeakMap<_ObjectAPI, ClassAPI>,
 	shadow :WeakMap<_ObjectAPI, Names>,
+	fix :WeakMap<_Vue3, FunctionalComponentConstructor>,
 	Set :SetConstructor,
 };
 interface EasyMap<K extends object, V> extends WeakMap<K, V> {into (key :K) :V;}
@@ -576,7 +569,6 @@ function devAssertFunction<T> (this :__Dev__, fn :T) {
 	return fn as T extends CallableFunction ? T : never;
 }
 
-var THROW_IRREPARABLE = true;
 var INCLUDES_UPPERCASE = /[A-Z]/;
 var STARTS_WITH_LOWERCASE = /^[a-z]/;
 var CHECKED = WeakMap && /*#__PURE__*/new WeakMap<ClassAPI | _ObjectAPI, Names<ClassAPI | _ObjectAPI>>();
@@ -584,7 +576,7 @@ function forKeys (option :{} | undefined, callback :(name :string) => void) {
 	if ( isArray(option) ) { option.forEach(callback); }
 	else { for ( var key in option ) { callback(key); } }
 }
-function check (options :_ObjectAPI & { readonly name? :string, readonly displayName? :string }, __dev__ :__Dev__) :Names<ClassAPI | _ObjectAPI> {
+function check (options :_ObjectAPI & { readonly name? :string }, __dev__ :__Dev__) :Names<ClassAPI | _ObjectAPI> {
 	
 	var belong = OPTIONS.constructor.get(options) || options;
 	var ownKeys = CHECKED.get(belong);
@@ -622,7 +614,7 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 		ownKeys![name] = belong;
 	});
 	
-	var name :string;
+	var name :string | undefined;
 	
 	for ( name in options.methods ) {
 		if ( name[0]==='_' || name[0]==='$' ) { throw Error(__dev__.compile_reserved); }
@@ -653,17 +645,18 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 	});
 	assign(allKeys, ownKeys);
 	
-	[ options.name, options.displayName ].forEach(function (name :unknown) {
+	if ( typeof options==='object' ) {
+		name = options.name;
 		if ( typeof name==='string'
 			? !name || STARTS_WITH_LOWERCASE.test(name) || options.components && name in options.components && options.components[name]!==options
 			: name!==undefined
 		) { throw Error(__dev__.compile_name); }
-	});
+	}
 	
 	options.emits &&
 	( isArray(options.emits) ? options.emits : Keys(options.emits) ).forEach(function (event) {
 		if ( typeof event!=='string' ) { throw Error(__dev__.compile_type); }
-		if ( /(?:capture|once|passive)$/i.test('on' + event) || /^-?[vV]node/.test(event) ) { throw Error(__dev__.compile_emits); }
+		if ( /(?:capture|once|passive)$/.test('on' + event.toLowerCase()) || /^-?[vV]node/.test(event) ) { throw Error(__dev__.compile_emits); }
 	});
 	
 	if (
@@ -678,30 +671,47 @@ function check (options :_ObjectAPI & { readonly name? :string, readonly display
 }
 
 var UPPER = /[A-Z]/;
-function fixPascal (pascal :string, cases :Names) {
+function fixPascal (pascal :string, cases :Names, FunctionalComponent :FunctionalComponentConstructor) {
 	var First = pascal[0]!;
 	var first = First.toLowerCase();
 	var rest = pascal.slice(1);
-	cases[first + rest] = null;
-	hyphenate(first, rest, cases);
-	first===First || hyphenate(First, rest, cases);
+	FunctionalComponent(cases, first + rest);
+	hyphenate(first, rest, cases, FunctionalComponent);
+	first===First || hyphenate(First, rest, cases, FunctionalComponent);
 }
-function hyphenate (before :string, after :string, cases :Names) {
+function hyphenate (before :string, after :string, cases :Names, FunctionalComponent :FunctionalComponentConstructor) {
 	var index = after.search(UPPER);
-	if ( index<0 ) { cases[before + after] = null; }
+	if ( index<0 ) { FunctionalComponent(cases, before + after); }
 	else {
 		if ( index ) { before += after.slice(0, index); }
 		var char = after[index]!;
 		after = after.slice(index + 1);
-		hyphenate(before + '-' + char.toLowerCase(), after, cases);
-		hyphenate(before + '-' + char, after, cases);
-		before[before.length - 1]==='-' || hyphenate(before + char, after, cases);
+		hyphenate(before + '-' + char.toLowerCase(), after, cases, FunctionalComponent);
+		hyphenate(before + '-' + char, after, cases, FunctionalComponent);
+		before[before.length - 1]==='-' || hyphenate(before + char, after, cases, FunctionalComponent);
 	}
 }
 
+type FunctionalComponentConstructor = (cases :Names, name :string) => void;
+function FunctionalComponentConstructor (Vue3 :_Vue3) {
+	var openBlock = Vue3.openBlock;
+	var createBlock = Vue3.createBlock;
+	var cache = create(NULL) as Names;
+	function FunctionalComponent (cases :Names, name :string) {
+		cases[name] = cache[name] || ( cache[name] = function (prop :unknown, context :any) {
+			openBlock();
+			return createBlock(name, context.attrs, context.slots);
+		} );
+	}
+	OPTIONS.fix.set(Vue3, FunctionalComponent);
+	return FunctionalComponent;
+}
+function FunctionalComponent2 (cases :Names, name :string) { cases[name] = null; }
+
+var isCustomElement = /*#__PURE__*/test.bind(/^(?:[ad-jl-ru-z]|b(?!ase-transition$)|c(?!omponent$)|k(?!eep-alive$)|s(?!lot$|uspense$)|t(?!e(?:leport|mplate)$|transition(?:-group)?$))/);
+
 var DEV :readonly ( keyof __Dev__ )[] = [
 	'proto',
-	'compile_case',
 	'compile_name',
 	'compile_props',
 	'compile_emits',
